@@ -7,14 +7,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
 <link rel="manifest" href="/favicon_io/site.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Products</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Items / Products — Aquilon ERP</title>
 
-<!--
-  ANTI-FLICKER SCRIPT — must be the first thing in <head>, before any
-  stylesheet. It reads the saved collapse state synchronously and sets
-  it on <html> so the sidebar is the correct width on the very first
-  paint. Copy this exact block, unchanged, to the top of every admin page.
--->
+<!-- ANTI-FLICKER SCRIPT -->
 <script>
   (function () {
     try {
@@ -26,7 +22,7 @@
   })();
 </script>
 
-<!-- Tailwind (utility classes for page content) -->
+<!-- Tailwind -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -41,8 +37,174 @@
   };
 </script>
 
-<!-- Shell styling (sidebar / topbar / overlays) — source of truth, loads after Tailwind -->
+<!-- Shell styling -->
 <link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<!-- Page-specific styles -->
+<style>
+  /* Form styles */
+  .form-input {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    color: #1a1a2e;
+  }
+  .form-input:focus {
+    border-color: #6da84c;
+    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.15);
+    background: #ffffff;
+  }
+  .form-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #374151;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .form-label .required { color: #ef4444; margin-left: 2px; }
+  .form-hint { font-size: 10.5px; color: #9ca3af; margin-top: 3px; }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .badge-dot-green { background: #22c55e; }
+  .badge-dot-amber { background: #f59e0b; }
+  .badge-dot-red { background: #ef4444; }
+  .badge-dot-gray { background: #94a3b8; }
+
+  /* Stats card */
+  .stat-card {
+    border: 1px solid #7dc057;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+  .stat-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  /* Table row hover */
+  .table-row-hover:hover {
+    background: #f8fafc;
+  }
+
+  /* Modal tabs */
+  .modal-tab-btn {
+    transition: all 0.2s ease;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    color: #6b7280;
+    cursor: pointer;
+    background: transparent;
+    display: flex;
+    gap: 6px;
+  }
+  .modal-tab-btn.active {
+    color: #6da84c;
+    border-bottom-color: #6da84c;
+  }
+  .modal-tab-btn:hover:not(.active) {
+    color: #1f2937;
+    border-bottom-color: #d1d5db;
+  }
+  .modal-tab-panel { display: none; }
+  .modal-tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-modal { animation: modalIn 0.18s ease; }
+
+  /* Action buttons */
+  .btn-icon-action {
+    transition: all 0.15s ease;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-icon-action:hover {
+    background: #f1f5f9;
+    color: #6da84c;
+  }
+  .btn-icon-action.danger:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  /* Toast */
+  .toast {
+    animation: fadeIn 0.2s ease;
+  }
+  .toast-success { background: #16a34a; }
+  .toast-error { background: #dc2626; }
+  .toast-warning { background: #f59e0b; }
+  .toast-info { background: #6da84c; }
+
+  /* Scrollbar for modal */
+  .modal-scroll {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .modal-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .modal-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
+  /* Empty state */
+  .empty-icon-svg {
+    opacity: 0.2;
+    width: 48px;
+    height: 48px;
+    color: #94a3b8;
+  }
+</style>
 </head>
 
 <body class="bg-gray-50 text-gray-800 antialiased">
@@ -55,34 +217,1040 @@
       <!-- Top bar gets injected here -->
       <div id="topbar-root"></div>
 
-      <!-- ============= PAGE CONTENT STARTS HERE ============= -->
+      <!-- ========================================================== -->
+      <!-- ============= PAGE CONTENT STARTS HERE ==================== -->
+      <!-- ========================================================== -->
       <main class="p-4 sm:p-6 lg:p-8">
-        <div class="max-w-6xl mx-auto">
-          <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 class="text-base font-semibold text-gray-800 mb-1">Products</h2>
-            <p class="text-sm text-gray-500">
-              Placeholder page template
-            </p>
+
+        <!-- Toast Container -->
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+
+        <!-- Modal Root -->
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+          <!-- Page Header -->
+          <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+            <div>
+              <div class="text-[11px] font-semibold tracking-wide uppercase text-primary">Masters</div>
+              <h1 class="text-[24px] sm:text-[28px] font-bold tracking-tight text-gray-900">Items / Products</h1>
+              <p class="text-[13px] text-gray-500 mt-1">Product and service master used across sales, purchase and inventory.</p>
+            </div>
+            <div class="flex gap-2.5 flex-wrap">
+              <!-- Filter Button -->
+              <div class="relative inline-block" data-dd-trigger>
+                <button onclick="toggleFilterDD()" class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[13px] font-semibold px-4 py-2.5 rounded-lg transition">
+                  <i class="fa-solid fa-filter"></i>
+                  Filter
+                  <span id="filterBadge" class="hidden text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+                <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-60 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-50">
+                  <div class="mb-3">
+                    <label class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Category</label>
+                    <select id="filterCategory" onchange="filterItems()" class="form-input text-[12px]">
+                      <option value="all">All Categories</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Status</label>
+                    <select id="filterStatus" onchange="filterItems()" class="form-input text-[12px]">
+                      <option value="all">All Status</option>
+                      <option value="green">In Stock</option>
+                      <option value="amber">Low Stock</option>
+                      <option value="red">Reorder</option>
+                    </select>
+                  </div>
+                  <button onclick="clearFilters()" class="text-[12px] text-primary font-semibold hover:underline">Clear Filters</button>
+                </div>
+              </div>
+
+              <!-- Vendor Purchase Button -->
+              <button onclick="openVendorPurchase()" class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[13px] font-semibold px-4 py-2.5 rounded-lg transition shadow-sm">
+                <i class="fa-solid fa-truck-fast"></i>
+                Vendor Purchase
+              </button>
+
+              <!-- Add Item Button -->
+              <button onclick="openAddItem()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[13px] font-semibold px-4 py-2.5 rounded-lg transition shadow-sm">
+                <i class="fa-solid fa-plus"></i>
+                Add Item
+              </button>
+            </div>
           </div>
+
+          <!-- Stats Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
+            <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+              <div class="stat-icon-wrap bg-primary-soft text-primary"><i class="fa-solid fa-boxes-stacked"></i></div>
+              <div>
+                <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Total Items</div>
+                <div class="text-[22px] font-bold text-gray-900" id="totalItems">0</div>
+              </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+              <div class="stat-icon-wrap bg-secondary-soft text-secondary"><i class="fa-solid fa-layer-group"></i></div>
+              <div>
+                <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Categories</div>
+                <div class="text-[22px] font-bold text-gray-900" id="totalCategories">0</div>
+              </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+              <div class="stat-icon-wrap bg-amber-50 text-amber-600"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div>
+                <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Low Stock</div>
+                <div class="text-[22px] font-bold text-amber-600" id="lowStockCount">0</div>
+              </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+              <div class="stat-icon-wrap bg-primary-soft text-primary"><i class="fa-solid fa-sack-dollar"></i></div>
+              <div>
+                <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Stock Value</div>
+                <div class="text-[22px] font-bold text-primary" id="totalStockValue">₹0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items Table Panel -->
+          <div id="itemsPanel"></div>
+
         </div>
       </main>
-      <!-- ============= PAGE CONTENT ENDS HERE ============= -->
+      <!-- ========================================================== -->
+      <!-- ============= PAGE CONTENT ENDS HERE ====================== -->
+      <!-- ========================================================== -->
     </div>
   </div>
 
+  <!-- ========================================================== -->
+  <!-- SCRIPTS -->
+  <!-- ========================================================== -->
+
+  <!-- Shell JS -->
   <script src="/assets/js/nav-sidebar.js"></script>
+
+  <!-- Main Items JS (all logic) -->
   <script>
+    // =============================================================
+    // NAV-SIDEBAR INIT
+    // =============================================================
     NavSidebar.init({
       basePath: "",
       activePage: "products",
-      pageTitle: "Products",
+      pageTitle: "Items / Products",
       user: {
         name: "Admin",
         role: "Super Admin",
-        avatarUrl: "", // leave empty to show initials fallback
+        avatarUrl: "",
       },
     });
 
+    // =============================================================
+    // ITEMS MODULE — Complete Logic
+    // =============================================================
+
+    // ---------- SVG Icons (used inside modals/table rows) ----------
+    function iconEdit() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+    }
+    function iconTrash() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`;
+    }
+    function iconEye() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    }
+    function iconX() {
+      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+    }
+    function iconSave() {
+      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`;
+    }
+    function iconBox() {
+      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`;
+    }
+    function iconUser() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+    }
+    function iconTag() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V10M10 21V10M14 21V10M19 21V10"/><path d="M2 10l10-6 10 6"/></svg>`;
+    }
+    function iconSearch() {
+      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
+    }
+
+    // ---------- Toast System ----------
+    function showToast(message, kind) {
+      kind = kind || 'success';
+      var wrap = document.getElementById('toastWrap');
+      var colors = {
+        success: 'bg-green-600',
+        info: 'bg-primary',
+        warning: 'bg-amber-600',
+        error: 'bg-red-600'
+      };
+      var el = document.createElement('div');
+      el.className = 'toast ' + colors[kind] + ' text-white text-sm font-semibold px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
+      el.innerHTML = '<span>' + message + '</span>';
+      wrap.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = 'opacity .3s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 300);
+      }, 2600);
+    }
+
+    // ---------- Modal System ----------
+    function openModal(innerHtml, opts) {
+      opts = opts || {};
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = `
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4" id="modalOverlay">
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" id="modalBackdrop"></div>
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full ${opts.width || 'max-w-3xl'} max-h-[92vh] overflow-hidden animate-modal">
+            ${innerHtml}
+          </div>
+        </div>`;
+      document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = '';
+      document.body.style.overflow = '';
+    }
+
+    function modalHeader(title, subtitle) {
+      return `
+        <div class="flex items-start justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">${title}</h3>
+            ${subtitle ? '<p class="text-xs text-gray-500 mt-0.5">' + subtitle + '</p>' : ''}
+          </div>
+          <button onclick="closeModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
+        </div>`;
+    }
+
+    function modalFooter(saveLabel, onSaveAttr, extraBtns) {
+      return `
+        <div class="flex items-center justify-between gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl sticky bottom-0">
+          <div>${extraBtns || ''}</div>
+          <div class="flex gap-2">
+            <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+            <button ${onSaveAttr} class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
+              ${iconSave()} ${saveLabel}
+            </button>
+          </div>
+        </div>`;
+    }
+
+    function fld(label, inputHtml, hint) {
+      return `
+        <div class="mb-3">
+          <label class="form-label">${label}</label>
+          ${inputHtml}
+          ${hint ? '<div class="form-hint">' + hint + '</div>' : ''}
+        </div>`;
+    }
+
+    function inputBase() { return "form-input"; }
+
+    // ---------- Dropdown ----------
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('[data-dd-trigger]')) {
+        document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+      }
+    });
+
+    function toggleFilterDD() {
+      var menu = document.getElementById('filterDD');
+      var isHidden = menu.classList.contains('hidden');
+      document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+      if (isHidden) menu.classList.remove('hidden');
+    }
+
+    // ---------- Helpers ----------
+    function money(n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); }
+
+    function badge(text, color) {
+      var map = { green: 'badge-green', amber: 'badge-amber', red: 'badge-red', gray: 'badge-gray' };
+      var dot = { green: 'badge-dot-green', amber: 'badge-dot-amber', red: 'badge-dot-red', gray: 'badge-dot-gray' };
+      return '<span class="badge ' + map[color] + '"><span class="badge-dot ' + dot[color] + '"></span>' + text + '</span>';
+    }
+
+    function rowActionsHtml(editFn, delFn, viewFn) {
+      var html = '<div class="flex gap-1">';
+      if (viewFn) {
+        html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
+      }
+      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      html += '</div>';
+      return html;
+    }
+
+    function panelWrap(titleHtml, bodyHtml, extraHead) {
+      return `
+        <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-gray-100">
+            <div class="font-bold text-[14.5px] text-gray-800 flex items-center gap-2">${titleHtml}</div>
+            ${extraHead || ''}
+          </div>
+          <div>${bodyHtml}</div>
+        </div>`;
+    }
+
+    function tableHtml(cols, rowsHtml) {
+      var colHeaders = cols.map(function(c) {
+        return '<th class="text-left text-[11px] font-bold uppercase tracking-wide text-gray-500 px-4 py-3 whitespace-nowrap">' + c + '</th>';
+      }).join('');
+      return `
+        <div class="overflow-auto h-[370px]">
+          <table class="w-full text-[13px]">
+            <thead class="sticky top-0">
+              <tr class="bg-gray-50 border-b border-gray-200">${colHeaders}</tr>
+            </thead>
+            <tbody id="tbody-anchor">${rowsHtml}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // =============================================================
+    // DATA (only 2 dummy items retained)
+    // =============================================================
+
+    var warehouses = [
+      { id: 'WH-001', name: 'Main Warehouse - Mumbai' },
+      { id: 'WH-002', name: 'Branch Warehouse - Pune' },
+      { id: 'WH-003', name: 'Storage - Bhiwandi' },
+    ];
+
+    // Fallback dummy vendors — replace with live API data (see fetchVendorList below)
+    var vendors = [
+      { id: 'VEN-001', name: 'Global Imports Inc.' },
+      { id: 'VEN-002', name: 'Local Supplier Co.' },
+    ];
+
+    var items = [{
+      id: 'ITM-1001',
+      name: 'Centrifugal Blower — 5HP',
+      sku: 'BLW-5HP-001',
+      category: 'Blowers',
+      subCategory: 'Industrial Blowers',
+      hsn: '9503',
+      unit: 'Pcs',
+      sellingPrice: 42000,
+      mrpPrice: 45000,
+      gstRate: '18',
+      stock: 48,
+      warehouse: 'WH-001',
+      description: 'Heavy duty industrial blower',
+      status: 'green'
+    }, {
+      id: 'ITM-1002',
+      name: 'Dual Media Filter Vessel — 500L',
+      sku: 'FIL-500L-002',
+      category: 'Filtration',
+      subCategory: 'Filter Vessels',
+      hsn: '8421',
+      unit: 'Pcs',
+      sellingPrice: 118000,
+      mrpPrice: 125000,
+      gstRate: '18',
+      stock: 6,
+      warehouse: 'WH-001',
+      description: '500L capacity filtration vessel',
+      status: 'amber'
+    }];
+
+    // Variant field id -> label map (also reused for the product's own extra spec fields)
+    var variantSpecFields = [
+      { id: 'height', label: 'Height' },
+      { id: 'width', label: 'Width' },
+      { id: 'length', label: 'Length' },
+      { id: 'materialType', label: 'Material Type' },
+      { id: 'size', label: 'Size' },
+      { id: 'productNumber', label: 'Product Number' }
+    ];
+
+    var nextItemNo = 1003;
+
+    // =============================================================
+    // FUNCTIONS
+    // =============================================================
+
+    function statusLabel(s) {
+      return s === 'green' ? 'In Stock' : s === 'amber' ? 'Low Stock' : 'Reorder';
+    }
+
+    // No reorder-level field anymore — derive status purely from stock quantity
+    function stockStatus(qty) {
+      qty = Number(qty) || 0;
+      return qty > 20 ? 'green' : qty > 5 ? 'amber' : 'red';
+    }
+
+    function getWarehouseName(id) {
+      var w = warehouses.find(function(x) { return x.id === id; });
+      return w ? w.name : id;
+    }
+
+    function renderStats() {
+      document.getElementById('totalItems').textContent = items.length;
+      var uniqueCats = new Set(items.map(function(i) { return (i.category || '').trim().toLowerCase(); }).filter(Boolean));
+      document.getElementById('totalCategories').textContent = uniqueCats.size;
+      var lowStock = items.filter(function(i) { return i.status === 'amber' || i.status === 'red'; });
+      document.getElementById('lowStockCount').textContent = lowStock.length;
+      var totalVal = items.reduce(function(sum, i) { return sum + (i.stock * i.sellingPrice); }, 0);
+      document.getElementById('totalStockValue').textContent = money(totalVal);
+
+      var filterCat = document.getElementById('filterCategory');
+      var currentVal = filterCat.value;
+      var distinctCats = Array.from(new Set(items.map(function(i) { return i.category; }).filter(Boolean))).sort();
+      filterCat.innerHTML = '<option value="all">All Categories</option>';
+      distinctCats.forEach(function(c) {
+        filterCat.innerHTML += '<option value="' + c + '">' + c + '</option>';
+      });
+      filterCat.value = currentVal;
+    }
+
+    function getFilteredItems() {
+      var searchInput = document.getElementById('searchInput');
+      var q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+      var cat = document.getElementById('filterCategory').value || 'all';
+      var status = document.getElementById('filterStatus').value || 'all';
+
+      return items.filter(function(it) {
+        var matchSearch = q.length < 2 ? true : (
+          it.name.toLowerCase().indexOf(q) !== -1 ||
+          it.sku.toLowerCase().indexOf(q) !== -1 ||
+          it.id.toLowerCase().indexOf(q) !== -1 ||
+          it.hsn.indexOf(q) !== -1
+        );
+        var matchCat = cat === 'all' || it.category === cat;
+        var matchStatus = status === 'all' || it.status === status;
+        return matchSearch && matchCat && matchStatus;
+      });
+    }
+
+    function renderItems() {
+      var filtered = getFilteredItems();
+
+      var rowsHtml = '';
+      if (filtered.length === 0) {
+        rowsHtml = `
+          <tr>
+            <td colspan="8" class="text-center py-10 text-gray-400 text-sm">
+              <div class="flex justify-center mb-2 empty-icon-svg">${iconBox()}</div>
+              No items found. Try adjusting your filters or
+              <button onclick="openAddItem()" class="text-primary font-semibold hover:underline">add a new item</button>.
+            </td>
+          </tr>`;
+      } else {
+        rowsHtml = filtered.map(function(it) {
+          return `
+            <tr class="border-b border-gray-100 table-row-hover">
+              <td class="px-4 py-3">
+                <div class="font-semibold text-gray-800">${it.name}</div>
+                <div class="text-[11.5px] text-gray-400 font-mono">${it.id} · ${it.sku}</div>
+              </td>
+              <td class="px-4 py-3 text-gray-600">${it.category}${it.subCategory ? '<div class="text-[11px] text-gray-400">' + it.subCategory + '</div>' : ''}</td>
+              <td class="px-4 py-3 font-mono font-semibold">${it.stock}</td>
+              <td class="px-4 py-3 text-[11px] text-gray-500">${getWarehouseName(it.warehouse)}</td>
+              <td class="px-4 py-3 font-mono font-semibold">${money(it.sellingPrice)}</td>
+              <td class="px-4 py-3 font-mono text-gray-500">${it.gstRate}%</td>
+              <td class="px-4 py-3">${badge(statusLabel(it.status), it.status)}</td>
+              <td class="px-4 py-3">${rowActionsHtml(
+                "editItem('"+it.id+"')",
+                "delItem('"+it.id+"')",
+                "viewItem('"+it.id+"')"
+              )}</td>
+            </tr>`;
+        }).join('');
+      }
+
+      var panelHtml = panelWrap(
+        'All Items <span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
+        tableHtml(['Item', 'Category', 'Stock', 'Warehouse', 'Price', 'GST', 'Status', 'Actions'], rowsHtml),
+        '<div class="flex items-center gap-2"><span class="text-[11px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderItems()" class="text-[12px] border border-[#6da84c] rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
+      );
+
+      document.getElementById('itemsPanel').innerHTML = panelHtml;
+      renderStats();
+    }
+
+    function filterItems() { renderItems(); }
+
+    function clearFilters() {
+      document.getElementById('filterCategory').value = 'all';
+      document.getElementById('filterStatus').value = 'all';
+      var searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = '';
+      renderItems();
+      toggleFilterDD();
+    }
+
+    // =============================================================
+    // ADD / EDIT ITEM  (Basic Info · Pricing & Tax · Inventory only)
+    // =============================================================
+
+    function openAddItem() { openItemModal(null); }
+
+    function editItem(id) {
+      var it = items.find(function(x) { return x.id === id; });
+      if (it) openItemModal(it);
+    }
+
+    function viewItem(id) {
+      var it = items.find(function(x) { return x.id === id; });
+      if (!it) return;
+
+      var modalContent = `
+        ${modalHeader('Item Details — ' + it.name, it.id + ' · ' + it.sku)}
+        <div class="px-6 py-4 modal-scroll">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div><span class="text-gray-500">Category</span><br><span class="font-semibold">${it.category}</span></div>
+            <div><span class="text-gray-500">Sub Category</span><br><span class="font-semibold">${it.subCategory || '—'}</span></div>
+            <div><span class="text-gray-500">HSN/SAC</span><br><span class="font-mono font-semibold">${it.hsn}</span></div>
+            <div><span class="text-gray-500">Unit</span><br><span class="font-semibold">${it.unit}</span></div>
+            <div><span class="text-gray-500">Status</span><br>${badge(statusLabel(it.status), it.status)}</div>
+            <div><span class="text-gray-500">Total Stock</span><br><span class="font-semibold">${it.stock} ${it.unit}</span></div>
+            <div><span class="text-gray-500">Selling Price</span><br><span class="font-semibold text-primary">${money(it.sellingPrice)}</span></div>
+            <div><span class="text-gray-500">MRP Price</span><br><span class="font-semibold">${money(it.mrpPrice)}</span></div>
+            <div><span class="text-gray-500">GST Rate</span><br><span class="font-semibold">${it.gstRate}%</span></div>
+            <div><span class="text-gray-500">Warehouse</span><br><span class="font-semibold">${getWarehouseName(it.warehouse)}</span></div>
+            <div><span class="text-gray-500">Height</span><br><span class="font-semibold">${it.height || '—'}</span></div>
+            <div><span class="text-gray-500">Width</span><br><span class="font-semibold">${it.width || '—'}</span></div>
+            <div><span class="text-gray-500">Length</span><br><span class="font-semibold">${it.length || '—'}</span></div>
+            <div><span class="text-gray-500">Material Type</span><br><span class="font-semibold">${it.materialType || '—'}</span></div>
+            <div><span class="text-gray-500">Size</span><br><span class="font-semibold">${it.size || '—'}</span></div>
+            <div><span class="text-gray-500">Product Number</span><br><span class="font-semibold">${it.productNumber || '—'}</span></div>
+            ${it.description ? '<div class="col-span-2"><span class="text-gray-500">Description</span><br><span class="text-sm">' + it.description + '</span></div>' : ''}
+          </div>
+
+          ${it.variants && it.variants.length ? `
+          <div class="mt-5 pt-4 border-t border-gray-100">
+            <h4 class="text-[13px] font-semibold text-gray-800 mb-2">Variants (${it.variants.length})</h4>
+            <div class="border border-gray-200 rounded-lg divide-y divide-gray-100">
+              ${it.variants.map(function(v) {
+                return '<div class="px-3 py-2 text-sm flex items-center justify-between"><span class="font-semibold">' + (v.variantName || 'Unnamed Variant') + '</span><span class="text-gray-400 text-[11px] font-mono">' + (v.sku || '') + '</span></div>';
+              }).join('')}
+            </div>
+          </div>` : ''}
+        </div>
+        ${modalFooter('Close', 'onclick="closeModal()"')}
+      `;
+
+      openModal(modalContent, { width: 'max-w-2xl' });
+    }
+
+    // Tracks which product row is selected inside the "Add Variant" tab for the currently open modal
+    var variantSelectedProductId = null;
+
+    function fldErr(id) {
+      // Inline required-field error message, hidden by default
+      return '<div id="err_' + id + '" class="hidden text-[10.5px] text-red-500 mt-1">This field is required</div>';
+    }
+
+    function openItemModal(existing) {
+      var e = existing || {
+        name: '',
+        sku: '',
+        category: '',
+        subCategory: '',
+        hsn: '',
+        unit: '',
+        sellingPrice: '',
+        mrpPrice: '',
+        gstRate: '',
+        stock: '',
+        warehouse: warehouses[0].id,
+        description: '',
+        height: '',
+        width: '',
+        length: '',
+        materialType: '',
+        size: '',
+        productNumber: '',
+        variants: []
+      };
+      var isEdit = !!existing;
+      variantSelectedProductId = null;
+
+      var modalContent = `
+        ${modalHeader(isEdit ? 'Edit Item' : 'Add New Item', isEdit ? e.id : 'Create a new product/service master record')}
+        <div class="px-6 py-4 modal-scroll">
+          <div class="flex border-b border-gray-200 mb-4 gap-1 flex-wrap" id="modalTabs">
+            <button class="modal-tab-btn active" data-tab="tab-basic">
+              ${iconUser()} Basic Info
+            </button>
+            <button class="modal-tab-btn" data-tab="tab-pricing">
+              ${iconTag()} Pricing & Tax
+            </button>
+            <button class="modal-tab-btn" data-tab="tab-inventory">
+              ${iconBox()} Inventory
+            </button>
+            <button class="modal-tab-btn" data-tab="tab-variant">
+              ${iconTag()} Add Variant
+            </button>
+          </div>
+
+          <div id="tab-basic" class="modal-tab-panel active">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="mb-3">
+                <label class="form-label">Item Name <span class="required">*</span></label>
+                <input id="f_name" value="${e.name}" placeholder="e.g. Centrifugal Blower — 5HP" class="${inputBase()}">
+                ${fldErr('f_name')}
+              </div>
+              ${fld('SKU / Code', '<input id="f_sku" value="' + e.sku + '" placeholder="e.g. BLW-5HP-001" class="' + inputBase() + '">')}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${fld('Category', '<input id="f_category" value="' + e.category + '" placeholder="e.g. Blowers" class="' + inputBase() + '">')}
+              ${fld('Sub Category', '<input id="f_subcategory" value="' + (e.subCategory || '') + '" placeholder="e.g. Industrial Blowers" class="' + inputBase() + '">')}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${fld('HSN / SAC Code', '<input id="f_hsn" value="' + e.hsn + '" placeholder="e.g. 9503" class="' + inputBase() + '">')}
+              ${fld('Unit', '<input id="f_unit" value="' + e.unit + '" placeholder="e.g. Pcs / Kg / Ltr" class="' + inputBase() + '">')}
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              ${fld('Height', '<input id="f_height" value="' + (e.height || '') + '" placeholder="e.g. 45 cm" class="' + inputBase() + '">')}
+              ${fld('Width', '<input id="f_width" value="' + (e.width || '') + '" placeholder="e.g. 30 cm" class="' + inputBase() + '">')}
+              ${fld('Length', '<input id="f_length" value="' + (e.length || '') + '" placeholder="e.g. 60 cm" class="' + inputBase() + '">')}
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              ${fld('Material Type', '<input id="f_materialType" value="' + (e.materialType || '') + '" placeholder="e.g. Stainless Steel" class="' + inputBase() + '">')}
+              ${fld('Size', '<input id="f_size" value="' + (e.size || '') + '" placeholder="e.g. Medium" class="' + inputBase() + '">')}
+              ${fld('Product Number', '<input id="f_productNumber" value="' + (e.productNumber || '') + '" placeholder="e.g. PN-1024" class="' + inputBase() + '">')}
+            </div>
+            ${fld('Description', '<textarea id="f_description" rows="2" class="' + inputBase() + '" placeholder="Brief description">' + (e.description || '') + '</textarea>')}
+          </div>
+
+          <div id="tab-pricing" class="modal-tab-panel">
+            <div class="grid grid-cols-2 gap-3">
+              ${fld('Selling Price (₹)', '<input id="f_selling" type="number" value="' + e.sellingPrice + '" class="' + inputBase() + '">')}
+              ${fld('MRP Price (₹)', '<input id="f_mrp" type="number" value="' + e.mrpPrice + '" class="' + inputBase() + '">')}
+            </div>
+            ${fld('GST Rate (%)', '<input id="f_gst" type="text" value="' + e.gstRate + '" placeholder="e.g. 18" class="' + inputBase() + '">', 'GST rate as per HSN/SAC classification')}
+          </div>
+
+          <div id="tab-inventory" class="modal-tab-panel">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="mb-3">
+                <label class="form-label">Total Stock <span class="required">*</span></label>
+                <input id="f_stock" type="number" value="${e.stock}" class="${inputBase()}">
+                ${fldErr('f_stock')}
+              </div>
+              ${fld('Warehouse', '<select id="f_warehouse" class="' + inputBase() + '">' + warehouses.map(function(w) { return '<option ' + (w.id === e.warehouse ? 'selected' : '') + ' value="' + w.id + '">' + w.name + '</option>'; }).join('') + '</select>')}
+            </div>
+          </div>
+
+          <div id="tab-variant" class="modal-tab-panel">
+            <div class="mb-3">
+              <label class="form-label">Search Product</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+                <input id="variantProductSearch" oninput="renderVariantProductList()" placeholder="Search existing products by name or SKU…" class="${inputBase()}" style="padding-left:34px;">
+              </div>
+            </div>
+            <div id="variantProductList" class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-40 overflow-y-auto"></div>
+
+            <div id="variantFormWrap" class="hidden mt-4 pt-4 border-t border-gray-100">
+              <div class="flex items-center justify-between mb-3">
+                <div class="text-[12.5px] font-semibold text-gray-700">Adding variant for: <span id="variantForProductName" class="text-primary"></span></div>
+                <button onclick="clearVariantSelection()" class="text-[11px] text-gray-400 hover:text-gray-600">${iconX()} Change product</button>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                ${fld('Variant Name', '<input id="v_variantName" placeholder="e.g. Red / Large" class="' + inputBase() + '">')}
+                ${fld('SKU', '<input id="v_sku" placeholder="e.g. BLW-5HP-001-RED-L" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                ${fld('Height', '<input id="v_height" class="' + inputBase() + '">')}
+                ${fld('Width', '<input id="v_width" class="' + inputBase() + '">')}
+                ${fld('Length', '<input id="v_length" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                ${fld('Unit', '<input id="v_unit" placeholder="e.g. Pcs" class="' + inputBase() + '">')}
+                ${fld('Material Type', '<input id="v_materialType" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                ${fld('Size', '<input id="v_size" class="' + inputBase() + '">')}
+                ${fld('Product Number', '<input id="v_productNumber" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                ${fld('Variant Category', '<input id="v_variantCategory" class="' + inputBase() + '">')}
+                ${fld('Variant Sub Category', '<input id="v_variantSubCategory" class="' + inputBase() + '">')}
+              </div>
+              <button onclick="saveVariant()" class="mt-1 inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
+                ${iconSave()} Add Variant
+              </button>
+            </div>
+          </div>
+        </div>
+        ${modalFooter(isEdit ? 'Update Item' : 'Save Item', 'onclick="saveItem(\'' + (isEdit ? e.id : '') + '\')"')}
+      `;
+
+      openModal(modalContent, { width: 'max-w-2xl' });
+
+      // Tab switching
+      setTimeout(function() {
+        var tabs = document.querySelectorAll('.modal-tab-btn');
+        tabs.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            tabs.forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            var panels = document.querySelectorAll('.modal-tab-panel');
+            panels.forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById(this.dataset.tab).classList.add('active');
+            if (btn.dataset.tab === 'tab-variant') renderVariantProductList();
+          });
+        });
+      }, 50);
+    }
+
+    // ---------- Add Variant tab helpers ----------
+    function renderVariantProductList() {
+      var wrap = document.getElementById('variantProductList');
+      if (!wrap) return;
+      var q = (document.getElementById('variantProductSearch') || {}).value || '';
+      q = q.trim().toLowerCase();
+      var matches = items.filter(function(it) {
+        return q.length === 0 ||
+          it.name.toLowerCase().indexOf(q) !== -1 ||
+          it.sku.toLowerCase().indexOf(q) !== -1;
+      });
+      if (matches.length === 0) {
+        wrap.innerHTML = '<div class="text-center py-4 text-gray-400 text-[12.5px]">No matching products</div>';
+        return;
+      }
+      wrap.innerHTML = matches.map(function(it) {
+        var isSel = it.id === variantSelectedProductId;
+        return '<div onclick="selectVariantProduct(\'' + it.id + '\')" class="px-3 py-2 text-[12.5px] cursor-pointer flex items-center justify-between ' + (isSel ? 'bg-primary-soft' : 'hover:bg-gray-50') + '">' +
+          '<span class="font-semibold text-gray-700">' + it.name + '</span>' +
+          '<span class="text-gray-400 font-mono">' + it.sku + '</span></div>';
+      }).join('');
+    }
+
+    function selectVariantProduct(itemId) {
+      variantSelectedProductId = itemId;
+      var it = items.find(function(x) { return x.id === itemId; });
+      renderVariantProductList();
+      var formWrap = document.getElementById('variantFormWrap');
+      if (!it || !formWrap) return;
+      formWrap.classList.remove('hidden');
+      document.getElementById('variantForProductName').textContent = it.name + ' (' + it.sku + ')';
+    }
+
+    function clearVariantSelection() {
+      variantSelectedProductId = null;
+      var formWrap = document.getElementById('variantFormWrap');
+      if (formWrap) formWrap.classList.add('hidden');
+      renderVariantProductList();
+    }
+
+    function saveVariant() {
+      if (!variantSelectedProductId) {
+        showToast('Please select a product first', 'error');
+        return;
+      }
+      var it = items.find(function(x) { return x.id === variantSelectedProductId; });
+      if (!it) return;
+
+      var variant = {
+        variantName: (document.getElementById('v_variantName') || {}).value || '',
+        sku: (document.getElementById('v_sku') || {}).value || '',
+        height: (document.getElementById('v_height') || {}).value || '',
+        width: (document.getElementById('v_width') || {}).value || '',
+        length: (document.getElementById('v_length') || {}).value || '',
+        unit: (document.getElementById('v_unit') || {}).value || '',
+        materialType: (document.getElementById('v_materialType') || {}).value || '',
+        size: (document.getElementById('v_size') || {}).value || '',
+        productNumber: (document.getElementById('v_productNumber') || {}).value || '',
+        variantCategory: (document.getElementById('v_variantCategory') || {}).value || '',
+        variantSubCategory: (document.getElementById('v_variantSubCategory') || {}).value || ''
+      };
+
+      it.variants = it.variants || [];
+      it.variants.push(variant);
+
+      showToast('Variant added to ' + it.name, 'success');
+
+      // reset the variant form for the next entry
+      ['v_variantName','v_sku','v_height','v_width','v_length','v_unit','v_materialType','v_size','v_productNumber','v_variantCategory','v_variantSubCategory'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    }
+
+    // =============================================================
+    // SAVE / DELETE ITEM
+    // =============================================================
+
+    // Toggles the red border + inline message for a required field
+    function setFieldError(id, hasError) {
+      var el = document.getElementById(id);
+      var err = document.getElementById('err_' + id);
+      if (el) el.classList.toggle('border-red-500', !!hasError);
+      if (err) err.classList.toggle('hidden', !hasError);
+    }
+
+    function saveItem(existingId) {
+      var name = document.getElementById('f_name') ? document.getElementById('f_name').value.trim() : '';
+      var sku = document.getElementById('f_sku') ? document.getElementById('f_sku').value.trim() : '';
+      var category = document.getElementById('f_category') ? document.getElementById('f_category').value.trim() : '';
+      var subCategory = document.getElementById('f_subcategory') ? document.getElementById('f_subcategory').value.trim() : '';
+      var hsn = document.getElementById('f_hsn') ? document.getElementById('f_hsn').value.trim() : '';
+      var unit = document.getElementById('f_unit') ? document.getElementById('f_unit').value.trim() : '';
+      var height = document.getElementById('f_height') ? document.getElementById('f_height').value.trim() : '';
+      var width = document.getElementById('f_width') ? document.getElementById('f_width').value.trim() : '';
+      var length = document.getElementById('f_length') ? document.getElementById('f_length').value.trim() : '';
+      var materialType = document.getElementById('f_materialType') ? document.getElementById('f_materialType').value.trim() : '';
+      var size = document.getElementById('f_size') ? document.getElementById('f_size').value.trim() : '';
+      var productNumber = document.getElementById('f_productNumber') ? document.getElementById('f_productNumber').value.trim() : '';
+      var sellingPrice = document.getElementById('f_selling') ? parseFloat(document.getElementById('f_selling').value) || 0 : 0;
+      var mrpPrice = document.getElementById('f_mrp') ? parseFloat(document.getElementById('f_mrp').value) || 0 : 0;
+      var gstRate = document.getElementById('f_gst') ? document.getElementById('f_gst').value.trim() : '';
+      var stockRaw = document.getElementById('f_stock') ? document.getElementById('f_stock').value.trim() : '';
+      var stock = stockRaw === '' ? '' : (parseInt(stockRaw) || 0);
+      var warehouse = document.getElementById('f_warehouse') ? document.getElementById('f_warehouse').value || 'WH-001' : 'WH-001';
+      var description = document.getElementById('f_description') ? document.getElementById('f_description').value || '' : '';
+
+      // Only Item Name and Total Stock are mandatory
+      var nameMissing = !name;
+      var stockMissing = stockRaw === '';
+      setFieldError('f_name', nameMissing);
+      setFieldError('f_stock', stockMissing);
+
+      if (nameMissing || stockMissing) {
+        showToast('Please fill the required fields', 'error');
+        return;
+      }
+
+      if (existingId) {
+        var it = items.find(function(x) { return x.id === existingId; });
+        if (it) {
+          it.name = name;
+          it.sku = sku;
+          it.category = category;
+          it.subCategory = subCategory;
+          it.hsn = hsn;
+          it.unit = unit;
+          it.height = height;
+          it.width = width;
+          it.length = length;
+          it.materialType = materialType;
+          it.size = size;
+          it.productNumber = productNumber;
+          it.sellingPrice = sellingPrice;
+          it.mrpPrice = mrpPrice;
+          it.gstRate = gstRate;
+          it.stock = stock;
+          it.warehouse = warehouse;
+          it.description = description;
+          it.status = stockStatus(stock);
+          showToast('Item updated successfully', 'success');
+        }
+      } else {
+        var newItem = {
+          id: 'ITM-' + (nextItemNo++),
+          name: name,
+          sku: sku,
+          category: category,
+          subCategory: subCategory,
+          hsn: hsn,
+          unit: unit,
+          height: height,
+          width: width,
+          length: length,
+          materialType: materialType,
+          size: size,
+          productNumber: productNumber,
+          sellingPrice: sellingPrice,
+          mrpPrice: mrpPrice,
+          gstRate: gstRate,
+          stock: stock,
+          warehouse: warehouse,
+          description: description,
+          variants: [],
+          status: stockStatus(stock)
+        };
+        items.unshift(newItem);
+        showToast('Item added successfully', 'success');
+      }
+
+      closeModal();
+      renderItems();
+    }
+
+    function delItem(id) {
+      var it = items.find(function(x) { return x.id === id; });
+      if (!it) return;
+
+      var modalContent = `
+        ${modalHeader('Delete Item', it.name)}
+        <div class="px-6 py-4 text-sm text-gray-600">
+          <p>Are you sure you want to permanently delete <b class="text-gray-800">${it.name}</b>?</p>
+          <p class="text-gray-400 text-[12px] mt-1">This action cannot be undone. All associated transactions will be affected.</p>
+        </div>
+        ${modalFooter('Delete', 'onclick="confirmDeleteItem(\'' + id + '\')"', '')}
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
+
+    function confirmDeleteItem(id) {
+      items = items.filter(function(x) { return x.id !== id; });
+      closeModal();
+      renderItems();
+      showToast('Item deleted successfully', 'warning');
+    }
+
+    // =============================================================
+    // VENDOR PURCHASE (select vendor overlay)
+    // =============================================================
+
+    // TODO: replace fallback with live API once backend endpoint is ready.
+    async function fetchVendorList() {
+      try {
+        // const res = await fetch('/api/vendors'); // <-- enable this when the vendors API is live
+        // if (!res.ok) throw new Error('Vendor API failed');
+        // const data = await res.json();
+        // return data;
+        throw new Error('Vendor API not wired up yet — using fallback list');
+      } catch (err) {
+        console.warn(err.message);
+        return vendors; // dummy fallback (1-2 entries)
+      }
+    }
+
+    async function openVendorPurchase() {
+      var loadingContent = `
+        ${modalHeader('Vendor Purchase', 'Select a vendor to start a purchase')}
+        <div class="px-6 py-10 text-center text-sm text-gray-400">Loading vendors…</div>
+        ${modalFooter('Proceed', 'disabled class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gray-300 cursor-not-allowed flex items-center gap-1.5"')}
+      `;
+      openModal(loadingContent, { width: 'max-w-md' });
+
+      var vendorList = await fetchVendorList();
+      renderVendorPurchaseModal(vendorList);
+    }
+
+    function renderVendorPurchaseModal(vendorList, selectVendorId) {
+      var vendorOptions = vendorList.map(function(v) {
+        return '<option ' + (v.id === selectVendorId ? 'selected' : '') + ' value="' + v.id + '">' + v.name + '</option>';
+      }).join('');
+
+      var modalContent = `
+        ${modalHeader('Vendor Purchase', 'Select a vendor to start a purchase')}
+        <div class="px-6 py-5">
+          <div class="flex items-end gap-2">
+            <div class="flex-1">
+              ${fld('Vendor', '<select id="f_vendorPurchase" class="' + inputBase() + '">' + vendorOptions + '</select>', vendorList.length ? '' : 'No vendors found')}
+            </div>
+            <button onclick="toggleAddVendorForm()" class="mb-3 inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">
+              ${iconUser()} Add New Vendor
+            </button>
+          </div>
+
+          <div id="addVendorFormWrap" class="hidden mt-2 pt-4 border-t border-gray-100">
+            <div class="text-[12.5px] font-semibold text-gray-700 mb-2">New Vendor</div>
+            ${fld('Vendor Name', '<input id="nv_vendorName" placeholder="e.g. Rajesh Kumar" class="' + inputBase() + '">')}
+            ${fld('Company Name', '<input id="nv_companyName" placeholder="e.g. Global Imports Inc." class="' + inputBase() + '">')}
+            ${fld('Phone', '<input id="nv_phone" type="tel" placeholder="e.g. 9876543210" class="' + inputBase() + '">')}
+            <button onclick="saveNewVendor()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
+              ${iconSave()} Save Vendor
+            </button>
+          </div>
+        </div>
+        ${modalFooter('Proceed', 'onclick="proceedVendorPurchase()"')}
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
+
+    function toggleAddVendorForm() {
+      var wrap = document.getElementById('addVendorFormWrap');
+      if (wrap) wrap.classList.toggle('hidden');
+    }
+
+    function saveNewVendor() {
+      var vendorName = (document.getElementById('nv_vendorName') || {}).value || '';
+      var companyName = (document.getElementById('nv_companyName') || {}).value || '';
+      var phone = (document.getElementById('nv_phone') || {}).value || '';
+
+      vendorName = vendorName.trim();
+      companyName = companyName.trim();
+      phone = phone.trim();
+
+      // TODO: POST this to the vendors API once available; for now push into the local dummy list.
+      var newVendor = {
+        id: 'VEN-' + (100 + vendors.length + 1),
+        name: companyName ? (vendorName || companyName) + ' — ' + companyName : (vendorName || 'New Vendor'),
+        contactName: vendorName,
+        companyName: companyName,
+        phone: phone
+      };
+      vendors.push(newVendor);
+
+      showToast('Vendor added', 'success');
+      renderVendorPurchaseModal(vendors, newVendor.id);
+    }
+
+    function proceedVendorPurchase() {
+      var sel = document.getElementById('f_vendorPurchase');
+      var vendorId = sel ? sel.value : null;
+      var vendorName = sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : '';
+      if (!vendorId) {
+        showToast('Please select a vendor', 'error');
+        return;
+      }
+      closeModal();
+      showToast('Starting purchase for ' + vendorName, 'info');
+      // Hook up navigation to the Purchase Bill screen here once available.
+    }
+
+    // =============================================================
+    // SEARCH (debounced, min 2 characters)
+    // =============================================================
+
+    var searchDebounceTimer = null;
+
+    function onSearchInput() {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(function() {
+        renderItems();
+      }, 300);
+    }
+
+    // Add search input to top bar
+    (function addSearchToTopbar() {
+      var searchContainer = document.querySelector('.app-main header');
+      if (searchContainer) {
+        var searchHtml = `
+          <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+            <input type="text" id="searchInput" placeholder="Search items by name, SKU, HSN… (min 2 letters)"
+              oninput="onSearchInput()"
+              class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+          </div>
+        `;
+        var headerContent = searchContainer.innerHTML;
+        var hamburgerIndex = headerContent.indexOf('lg:hidden');
+        if (hamburgerIndex !== -1) {
+          var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
+          var before = headerContent.substring(0, firstDivEnd);
+          var after = headerContent.substring(firstDivEnd);
+          searchContainer.innerHTML = before + searchHtml + after;
+        }
+      }
+    })();
+
+    // =============================================================
+    // INIT
+    // =============================================================
+
+    renderItems();
+
+    console.log('Items Module Loaded Successfully');
+    console.log('Total Items:', items.length);
+
   </script>
+
 </body>
 </html>

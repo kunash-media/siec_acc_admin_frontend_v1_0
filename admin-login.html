@@ -181,7 +181,7 @@
 
     // Already logged in? Skip straight to the dashboard.
     if (Auth.isLoggedIn()) {
-      window.location.href = "dashboard.html";
+      window.location.href = "/dashboard/dashboard.html";
     }
 
     var form = document.getElementById("login-form");
@@ -216,7 +216,7 @@
           }).showToast();
 
           setTimeout(function () {
-            window.location.href = "dashboard.html";
+            window.location.href = "/dashboard/dashboard.html";
           }, 1200);
         })
         .catch(function (err) {

@@ -45,7 +45,7 @@
   var AUTH_STORAGE_KEY = "adminAuth";
 
   // ---- API config ----
-  var API_BASE_URL = "http://localhost:9091";
+  var API_BASE_URL = "http://localhost:9093";
   var LOGIN_URL = API_BASE_URL + "/api/admin/auth/login";
   var LOGOUT_URL = API_BASE_URL + "/api/admin/auth/logout";
 
@@ -144,8 +144,7 @@
     },
 
     _loginPath: function () {
-      var basePath = (window.NavSidebar && window.NavSidebar._config && window.NavSidebar._config.basePath) || "";
-      return basePath + "admin-login.html";
+       return "/admin-login.html";
     },
   };
 
@@ -166,7 +165,7 @@
    * partials/nav-sidebar.html is now just a readable reference copy,
    * it is no longer loaded at runtime.
    */
-  var NAV_SIDEBAR_TEMPLATE = [
+    var NAV_SIDEBAR_TEMPLATE = [
     '<aside id="app-sidebar" class="app-sidebar">',
     '  <div class="sidebar-brand">',
     '    <a href="/dashboard/dashboard.html" class="sidebar-brand-link" aria-label="Go to dashboard">',
@@ -174,24 +173,27 @@
     '      <img src="/assets/Images/company-logo.png" alt="Company logo" class="sidebar-logo-mark" />',
     '    </a>',
     '    <button type="button" id="sidebar-collapse-btn" class="sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">',
-    '      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>',
+    '      <i class="fa-solid fa-chevron-left"></i>',
     '    </button>',
     '  </div>',
     '  <nav class="sidebar-nav" aria-label="Primary">',
     '    <ul class="sidebar-nav-list">',
+
+    /* ============ OVERVIEW ============ */
     '      <li class="sidebar-nav-item">',
     '        <a href="/dashboard/dashboard.html" class="sidebar-nav-link" data-page="dashboard">',
-    '          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg></span>',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-gauge"></i></span>',
     '          <span class="sidebar-nav-label">Dashboard</span>',
     '          <span class="sidebar-tooltip">Dashboard</span>',
     '        </a>',
     '      </li>',
 
+    /* ============ TOOLS ============ */
     '      <li class="sidebar-nav-divider" role="separator"></li>',
     '      <li class="sidebar-nav-heading"><span>Tools</span></li>',
     '      <li class="sidebar-nav-item">',
     '        <a href="/products/products.html" class="sidebar-nav-link" data-page="products">',
-    '          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></span>',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-box"></i></span>',
     '          <span class="sidebar-nav-label">Products</span>',
     '          <span class="sidebar-tooltip">Products</span>',
     '        </a>',
@@ -199,7 +201,7 @@
 
     '      <li class="sidebar-nav-item">',
     '        <a href="/vendors/vendors.html" class="sidebar-nav-link" data-page="vendors">',
-    '          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path><path d="M9 9v.01"></path><path d="M9 12v.01"></path><path d="M9 15v.01"></path><path d="M9 18v.01"></path></svg></span>',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-building"></i></span>',
     '          <span class="sidebar-nav-label">Vendors</span>',
     '          <span class="sidebar-tooltip">Vendors</span>',
     '        </a>',
@@ -207,55 +209,216 @@
 
     '      <li class="sidebar-nav-item">',
     '        <a href="/clients/clients.html" class="sidebar-nav-link" data-page="clients">',
-    '          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-users"></i></span>',
     '          <span class="sidebar-nav-label">Clients</span>',
     '          <span class="sidebar-tooltip">Clients</span>',
     '        </a>',
     '      </li>',
 
+    /* ============ SALES ============ */
+    '      <li class="sidebar-nav-divider" role="separator"></li>',
+    '      <li class="sidebar-nav-heading"><span>Sales</span></li>',
 
     '      <li class="sidebar-nav-item">',
     '        <a href="/quotations/quotations.html" class="sidebar-nav-link" data-page="quotations">',
-    '          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span>',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-file-lines"></i></span>',
     '          <span class="sidebar-nav-label">Quotation</span>',
     '          <span class="sidebar-tooltip">Quotation</span>',
     '        </a>',
     '      </li>',
 
-
-    '      <li class="sidebar-nav-item">',
-    '        <a href="/invoices/invoices.html" class="sidebar-nav-link" data-page="invoices">',
-    '          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h16v20l-3-2-3 2-3-2-3 2-3-2-1 2z"></path><line x1="8" y1="7" x2="16" y2="7"></line><line x1="8" y1="11" x2="16" y2="11"></line><line x1="8" y1="15" x2="12" y2="15"></line></svg></span>',
-    '          <span class="sidebar-nav-label">Invoices</span>',
-    '          <span class="sidebar-tooltip">Invoices</span>',
-    '        </a>',
-    '      </li>',
-
-
     '      <li class="sidebar-nav-item">',
     '        <a href="/sales-orders/sales-orders.html" class="sidebar-nav-link" data-page="sales-orders">',
-    '          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-cart-shopping"></i></span>',
     '          <span class="sidebar-nav-label">Sales Orders</span>',
     '          <span class="sidebar-tooltip">Sales Orders</span>',
     '        </a>',
     '      </li>',
 
     '      <li class="sidebar-nav-item">',
+    '        <a href="/delivery-challan/delivery-challan.html" class="sidebar-nav-link" data-page="delivery-challan">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-truck"></i></span>',
+    '          <span class="sidebar-nav-label">Delivery Challan</span>',
+    '          <span class="sidebar-tooltip">Delivery Challan</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/invoices/invoices.html" class="sidebar-nav-link" data-page="invoices">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-file-invoice"></i></span>',
+    '          <span class="sidebar-nav-label">Invoices</span>',
+    '          <span class="sidebar-tooltip">Invoices</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/customer-payments/customer-payments.html" class="sidebar-nav-link" data-page="customer-payments">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-hand-holding-dollar"></i></span>',
+    '          <span class="sidebar-nav-label">Customer Payments</span>',
+    '          <span class="sidebar-tooltip">Customer Payments</span>',
+    '        </a>',
+    '      </li>',
+
+    /* ============ PURCHASE ============ */
+    '      <li class="sidebar-nav-divider" role="separator"></li>',
+    '      <li class="sidebar-nav-heading"><span>Purchase</span></li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/purchase-orders/purchase-orders.html" class="sidebar-nav-link" data-page="purchase-orders">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-truck-fast"></i></span>',
+    '          <span class="sidebar-nav-label">Purchase Orders</span>',
+    '          <span class="sidebar-tooltip">Purchase Orders</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/goods-receipt/goods-receipt.html" class="sidebar-nav-link" data-page="goods-receipt">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-clipboard-check"></i></span>',
+    '          <span class="sidebar-nav-label">Goods Receipt</span>',
+    '          <span class="sidebar-tooltip">Goods Receipt</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/purchase-bills/purchase-bills.html" class="sidebar-nav-link" data-page="purchase-bills">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span>',
+    '          <span class="sidebar-nav-label">Purchase Bills</span>',
+    '          <span class="sidebar-tooltip">Purchase Bills</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/vendor-payments/vendor-payments.html" class="sidebar-nav-link" data-page="vendor-payments">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-money-check-dollar"></i></span>',
+    '          <span class="sidebar-nav-label">Vendor Payments</span>',
+    '          <span class="sidebar-tooltip">Vendor Payments</span>',
+    '        </a>',
+    '      </li>',
+
+    /* ============ OPERATIONS ============ */
+    '      <li class="sidebar-nav-divider" role="separator"></li>',
+    '      <li class="sidebar-nav-heading"><span>Operations</span></li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/inventory/inventory.html" class="sidebar-nav-link" data-page="inventory">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-boxes-stacked"></i></span>',
+    '          <span class="sidebar-nav-label">Inventory</span>',
+    '          <span class="sidebar-tooltip">Inventory</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/expenses/expenses.html" class="sidebar-nav-link" data-page="expenses">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-money-bill-wave"></i></span>',
+    '          <span class="sidebar-nav-label">Expenses</span>',
+    '          <span class="sidebar-tooltip">Expenses</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/projects/projects.html" class="sidebar-nav-link" data-page="projects">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-folder"></i></span>',
+    '          <span class="sidebar-nav-label">Projects</span>',
+    '          <span class="sidebar-tooltip">Projects</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/timetracking/timesheet.html" class="sidebar-nav-link" data-page="timetracking">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-clock"></i></span>',
+    '          <span class="sidebar-nav-label">Time Tracking</span>',
+    '          <span class="sidebar-tooltip">Time Tracking</span>',
+    '        </a>',
+    '      </li>',
+
+    /* ============ FINANCE ============ */
+    '      <li class="sidebar-nav-divider" role="separator"></li>',
+    '      <li class="sidebar-nav-heading"><span>Finance</span></li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/gst-tax/gst-tax.html" class="sidebar-nav-link" data-page="gsttax">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-shield-halved"></i></span>',
+    '          <span class="sidebar-nav-label">GST / Tax</span>',
+    '          <span class="sidebar-tooltip">GST / Tax</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/banking/banking.html" class="sidebar-nav-link" data-page="banking">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-money-check"></i></span>',
+    '          <span class="sidebar-nav-label">Banking</span>',
+    '          <span class="sidebar-tooltip">Banking</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/accounts/accounts.html" class="sidebar-nav-link" data-page="accounts">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-book"></i></span>',
+    '          <span class="sidebar-nav-label">Accounting</span>',
+    '          <span class="sidebar-tooltip">Accounting</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/reports/reports.html" class="sidebar-nav-link" data-page="reports">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-chart-line"></i></span>',
+    '          <span class="sidebar-nav-label">Reports</span>',
+    '          <span class="sidebar-tooltip">Reports</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/documents/documents.html" class="sidebar-nav-link" data-page="documents">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-folder-open"></i></span>',
+    '          <span class="sidebar-nav-label">Documents</span>',
+    '          <span class="sidebar-tooltip">Documents</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/filing-&-compliance/filing-&-compliance.html" class="sidebar-nav-link" data-page="filing">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-file-shield"></i></span>',
+    '          <span class="sidebar-nav-label">Filing &amp; Compliance</span>',
+    '          <span class="sidebar-tooltip">Filing &amp; Compliance</span>',
+    '        </a>',
+    '      </li>',
+
+    /* ============ SYSTEM ============ */
+    '      <li class="sidebar-nav-divider" role="separator"></li>',
+    '      <li class="sidebar-nav-heading"><span>System</span></li>',
+
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/users-&-roles/users.html" class="sidebar-nav-link" data-page="users">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-users-gear"></i></span>',
+    '          <span class="sidebar-nav-label">Users &amp; Roles</span>',
+    '          <span class="sidebar-tooltip">Users &amp; Roles</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/notifications/notifications.html" class="sidebar-nav-link" data-page="notifications">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-bell"></i></span>',
+    '          <span class="sidebar-nav-label">Notifications</span>',
+    '          <span class="sidebar-tooltip">Notifications</span>',
+    '        </a>',
+    '      </li>',
+
+    '      <li class="sidebar-nav-item">',
     '        <a href="/settings/settings.html" class="sidebar-nav-link" data-page="settings">',
-    '          <span class="sidebar-nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></span>',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-gear"></i></span>',
     '          <span class="sidebar-nav-label">Settings</span>',
     '          <span class="sidebar-tooltip">Settings</span>',
     '        </a>',
     '      </li>',
 
     '    </ul>',
-
     '  </nav>',
     '  <hr>',
     '    <div class="text-sm m-4 text-gray-600">© 2026 Kunash Media Solutions</div>',
     '  <div class="sidebar-foot">',
     '    <button type="button" id="sidebar-expand-btn" class="sidebar-expand-btn" aria-label="Expand sidebar" title="Expand sidebar">',
-    '      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
+    '      <i class="fa-solid fa-chevron-right"></i>',
     '    </button>',
     '  </div>',
     '</aside>',
@@ -263,12 +426,11 @@
     '<header id="app-topbar" class="app-topbar">',
     '  <div class="topbar-left">',
     '    <button type="button" id="mobile-menu-btn" class="icon-btn mobile-only" aria-label="Open menu">',
-    '      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>',
+    '      <i class="fa-solid fa-bars"></i>',
     '    </button>',
     '    <h1 id="topbar-page-title" class="topbar-page-title">Dashboard</h1>',
     '  </div>',
     '  <div class="topbar-right">',
-
     '    <div id="profile-menu" class="profile-menu">',
     '      <button type="button" id="profile-trigger" class="profile-trigger" aria-haspopup="true" aria-expanded="false">',
     '        <span class="profile-avatar">',
@@ -279,7 +441,7 @@
     '          <span id="profile-name" class="profile-name">Admin User</span>',
     '          <span id="profile-role" class="profile-role">Administrator</span>',
     '        </span>',
-    '        <svg class="profile-caret desktop-only" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>',
+    '        <i class="fa-solid fa-chevron-down profile-caret desktop-only"></i>',
     '      </button>',
     '      <div id="profile-dropdown" class="profile-dropdown" role="menu">',
     '        <div class="profile-dropdown-header">',
@@ -289,7 +451,7 @@
     '        <div class="profile-dropdown-divider"></div>',
     '        <div class="profile-dropdown-divider"></div>',
     '        <button type="button" id="logout-trigger" class="profile-dropdown-item profile-dropdown-item-danger" role="menuitem">',
-    '          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
+    '          <i class="fa-solid fa-arrow-right-from-bracket"></i>',
     '          <span>Logout</span>',
     '        </button>',
     '      </div>',
@@ -301,7 +463,7 @@
     '  <div class="confirm-overlay-backdrop" data-close-logout></div>',
     '  <div class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="logout-dialog-title">',
     '    <div class="confirm-dialog-icon">',
-    '      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
+    '      <i class="fa-solid fa-arrow-right-from-bracket"></i>',
     '    </div>',
     '    <h2 id="logout-dialog-title" class="confirm-dialog-title">Log out?</h2>',
     '    <p class="confirm-dialog-text">You\'ll need to sign in again to access the admin panel.</p>',
@@ -311,7 +473,7 @@
     '    </div>',
     '  </div>',
     '</div>'
-      ].join("\n");
+  ].join("\n");
 
   var NavSidebar = {
     _config: null,
@@ -335,9 +497,9 @@
       //=================================================//
       //====uncomment to login check with token =======//
       //=================================================//
-      // if (!Auth.requireAuth()) {
-      //   return;
-      // }
+      if (!Auth.requireAuth()) {
+        return;
+      }
 
       try {
         this._inject(NAV_SIDEBAR_TEMPLATE);
@@ -545,7 +707,7 @@
     },
 
     /* ---------------------------------------------------------------- */
-    /* Logout confirmation overlay (Yes / No)                            */
+    /* Logout confirmation overlay (Yes / No)                           */
     /* ---------------------------------------------------------------- */
     _bindLogoutOverlay: function () {
       var overlay = document.getElementById("logout-overlay");

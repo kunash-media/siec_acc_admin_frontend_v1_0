@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+<link rel="manifest" href="/favicon_io/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Delivery Challan — Aquilon ERP</title>
+
+<script>
+  (function () {
+    try {
+      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+    } catch (e) {
+      document.documentElement.classList.add("sidebar-expanded");
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
+          secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<style>
+  body {
+    font-size: 12px;
+    background: #f3f4f6;
+  }
+
+  .form-input {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    color: #1a1a2e;
+  }
+  .form-input:focus {
+    border-color: #6da84c;
+    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.12);
+    background: #ffffff;
+  }
+  .form-input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+
+  .form-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #374151;
+    display: block;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .form-label .required { color: #ef4444; margin-left: 2px; }
+  .form-hint { font-size: 9.5px; color: #9ca3af; margin-top: 2px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .badge-dot-green { background: #22c55e; }
+  .badge-dot-amber { background: #f59e0b; }
+  .badge-dot-red { background: #ef4444; }
+  .badge-dot-gray { background: #94a3b8; }
+  .badge-dot-blue { background: #3b82f6; }
+  .badge-dot-purple { background: #8b5cf6; }
+
+  .stat-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 10px 14px !important;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+  .stat-card .stat-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+  }
+  .stat-card .stat-value {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-top: 2px;
+  }
+
+  .table-row-hover:hover {
+    background: #f8fafc;
+  }
+
+  .btn-icon-action {
+    transition: all 0.15s ease;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-icon-action:hover {
+    background: #f1f5f9;
+    color: #6da84c;
+  }
+  .btn-icon-action.danger:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+  .btn-icon-action.primary:hover {
+    background: #eef5e8;
+    color: #6da84c;
+  }
+
+  .toast {
+    animation: fadeIn 0.2s ease;
+    font-size: 12px;
+  }
+  .toast-success { background: #16a34a; }
+  .toast-error { background: #dc2626; }
+  .toast-warning { background: #f59e0b; }
+  .toast-info { background: #6da84c; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-modal { animation: modalIn 0.18s ease; }
+
+  .modal-scroll {
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+  .modal-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .modal-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
+  .empty-icon-svg {
+    opacity: 0.2;
+    width: 40px;
+    height: 40px;
+    color: #94a3b8;
+  }
+
+  .line-item-row:hover {
+    background: #f8fafc;
+  }
+  .line-item-row td {
+    padding: 4px 6px;
+    vertical-align: middle;
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .page-subtitle {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .page-breadcrumb {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6da84c;
+  }
+
+  table th {
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    padding: 8px 12px;
+  }
+  table td {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  table td .font-mono {
+    font-size: 11px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .modal-subtitle {
+    font-size: 11px;
+    color: #6b7280;
+  }
+
+  .filter-btn {
+    font-size: 11px;
+    padding: 5px 12px;
+  }
+  .filter-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Delivery Challan Preview */
+  .dc-preview {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px 28px;
+    max-width: 820px;
+    margin: 0 auto;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .dc-preview .dc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #6da84c;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+  .dc-preview .dc-company-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+  .dc-preview .dc-company-details {
+    font-size: 11px;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-top: 4px;
+  }
+  .dc-preview .dc-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #6da84c;
+    letter-spacing: 0.04em;
+  }
+  .dc-preview .dc-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 12px;
+  }
+  .dc-preview .dc-meta .meta-label {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .dc-preview .dc-meta .meta-value {
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+  .dc-preview .dc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+  .dc-preview .dc-table th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .dc-preview .dc-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .dc-preview .dc-footer {
+    margin-top: 20px;
+    font-size: 11px;
+    color: #6b7280;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 12px;
+    text-align: center;
+  }
+
+  /* Packing List Preview */
+  .pl-preview {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px 28px;
+    max-width: 820px;
+    margin: 0 auto;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .pl-preview .pl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #d97706;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+  .pl-preview .pl-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #d97706;
+    letter-spacing: 0.04em;
+  }
+  .pl-preview .pl-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+  .pl-preview .pl-table th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .pl-preview .pl-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .pl-preview .pl-totals {
+    margin-top: 12px;
+    border-top: 2px solid #e5e7eb;
+    padding-top: 12px;
+    text-align: right;
+    font-size: 13px;
+  }
+</style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased text-sm">
+
+  <div class="flex min-h-screen">
+    <div id="sidebar-root"></div>
+
+    <div class="app-main flex-1 flex flex-col min-w-0">
+      <div id="topbar-root"></div>
+
+      <main class="p-3 sm:p-4 lg:p-5">
+
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+          <!-- ===== PAGE HEADER ===== -->
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <div class="page-breadcrumb">Sales</div>
+              <h1 class="page-title text-gray-900">Delivery Challan</h1>
+              <p class="page-subtitle mt-0.5">Record physical delivery of goods. Generate Packing List (Enhancement #6).</p>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <div class="relative inline-block" data-dd-trigger>
+                <button onclick="toggleFilterDD()" class="filter-btn inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M7 12h10M11 18h2"/>
+                  </svg>
+                  Filter
+                  <span id="filterBadge" class="hidden text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+                <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-50">
+                  <div class="mb-2">
+                    <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Status</label>
+                    <select id="filterStatus" onchange="filterDC()" class="form-input text-[10px]">
+                      <option value="all">All Status</option>
+                      <option value="draft">Draft</option>
+                      <option value="dispatched">Dispatched</option>
+                      <option value="delivered">Delivered</option>
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Customer</label>
+                    <select id="filterCustomer" onchange="filterDC()" class="form-input text-[10px]">
+                      <option value="all">All Customers</option>
+                    </select>
+                  </div>
+                  <button onclick="clearFilters()" class="text-[10px] text-primary font-semibold hover:underline">Clear Filters</button>
+                </div>
+              </div>
+
+              <button onclick="openAddDC()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                New Delivery Challan
+              </button>
+            </div>
+          </div>
+
+          <!-- ===== STATS CARDS ===== -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Total</div>
+              <div class="stat-value" id="totalDC">0</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Draft</div>
+              <div class="stat-value text-gray-500" id="draftDC">0</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Dispatched</div>
+              <div class="stat-value text-blue-600" id="dispatchedDC">0</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Delivered</div>
+              <div class="stat-value text-green-600" id="deliveredDC">0</div>
+            </div>
+          </div>
+
+          <!-- ===== DELIVERY CHALLAN TABLE ===== -->
+          <div id="dcPanel"></div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- SCRIPTS -->
+  <!-- ========================================================== -->
+
+  <script src="/assets/js/nav-sidebar.js"></script>
+  <script>
+    // =============================================================
+    // NAV-SIDEBAR INIT
+    // =============================================================
+    NavSidebar.init({
+      basePath: "",
+      activePage: "delivery-challan",
+      pageTitle: "Delivery Challan",
+      user: {
+        name: "Admin",
+        role: "Super Admin",
+        avatarUrl: "",
+      },
+    });
+
+    // =============================================================
+    // SVG ICONS
+    // =============================================================
+    function iconPlus() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>`;
+    }
+    function iconEdit() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+    }
+    function iconTrash() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`;
+    }
+    function iconEye() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    }
+    function iconX() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+    }
+    function iconFilter() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
+    }
+    function iconSave() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`;
+    }
+    function iconInfo() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>`;
+    }
+    function iconDocument() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>`;
+    }
+    function iconSearch() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
+    }
+    function iconPackage() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`;
+    }
+    function iconTruck() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18" r="2.5"/><circle cx="18.5" cy="18" r="2.5"/></svg>`;
+    }
+    function iconPrint() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>`;
+    }
+
+    // =============================================================
+    // TOAST
+    // =============================================================
+    function showToast(message, kind) {
+      kind = kind || 'success';
+      var wrap = document.getElementById('toastWrap');
+      var colors = {
+        success: 'bg-green-600',
+        info: 'bg-primary',
+        warning: 'bg-amber-600',
+        error: 'bg-red-600'
+      };
+      var el = document.createElement('div');
+      el.className = 'toast ' + colors[kind] + ' text-white font-semibold px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
+      el.innerHTML = '<span>' + message + '</span>';
+      wrap.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = 'opacity .3s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 300);
+      }, 2600);
+    }
+
+    // =============================================================
+    // MODAL
+    // =============================================================
+    function openModal(innerHtml, opts) {
+      opts = opts || {};
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = `
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-3" id="modalOverlay">
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" id="modalBackdrop"></div>
+          <div class="relative bg-white rounded-xl shadow-2xl w-full ${opts.width || 'max-w-4xl'} max-h-[92vh] overflow-hidden animate-modal">
+            ${innerHtml}
+          </div>
+        </div>`;
+      document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = '';
+      document.body.style.overflow = '';
+    }
+
+    function modalHeader(title, subtitle) {
+      return `
+        <div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div>
+            <h3 class="modal-title text-gray-900">${title}</h3>
+            ${subtitle ? '<p class="modal-subtitle mt-0.5">' + subtitle + '</p>' : ''}
+          </div>
+          <button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
+        </div>`;
+    }
+
+    function modalFooter(saveLabel, onSaveAttr, extraBtns) {
+      return `
+        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
+          <div>${extraBtns || ''}</div>
+          <div class="flex gap-2">
+            <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+            <button ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
+              ${iconSave()} ${saveLabel}
+            </button>
+          </div>
+        </div>`;
+    }
+
+    function fld(label, inputHtml, hint) {
+      return `
+        <div class="mb-2">
+          <label class="form-label">${label}</label>
+          ${inputHtml}
+          ${hint ? '<div class="form-hint">' + hint + '</div>' : ''}
+        </div>`;
+    }
+
+    function inputBase() { return "form-input"; }
+
+    // =============================================================
+    // DROPDOWN
+    // =============================================================
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('[data-dd-trigger]')) {
+        document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+      }
+    });
+
+    function toggleFilterDD() {
+      var menu = document.getElementById('filterDD');
+      var isHidden = menu.classList.contains('hidden');
+      document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+      if (isHidden) menu.classList.remove('hidden');
+    }
+
+    // =============================================================
+    // HELPERS
+    // =============================================================
+    function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+
+    function statusBadge(status) {
+      var map = {
+        draft: 'badge-gray',
+        dispatched: 'badge-blue',
+        delivered: 'badge-green'
+      };
+      var dot = {
+        draft: 'badge-dot-gray',
+        dispatched: 'badge-dot-blue',
+        delivered: 'badge-dot-green'
+      };
+      var label = status.charAt(0).toUpperCase() + status.slice(1);
+      return '<span class="badge ' + map[status] + '"><span class="badge-dot ' + dot[status] + '"></span>' + label + '</span>';
+    }
+
+    function rowActionsHtml(editFn, delFn, viewFn, plFn) {
+      var html = '<div class="flex gap-1">';
+      if (viewFn) {
+        html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
+      }
+      if (plFn) {
+        html += '<button onclick="' + plFn + '" class="btn-icon-action primary" title="Packing List">' + iconPackage() + '</button>';
+      }
+      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      html += '</div>';
+      return html;
+    }
+
+    function panelWrap(titleHtml, bodyHtml, extraHead) {
+      return `
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800 flex items-center gap-2">${titleHtml}</div>
+            ${extraHead || ''}
+          </div>
+          <div>${bodyHtml}</div>
+        </div>`;
+    }
+
+    function tableHtml(cols, rowsHtml) {
+      var colHeaders = cols.map(function(c) {
+        return '<th class="text-left font-semibold whitespace-nowrap">' + c + '</th>';
+      }).join('');
+      return `
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200">${colHeaders}</tr>
+            </thead>
+            <tbody id="tbody-anchor">${rowsHtml}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // =============================================================
+    // DATA
+    // =============================================================
+
+    var customers = [
+      { id: 'CUS-001', name: 'XYZ Retail Store', address: 'A-12, Connaught Place, New Delhi' },
+      { id: 'CUS-002', name: 'ABC Enterprises', address: '45, Industrial Estate, Pune' },
+      { id: 'CUS-003', name: 'Rahul Sharma', address: '12, Green Park, Mumbai' },
+      { id: 'CUS-004', name: 'Tech Solutions Inc.', address: '88, Electronics City, Bengaluru' },
+      { id: 'CUS-005', name: 'Priya Patel', address: '22, Lake View, Surat' },
+      { id: 'CUS-006', name: 'Global Exports Ltd.', address: '101, Trade Tower, Delhi' },
+    ];
+
+    var salesOrders = [
+      { id: 'SO-001', number: 'SO/25-26/001', customerId: 'CUS-001', customerName: 'XYZ Retail Store' },
+      { id: 'SO-002', number: 'SO/25-26/002', customerId: 'CUS-002', customerName: 'ABC Enterprises' },
+      { id: 'SO-003', number: 'SO/25-26/003', customerId: 'CUS-003', customerName: 'Rahul Sharma' },
+      { id: 'SO-004', number: 'SO/25-26/004', customerId: 'CUS-004', customerName: 'Tech Solutions Inc.' },
+      { id: 'SO-005', number: 'SO/25-26/005', customerId: 'CUS-006', customerName: 'Global Exports Ltd.' },
+    ];
+
+    var items = [
+      { id: 'ITM-1001', name: 'Centrifugal Blower — 5HP', price: 42000, unit: 'Pcs' },
+      { id: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', price: 118000, unit: 'Pcs' },
+      { id: 'ITM-1003', name: 'Activated Carbon Media', price: 6500, unit: 'Kg' },
+      { id: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', price: 850, unit: 'Mtr' },
+      { id: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', price: 28000, unit: 'Pcs' },
+    ];
+
+    var deliveryChallans = [{
+      id: 'DC-001',
+      number: 'DC/25-26/001',
+      date: '2026-01-14',
+      customerId: 'CUS-001',
+      customerName: 'XYZ Retail Store',
+      customerAddress: 'A-12, Connaught Place, New Delhi',
+      shippingAddress: 'A-12, Connaught Place, New Delhi',
+      soReference: 'SO/25-26/001',
+      status: 'delivered',
+      items: [
+        { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', qty: 2, unit: 'Pcs', serial: 'BLW-001, BLW-002' },
+        { itemId: 'ITM-1003', name: 'Activated Carbon Media', qty: 10, unit: 'Kg', serial: '' }
+      ],
+      packingList: {
+        packages: 3,
+        packageType: 'Cardboard Box',
+        dimensions: '30x20x15 cm',
+        totalWeight: '15.5 Kg',
+        created: true
+      },
+      notes: 'Delivered to warehouse',
+      createdAt: '2026-01-14'
+    }, {
+      id: 'DC-002',
+      number: 'DC/25-26/002',
+      date: '2026-01-20',
+      customerId: 'CUS-002',
+      customerName: 'ABC Enterprises',
+      customerAddress: '45, Industrial Estate, Pune',
+      shippingAddress: '45, Industrial Estate, Pune',
+      soReference: 'SO/25-26/002',
+      status: 'dispatched',
+      items: [
+        { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', qty: 1, unit: 'Pcs', serial: 'FIL-001' },
+        { itemId: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', qty: 20, unit: 'Mtr', serial: '' }
+      ],
+      packingList: {
+        packages: 2,
+        packageType: 'Wooden Crate',
+        dimensions: '120x80x60 cm',
+        totalWeight: '85 Kg',
+        created: true
+      },
+      notes: 'Dispatched via surface transport',
+      createdAt: '2026-01-20'
+    }, {
+      id: 'DC-003',
+      number: 'DC/25-26/003',
+      date: '2026-01-25',
+      customerId: 'CUS-003',
+      customerName: 'Rahul Sharma',
+      customerAddress: '12, Green Park, Mumbai',
+      shippingAddress: '12, Green Park, Mumbai',
+      soReference: 'SO/25-26/003',
+      status: 'draft',
+      items: [
+        { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', qty: 2, unit: 'Pcs', serial: '' }
+      ],
+      packingList: {
+        packages: 0,
+        packageType: '',
+        dimensions: '',
+        totalWeight: '',
+        created: false
+      },
+      notes: 'Pending packing',
+      createdAt: '2026-01-25'
+    }, {
+      id: 'DC-004',
+      number: 'DC/25-26/004',
+      date: '2026-02-01',
+      customerId: 'CUS-004',
+      customerName: 'Tech Solutions Inc.',
+      customerAddress: '88, Electronics City, Bengaluru',
+      shippingAddress: '88, Electronics City, Bengaluru',
+      soReference: 'SO/25-26/004',
+      status: 'dispatched',
+      items: [
+        { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', qty: 3, unit: 'Pcs', serial: 'BLW-003, BLW-004, BLW-005' }
+      ],
+      packingList: {
+        packages: 3,
+        packageType: 'Cardboard Box',
+        dimensions: '40x30x25 cm',
+        totalWeight: '22 Kg',
+        created: true
+      },
+      notes: 'Express delivery',
+      createdAt: '2026-02-01'
+    }, {
+      id: 'DC-005',
+      number: 'DC/25-26/005',
+      date: '2026-02-08',
+      customerId: 'CUS-006',
+      customerName: 'Global Exports Ltd.',
+      customerAddress: '101, Trade Tower, Delhi',
+      shippingAddress: '101, Trade Tower, Delhi',
+      soReference: 'SO/25-26/005',
+      status: 'delivered',
+      items: [
+        { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', qty: 2, unit: 'Pcs', serial: 'FIL-002, FIL-003' },
+        { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', qty: 3, unit: 'Pcs', serial: 'DOSE-001, DOSE-002, DOSE-003' }
+      ],
+      packingList: {
+        packages: 5,
+        packageType: 'Export Grade Box',
+        dimensions: '100x80x70 cm',
+        totalWeight: '120 Kg',
+        created: true
+      },
+      notes: 'Export documentation attached',
+      createdAt: '2026-02-08'
+    }];
+
+    var nextDCNo = 6;
+
+    // =============================================================
+    // FUNCTIONS
+    // =============================================================
+
+    function getCustomerName(id) {
+      var c = customers.find(function(x) { return x.id === id; });
+      return c ? c.name : id;
+    }
+
+    function renderStats() {
+      var total = deliveryChallans.length;
+      var draft = deliveryChallans.filter(function(dc) { return dc.status === 'draft'; }).length;
+      var dispatched = deliveryChallans.filter(function(dc) { return dc.status === 'dispatched'; }).length;
+      var delivered = deliveryChallans.filter(function(dc) { return dc.status === 'delivered'; }).length;
+
+      document.getElementById('totalDC').textContent = total;
+      document.getElementById('draftDC').textContent = draft;
+      document.getElementById('dispatchedDC').textContent = dispatched;
+      document.getElementById('deliveredDC').textContent = delivered;
+
+      var filterCustomer = document.getElementById('filterCustomer');
+      var currentVal = filterCustomer.value;
+      filterCustomer.innerHTML = '<option value="all">All Customers</option>';
+      customers.forEach(function(c) {
+        filterCustomer.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>';
+      });
+      filterCustomer.value = currentVal;
+    }
+
+    function getFilteredDC() {
+      var searchInput = document.getElementById('searchInput');
+      var q = searchInput ? searchInput.value.toLowerCase() : '';
+      var status = document.getElementById('filterStatus').value || 'all';
+      var customer = document.getElementById('filterCustomer').value || 'all';
+
+      return deliveryChallans.filter(function(dc) {
+        var matchSearch = dc.number.toLowerCase().indexOf(q) !== -1 ||
+          dc.customerName.toLowerCase().indexOf(q) !== -1 ||
+          dc.id.toLowerCase().indexOf(q) !== -1;
+        var matchStatus = status === 'all' || dc.status === status;
+        var matchCustomer = customer === 'all' || dc.customerId === customer;
+        return matchSearch && matchStatus && matchCustomer;
+      });
+    }
+
+    function renderDC() {
+      var filtered = getFilteredDC();
+
+      var rowsHtml = '';
+      if (filtered.length === 0) {
+        rowsHtml = `
+          <tr>
+            <td colspan="8" class="text-center py-10 text-gray-400 text-sm">
+              <div class="flex justify-center mb-2 empty-icon-svg">${iconDocument()}</div>
+              No delivery challans found. Try adjusting your filters or
+              <button onclick="openAddDC()" class="text-primary font-semibold hover:underline">create a new delivery challan</button>.
+            </td>
+          </tr>`;
+      } else {
+        rowsHtml = filtered.map(function(dc) {
+          var hasPL = dc.packingList && dc.packingList.created;
+          return `
+            <tr class="border-b border-gray-100 table-row-hover">
+              <td class="px-3 py-2.5">
+                <div class="font-semibold text-gray-800 text-sm">${dc.number}</div>
+                <div class="text-[10px] text-gray-400 font-mono">${dc.id}</div>
+              </td>
+              <td class="px-3 py-2.5 text-xs">${dc.date}</td>
+              <td class="px-3 py-2.5 text-sm text-gray-700">${dc.customerName}</td>
+              <td class="px-3 py-2.5 text-xs">${dc.soReference || '—'}</td>
+              <td class="px-3 py-2.5 text-[10px]">${dc.items.reduce(function(sum, item) { return sum + item.qty; }, 0)} items</td>
+              <td class="px-3 py-2.5">${statusBadge(dc.status)}</td>
+              <td class="px-3 py-2.5 text-center">${hasPL ? '<span class="text-green-600 text-[10px] font-semibold">✓ Generated</span>' : '<span class="text-amber-600 text-[10px] font-semibold">Pending</span>'}</td>
+              <td class="px-3 py-2.5">${rowActionsHtml(
+                "editDC('"+dc.id+"')",
+                "delDC('"+dc.id+"')",
+                "viewDC('"+dc.id+"')",
+                hasPL ? "viewPackingList('"+dc.id+"')" : "generatePackingList('"+dc.id+"')"
+              )}</td>
+            </tr>`;
+        }).join('');
+      }
+
+      var panelHtml = panelWrap(
+        'Delivery Challans <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
+        tableHtml(['DC #', 'Date', 'Customer', 'SO Reference', 'Items', 'Status', 'Packing List', 'Actions'], rowsHtml),
+        '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderDC()" class="text-[10px] border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
+      );
+
+      document.getElementById('dcPanel').innerHTML = panelHtml;
+      renderStats();
+    }
+
+    function filterDC() { renderDC(); }
+
+    function clearFilters() {
+      document.getElementById('filterStatus').value = 'all';
+      document.getElementById('filterCustomer').value = 'all';
+      var searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = '';
+      renderDC();
+      toggleFilterDD();
+    }
+
+    // =============================================================
+    // VIEW DELIVERY CHALLAN
+    // =============================================================
+
+    function viewDC(id) {
+      var dc = deliveryChallans.find(function(x) { return x.id === id; });
+      if (!dc) return;
+
+      var itemsHtml = dc.items.map(function(item) {
+        return `
+          <tr>
+            <td class="px-2 py-1.5 text-xs">${item.name}</td>
+            <td class="px-2 py-1.5 text-xs text-center">${item.qty}</td>
+            <td class="px-2 py-1.5 text-xs text-center">${item.unit || 'Pcs'}</td>
+            <td class="px-2 py-1.5 text-xs">${item.serial || '—'}</td>
+          </tr>`;
+      }).join('');
+
+      var hasPL = dc.packingList && dc.packingList.created;
+
+      var modalContent = `
+        ${modalHeader('Delivery Challan Details — ' + dc.number, dc.id)}
+        <div class="px-5 py-4 modal-scroll">
+
+          <div class="dc-preview">
+            <div class="dc-header">
+              <div>
+                <div class="dc-company-name">${company.name || 'Kunash Media Pvt. Ltd.'}</div>
+                <div class="dc-company-details">
+                  ${company.address || '401, Creative Hub, BKC, Mumbai - 400051'}<br>
+                  GSTIN: ${company.gstin || '27AABCU1234D1ZP'} | Phone: ${company.phone || '+91-9876543210'}
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div class="dc-title">DELIVERY CHALLAN</div>
+              </div>
+            </div>
+
+            <div class="dc-meta">
+              <div>
+                <div class="meta-label">Customer</div>
+                <div class="meta-value">${dc.customerName}</div>
+                <div class="text-xs text-gray-500">${dc.customerAddress || ''}</div>
+              </div>
+              <div style="text-align:right;">
+                <div><span class="meta-label">DC #</span> <span class="meta-value">${dc.number}</span></div>
+                <div><span class="meta-label">Date</span> <span class="meta-value">${dc.date}</span></div>
+                <div><span class="meta-label">SO Reference</span> <span class="meta-value">${dc.soReference || '—'}</span></div>
+                <div><span class="meta-label">Status</span> ${statusBadge(dc.status)}</div>
+              </div>
+            </div>
+
+            <div style="margin-bottom:8px;">
+              <span class="meta-label">Shipping Address</span>
+              <div class="text-sm text-gray-700">${dc.shippingAddress || dc.customerAddress}</div>
+            </div>
+
+            <table class="dc-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th class="text-center">Qty</th>
+                  <th class="text-center">Unit</th>
+                  <th>Serial / Batch</th>
+                </tr>
+              </thead>
+              <tbody>${itemsHtml}</tbody>
+            </table>
+
+            ${dc.notes ? `<div class="text-xs text-gray-500 mt-2"><strong>Notes:</strong> ${dc.notes}</div>` : ''}
+
+            <div class="dc-footer">
+              <p>This is a system generated delivery challan. | ${company.name}</p>
+            </div>
+          </div>
+
+        </div>
+        ${modalFooter('Close', 'onclick="closeModal()"', `
+          <div class="flex gap-1.5">
+            <button onclick="generatePackingList('${dc.id}')" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1 px-2 py-1 rounded border border-primary/20 hover:bg-primary-light transition">
+              ${iconPackage()} ${hasPL ? 'View Packing List' : 'Generate Packing List'}
+            </button>
+            <button onclick="printDC('${dc.id}')" class="text-xs font-semibold text-gray-600 hover:underline flex items-center gap-1 px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 transition">
+              ${iconPrint()} Print
+            </button>
+          </div>
+        `)}
+      `;
+
+      openModal(modalContent, { width: 'max-w-4xl' });
+    }
+
+    // =============================================================
+    // PACKING LIST FUNCTIONS (Enhancement #6)
+    // =============================================================
+
+    function generatePackingList(id) {
+      var dc = deliveryChallans.find(function(x) { return x.id === id; });
+      if (!dc) return;
+
+      // Open modal to enter packing list details
+      var modalContent = `
+        ${modalHeader('Generate Packing List', dc.number)}
+        <div class="px-5 py-4 modal-scroll">
+
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Package Count *', '<input type="number" class="form-input" id="pl_packages" value="' + (dc.packingList && dc.packingList.packages ? dc.packingList.packages : 1) + '" placeholder="Number of packages">')}
+            ${fld('Package Type', '<select class="form-input" id="pl_type"><option ' + (dc.packingList && dc.packingList.packageType === 'Cardboard Box' ? 'selected' : '') + '>Cardboard Box</option><option ' + (dc.packingList && dc.packingList.packageType === 'Wooden Crate' ? 'selected' : '') + '>Wooden Crate</option><option ' + (dc.packingList && dc.packingList.packageType === 'Plastic Container' ? 'selected' : '') + '>Plastic Container</option><option ' + (dc.packingList && dc.packingList.packageType === 'Export Grade Box' ? 'selected' : '') + '>Export Grade Box</option><option ' + (dc.packingList && dc.packingList.packageType === 'Pallet' ? 'selected' : '') + '>Pallet</option><option ' + (dc.packingList && dc.packingList.packageType === 'Other' ? 'selected' : '') + '>Other</option></select>')}
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Dimensions (LxWxH)', '<input type="text" class="form-input" id="pl_dimensions" value="' + (dc.packingList && dc.packingList.dimensions ? dc.packingList.dimensions : '') + '" placeholder="e.g. 30x20x15 cm">')}
+            ${fld('Total Weight', '<input type="text" class="form-input" id="pl_weight" value="' + (dc.packingList && dc.packingList.totalWeight ? dc.packingList.totalWeight : '') + '" placeholder="e.g. 15.5 Kg">')}
+          </div>
+
+          <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+            <p class="text-[10px] text-gray-500">ⓘ Packing List will be linked to this Delivery Challan and will appear in Project Documents (Enhancement #5)</p>
+          </div>
+        </div>
+        ${modalFooter('Generate Packing List', 'onclick="savePackingList(\'' + id + '\')"')}
+      `;
+
+      openModal(modalContent, { width: 'max-w-lg' });
+    }
+
+    function savePackingList(id) {
+      var dc = deliveryChallans.find(function(x) { return x.id === id; });
+      if (!dc) return;
+
+      var packages = parseInt(document.getElementById('pl_packages').value) || 0;
+      var packageType = document.getElementById('pl_type').value || '';
+      var dimensions = document.getElementById('pl_dimensions').value || '';
+      var totalWeight = document.getElementById('pl_weight').value || '';
+
+      if (packages === 0) {
+        showToast('Please enter package count', 'error');
+        return;
+      }
+
+      dc.packingList = {
+        packages: packages,
+        packageType: packageType,
+        dimensions: dimensions,
+        totalWeight: totalWeight,
+        created: true
+      };
+
+      closeModal();
+      renderDC();
+      showToast('Packing List generated successfully for ' + dc.number + '!', 'success');
+
+      // Show packing list view
+      setTimeout(function() {
+        viewPackingList(id);
+      }, 300);
+    }
+
+    function viewPackingList(id) {
+      var dc = deliveryChallans.find(function(x) { return x.id === id; });
+      if (!dc || !dc.packingList || !dc.packingList.created) {
+        showToast('Packing List not found for this Delivery Challan', 'error');
+        return;
+      }
+
+      var pl = dc.packingList;
+
+      var itemsHtml = dc.items.map(function(item) {
+        return `
+          <tr>
+            <td class="px-2 py-1.5 text-xs">${item.name}</td>
+            <td class="px-2 py-1.5 text-xs text-center">${item.qty}</td>
+            <td class="px-2 py-1.5 text-xs text-center">${item.unit || 'Pcs'}</td>
+          </tr>`;
+      }).join('');
+
+      var modalContent = `
+        ${modalHeader('Packing List — ' + dc.number, 'For Delivery Challan ' + dc.number)}
+        <div class="px-5 py-4 modal-scroll">
+
+          <div class="pl-preview">
+            <div class="pl-header">
+              <div>
+                <div class="dc-company-name">${company.name || 'Kunash Media Pvt. Ltd.'}</div>
+                <div class="dc-company-details">
+                  ${company.address || '401, Creative Hub, BKC, Mumbai - 400051'}<br>
+                  GSTIN: ${company.gstin || '27AABCU1234D1ZP'} | Phone: ${company.phone || '+91-9876543210'}
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div class="pl-title">PACKING LIST</div>
+              </div>
+            </div>
+
+            <div class="dc-meta">
+              <div>
+                <div class="meta-label">Customer</div>
+                <div class="meta-value">${dc.customerName}</div>
+                <div class="text-xs text-gray-500">${dc.customerAddress || ''}</div>
+              </div>
+              <div style="text-align:right;">
+                <div><span class="meta-label">DC #</span> <span class="meta-value">${dc.number}</span></div>
+                <div><span class="meta-label">Date</span> <span class="meta-value">${dc.date}</span></div>
+                <div><span class="meta-label">SO Reference</span> <span class="meta-value">${dc.soReference || '—'}</span></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-sm mb-3">
+              <div><span class="text-gray-500">Package Count:</span> <span class="font-semibold">${pl.packages}</span></div>
+              <div><span class="text-gray-500">Package Type:</span> <span class="font-semibold">${pl.packageType || '—'}</span></div>
+              <div><span class="text-gray-500">Dimensions:</span> <span class="font-semibold">${pl.dimensions || '—'}</span></div>
+              <div><span class="text-gray-500">Total Weight:</span> <span class="font-semibold">${pl.totalWeight || '—'}</span></div>
+            </div>
+
+            <table class="pl-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th class="text-center">Qty</th>
+                  <th class="text-center">Unit</th>
+                </tr>
+              </thead>
+              <tbody>${itemsHtml}</tbody>
+            </table>
+
+            <div class="pl-totals">
+              <div class="total-row"><span class="label">Total Items</span><span class="value">${dc.items.reduce(function(sum, item) { return sum + item.qty; }, 0)}</span></div>
+              <div class="total-row"><span class="label">Total Packages</span><span class="value">${pl.packages}</span></div>
+            </div>
+
+            <div class="dc-footer">
+              <p>This is a system generated packing list. | ${company.name}</p>
+            </div>
+          </div>
+
+        </div>
+        ${modalFooter('Close', 'onclick="closeModal()"', `
+          <div class="flex gap-1.5">
+            <button onclick="printPackingList('${dc.id}')" class="text-xs font-semibold text-gray-600 hover:underline flex items-center gap-1 px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 transition">
+              ${iconPrint()} Print
+            </button>
+          </div>
+        `)}
+      `;
+
+      openModal(modalContent, { width: 'max-w-4xl' });
+    }
+
+    // =============================================================
+    // PRINT FUNCTIONS
+    // =============================================================
+
+    function printDC(id) {
+      showToast('Printing Delivery Challan...', 'info');
+    }
+
+    function printPackingList(id) {
+      showToast('Printing Packing List...', 'info');
+    }
+
+    // =============================================================
+    // ADD / EDIT DELIVERY CHALLAN
+    // =============================================================
+
+    function openAddDC() { openDCModal(null); }
+
+    function editDC(id) {
+      var dc = deliveryChallans.find(function(x) { return x.id === id; });
+      if (dc) openDCModal(dc);
+    }
+
+    function openDCModal(existing) {
+      var e = existing || {
+        number: 'DC/25-26/' + String(deliveryChallans.length + 1).padStart(3, '0'),
+        date: new Date().toISOString().split('T')[0],
+        customerId: customers[0].id,
+        status: 'draft',
+        items: [],
+        notes: '',
+        shippingAddress: ''
+      };
+      var isEdit = !!existing;
+
+      // Line items
+      var lineItemsHtml = '';
+      if (e.items && e.items.length > 0) {
+        lineItemsHtml = e.items.map(function(item, idx) {
+          return `
+            <tr class="border-b border-gray-100 line-item-row">
+              <td class="px-2 py-1">
+                <select class="form-input text-[10px] item-select" data-idx="${idx}">
+                  ${items.map(function(it) { return '<option ' + (it.id === item.itemId ? 'selected' : '') + ' value="' + it.id + '">' + it.name + '</option>'; }).join('')}
+                </select>
+              </td>
+              <td class="px-2 py-1">
+                <input type="number" class="form-input text-[10px] item-qty" value="${item.qty}" data-idx="${idx}" placeholder="Qty">
+              </td>
+              <td class="px-2 py-1">
+                <input type="text" class="form-input text-[10px] item-serial" value="${item.serial || ''}" data-idx="${idx}" placeholder="Serial numbers">
+              </td>
+              <td class="px-2 py-1 text-center">
+                <button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
+              </td>
+            </tr>`;
+        }).join('');
+      }
+
+      var modalContent = `
+        ${modalHeader(isEdit ? 'Edit Delivery Challan' : 'New Delivery Challan', isEdit ? e.number : 'Create a new delivery challan')}
+
+        <div class="px-5 py-4 modal-scroll">
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            ${fld('DC #', '<input type="text" class="form-input" id="f_number" value="' + e.number + '" disabled>')}
+            ${fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">')}
+            ${fld('Customer *', '<select id="f_customer" class="form-input" onchange="updateAddress()">' + customers.map(function(c) { return '<option ' + (c.id === e.customerId ? 'selected' : '') + ' value="' + c.id + '">' + c.name + '</option>'; }).join('') + '</select>')}
+            ${fld('SO Reference', '<select class="form-input" id="f_soReference"><option value="">None</option>' + salesOrders.map(function(so) { return '<option ' + (so.id === e.soReference ? 'selected' : '') + ' value="' + so.number + '">' + so.number + ' - ' + so.customerName + '</option>'; }).join('') + '</select>')}
+          </div>
+
+          ${fld('Shipping Address', '<input type="text" class="form-input" id="f_shippingAddress" value="' + (e.shippingAddress || '') + '" placeholder="Shipping address">')}
+
+          <!-- Line Items -->
+          <div class="mt-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="form-label mb-0">Items</label>
+              <button onclick="addLineItem()" class="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1">
+                ${iconPlus()} Add Item
+              </button>
+            </div>
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <table class="w-full text-xs" id="lineItemsTable">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-2 py-1.5 text-left font-semibold text-gray-600">Item</th>
+                    <th class="px-2 py-1.5 text-center font-semibold text-gray-600">Qty</th>
+                    <th class="px-2 py-1.5 text-left font-semibold text-gray-600">Serial / Batch</th>
+                    <th class="px-2 py-1.5 text-center font-semibold text-gray-600" style="width:36px;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="lineItemsBody">
+                  ${lineItemsHtml || '<tr><td colspan="4" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mt-3">
+            ${fld('Status', '<select class="form-input" id="f_status"><option ' + (e.status === 'draft' ? 'selected' : '') + ' value="draft">Draft</option><option ' + (e.status === 'dispatched' ? 'selected' : '') + ' value="dispatched">Dispatched</option><option ' + (e.status === 'delivered' ? 'selected' : '') + ' value="delivered">Delivered</option></select>')}
+          </div>
+
+          ${fld('Notes', '<textarea rows="2" class="form-input" id="f_notes" placeholder="Additional notes">' + (e.notes || '') + '</textarea>')}
+        </div>
+        ${modalFooter(isEdit ? 'Update Delivery Challan' : 'Save Delivery Challan', 'onclick="saveDC(\'' + (isEdit ? e.id : '') + '\')"')}
+      `;
+
+      openModal(modalContent, { width: 'max-w-4xl' });
+    }
+
+    // =============================================================
+    // LINE ITEM FUNCTIONS
+    // =============================================================
+
+    function addLineItem() {
+      var tbody = document.getElementById('lineItemsBody');
+      if (!tbody) return;
+      var emptyRow = tbody.querySelector('tr td[colspan]');
+      if (emptyRow) tbody.innerHTML = '';
+
+      var idx = tbody.children.length;
+      var row = document.createElement('tr');
+      row.className = 'border-b border-gray-100 line-item-row';
+      row.innerHTML = `
+        <td class="px-2 py-1">
+          <select class="form-input text-[10px] item-select" data-idx="${idx}">
+            ${items.map(function(it) { return '<option value="' + it.id + '">' + it.name + '</option>'; }).join('')}
+          </select>
+        </td>
+        <td class="px-2 py-1">
+          <input type="number" class="form-input text-[10px] item-qty" value="1" data-idx="${idx}" placeholder="Qty">
+        </td>
+        <td class="px-2 py-1">
+          <input type="text" class="form-input text-[10px] item-serial" data-idx="${idx}" placeholder="Serial numbers">
+        </td>
+        <td class="px-2 py-1 text-center">
+          <button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function removeLineItem(btn) {
+      var row = btn.closest('tr');
+      if (row) row.remove();
+      var tbody = document.getElementById('lineItemsBody');
+      if (tbody && tbody.children.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products.</td></tr>';
+      }
+    }
+
+    function updateAddress() {
+      var customerId = document.getElementById('f_customer').value;
+      var customer = customers.find(function(c) { return c.id === customerId; });
+      if (customer && customer.address) {
+        document.getElementById('f_shippingAddress').value = customer.address;
+      }
+    }
+
+    // =============================================================
+    // SAVE / DELETE DELIVERY CHALLAN
+    // =============================================================
+
+    function saveDC(existingId) {
+      var number = document.getElementById('f_number').value;
+      var date = document.getElementById('f_date').value;
+      var customerId = document.getElementById('f_customer').value;
+      var shippingAddress = document.getElementById('f_shippingAddress').value || '';
+      var soReference = document.getElementById('f_soReference').value || '';
+      var status = document.getElementById('f_status').value;
+      var notes = document.getElementById('f_notes').value || '';
+
+      if (!date || !customerId) {
+        showToast('Please fill all required fields (Date, Customer)', 'error');
+        return;
+      }
+
+      var itemsData = [];
+      var rows = document.querySelectorAll('#lineItemsBody .line-item-row');
+      rows.forEach(function(row) {
+        var itemId = row.querySelector('.item-select').value;
+        var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+        var serial = row.querySelector('.item-serial').value || '';
+        if (qty > 0) {
+          var item = items.find(function(it) { return it.id === itemId; });
+          itemsData.push({
+            itemId: itemId,
+            name: item ? item.name : '',
+            qty: qty,
+            unit: item ? item.unit : 'Pcs',
+            serial: serial
+          });
+        }
+      });
+
+      if (itemsData.length === 0) {
+        showToast('Please add at least one item to the delivery challan', 'error');
+        return;
+      }
+
+      var customer = customers.find(function(c) { return c.id === customerId; });
+      var customerName = customer ? customer.name : '';
+
+      if (existingId) {
+        var dc = deliveryChallans.find(function(x) { return x.id === existingId; });
+        if (dc) {
+          dc.number = number;
+          dc.date = date;
+          dc.customerId = customerId;
+          dc.customerName = customerName;
+          dc.customerAddress = customer ? customer.address : '';
+          dc.shippingAddress = shippingAddress || (customer ? customer.address : '');
+          dc.soReference = soReference;
+          dc.status = status;
+          dc.items = itemsData;
+          dc.notes = notes;
+          showToast('Delivery Challan updated successfully', 'success');
+        }
+      } else {
+        var newDC = {
+          id: 'DC-' + String(nextDCNo++).padStart(3, '0'),
+          number: number || 'DC/25-26/' + String(deliveryChallans.length + 1).padStart(3, '0'),
+          date: date,
+          customerId: customerId,
+          customerName: customerName,
+          customerAddress: customer ? customer.address : '',
+          shippingAddress: shippingAddress || (customer ? customer.address : ''),
+          soReference: soReference,
+          status: status,
+          items: itemsData,
+          packingList: { packages: 0, packageType: '', dimensions: '', totalWeight: '', created: false },
+          notes: notes,
+          createdAt: date
+        };
+        deliveryChallans.unshift(newDC);
+        showToast('Delivery Challan created successfully', 'success');
+      }
+
+      closeModal();
+      renderDC();
+    }
+
+    function delDC(id) {
+      var dc = deliveryChallans.find(function(x) { return x.id === id; });
+      if (!dc) return;
+
+      var modalContent = `
+        ${modalHeader('Delete Delivery Challan', dc.number)}
+        <div class="px-5 py-4 text-sm text-gray-600">
+          <p>Are you sure you want to permanently delete <b class="text-gray-800">${dc.number}</b>?</p>
+          <p class="text-gray-400 text-[11px] mt-1">This action cannot be undone. All associated data will be removed.</p>
+        </div>
+        ${modalFooter('Delete', 'onclick="confirmDeleteDC(\'' + id + '\')"', '')}
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
+
+    function confirmDeleteDC(id) {
+      deliveryChallans = deliveryChallans.filter(function(x) { return x.id !== id; });
+      closeModal();
+      renderDC();
+      showToast('Delivery Challan deleted successfully', 'warning');
+    }
+
+    // =============================================================
+    // SEARCH
+    // =============================================================
+
+    (function addSearchToTopbar() {
+      var searchContainer = document.querySelector('.app-main header');
+      if (searchContainer) {
+        var searchHtml = `
+          <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+            <input type="text" id="searchInput" placeholder="Search delivery challans by number, customer…"
+              onkeyup="filterDC()"
+              class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+          </div>
+        `;
+        var headerContent = searchContainer.innerHTML;
+        var hamburgerIndex = headerContent.indexOf('lg:hidden');
+        if (hamburgerIndex !== -1) {
+          var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
+          var before = headerContent.substring(0, firstDivEnd);
+          var after = headerContent.substring(firstDivEnd);
+          searchContainer.innerHTML = before + searchHtml + after;
+        }
+      }
+    })();
+
+    // =============================================================
+    // INIT
+    // =============================================================
+
+    // Company details
+    var company = {
+      name: 'Kunash Media Pvt. Ltd.',
+      address: '401, Creative Hub, BKC, Bandra East, Mumbai - 400051',
+      gstin: '27AABCU1234D1ZP',
+      phone: '+91-9876543210'
+    };
+
+    renderDC();
+
+    console.log('📦 Delivery Challan Module Loaded Successfully');
+    console.log('📊 Total DC:', deliveryChallans.length);
+    console.log('📦 Packing List (Enhancement #6) enabled');
+    console.log('📌 Status: Draft(' + deliveryChallans.filter(function(dc) { return dc.status === 'draft'; }).length +
+      '), Dispatched(' + deliveryChallans.filter(function(dc) { return dc.status === 'dispatched'; }).length +
+      '), Delivered(' + deliveryChallans.filter(function(dc) { return dc.status === 'delivered'; }).length + ')');
+
+  </script>
+
+</body>
+</html>

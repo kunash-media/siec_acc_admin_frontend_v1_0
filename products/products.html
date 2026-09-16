@@ -129,7 +129,7 @@
     cursor: pointer;
     background: transparent;
     display: flex;
-    gap: 6px;
+    gap: 8px;
   }
   .modal-tab-btn.active {
     color: #6da84c;
@@ -855,33 +855,21 @@
 
             <div id="variantFormWrap" class="hidden mt-4 pt-4 border-t border-gray-100">
               <div class="flex items-center justify-between mb-3">
-                <div class="text-[12.5px] font-semibold text-gray-700">Adding variant for: <span id="variantForProductName" class="text-primary"></span></div>
+                <div class="text-[12.5px] font-semibold text-gray-700">Adding variant(s) for: <span id="variantForProductName" class="text-primary"></span></div>
                 <button onclick="clearVariantSelection()" class="text-[11px] text-gray-400 hover:text-gray-600">${iconX()} Change product</button>
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                ${fld('Variant Name', '<input id="v_variantName" placeholder="e.g. Red / Large" class="' + inputBase() + '">')}
-                ${fld('SKU', '<input id="v_sku" placeholder="e.g. BLW-5HP-001-RED-L" class="' + inputBase() + '">')}
-              </div>
-              <div class="grid grid-cols-3 gap-3">
-                ${fld('Height', '<input id="v_height" class="' + inputBase() + '">')}
-                ${fld('Width', '<input id="v_width" class="' + inputBase() + '">')}
-                ${fld('Length', '<input id="v_length" class="' + inputBase() + '">')}
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                ${fld('Unit', '<input id="v_unit" placeholder="e.g. Pcs" class="' + inputBase() + '">')}
-                ${fld('Material Type', '<input id="v_materialType" class="' + inputBase() + '">')}
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                ${fld('Size', '<input id="v_size" class="' + inputBase() + '">')}
-                ${fld('Product Number', '<input id="v_productNumber" class="' + inputBase() + '">')}
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                ${fld('Variant Category', '<input id="v_variantCategory" class="' + inputBase() + '">')}
-                ${fld('Variant Sub Category', '<input id="v_variantSubCategory" class="' + inputBase() + '">')}
-              </div>
-              <button onclick="saveVariant()" class="mt-1 inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
-                ${iconSave()} Add Variant
+
+              <div id="variantRowsWrap" class="space-y-3"></div>
+
+              <button onclick="addVariantRow()" class="mt-2 inline-flex items-center gap-1.5 bg-white border border-[#6da84c] hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-3 py-2 rounded-lg transition">
+                ${iconUser()} + Add Variant
               </button>
+
+              <div class="mt-4 pt-3 border-t border-gray-100">
+                <button onclick="saveVariant()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
+                  ${iconSave()} Save Variant(s)
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -937,13 +925,68 @@
       if (!it || !formWrap) return;
       formWrap.classList.remove('hidden');
       document.getElementById('variantForProductName').textContent = it.name + ' (' + it.sku + ')';
+
+      // start fresh with a single blank variant row
+      variantRowCounter = 0;
+      document.getElementById('variantRowsWrap').innerHTML = '';
+      addVariantRow();
     }
 
     function clearVariantSelection() {
       variantSelectedProductId = null;
       var formWrap = document.getElementById('variantFormWrap');
       if (formWrap) formWrap.classList.add('hidden');
+      var rowsWrap = document.getElementById('variantRowsWrap');
+      if (rowsWrap) rowsWrap.innerHTML = '';
+      variantRowCounter = 0;
       renderVariantProductList();
+    }
+
+    // ---------- Multiple variant rows (one product can have many variants) ----------
+    var variantRowCounter = 0;
+
+    function buildVariantRowHtml(idx) {
+      return `
+        <div class="variant-row border border-gray-200 rounded-lg p-3 relative" data-idx="${idx}">
+          <button onclick="removeVariantRow(${idx})" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition" title="Remove this variant">${iconX()}</button>
+          <div class="grid grid-cols-2 gap-3 pr-6">
+            ${fld('Variant Name', '<input id="v_variantName_' + idx + '" placeholder="e.g. Red / Large" class="' + inputBase() + '">')}
+            ${fld('SKU', '<input id="v_sku_' + idx + '" placeholder="e.g. BLW-5HP-001-RED-L" class="' + inputBase() + '">')}
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            ${fld('Height', '<input id="v_height_' + idx + '" class="' + inputBase() + '">')}
+            ${fld('Width', '<input id="v_width_' + idx + '" class="' + inputBase() + '">')}
+            ${fld('Length', '<input id="v_length_' + idx + '" class="' + inputBase() + '">')}
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Unit', '<input id="v_unit_' + idx + '" placeholder="e.g. Pcs" class="' + inputBase() + '">')}
+            ${fld('Material Type', '<input id="v_materialType_' + idx + '" class="' + inputBase() + '">')}
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Size', '<input id="v_size_' + idx + '" class="' + inputBase() + '">')}
+            ${fld('Product Number', '<input id="v_productNumber_' + idx + '" class="' + inputBase() + '">')}
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Variant Category', '<input id="v_variantCategory_' + idx + '" class="' + inputBase() + '">')}
+            ${fld('Variant Sub Category', '<input id="v_variantSubCategory_' + idx + '" class="' + inputBase() + '">')}
+          </div>
+        </div>`;
+    }
+
+    function addVariantRow() {
+      var rowsWrap = document.getElementById('variantRowsWrap');
+      if (!rowsWrap) return;
+      var idx = variantRowCounter++;
+      rowsWrap.insertAdjacentHTML('beforeend', buildVariantRowHtml(idx));
+    }
+
+    function removeVariantRow(idx) {
+      var rowsWrap = document.getElementById('variantRowsWrap');
+      if (!rowsWrap) return;
+      var row = rowsWrap.querySelector('.variant-row[data-idx="' + idx + '"]');
+      if (row) row.remove();
+      // always keep at least one row available to fill in
+      if (rowsWrap.children.length === 0) addVariantRow();
     }
 
     function saveVariant() {
@@ -954,30 +997,48 @@
       var it = items.find(function(x) { return x.id === variantSelectedProductId; });
       if (!it) return;
 
-      var variant = {
-        variantName: (document.getElementById('v_variantName') || {}).value || '',
-        sku: (document.getElementById('v_sku') || {}).value || '',
-        height: (document.getElementById('v_height') || {}).value || '',
-        width: (document.getElementById('v_width') || {}).value || '',
-        length: (document.getElementById('v_length') || {}).value || '',
-        unit: (document.getElementById('v_unit') || {}).value || '',
-        materialType: (document.getElementById('v_materialType') || {}).value || '',
-        size: (document.getElementById('v_size') || {}).value || '',
-        productNumber: (document.getElementById('v_productNumber') || {}).value || '',
-        variantCategory: (document.getElementById('v_variantCategory') || {}).value || '',
-        variantSubCategory: (document.getElementById('v_variantSubCategory') || {}).value || ''
-      };
-
+      var rows = document.querySelectorAll('#variantRowsWrap .variant-row');
+      var addedCount = 0;
       it.variants = it.variants || [];
-      it.variants.push(variant);
 
-      showToast('Variant added to ' + it.name, 'success');
-
-      // reset the variant form for the next entry
-      ['v_variantName','v_sku','v_height','v_width','v_length','v_unit','v_materialType','v_size','v_productNumber','v_variantCategory','v_variantSubCategory'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.value = '';
+      rows.forEach(function(row) {
+        var idx = row.dataset.idx;
+        var get = function(field) {
+          var el = document.getElementById('v_' + field + '_' + idx);
+          return el ? el.value.trim() : '';
+        };
+        var variant = {
+          variantName: get('variantName'),
+          sku: get('sku'),
+          height: get('height'),
+          width: get('width'),
+          length: get('length'),
+          unit: get('unit'),
+          materialType: get('materialType'),
+          size: get('size'),
+          productNumber: get('productNumber'),
+          variantCategory: get('variantCategory'),
+          variantSubCategory: get('variantSubCategory')
+        };
+        // skip a row that was left completely empty
+        var isEmpty = Object.keys(variant).every(function(k) { return !variant[k]; });
+        if (!isEmpty) {
+          it.variants.push(variant);
+          addedCount++;
+        }
       });
+
+      if (addedCount === 0) {
+        showToast('Fill in at least one variant before saving', 'error');
+        return;
+      }
+
+      showToast(addedCount + ' variant(s) added to ' + it.name, 'success');
+
+      // reset back to a single blank row for the next batch
+      variantRowCounter = 0;
+      document.getElementById('variantRowsWrap').innerHTML = '';
+      addVariantRow();
     }
 
     // =============================================================
@@ -1126,7 +1187,7 @@
         <div class="px-6 py-10 text-center text-sm text-gray-400">Loading vendors…</div>
         ${modalFooter('Proceed', 'disabled class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gray-300 cursor-not-allowed flex items-center gap-1.5"')}
       `;
-      openModal(loadingContent, { width: 'max-w-md' });
+      openModal(loadingContent, { width: 'max-w-lg' });
 
       var vendorList = await fetchVendorList();
       renderVendorPurchaseModal(vendorList);
@@ -1139,13 +1200,19 @@
 
       var modalContent = `
         ${modalHeader('Vendor Purchase', 'Select a vendor to start a purchase')}
-        <div class="px-6 py-5">
+        <div class="px-6 py-5 modal-scroll">
           <div class="flex items-end gap-2">
             <div class="flex-1">
               ${fld('Vendor', '<select id="f_vendorPurchase" class="' + inputBase() + '">' + vendorOptions + '</select>', vendorList.length ? '' : 'No vendors found')}
             </div>
-            <button onclick="toggleAddVendorForm()" class="mb-3 inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">
+          </div>
+
+          <div class="flex flex-wrap gap-2 mb-1">
+            <button onclick="toggleAddVendorForm()" class="inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">
               ${iconUser()} Add New Vendor
+            </button>
+            <button onclick="toggleAddItemForm()" class="inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">
+              ${iconBox()} Add Item
             </button>
           </div>
 
@@ -1158,15 +1225,276 @@
               ${iconSave()} Save Vendor
             </button>
           </div>
+
+          <div id="addItemFormWrap" class="hidden mt-2 pt-4 border-t border-gray-100">
+            <div class="text-[12.5px] font-semibold text-gray-700 mb-2">Add Item <span class="font-normal text-gray-400">— adds directly to your product inventory</span></div>
+
+            <!-- New vs Existing mode switch -->
+            <div class="flex gap-2 mb-3">
+              <button type="button" id="vpModeBtn_new" onclick="switchVpItemMode('new')" class="modal-tab-btn active" style="border:1px solid #e5e7eb; border-radius:8px; padding:6px 12px;">New Item</button>
+              <button type="button" id="vpModeBtn_existing" onclick="switchVpItemMode('existing')" class="modal-tab-btn" style="border:1px solid #e5e7eb; border-radius:8px; padding:6px 12px;">Existing Item</button>
+            </div>
+
+            <!-- ============ NEW ITEM PANEL ============ -->
+            <div id="vpNewItemPanel">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="mb-3">
+                  <label class="form-label">Item Name <span class="required">*</span></label>
+                  <input id="vp_name" placeholder="e.g. Centrifugal Blower — 5HP" class="${inputBase()}">
+                  ${fldErr('vp_name')}
+                </div>
+                ${fld('SKU / Code', '<input id="vp_sku" placeholder="e.g. BLW-5HP-001" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                ${fld('Category', '<input id="vp_category" placeholder="e.g. Blowers" class="' + inputBase() + '">')}
+                ${fld('Sub Category', '<input id="vp_subcategory" placeholder="e.g. Industrial Blowers" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                ${fld('HSN / SAC Code', '<input id="vp_hsn" class="' + inputBase() + '">')}
+                ${fld('Unit', '<input id="vp_unit" placeholder="e.g. Pcs / Kg / Ltr" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                ${fld('Height', '<input id="vp_height" class="' + inputBase() + '">')}
+                ${fld('Width', '<input id="vp_width" class="' + inputBase() + '">')}
+                ${fld('Length', '<input id="vp_length" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                ${fld('Material Type', '<input id="vp_materialType" class="' + inputBase() + '">')}
+                ${fld('Size', '<input id="vp_size" class="' + inputBase() + '">')}
+                ${fld('Product Number', '<input id="vp_productNumber" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                ${fld('Selling Price (₹)', '<input id="vp_selling" type="number" class="' + inputBase() + '">')}
+                ${fld('MRP Price (₹)', '<input id="vp_mrp" type="number" class="' + inputBase() + '">')}
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                ${fld('GST Rate (%)', '<input id="vp_gst" placeholder="e.g. 18" class="' + inputBase() + '">')}
+                <div class="mb-3">
+                  <label class="form-label">Total Stock <span class="required">*</span></label>
+                  <input id="vp_stock" type="number" class="${inputBase()}">
+                  ${fldErr('vp_stock')}
+                </div>
+              </div>
+              ${fld('Warehouse', '<select id="vp_warehouse" class="' + inputBase() + '">' + warehouses.map(function(w) { return '<option value="' + w.id + '">' + w.name + '</option>'; }).join('') + '</select>')}
+              ${fld('Description', '<textarea id="vp_description" rows="2" class="' + inputBase() + '" placeholder="Brief description"></textarea>')}
+
+              <div class="form-hint mb-2">Only Item Name and Total Stock are required — rest can be filled in later by editing the item.</div>
+              <button onclick="saveVendorPurchaseItem()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
+                ${iconSave()} Save Item to Inventory
+              </button>
+            </div>
+
+            <!-- ============ EXISTING ITEM PANEL ============ -->
+            <div id="vpExistingItemPanel" class="hidden">
+              <div class="mb-3">
+                <label class="form-label">Search Existing Product</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+                  <input id="vpExistingSearch" oninput="renderVpExistingProductList()" placeholder="Search by name or SKU…" class="${inputBase()}" style="padding-left:34px;">
+                </div>
+              </div>
+              <div id="vpExistingProductList" class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-40 overflow-y-auto"></div>
+
+              <div id="vpExistingStockFormWrap" class="hidden mt-4 pt-4 border-t border-gray-100">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-[12.5px] font-semibold text-gray-700">Adding stock for: <span id="vpExistingProductName" class="text-primary"></span></div>
+                  <button onclick="clearVpExistingSelection()" class="text-[11px] text-gray-400 hover:text-gray-600">${iconX()} Change product</button>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="mb-3">
+                    <label class="form-label">Add Stock Qty <span class="required">*</span></label>
+                    <input id="vpExistingQty" type="number" placeholder="e.g. 25" class="${inputBase()}">
+                    ${fldErr('vpExistingQty')}
+                  </div>
+                  ${fld('Warehouse', '<select id="vpExistingWarehouse" class="' + inputBase() + '">' + warehouses.map(function(w) { return '<option value="' + w.id + '">' + w.name + '</option>'; }).join('') + '</select>')}
+                </div>
+                <div class="form-hint mb-2">This adds to the item's current stock — it will not create a duplicate product.</div>
+                <button onclick="saveVpExistingStock()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
+                  ${iconSave()} Add Stock to Inventory
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         ${modalFooter('Proceed', 'onclick="proceedVendorPurchase()"')}
       `;
-      openModal(modalContent, { width: 'max-w-md' });
+      openModal(modalContent, { width: 'max-w-lg' });
     }
 
     function toggleAddVendorForm() {
       var wrap = document.getElementById('addVendorFormWrap');
       if (wrap) wrap.classList.toggle('hidden');
+    }
+
+    function toggleAddItemForm() {
+      var wrap = document.getElementById('addItemFormWrap');
+      if (wrap) wrap.classList.toggle('hidden');
+    }
+
+    // ---------- New vs Existing item mode ----------
+    var vpSelectedExistingItemId = null;
+
+    function switchVpItemMode(mode) {
+      var newPanel = document.getElementById('vpNewItemPanel');
+      var existingPanel = document.getElementById('vpExistingItemPanel');
+      var newBtn = document.getElementById('vpModeBtn_new');
+      var existingBtn = document.getElementById('vpModeBtn_existing');
+      if (!newPanel || !existingPanel) return;
+
+      if (mode === 'existing') {
+        newPanel.classList.add('hidden');
+        existingPanel.classList.remove('hidden');
+        newBtn.classList.remove('active');
+        existingBtn.classList.add('active');
+        renderVpExistingProductList();
+      } else {
+        newPanel.classList.remove('hidden');
+        existingPanel.classList.add('hidden');
+        newBtn.classList.add('active');
+        existingBtn.classList.remove('active');
+      }
+    }
+
+    function renderVpExistingProductList() {
+      var wrap = document.getElementById('vpExistingProductList');
+      if (!wrap) return;
+      var q = (document.getElementById('vpExistingSearch') || {}).value || '';
+      q = q.trim().toLowerCase();
+      var matches = items.filter(function(it) {
+        return q.length === 0 ||
+          it.name.toLowerCase().indexOf(q) !== -1 ||
+          it.sku.toLowerCase().indexOf(q) !== -1;
+      });
+      if (matches.length === 0) {
+        wrap.innerHTML = '<div class="text-center py-4 text-gray-400 text-[12.5px]">No matching products</div>';
+        return;
+      }
+      wrap.innerHTML = matches.map(function(it) {
+        var isSel = it.id === vpSelectedExistingItemId;
+        return '<div onclick="selectVpExistingProduct(\'' + it.id + '\')" class="px-3 py-2 text-[12.5px] cursor-pointer flex items-center justify-between ' + (isSel ? 'bg-primary-soft' : 'hover:bg-gray-50') + '">' +
+          '<span class="font-semibold text-gray-700">' + it.name + '</span>' +
+          '<span class="text-gray-400 font-mono">' + it.sku + ' · stock: ' + it.stock + '</span></div>';
+      }).join('');
+    }
+
+    function selectVpExistingProduct(itemId) {
+      vpSelectedExistingItemId = itemId;
+      var it = items.find(function(x) { return x.id === itemId; });
+      renderVpExistingProductList();
+      var formWrap = document.getElementById('vpExistingStockFormWrap');
+      if (!it || !formWrap) return;
+      formWrap.classList.remove('hidden');
+      document.getElementById('vpExistingProductName').textContent = it.name + ' (' + it.sku + ') — current stock: ' + it.stock;
+      var whSel = document.getElementById('vpExistingWarehouse');
+      if (whSel) whSel.value = it.warehouse;
+    }
+
+    function clearVpExistingSelection() {
+      vpSelectedExistingItemId = null;
+      var formWrap = document.getElementById('vpExistingStockFormWrap');
+      if (formWrap) formWrap.classList.add('hidden');
+      renderVpExistingProductList();
+    }
+
+    function saveVpExistingStock() {
+      if (!vpSelectedExistingItemId) {
+        showToast('Please select a product first', 'error');
+        return;
+      }
+      var it = items.find(function(x) { return x.id === vpSelectedExistingItemId; });
+      if (!it) return;
+
+      var qtyRaw = (document.getElementById('vpExistingQty') || {}).value || '';
+      qtyRaw = qtyRaw.trim();
+      var qtyMissing = qtyRaw === '' || isNaN(parseInt(qtyRaw)) || parseInt(qtyRaw) <= 0;
+      setFieldError('vpExistingQty', qtyMissing);
+      if (qtyMissing) {
+        showToast('Please enter a valid quantity', 'error');
+        return;
+      }
+
+      var qty = parseInt(qtyRaw);
+      it.stock = (Number(it.stock) || 0) + qty;
+      it.status = stockStatus(it.stock);
+      var whSel = document.getElementById('vpExistingWarehouse');
+      if (whSel && whSel.value) it.warehouse = whSel.value;
+
+      renderItems(); // keeps the main inventory table/stats in sync immediately
+      showToast('Added ' + qty + ' stock to ' + it.name + ' (no duplicate created)', 'success');
+
+      // reset for the next entry
+      document.getElementById('vpExistingQty').value = '';
+      setFieldError('vpExistingQty', false);
+      clearVpExistingSelection();
+      var searchEl = document.getElementById('vpExistingSearch');
+      if (searchEl) searchEl.value = '';
+    }
+
+    function saveVendorPurchaseItem() {
+      var name = (document.getElementById('vp_name') || {}).value || '';
+      name = name.trim();
+      var stockRaw = (document.getElementById('vp_stock') || {}).value || '';
+      stockRaw = stockRaw.trim();
+
+      var nameMissing = !name;
+      var stockMissing = stockRaw === '';
+      setFieldError('vp_name', nameMissing);
+      setFieldError('vp_stock', stockMissing);
+      if (nameMissing || stockMissing) {
+        showToast('Please fill the required fields', 'error');
+        return;
+      }
+
+      var get = function(id) {
+        var el = document.getElementById(id);
+        return el ? el.value.trim() : '';
+      };
+      var getNum = function(id) {
+        var el = document.getElementById(id);
+        return el ? (parseFloat(el.value) || 0) : 0;
+      };
+
+      var stock = parseInt(stockRaw) || 0;
+
+      // Same shape as items added from the main "Add Item" form — keeps inventory in sync, no duplication.
+      var newItem = {
+        id: 'ITM-' + (nextItemNo++),
+        name: name,
+        sku: get('vp_sku'),
+        category: get('vp_category'),
+        subCategory: get('vp_subcategory'),
+        hsn: get('vp_hsn'),
+        unit: get('vp_unit'),
+        height: get('vp_height'),
+        width: get('vp_width'),
+        length: get('vp_length'),
+        materialType: get('vp_materialType'),
+        size: get('vp_size'),
+        productNumber: get('vp_productNumber'),
+        sellingPrice: getNum('vp_selling'),
+        mrpPrice: getNum('vp_mrp'),
+        gstRate: get('vp_gst'),
+        stock: stock,
+        warehouse: (document.getElementById('vp_warehouse') || {}).value || warehouses[0].id,
+        description: get('vp_description'),
+        variants: [],
+        status: stockStatus(stock)
+      };
+
+      items.unshift(newItem);
+      renderItems(); // keeps the main inventory table/stats in sync immediately
+
+      showToast('Item added to inventory', 'success');
+
+      // collapse and reset the inline form
+      document.getElementById('addItemFormWrap').classList.add('hidden');
+      ['vp_name','vp_sku','vp_category','vp_subcategory','vp_hsn','vp_unit','vp_height','vp_width','vp_length',
+       'vp_materialType','vp_size','vp_productNumber','vp_selling','vp_mrp','vp_gst','vp_stock','vp_description'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      setFieldError('vp_name', false);
+      setFieldError('vp_stock', false);
     }
 
     function saveNewVendor() {

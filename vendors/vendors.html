@@ -101,12 +101,22 @@
   .badge-dot-blue { background: #3b82f6; }
 
   /* Stats card */
+   /* Stats card */
   .stat-card {
+    border-color: #6da84c !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
   .stat-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Tables — bordered per design update */
+  .overflow-x-auto table {
+    border-radius: 8px;
+  }
+  .overflow-x-auto table thead tr {
+    border-bottom: 1px solid #6da84c;
   }
 
   /* Table row hover */
@@ -115,7 +125,10 @@
   }
 
   /* Modal tabs */
-  .modal-tab-btn {
+   .modal-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     transition: all 0.2s ease;
     padding: 8px 14px;
     font-size: 12px;
@@ -125,6 +138,8 @@
     cursor: pointer;
     background: transparent;
   }
+
+
   .modal-tab-btn.active {
     color: #6da84c;
     border-bottom-color: #6da84c;
@@ -326,7 +341,7 @@
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    border: 1px solid #f1f5f9;
+    border: 1px solid #b4b9bd;
     border-radius: 10px;
     margin-bottom: 8px;
   }
@@ -344,7 +359,7 @@
 
   /* ---------------- PURCHASE SUMMARY MINI CARDS ---------------- */
   .report-mini-card {
-    border: 1px solid #f1f5f9;
+    border: 1px solid #6da84c;
     border-radius: 10px;
     padding: 12px 14px;
     background: #fafbfc;
@@ -354,7 +369,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .04em;
-    color: #9ca3af;
+    color: #575b64;
   }
   .report-mini-value {
     font-size: 18px;
@@ -506,73 +521,29 @@
     // VENDORS MODULE — Complete Logic (No Emojis, Only SVG Icons)
     // =============================================================
 
-    // ---------- SVG Icons ----------
-    function iconPlus() {
-      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>`;
-    }
-    function iconEdit() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
-    }
-    function iconTrash() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`;
-    }
-    function iconEye() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-    }
-    function iconX() {
-      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
-    }
-    function iconFilter() {
-      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
-    }
-    function iconSave() {
-      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`;
-    }
-    function iconInfo() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>`;
-    }
-    function iconUser() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-    }
-    function iconBuilding() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V10M10 21V10M14 21V10M19 21V10"/><path d="M2 10l10-6 10 6"/></svg>`;
-    }
-    function iconGST() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg>`;
-    }
-    function iconBank() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4.5A2.5 2.5 0 016.5 2H20v18H6.5A2.5 2.5 0 014 17.5v-13z"/><path d="M4 17.5A2.5 2.5 0 016.5 20H20"/></svg>`;
-    }
-    function iconSearch() {
-      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
-    }
-    function iconPhone() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>`;
-    }
-    function iconMail() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>`;
-    }
-    function iconChevronDown() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>`;
-    }
-    function iconChevronRightSmall() {
-      return `<svg class="w-3 h-3 step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>`;
-    }
-    function iconCheck() {
-      return `<svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`;
-    }
-    function iconTag() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41L11 3.83A2 2 0 009.59 3.24L3 3v6.59a2 2 0 00.59 1.41l9.58 9.58a2 2 0 002.83 0l4.59-4.59a2 2 0 000-2.83z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/></svg>`;
-    }
-    function iconUpload() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>`;
-    }
-    function iconDoc() {
-      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>`;
-    }
-    function iconChart() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 13v5M12 9v9M17 5v13"/></svg>`;
-    }
+        function iconPlus() { return `<i class="fa-solid fa-plus"></i>`; }
+    function iconEdit() { return `<i class="fa-solid fa-pen"></i>`; }
+    function iconTrash() { return `<i class="fa-solid fa-trash"></i>`; }
+    function iconEye() { return `<i class="fa-solid fa-eye"></i>`; }
+    function iconX() { return `<i class="fa-solid fa-xmark"></i>`; }
+    function iconFilter() { return `<i class="fa-solid fa-filter"></i>`; }
+    function iconSave() { return `<i class="fa-solid fa-floppy-disk"></i>`; }
+    function iconInfo() { return `<i class="fa-solid fa-circle-info"></i>`; }
+    function iconUser() { return `<i class="fa-solid fa-user"></i>`; }
+    function iconBuilding() { return `<i class="fa-solid fa-building"></i>`; }
+    function iconGST() { return `<i class="fa-solid fa-shield-halved"></i>`; }
+    function iconBank() { return `<i class="fa-solid fa-building-columns"></i>`; }
+    function iconSearch() { return `<i class="fa-solid fa-magnifying-glass"></i>`; }
+    function iconPhone() { return `<i class="fa-solid fa-phone"></i>`; }
+    function iconMail() { return `<i class="fa-solid fa-envelope"></i>`; }
+    function iconChevronDown() { return `<i class="fa-solid fa-chevron-down"></i>`; }
+    function iconChevronRightSmall() { return `<i class="fa-solid fa-chevron-right step-chevron"></i>`; }
+    function iconCheck() { return `<i class="fa-solid fa-check"></i>`; }
+    function iconTag() { return `<i class="fa-solid fa-tag"></i>`; }
+    function iconUpload() { return `<i class="fa-solid fa-upload"></i>`; }
+    function iconDownload() { return `<i class="fa-solid fa-download"></i>`; }
+    function iconDoc() { return `<i class="fa-solid fa-file-lines"></i>`; }
+    function iconChart() { return `<i class="fa-solid fa-chart-column"></i>`; }
 
     // ---------- Toast System ----------
     function showToast(message, kind) {
@@ -629,7 +600,7 @@
 
     function modalFooter(saveLabel, onSaveAttr, extraBtns) {
       return `
-        <div class="flex items-center justify-between gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl sticky bottom-0">
+        <div class="flex items-center justify-between gap-2 px-6 py-2 border-t border-gray-100 bg-gray-50 rounded-b-2xl sticky bottom-0">
           <div>${extraBtns || ''}</div>
           <div class="flex gap-2">
             <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
@@ -687,8 +658,8 @@
 
     function panelWrap(titleHtml, bodyHtml, extraHead) {
       return `
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-gray-100">
+        <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-[#6da84c]">
             <div class="font-bold text-[14.5px] text-gray-800 flex items-center gap-2">${titleHtml}</div>
             ${extraHead || ''}
           </div>
@@ -704,7 +675,7 @@
         <div class="overflow-x-auto">
           <table class="w-full text-[13px]">
             <thead>
-              <tr class="bg-gray-50 border-b border-gray-200">${colHeaders}</tr>
+              <tr class="bg-gray-50 border-b border-gray-300">${colHeaders}</tr>
             </thead>
             <tbody id="tbody-anchor">${rowsHtml}</tbody>
           </table>
@@ -1013,79 +984,7 @@
       createdAt: '2025-03-10',
       color: vendorColors[2],
       secondaryContacts: []
-    }, {
-      id: 'VEN-004',
-      name: 'Tech Components Ltd.',
-      companyName: 'Tech Components Limited',
-      vendorType: 'vt-manufacturer',
-      gstin: '29TECH1234H1ZP',
-      pan: 'TECH1234H',
-      email: 'sales@techcomponents.com',
-      phone: '+91-9876543213',
-      address: '88, Electronics City, Bengaluru',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      stateCode: '29',
-      pincode: '560100',
-      paymentTerms: 'Net 45 days',
-      bankName: 'Axis Bank',
-      bankAccount: '3456789012',
-      bankIfsc: 'AXIS0000789',
-      gstRegistered: true,
-      status: 'inactive',
-      outstanding: 0,
-      createdAt: '2025-04-05',
-      color: vendorColors[3],
-      secondaryContacts: []
-    }, {
-      id: 'VEN-005',
-      name: 'Quick Logistics',
-      companyName: 'Quick Logistics Services',
-      vendorType: 'vt-service',
-      gstin: '',
-      pan: 'QLOG1234I',
-      email: 'dispatch@quicklogistics.com',
-      phone: '+91-9876543214',
-      address: '22, Transport Nagar, Surat',
-      city: 'Surat',
-      state: 'Gujarat',
-      stateCode: '24',
-      pincode: '395001',
-      paymentTerms: 'Net 15 days',
-      bankName: 'Kotak Bank',
-      bankAccount: '6789012345',
-      bankIfsc: 'KOTAK0001234',
-      gstRegistered: false,
-      status: 'active',
-      outstanding: 32000,
-      createdAt: '2025-05-20',
-      color: vendorColors[4],
-      secondaryContacts: []
-    }, {
-      id: 'VEN-006',
-      name: 'Premium Raw Materials',
-      companyName: 'Premium Raw Materials Pvt. Ltd.',
-      vendorType: 'vt-manufacturer',
-      gstin: '19PRM1234J1ZP',
-      pan: 'PRM1234J',
-      email: 'info@premiumraw.com',
-      phone: '+91-9876543215',
-      address: '56, Industrial Estate, Kochi',
-      city: 'Kochi',
-      state: 'Kerala',
-      stateCode: '32',
-      pincode: '682001',
-      paymentTerms: 'Net 30 days',
-      bankName: 'Federal Bank',
-      bankAccount: '7890123456',
-      bankIfsc: 'FDRL0001234',
-      gstRegistered: true,
-      status: 'active',
-      outstanding: 95000,
-      createdAt: '2025-06-12',
-      color: vendorColors[5],
-      secondaryContacts: []
-    }];
+    },];
 
     var nextVendorNo = 7;
 
@@ -1108,7 +1007,33 @@
         { type: 'Bank Proof', fileName: 'bank_proof.pdf', uploadDate: '2025-01-22' }
       ]
     };
+    
     var documentTypeOptions = ['GST Certificate', 'PAN Card', 'Bank Proof', 'Agreement'];
+
+    function viewVendorDocument(vendorId, idx) {
+      var doc = (vendorDocuments[vendorId] || [])[idx];
+      if (!doc) return;
+      if (doc.fileUrl) {
+        window.open(doc.fileUrl, '_blank');
+      } else {
+        showToast('No stored file to preview for "' + doc.fileName + '" (demo record — connect a file store to enable this)', 'info');
+      }
+    }
+
+    function downloadVendorDocument(vendorId, idx) {
+      var doc = (vendorDocuments[vendorId] || [])[idx];
+      if (!doc) return;
+      if (doc.fileUrl) {
+        var a = document.createElement('a');
+        a.href = doc.fileUrl;
+        a.download = doc.fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } else {
+        showToast('No stored file to download for "' + doc.fileName + '" (demo record — connect a file store to enable this)', 'info');
+      }
+    }
 
     // =============================================================
     // FUNCTIONS
@@ -1197,7 +1122,7 @@
       var panelHtml = panelWrap(
         'All Vendors <span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
         tableHtml(['Vendor', 'Type', 'Company', 'GSTIN', 'GST Status', 'Outstanding', 'Status', 'Actions'], rowsHtml),
-        '<div class="flex items-center gap-2"><span class="text-[11px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderVendors()" class="text-[12px] border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
+        '<div class="flex items-center gap-2"><span class="text-[11px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderVendors()" class="text-[12px] border border-[#6da84c] rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
       );
 
       document.getElementById('vendorsPanel').innerHTML = panelHtml;
@@ -1278,14 +1203,18 @@
     // ---------- Documents tab (new) ----------
     function documentsTabHtml(v) {
       var docs = vendorDocuments[v.id] || [];
-      var rows = docs.length
-        ? docs.map(function(d) {
+           var rows = docs.length
+        ? docs.map(function(d, idx) {
             return `
               <div class="doc-row">
                 <div class="doc-icon">${iconDoc()}</div>
                 <div class="min-w-0 flex-1">
                   <div class="text-[13px] font-semibold text-gray-800">${d.type}</div>
                   <div class="text-[11px] text-gray-400">${d.fileName} · Uploaded ${d.uploadDate}</div>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="viewVendorDocument('${v.id}', ${idx})" class="btn-icon-action" title="View">${iconEye()}</button>
+                  <button onclick="downloadVendorDocument('${v.id}', ${idx})" class="btn-icon-action" title="Download">${iconDownload()}</button>
                 </div>
               </div>`;
           }).join('')
@@ -1372,7 +1301,7 @@
           </div>
         </div>
         <div class="text-[12px] font-bold text-gray-700 mb-2">Purchase Orders (${openCount} open)</div>
-        <div class="overflow-x-auto">
+        <div class="overflow-auto overflow-x-auto ">
           <table class="w-full text-[13px]">
             <thead><tr class="bg-gray-50 border-b border-gray-200">
               <th class="text-left px-3 py-2 text-[10.5px] font-bold uppercase text-gray-500">PO #</th>
@@ -1393,7 +1322,7 @@
 
       var contactsHtml = (v.secondaryContacts && v.secondaryContacts.length)
         ? v.secondaryContacts.map(function(c) {
-            return `<div class="text-[12.5px] text-gray-700 border border-gray-100 rounded-lg px-3 py-2 mb-2">
+            return `<div class="text-[12.5px] text-gray-700 border border-gray-400 rounded-lg px-3 py-2 mb-2">
                       <span class="font-semibold">${c.name || '—'}</span>${c.designation ? ' · ' + c.designation : ''}<br>
                       <span class="text-gray-500">${c.mobile || '—'} · ${c.email || '—'}</span>
                     </div>`;
@@ -1420,20 +1349,23 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 text-sm border-t border-gray-100 pt-4">
-              <div><span class="text-gray-500">Vendor ID</span><br><span class="font-mono font-semibold">${v.id}</span></div>
-              <div><span class="text-gray-500">Status</span><br>${v.status === 'active' ? badge('Active', 'green') : badge('Inactive', 'gray')}</div>
-              <div><span class="text-gray-500">GSTIN</span><br><span class="font-mono">${v.gstin || '—'}</span></div>
-              <div><span class="text-gray-500">PAN</span><br><span class="font-mono">${v.pan || '—'}</span></div>
-              <div><span class="text-gray-500">Email</span><br><span class="text-gray-700">${v.email}</span></div>
-              <div><span class="text-gray-500">Phone</span><br><span class="text-gray-700">${v.phone}</span></div>
-              <div class="col-span-2"><span class="text-gray-500">Address</span><br><span class="text-gray-700">${v.address}, ${v.city}, ${v.state} - ${v.pincode}</span></div>
-              <div><span class="text-gray-500">Payment Terms</span><br><span class="font-semibold">${v.paymentTerms}</span></div>
-              <div><span class="text-gray-500">Outstanding</span><br><span class="font-semibold text-amber-600">${money(v.outstanding)}</span></div>
+            <div class="border border-[#6da84c] rounded-xl p-4 mt-4">
+              <h4 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-3">Vendor Info</h4>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><span class="text-gray-500">Vendor ID</span><br><span class="font-mono font-semibold">${v.id}</span></div>
+                <div><span class="text-gray-500">Status</span><br>${v.status === 'active' ? badge('Active', 'green') : badge('Inactive', 'gray')}</div>
+                <div><span class="text-gray-500">GSTIN</span><br><span class="font-mono">${v.gstin || '—'}</span></div>
+                <div><span class="text-gray-500">PAN</span><br><span class="font-mono">${v.pan || '—'}</span></div>
+                <div><span class="text-gray-500">Email</span><br><span class="text-gray-700">${v.email}</span></div>
+                <div><span class="text-gray-500">Phone</span><br><span class="text-gray-700">${v.phone}</span></div>
+                <div class="col-span-2"><span class="text-gray-500">Address</span><br><span class="text-gray-700">${v.address}, ${v.city}, ${v.state} - ${v.pincode}</span></div>
+                <div><span class="text-gray-500">Payment Terms</span><br><span class="font-semibold">${v.paymentTerms}</span></div>
+                <div><span class="text-gray-500">Outstanding</span><br><span class="font-semibold text-amber-600">${money(v.outstanding)}</span></div>
+              </div>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-gray-100">
-              <h4 class="text-[13px] font-semibold text-gray-800 mb-2 flex items-center gap-2">${iconBank()} Bank Details</h4>
+            <div class="border border-[#6da84c] rounded-xl p-4 mt-3">
+              <h4 class="text-[13px] font-semibold text-gray-800 mb-3 flex items-center gap-2">${iconBank()} Bank Details</h4>
               <div class="grid grid-cols-3 gap-3 text-sm">
                 <div><span class="text-gray-500">Bank</span><br><span class="font-semibold">${v.bankName}</span></div>
                 <div><span class="text-gray-500">Account No.</span><br><span class="font-mono">${v.bankAccount}</span></div>
@@ -1441,12 +1373,12 @@
               </div>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-gray-100">
-              <h4 class="text-[13px] font-semibold text-gray-800 mb-2 flex items-center gap-2">${iconUser()} Secondary Contacts</h4>
+            <div class="border border-[#6da84c] rounded-xl p-4 mt-3">
+              <h4 class="text-[13px] font-semibold text-gray-800 mb-3 flex items-center gap-2">${iconUser()} Secondary Contacts</h4>
               ${contactsHtml}
             </div>
 
-            <div class="mt-3 text-[11px] text-gray-400 flex items-center gap-1">
+            <div class="mt-2 text-[11px] text-gray-400 flex items-center gap-1">
               ${iconInfo()} Created on ${v.createdAt}
             </div>
           </div>

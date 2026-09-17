@@ -45,7 +45,7 @@
   var AUTH_STORAGE_KEY = "adminAuth";
 
   // ---- API config ----
-  var API_BASE_URL = "http://localhost:9093";
+  var API_BASE_URL = "http://localhost:9091";
   var LOGIN_URL = API_BASE_URL + "/api/admin/auth/login";
   var LOGOUT_URL = API_BASE_URL + "/api/admin/auth/logout";
 
@@ -144,7 +144,8 @@
     },
 
     _loginPath: function () {
-       return "/admin-login.html";
+      var basePath = (window.NavSidebar && window.NavSidebar._config && window.NavSidebar._config.basePath) || "";
+      return basePath + "admin-login.html";
     },
   };
 
@@ -165,7 +166,7 @@
    * partials/nav-sidebar.html is now just a readable reference copy,
    * it is no longer loaded at runtime.
    */
-    var NAV_SIDEBAR_TEMPLATE = [
+  var NAV_SIDEBAR_TEMPLATE = [
     '<aside id="app-sidebar" class="app-sidebar">',
     '  <div class="sidebar-brand">',
     '    <a href="/dashboard/dashboard.html" class="sidebar-brand-link" aria-label="Go to dashboard">',
@@ -336,7 +337,7 @@
     '      <li class="sidebar-nav-heading"><span>Finance</span></li>',
 
     '      <li class="sidebar-nav-item">',
-    '        <a href="/gst-tax/gst-tax.html" class="sidebar-nav-link" data-page="gsttax">',
+    '        <a href="/gst/gst-tax.html" class="sidebar-nav-link" data-page="gst-tax">',
     '          <span class="sidebar-nav-icon"><i class="fa-solid fa-shield-halved"></i></span>',
     '          <span class="sidebar-nav-label">GST / Tax</span>',
     '          <span class="sidebar-tooltip">GST / Tax</span>',
@@ -352,7 +353,7 @@
     '      </li>',
 
     '      <li class="sidebar-nav-item">',
-    '        <a href="/accounts/accounts.html" class="sidebar-nav-link" data-page="accounts">',
+    '        <a href="/accounting/accounting.html" class="sidebar-nav-link" data-page="accounting">',
     '          <span class="sidebar-nav-icon"><i class="fa-solid fa-book"></i></span>',
     '          <span class="sidebar-nav-label">Accounting</span>',
     '          <span class="sidebar-tooltip">Accounting</span>',
@@ -497,23 +498,42 @@
       //=================================================//
       //====uncomment to login check with token =======//
       //=================================================//
-      if (!Auth.requireAuth()) {
+      // if (!Auth.requireAuth()) {
+      //   return;
+      // }
+
+      // Injecting the markup is the one step that must succeed for
+      // anything else to make sense — if it fails, bail out entirely.
+      try {
+        this._inject(NAV_SIDEBAR_TEMPLATE);
+      } catch (err) {
+        console.error("[nav-sidebar] failed to inject markup:", err);
+        this._paintReady();
         return;
       }
 
-      try {
-        this._inject(NAV_SIDEBAR_TEMPLATE);
-        this._applyUser();
-        this._applyActiveLink();
-        this._bindCollapseToggle();
-        this._bindMobileNav();
-        this._bindProfileMenu();
-        this._bindLogoutOverlay();
-        this._paintReady();
-      } catch (err) {
-        console.error("[nav-sidebar] failed to render:", err);
-        this._paintReady();
+      // Every other step gets its OWN try/catch. Previously these were
+      // all in one block, so a failure early on (e.g. a corrupted
+      // localStorage admin blob in _applyUser) silently skipped
+      // _applyActiveLink and every step after it — which is why the
+      // active nav highlight could appear to "randomly" stop working.
+      var steps = [
+        "_applyUser",
+        "_applyActiveLink",
+        "_bindCollapseToggle",
+        "_bindMobileNav",
+        "_bindProfileMenu",
+        "_bindLogoutOverlay",
+      ];
+      for (var i = 0; i < steps.length; i++) {
+        try {
+          this[steps[i]]();
+        } catch (err) {
+          console.error("[nav-sidebar] " + steps[i] + " failed:", err);
+        }
       }
+
+      this._paintReady();
     },
 
     _inject: function (html) {
@@ -607,11 +627,42 @@
     },
 
     _applyActiveLink: function () {
-      var page = this._config.activePage;
-      if (!page) return;
       var links = document.querySelectorAll(".sidebar-nav-link[data-page]");
+      var page = this._config.activePage;
+      var matched = false;
+
+      // Primary: match the configured activePage against data-page,
+      // case-insensitively (so "deliverychallan" still matches
+      // data-page="deliveryChallan" instead of silently matching nothing).
+      if (page) {
+        var pageLower = String(page).toLowerCase();
+        links.forEach(function (link) {
+          var linkPage = (link.getAttribute("data-page") || "").toLowerCase();
+          if (linkPage === pageLower) {
+            link.classList.add("active");
+            link.setAttribute("aria-current", "page");
+            matched = true;
+          }
+        });
+      }
+
+      if (matched) return;
+
+      // Fallback: no activePage was passed, or it didn't match anything —
+      // auto-detect the active link by comparing each link's URL path to
+      // the current page's path. This means highlighting still works
+      // correctly without relying on activePage being spelled exactly
+      // right on every page.
+      var currentPath = window.location.pathname.replace(/\/+$/, "").toLowerCase();
       links.forEach(function (link) {
-        if (link.getAttribute("data-page") === page) {
+        var href = link.getAttribute("href") || "";
+        var linkPath;
+        try {
+          linkPath = new URL(href, window.location.origin).pathname.replace(/\/+$/, "").toLowerCase();
+        } catch (e) {
+          return; // malformed href, skip
+        }
+        if (linkPath && linkPath === currentPath) {
           link.classList.add("active");
           link.setAttribute("aria-current", "page");
         }
@@ -707,7 +758,7 @@
     },
 
     /* ---------------------------------------------------------------- */
-    /* Logout confirmation overlay (Yes / No)                           */
+    /* Logout confirmation overlay (Yes / No)                            */
     /* ---------------------------------------------------------------- */
     _bindLogoutOverlay: function () {
       var overlay = document.getElementById("logout-overlay");

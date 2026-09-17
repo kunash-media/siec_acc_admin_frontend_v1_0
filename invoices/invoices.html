@@ -7,6 +7,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
 <link rel="manifest" href="/favicon_io/site.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <title>Invoices — Aquilon ERP</title>
 
 <script>
@@ -107,6 +108,7 @@
   .stat-card {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     padding: 10px 14px !important;
+    border: 1px solid #6da84c33 !important;
   }
   .stat-card:hover {
     transform: translateY(-2px);
@@ -402,25 +404,49 @@
     gap: 20px;
   }
 
-  /* Company logo upload area */
-  .logo-upload-area {
-    border: 2px dashed #d1d5db;
-    border-radius: 8px;
-    padding: 12px;
-    text-align: center;
-    transition: border-color 0.2s, background 0.2s;
+  /* ---- TABS ---- */
+  .tab-btn {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    color: #6b7280;
+    background: transparent;
     cursor: pointer;
+    transition: all 0.15s ease;
   }
-  .logo-upload-area:hover {
+  .tab-btn:hover { color: #5c9140; }
+  .tab-btn.active {
+    color: #5c9140;
+    background: #ffffff;
+    border-color: #6da84c55;
+    box-shadow: 0 -2px 0 0 #6da84c inset;
+  }
+  .tab-bar {
+    border-bottom: 1px solid #6da84c55;
+  }
+
+  /* ---- TEMPLATE PICKER ---- */
+  .template-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .template-card:hover { border-color: #6da84c99; }
+  .template-card.selected {
     border-color: #6da84c;
-    background: #f8fafc;
+    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.12);
   }
-  .logo-preview {
-    max-width: 120px;
-    max-height: 60px;
-    object-fit: contain;
-    margin: 0 auto;
-    display: block;
+  .template-thumb {
+    border-radius: 6px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    padding: 10px;
+    font-size: 9px;
   }
 </style>
 </head>
@@ -447,7 +473,17 @@
               <h1 class="page-title text-gray-900">Invoices</h1>
               <p class="page-subtitle mt-0.5">Tax invoices, proforma and recurring invoices. Track payments and outstanding.</p>
             </div>
-            <div class="flex gap-2 flex-wrap">
+            <div class="flex gap-2 flex-wrap items-center">
+
+              <!-- Currency Selector -->
+              <select id="currencySelector" onchange="onGlobalCurrencyChange()" class="form-input !w-auto text-[11px] font-semibold" title="Choose currency for new invoices">
+                <option value="INR">🇮🇳 India — ₹ INR</option>
+                <option value="USD">🇺🇸 America — $ USD</option>
+                <option value="AED">🇦🇪 Dubai — د.إ AED</option>
+                <option value="EUR">🇪🇺 Europe — € EUR</option>
+                <option value="OMR">🇴🇲 Oman — ﷼ OMR</option>
+              </select>
+
               <div class="relative inline-block" data-dd-trigger>
                 <button onclick="toggleFilterDD()" class="filter-btn inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition">
                   <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -459,16 +495,7 @@
                 <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-50">
                   <div class="mb-2">
                     <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Status</label>
-                    <select id="filterStatus" onchange="filterInvoices()" class="form-input text-[10px]">
-                      <option value="all">All Status</option>
-                      <option value="draft">Draft</option>
-                      <option value="sent">Sent</option>
-                      <option value="viewed">Viewed</option>
-                      <option value="partial">Partially Paid</option>
-                      <option value="paid">Paid</option>
-                      <option value="overdue">Overdue</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
+                    <select id="filterStatus" onchange="filterInvoices()" class="form-input text-[10px]"></select>
                   </div>
                   <div class="mb-2">
                     <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Customer</label>
@@ -480,6 +507,18 @@
                 </div>
               </div>
 
+              <button onclick="openChooseTemplate()" id="chooseTemplateBtn" class="inline-flex items-center gap-1.5 bg-white border border-primary text-primary hover:bg-primary-soft text-[11px] font-semibold px-3 py-2 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Choose Template
+              </button>
+
+              <button onclick="openAddProforma()" id="newProformaBtn" class="hidden inline-flex items-center gap-1.5 bg-white border border-primary text-primary hover:bg-primary-soft text-[11px] font-semibold px-3 py-2 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                New Proforma
+              </button>
+
               <button onclick="openAddInvoice()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm">
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M12 5v14M5 12h14"/>
@@ -490,35 +529,33 @@
           </div>
 
           <!-- ===== STATS CARDS ===== -->
-          <div class="grid grid-cols-2 md:grid-cols-6 gap-2.5 mb-4">
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+            <div class="bg-white rounded-xl shadow-sm stat-card">
               <div class="stat-label">Total</div>
               <div class="stat-value" id="totalInvoices">0</div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="bg-white rounded-xl shadow-sm stat-card">
               <div class="stat-label">Due</div>
               <div class="stat-value text-amber-600" id="dueInvoices">0</div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="bg-white rounded-xl shadow-sm stat-card">
               <div class="stat-label">Overdue</div>
               <div class="stat-value text-red-600" id="overdueInvoices">0</div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
-              <div class="stat-label">Paid</div>
-              <div class="stat-value text-green-600" id="paidInvoices">0</div>
-            </div>
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="bg-white rounded-xl shadow-sm stat-card">
               <div class="stat-label">Total Value</div>
               <div class="stat-value text-primary" id="totalValue">₹0</div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
-              <div class="stat-label">Receivable</div>
-              <div class="stat-value text-amber-600" id="receivableAmount">₹0</div>
-            </div>
+          </div>
+
+          <!-- ===== TABS ===== -->
+          <div class="tab-bar flex gap-1 mb-0 px-1">
+            <button class="tab-btn active" id="tabBtn_invoice" onclick="switchTab('invoice')">Invoices</button>
+            <button class="tab-btn" id="tabBtn_proforma" onclick="switchTab('proforma')">Proforma Invoices</button>
           </div>
 
           <!-- ===== INVOICES TABLE ===== -->
-          <div id="invoicesPanel"></div>
+          <div id="invoicesPanel" class="rounded-t-none"></div>
 
         </div>
       </main>
@@ -563,14 +600,8 @@
     function iconX() {
       return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
     }
-    function iconFilter() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
-    }
     function iconSave() {
       return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`;
-    }
-    function iconInfo() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>`;
     }
     function iconDocument() {
       return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>`;
@@ -584,11 +615,29 @@
     function iconDownload() {
       return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>`;
     }
-    function iconPayment() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V10M10 21V10M14 21V10M19 21V10"/><path d="M2 10l10-6 10 6"/></svg>`;
+
+    // =============================================================
+    // CURRENCY CONFIG
+    // =============================================================
+    var currencyMeta = {
+      INR: { symbol: '₹', label: 'India',  countries: ['India'], rate: 1 },
+      USD: { symbol: '$', label: 'America', countries: ['America', 'USA', 'United States'], rate: 83.5 },
+      AED: { symbol: 'د.إ', label: 'Dubai', countries: ['Dubai', 'UAE', 'United Arab Emirates'], rate: 22.7 },
+      EUR: { symbol: '€', label: 'Europe', countries: ['Europe', 'Germany', 'France'], rate: 90.2 },
+      OMR: { symbol: '﷼', label: 'Oman', countries: ['Oman'], rate: 217.5 },
+    };
+
+    function getCurrencySymbol(currency) {
+      return (currencyMeta[currency] && currencyMeta[currency].symbol) || '₹';
     }
-    function iconLogo() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4.5A2.5 2.5 0 016.5 2H20v18H6.5A2.5 2.5 0 014 17.5v-13z"/><path d="M4 17.5A2.5 2.5 0 016.5 20H20"/></svg>`;
+    function getCurrencyRate(currency) {
+      return (currencyMeta[currency] && currencyMeta[currency].rate) || 1;
+    }
+    function currencyForCountry(country) {
+      for (var code in currencyMeta) {
+        if (currencyMeta[code].countries.indexOf(country) !== -1) return code;
+      }
+      return 'INR';
     }
 
     // =============================================================
@@ -670,8 +719,6 @@
         </div>`;
     }
 
-    function inputBase() { return "form-input"; }
-
     // =============================================================
     // DROPDOWN
     // =============================================================
@@ -691,39 +738,48 @@
     // =============================================================
     // HELPERS
     // =============================================================
-    function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
-
+    function money(n, currency) {
+      return getCurrencySymbol(currency || 'INR') + Number(n || 0).toLocaleString('en-IN');
+    }
     function formatCurrency(amount, currency) {
-      var symbols = { INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ' };
-      var symbol = symbols[currency] || '₹';
-      return symbol + Number(amount).toLocaleString('en-IN');
+      return getCurrencySymbol(currency) + Number(amount || 0).toLocaleString('en-IN');
+    }
+
+    // status label/badge maps per invoiceType
+    var statusOptions = {
+      invoice: [
+        { v: 'paid', l: 'Paid' },
+        { v: 'unpaid', l: 'Unpaid' },
+        { v: 'partial', l: 'Partial Paid' },
+      ],
+      proforma: [
+        { v: 'open', l: 'Open' },
+        { v: 'converted', l: 'Converted' },
+        { v: 'declined', l: 'Declined' },
+      ]
+    };
+
+    var statusStyle = {
+      paid:      { badge: 'badge-green',  dot: 'badge-dot-green' },
+      unpaid:    { badge: 'badge-amber',  dot: 'badge-dot-amber' },
+      partial:   { badge: 'badge-blue',   dot: 'badge-dot-blue' },
+      open:      { badge: 'badge-blue',   dot: 'badge-dot-blue' },
+      converted: { badge: 'badge-green',  dot: 'badge-dot-green' },
+      declined:  { badge: 'badge-red',    dot: 'badge-dot-red' },
+    };
+
+    function statusLabel(status) {
+      var all = statusOptions.invoice.concat(statusOptions.proforma);
+      var found = all.find(function(s) { return s.v === status; });
+      return found ? found.l : status;
     }
 
     function statusBadge(status) {
-      var map = {
-        draft: 'badge-gray',
-        sent: 'badge-blue',
-        viewed: 'badge-purple',
-        partial: 'badge-amber',
-        paid: 'badge-green',
-        overdue: 'badge-red',
-        cancelled: 'badge-gray'
-      };
-      var dot = {
-        draft: 'badge-dot-gray',
-        sent: 'badge-dot-blue',
-        viewed: 'badge-dot-purple',
-        partial: 'badge-dot-amber',
-        paid: 'badge-dot-green',
-        overdue: 'badge-dot-red',
-        cancelled: 'badge-dot-gray'
-      };
-      var label = status.charAt(0).toUpperCase() + status.slice(1);
-      if (status === 'partial') label = 'Partially Paid';
-      return '<span class="badge ' + map[status] + '"><span class="badge-dot ' + dot[status] + '"></span>' + label + '</span>';
+      var style = statusStyle[status] || { badge: 'badge-gray', dot: 'badge-dot-gray' };
+      return '<span class="badge ' + style.badge + '"><span class="badge-dot ' + style.dot + '"></span>' + statusLabel(status) + '</span>';
     }
 
-    function rowActionsHtml(editFn, delFn, viewFn, sendFn, downloadFn, paymentFn) {
+    function rowActionsHtml(editFn, delFn, viewFn, sendFn, downloadFn) {
       var html = '<div class="flex gap-1">';
       if (viewFn) {
         html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
@@ -734,9 +790,6 @@
       if (downloadFn) {
         html += '<button onclick="' + downloadFn + '" class="btn-icon-action primary" title="Download PDF">' + iconDownload() + '</button>';
       }
-      if (paymentFn) {
-        html += '<button onclick="' + paymentFn + '" class="btn-icon-action primary" title="Record Payment">' + iconPayment() + '</button>';
-      }
       html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
       html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
       html += '</div>';
@@ -745,7 +798,7 @@
 
     function panelWrap(titleHtml, bodyHtml, extraHead) {
       return `
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="bg-white border border-primary/30 rounded-xl rounded-tl-none shadow-sm overflow-hidden">
           <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
             <div class="font-semibold text-sm text-gray-800 flex items-center gap-2">${titleHtml}</div>
             ${extraHead || ''}
@@ -773,27 +826,18 @@
     // DATA
     // =============================================================
 
-    // ---- Company Logo (Base64 placeholder) ----
-    var companyLogo = null; // Will be set when user uploads
+    var activeTab = 'invoice'; // 'invoice' | 'proforma'
+    var globalCurrency = 'INR'; // reflects the top currency dropdown selection
 
-    var customers = [
-      { id: 'CUS-001', name: 'XYZ Retail Store', gst: '07BXYXZ1234F1ZP', state: 'Delhi', stateCode: '07', address: 'A-12, Connaught Place, New Delhi' },
-      { id: 'CUS-002', name: 'ABC Enterprises', gst: '27ABCXY1234E1ZP', state: 'Maharashtra', stateCode: '27', address: '45, Industrial Estate, Pune' },
-      { id: 'CUS-003', name: 'Rahul Sharma', gst: '', state: 'Maharashtra', stateCode: '27', address: '12, Green Park, Mumbai' },
-      { id: 'CUS-004', name: 'Tech Solutions Inc.', gst: '29TECH1234H1ZP', state: 'Karnataka', stateCode: '29', address: '88, Electronics City, Bengaluru' },
-      { id: 'CUS-005', name: 'Priya Patel', gst: '', state: 'Gujarat', stateCode: '24', address: '22, Lake View, Surat' },
-      { id: 'CUS-006', name: 'Global Exports Ltd.', gst: '07GLOB1234K1ZP', state: 'Delhi', stateCode: '07', address: '101, Trade Tower, Delhi' },
+    // ---- Saved Invoice Template (selected via Choose Template) ----
+    // Backend note: persist the chosen template id/name against the account/user
+    // so new-invoice creation defaults to it automatically.
+    var savedTemplateId = null;
+
+    var invoiceTemplates = [
+      { id: 'tpl-classic', name: 'Classic Green', description: 'Logo left, company right, clean line-item table. Matches current theme.' },
+      { id: 'tpl-modern',  name: 'Modern Split',  description: 'Bold title band, two-column summary, minimal rules.' },
     ];
-
-    var items = [
-      { id: 'ITM-1001', name: 'Centrifugal Blower — 5HP', price: 42000, gst: 18, unit: 'Pcs', hsn: '9503' },
-      { id: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', price: 118000, gst: 18, unit: 'Pcs', hsn: '8421' },
-      { id: 'ITM-1003', name: 'Activated Carbon Media', price: 6500, gst: 18, unit: 'Kg', hsn: '2803' },
-      { id: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', price: 850, gst: 18, unit: 'Mtr', hsn: '3917' },
-      { id: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', price: 28000, gst: 18, unit: 'Pcs', hsn: '8413' },
-    ];
-
-    var exchangeRates = { INR: 1, USD: 83.5, EUR: 90.2, GBP: 105.8, AED: 22.7 };
 
     // ---- Company Details ----
     var company = {
@@ -808,160 +852,201 @@
       bankName: 'HDFC Bank',
       bankAccount: '1234567890',
       bankIfsc: 'HDFC0000123',
+      // logo now comes from a URL/path (set via backend/DB) instead of a manual file upload
+      logoUrl: '',
     };
 
-    var invoices = [{
-      id: 'INV-001',
-      number: 'INV/25-26/001',
-      date: '2026-01-10',
-      dueDate: '2026-01-25',
-      customerId: 'CUS-001',
-      customerName: 'XYZ Retail Store',
-      customerGST: '07BXYXZ1234F1ZP',
-      customerState: 'Delhi',
-      customerStateCode: '07',
-      customerAddress: 'A-12, Connaught Place, New Delhi',
-      currency: 'INR',
-      exchangeRate: 1,
-      items: [
-        { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', hsn: '9503', qty: 2, rate: 42000, gst: 18, unit: 'Pcs' },
-        { itemId: 'ITM-1003', name: 'Activated Carbon Media', hsn: '2803', qty: 10, rate: 6500, gst: 18, unit: 'Kg' }
-      ],
-      discount: 5,
-      tax: 18,
-      shipping: 0,
-      otherCharges: 0,
-      status: 'sent',
-      total: 0,
-      totalINR: 0,
-      paid: 0,
-      createdAt: '2026-01-10',
-      placeOfSupply: 'Delhi',
-      terms: 'Payment within 15 days of invoice date.'
-    }, {
-      id: 'INV-002',
-      number: 'INV/25-26/002',
-      date: '2026-01-15',
-      dueDate: '2026-02-14',
-      customerId: 'CUS-002',
-      customerName: 'ABC Enterprises',
-      customerGST: '27ABCXY1234E1ZP',
-      customerState: 'Maharashtra',
-      customerStateCode: '27',
-      customerAddress: '45, Industrial Estate, Pune',
-      currency: 'INR',
-      exchangeRate: 1,
-      items: [
-        { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', hsn: '8421', qty: 1, rate: 118000, gst: 18, unit: 'Pcs' },
-        { itemId: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', hsn: '3917', qty: 20, rate: 850, gst: 18, unit: 'Mtr' }
-      ],
-      discount: 10,
-      tax: 18,
-      shipping: 0,
-      otherCharges: 0,
-      status: 'partial',
-      total: 0,
-      totalINR: 0,
-      paid: 50000,
-      createdAt: '2026-01-15',
-      placeOfSupply: 'Maharashtra',
-      terms: 'Net 30 days payment.'
-    }, {
-      id: 'INV-003',
-      number: 'INV/25-26/003',
-      date: '2026-01-20',
-      dueDate: '2026-02-19',
-      customerId: 'CUS-003',
-      customerName: 'Rahul Sharma',
-      customerGST: '',
-      customerState: 'Maharashtra',
-      customerStateCode: '27',
-      customerAddress: '12, Green Park, Mumbai',
-      currency: 'INR',
-      exchangeRate: 1,
-      items: [
-        { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', hsn: '8413', qty: 2, rate: 28000, gst: 18, unit: 'Pcs' }
-      ],
-      discount: 0,
-      tax: 18,
-      shipping: 500,
-      otherCharges: 0,
-      status: 'paid',
-      total: 0,
-      totalINR: 0,
-      paid: 0,
-      createdAt: '2026-01-20',
-      placeOfSupply: 'Maharashtra',
-      terms: 'Advance payment required.'
-    }, {
-      id: 'INV-004',
-      number: 'INV/25-26/004',
-      date: '2026-01-25',
-      dueDate: '2026-02-24',
-      customerId: 'CUS-004',
-      customerName: 'Tech Solutions Inc.',
-      customerGST: '29TECH1234H1ZP',
-      customerState: 'Karnataka',
-      customerStateCode: '29',
-      customerAddress: '88, Electronics City, Bengaluru',
-      currency: 'USD',
-      exchangeRate: 83.5,
-      items: [
-        { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', hsn: '9503', qty: 3, rate: 500, gst: 18, unit: 'Pcs' },
-        { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', hsn: '8421', qty: 1, rate: 1400, gst: 18, unit: 'Pcs' }
-      ],
-      discount: 0,
-      tax: 18,
-      shipping: 100,
-      otherCharges: 0,
-      status: 'overdue',
-      total: 0,
-      totalINR: 0,
-      paid: 0,
-      createdAt: '2026-01-25',
-      placeOfSupply: 'Karnataka',
-      terms: 'Net 15 days.'
-    }, {
-      id: 'INV-005',
-      number: 'INV/25-26/005',
-      date: '2026-02-01',
-      dueDate: '2026-03-03',
-      customerId: 'CUS-006',
-      customerName: 'Global Exports Ltd.',
-      customerGST: '07GLOB1234K1ZP',
-      customerState: 'Delhi',
-      customerStateCode: '07',
-      customerAddress: '101, Trade Tower, Delhi',
-      currency: 'EUR',
-      exchangeRate: 90.2,
-      items: [
-        { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', hsn: '8421', qty: 2, rate: 1300, gst: 18, unit: 'Pcs' },
-        { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', hsn: '8413', qty: 3, rate: 320, gst: 18, unit: 'Pcs' }
-      ],
-      discount: 5,
-      tax: 18,
-      shipping: 200,
-      otherCharges: 0,
-      status: 'viewed',
-      total: 0,
-      totalINR: 0,
-      paid: 0,
-      createdAt: '2026-02-05',
-      placeOfSupply: 'Delhi',
-      terms: 'Export invoice.'
-    }];
+    var customers = [
+      { id: 'CUS-001', name: 'XYZ Retail Store', gst: '07BXYXZ1234F1ZP', country: 'India', state: 'Delhi', stateCode: '07', address: 'A-12, Connaught Place, New Delhi', email: 'accounts@xyzretail.com', phone: '+91-9811122233' },
+      { id: 'CUS-002', name: 'ABC Enterprises', gst: '27ABCXY1234E1ZP', country: 'India', state: 'Maharashtra', stateCode: '27', address: '45, Industrial Estate, Pune', email: 'billing@abcenterprises.in', phone: '+91-9822233344' },
+      { id: 'CUS-003', name: 'Rahul Sharma', gst: '', country: 'India', state: 'Maharashtra', stateCode: '27', address: '12, Green Park, Mumbai', email: 'rahul.sharma@example.com', phone: '+91-9833344455' },
+      { id: 'CUS-004', name: 'Global Tech LLC', gst: '', country: 'America', state: '', stateCode: '', address: '221 Market St, San Francisco, CA', email: 'ap@globaltechllc.com', phone: '+1-4155551234' },
+      { id: 'CUS-005', name: 'Al Fahad Trading', gst: '', country: 'Dubai', state: '', stateCode: '', address: 'Sheikh Zayed Road, Dubai, UAE', email: 'finance@alfahadtrading.ae', phone: '+971-501234567' },
+      { id: 'CUS-006', name: 'Nordic Interiors GmbH', gst: '', country: 'Europe', state: '', stateCode: '', address: 'Friedrichstrasse 20, Berlin', email: 'buchhaltung@nordicinteriors.de', phone: '+49-3012345678' },
+      { id: 'CUS-007', name: 'Muscat Oilfield Services', gst: '', country: 'Oman', state: '', stateCode: '', address: 'Al Khuwair, Muscat', email: 'accounts@muscatoilfield.om', phone: '+968-91234567' },
+    ];
 
-    var nextInvNo = 6;
+    var items = [
+      { id: 'ITM-1001', name: 'Centrifugal Blower — 5HP', price: 42000, gst: 18, unit: 'Pcs', hsn: '9503' },
+      { id: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', price: 118000, gst: 18, unit: 'Pcs', hsn: '8421' },
+      { id: 'ITM-1003', name: 'Activated Carbon Media', price: 6500, gst: 18, unit: 'Kg', hsn: '2803' },
+      { id: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', price: 850, gst: 18, unit: 'Mtr', hsn: '3917' },
+      { id: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', price: 28000, gst: 18, unit: 'Pcs', hsn: '8413' },
+    ];
+
+    // invoiceType: 'invoice' | 'proforma' — this field is what the tabs filter on.
+    // Backend note: add `invoiceType` to the invoice payload/table so tab rendering
+    // stays a simple filter server-side once wired up.
+    var invoices = [
+      {
+        id: 'INV-001',
+        invoiceType: 'invoice',
+        number: 'INV/25-26/001',
+        date: '2026-01-10',
+        dueDate: '2026-01-25',
+        customerId: 'CUS-001',
+        customerName: 'XYZ Retail Store',
+        customerGST: '07BXYXZ1234F1ZP',
+        customerState: 'Delhi',
+        customerStateCode: '07',
+        customerAddress: 'A-12, Connaught Place, New Delhi',
+        currency: 'INR',
+        exchangeRate: 1,
+        items: [
+          { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', hsn: '9503', qty: 2, rate: 42000, gst: 18, unit: 'Pcs' },
+          { itemId: 'ITM-1003', name: 'Activated Carbon Media', hsn: '2803', qty: 10, rate: 6500, gst: 18, unit: 'Kg' }
+        ],
+        discount: 5,
+        tax: 18,
+        shipping: 0,
+        otherCharges: 0,
+        status: 'unpaid',
+        total: 0,
+        totalINR: 0,
+        paid: 0,
+        createdAt: '2026-01-10',
+        placeOfSupply: 'Delhi',
+        terms: 'Payment within 15 days of invoice date.',
+        pdfUrl: 'https://cdn.example.com/invoices/INV-001.pdf'
+      },
+      {
+        id: 'INV-002',
+        invoiceType: 'invoice',
+        number: 'INV/25-26/002',
+        date: '2026-02-02',
+        dueDate: '2026-02-16',
+        customerId: 'CUS-004',
+        customerName: 'Global Tech LLC',
+        customerGST: '',
+        customerState: '',
+        customerStateCode: '',
+        customerAddress: '221 Market St, San Francisco, CA',
+        currency: 'USD',
+        exchangeRate: 83.5,
+        items: [
+          { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', hsn: '8421', qty: 1, rate: 118000, gst: 0, unit: 'Pcs' }
+        ],
+        discount: 0,
+        tax: 0,
+        shipping: 0,
+        otherCharges: 0,
+        status: 'paid',
+        total: 0,
+        totalINR: 0,
+        paid: 0,
+        createdAt: '2026-02-02',
+        placeOfSupply: 'America',
+        terms: 'Net 15.',
+        pdfUrl: 'https://cdn.example.com/invoices/INV-002.pdf'
+      },
+      {
+        id: 'PRO-001',
+        invoiceType: 'proforma',
+        number: 'PI/25-26/001',
+        date: '2026-02-12',
+        dueDate: '2026-02-27',
+        validUntil: '2026-03-01',
+        customerId: 'CUS-002',
+        customerName: 'ABC Enterprises',
+        customerGST: '27ABCXY1234E1ZP',
+        customerState: 'Maharashtra',
+        customerStateCode: '27',
+        customerAddress: '45, Industrial Estate, Pune',
+        currency: 'INR',
+        exchangeRate: 1,
+        items: [
+          { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', hsn: '8413', qty: 3, rate: 28000, gst: 18, unit: 'Pcs' }
+        ],
+        discount: 0,
+        tax: 18,
+        shipping: 500,
+        otherCharges: 0,
+        status: 'open',
+        total: 0,
+        totalINR: 0,
+        paid: 0,
+        createdAt: '2026-02-12',
+        placeOfSupply: 'Maharashtra',
+        terms: 'Quotation valid for 15 days. Advance 50% required to confirm order.',
+        pdfUrl: 'https://cdn.example.com/proformas/PRO-001.pdf'
+      },
+      {
+        id: 'PRO-002',
+        invoiceType: 'proforma',
+        number: 'PI/25-26/002',
+        date: '2026-02-20',
+        dueDate: '2026-03-07',
+        validUntil: '2026-03-10',
+        customerId: 'CUS-005',
+        customerName: 'Al Fahad Trading',
+        customerGST: '',
+        customerState: '',
+        customerStateCode: '',
+        customerAddress: 'Sheikh Zayed Road, Dubai, UAE',
+        currency: 'AED',
+        exchangeRate: 22.7,
+        items: [
+          { itemId: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', hsn: '3917', qty: 200, rate: 850, gst: 0, unit: 'Mtr' }
+        ],
+        discount: 2,
+        tax: 0,
+        shipping: 0,
+        otherCharges: 0,
+        status: 'converted',
+        total: 0,
+        totalINR: 0,
+        paid: 0,
+        createdAt: '2026-02-20',
+        placeOfSupply: 'Dubai',
+        terms: 'Quotation valid for 15 days.',
+        pdfUrl: 'https://cdn.example.com/proformas/PRO-002.pdf'
+      }
+    ];
+
+    var nextInvNo = 3;
+    var nextProNo = 3;
 
     // Calculate totals
-    invoices.forEach(function(inv) {
-      var subtotal = inv.items.reduce(function(sum, item) { return sum + (item.qty * item.rate); }, 0);
-      var discountAmt = subtotal * (inv.discount / 100);
-      var afterDiscount = subtotal - discountAmt;
-      var taxAmt = afterDiscount * (inv.tax / 100);
-      inv.total = afterDiscount + taxAmt + inv.shipping + inv.otherCharges;
-      inv.totalINR = inv.total * inv.exchangeRate;
-    });
+    function recalcAll() {
+      invoices.forEach(function(inv) {
+        var subtotal = inv.items.reduce(function(sum, item) { return sum + (item.qty * item.rate); }, 0);
+        var discountAmt = subtotal * (inv.discount / 100);
+        var afterDiscount = subtotal - discountAmt;
+        var taxAmt = afterDiscount * (inv.tax / 100);
+        inv.total = afterDiscount + taxAmt + inv.shipping + inv.otherCharges;
+        inv.totalINR = inv.total * inv.exchangeRate;
+      });
+    }
+    recalcAll();
+
+    // =============================================================
+    // GLOBAL CURRENCY DROPDOWN
+    // =============================================================
+    function onGlobalCurrencyChange() {
+      globalCurrency = document.getElementById('currencySelector').value || 'INR';
+      showToast('New invoices will default to ' + currencyMeta[globalCurrency].label + ' (' + getCurrencySymbol(globalCurrency) + ')', 'info');
+    }
+
+    // =============================================================
+    // TABS
+    // =============================================================
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById('tabBtn_invoice').classList.toggle('active', tab === 'invoice');
+      document.getElementById('tabBtn_proforma').classList.toggle('active', tab === 'proforma');
+      document.getElementById('newProformaBtn').classList.toggle('hidden', tab !== 'proforma');
+      document.getElementById('chooseTemplateBtn').classList.toggle('hidden', tab !== 'invoice');
+      buildStatusFilterOptions();
+      clearFilters(true);
+      renderInvoices();
+    }
+
+    function buildStatusFilterOptions() {
+      var sel = document.getElementById('filterStatus');
+      var opts = statusOptions[activeTab];
+      sel.innerHTML = '<option value="all">All Status</option>' +
+        opts.map(function(o) { return '<option value="' + o.v + '">' + o.l + '</option>'; }).join('');
+    }
 
     // =============================================================
     // FUNCTIONS
@@ -972,26 +1057,31 @@
       return c ? c.name : id;
     }
 
-    function getCurrencySymbol(currency) {
-      var symbols = { INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ' };
-      return symbols[currency] || '₹';
+    function currentTabInvoices() {
+      return invoices.filter(function(i) { return i.invoiceType === activeTab; });
     }
 
     function renderStats() {
-      var total = invoices.length;
-      var due = invoices.filter(function(i) { return i.status === 'sent' || i.status === 'viewed' || i.status === 'partial'; }).length;
-      var overdue = invoices.filter(function(i) { return i.status === 'overdue'; }).length;
-      var paid = invoices.filter(function(i) { return i.status === 'paid'; }).length;
-      var totalVal = invoices.reduce(function(sum, i) { return sum + i.totalINR; }, 0);
-      var receivable = invoices.filter(function(i) { return i.status !== 'paid' && i.status !== 'cancelled' && i.status !== 'draft'; })
-        .reduce(function(sum, i) { return sum + (i.totalINR - i.paid); }, 0);
+      var list = currentTabInvoices();
+      var total = list.length;
+      var due, overdue;
+      if (activeTab === 'invoice') {
+        due = list.filter(function(i) { return i.status === 'unpaid' || i.status === 'partial'; }).length;
+        overdue = list.filter(function(i) { return i.status === 'unpaid' && new Date(i.dueDate) < new Date(); }).length;
+      } else {
+        due = list.filter(function(i) { return i.status === 'open'; }).length;
+        overdue = list.filter(function(i) { return i.status === 'declined'; }).length;
+      }
+      var totalVal = list.reduce(function(sum, i) { return sum + i.totalINR; }, 0);
 
       document.getElementById('totalInvoices').textContent = total;
       document.getElementById('dueInvoices').textContent = due;
       document.getElementById('overdueInvoices').textContent = overdue;
-      document.getElementById('paidInvoices').textContent = paid;
-      document.getElementById('totalValue').textContent = money(totalVal);
-      document.getElementById('receivableAmount').textContent = money(receivable);
+      document.getElementById('totalValue').textContent = money(totalVal, 'INR');
+
+      // relabel stat cards for proforma context
+      document.querySelector('#dueInvoices').previousElementSibling.textContent = activeTab === 'invoice' ? 'Due' : 'Open';
+      document.querySelector('#overdueInvoices').previousElementSibling.textContent = activeTab === 'invoice' ? 'Overdue' : 'Declined';
 
       var filterCustomer = document.getElementById('filterCustomer');
       var currentVal = filterCustomer.value;
@@ -1005,10 +1095,10 @@
     function getFilteredInvoices() {
       var searchInput = document.getElementById('searchInput');
       var q = searchInput ? searchInput.value.toLowerCase() : '';
-      var status = document.getElementById('filterStatus').value || 'all';
-      var customer = document.getElementById('filterCustomer').value || 'all';
+      var status = document.getElementById('filterStatus') ? (document.getElementById('filterStatus').value || 'all') : 'all';
+      var customer = document.getElementById('filterCustomer') ? (document.getElementById('filterCustomer').value || 'all') : 'all';
 
-      return invoices.filter(function(inv) {
+      return currentTabInvoices().filter(function(inv) {
         var matchSearch = inv.number.toLowerCase().indexOf(q) !== -1 ||
           inv.customerName.toLowerCase().indexOf(q) !== -1 ||
           inv.id.toLowerCase().indexOf(q) !== -1;
@@ -1020,21 +1110,21 @@
 
     function renderInvoices() {
       var filtered = getFilteredInvoices();
+      var isProforma = activeTab === 'proforma';
 
       var rowsHtml = '';
       if (filtered.length === 0) {
         rowsHtml = `
           <tr>
-            <td colspan="9" class="text-center py-10 text-gray-400 text-sm">
+            <td colspan="7" class="text-center py-10 text-gray-400 text-sm">
               <div class="flex justify-center mb-2 empty-icon-svg">${iconDocument()}</div>
-              No invoices found. Try adjusting your filters or
-              <button onclick="openAddInvoice()" class="text-primary font-semibold hover:underline">create a new invoice</button>.
+              No ${isProforma ? 'proforma invoices' : 'invoices'} found. Try adjusting your filters or
+              <button onclick="${isProforma ? 'openAddProforma()' : 'openAddInvoice()'}" class="text-primary font-semibold hover:underline">create a new ${isProforma ? 'proforma invoice' : 'invoice'}</button>.
             </td>
           </tr>`;
       } else {
         rowsHtml = filtered.map(function(inv) {
-          var canSend = inv.status === 'draft';
-          var canPayment = inv.status === 'sent' || inv.status === 'viewed' || inv.status === 'partial' || inv.status === 'overdue';
+          var canSend = isProforma ? inv.status === 'open' : (inv.status === 'unpaid');
           var currencySymbol = getCurrencySymbol(inv.currency);
           return `
             <tr class="border-b border-gray-100 table-row-hover">
@@ -1048,19 +1138,18 @@
               <td class="px-3 py-2.5 font-mono text-[11px] text-gray-500">${inv.dueDate}</td>
               <td class="px-3 py-2.5">${statusBadge(inv.status)}</td>
               <td class="px-3 py-2.5">${rowActionsHtml(
-                "editInvoice('"+inv.id+"')",
+                (isProforma ? "editProforma('" : "editInvoice('")+inv.id+"')",
                 "delInvoice('"+inv.id+"')",
                 "viewInvoice('"+inv.id+"')",
-                canSend ? "sendInvoice('"+inv.id+"')" : null,
-                "downloadInvoice('"+inv.id+"')",
-                canPayment ? "recordPayment('"+inv.id+"')" : null
+                canSend ? "openSendOverlay('"+inv.id+"')" : null,
+                "downloadInvoice('"+inv.id+"')"
               )}</td>
             </tr>`;
         }).join('');
       }
 
       var panelHtml = panelWrap(
-        'All Invoices <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
+        (isProforma ? 'All Proforma Invoices' : 'All Invoices') + ' <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
         tableHtml(['Invoice #', 'Date', 'Customer', 'Total', 'Due Date', 'Status', 'Actions'], rowsHtml),
         '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderInvoices()" class="text-[10px] border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
       );
@@ -1071,13 +1160,15 @@
 
     function filterInvoices() { renderInvoices(); }
 
-    function clearFilters() {
-      document.getElementById('filterStatus').value = 'all';
+    function clearFilters(silent) {
+      buildStatusFilterOptions();
       document.getElementById('filterCustomer').value = 'all';
       var searchInput = document.getElementById('searchInput');
       if (searchInput) searchInput.value = '';
-      renderInvoices();
-      toggleFilterDD();
+      if (!silent) {
+        renderInvoices();
+        toggleFilterDD();
+      }
     }
 
     // =============================================================
@@ -1088,7 +1179,7 @@
       var inv = invoices.find(function(x) { return x.id === id; });
       if (!inv) return;
 
-      var customer = customers.find(function(c) { return c.id === inv.customerId; });
+      var isProforma = inv.invoiceType === 'proforma';
 
       // Determine GST type (CGST+SGST or IGST)
       var isSameState = company.stateCode === inv.customerStateCode;
@@ -1116,12 +1207,13 @@
 
       var currencySymbol = getCurrencySymbol(inv.currency);
 
-      var logoHtml = companyLogo ?
-        '<img src="' + companyLogo + '" alt="Company Logo" class="invoice-logo">' :
+      // Logo now sourced purely from company.logoUrl (set from DB) — no manual upload.
+      var logoHtml = company.logoUrl ?
+        '<img src="' + company.logoUrl + '" alt="Company Logo" class="invoice-logo">' :
         '<div class="w-20 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs border border-gray-200">Logo</div>';
 
       var modalContent = `
-        ${modalHeader('Invoice', inv.number)}
+        ${modalHeader(isProforma ? 'Proforma Invoice' : 'Invoice', inv.number)}
         <div class="px-5 py-4 modal-scroll">
 
           <!-- ===== INVOICE PREVIEW (Standard Format) ===== -->
@@ -1144,7 +1236,7 @@
 
             <!-- Invoice Title -->
             <div class="text-center mb-3">
-              <span class="invoice-title">TAX INVOICE</span>
+              <span class="invoice-title">${isProforma ? 'PROFORMA INVOICE' : 'TAX INVOICE'}</span>
             </div>
 
             <!-- Customer & Invoice Details -->
@@ -1154,12 +1246,12 @@
                 <div class="meta-value">${inv.customerName}</div>
                 <div class="text-xs text-gray-500">${inv.customerAddress || ''}</div>
                 <div class="text-xs text-gray-500">GSTIN: ${inv.customerGST || '—'}</div>
-                <div class="text-xs text-gray-500">State: ${inv.customerState} (Code: ${inv.customerStateCode})</div>
+                <div class="text-xs text-gray-500">State: ${inv.customerState || '—'}${inv.customerStateCode ? ' (Code: ' + inv.customerStateCode + ')' : ''}</div>
               </div>
               <div style="text-align:right;">
-                <div><span class="meta-label">Invoice #</span> <span class="meta-value">${inv.number}</span></div>
+                <div><span class="meta-label">${isProforma ? 'Proforma #' : 'Invoice #'}</span> <span class="meta-value">${inv.number}</span></div>
                 <div><span class="meta-label">Date</span> <span class="meta-value">${inv.date}</span></div>
-                <div><span class="meta-label">Due Date</span> <span class="meta-value">${inv.dueDate}</span></div>
+                <div><span class="meta-label">${isProforma ? 'Valid Until' : 'Due Date'}</span> <span class="meta-value">${isProforma ? (inv.validUntil || inv.dueDate) : inv.dueDate}</span></div>
                 <div><span class="meta-label">Place of Supply</span> <span class="meta-value">${inv.placeOfSupply || inv.customerState}</span></div>
                 <div><span class="meta-label">Currency</span> <span class="meta-value">${inv.currency} (${currencySymbol})</span></div>
               </div>
@@ -1225,17 +1317,7 @@
 
               ${inv.currency !== 'INR' ? `
               <div class="text-[10px] text-gray-400 mt-1">
-                INR Equivalent: ${money(inv.totalINR)} (Rate: ${inv.exchangeRate})
-              </div>` : ''}
-
-              ${inv.paid > 0 ? `
-              <div class="total-row">
-                <span class="label" style="color:#16a34a;">Amount Paid</span>
-                <span class="value" style="color:#16a34a;">${formatCurrency(inv.paid, inv.currency)}</span>
-              </div>
-              <div class="total-row" style="font-weight:700;border-top:1px solid #e5e7eb;padding-top:4px;">
-                <span class="label">Balance Due</span>
-                <span class="value" style="color:#d97706;">${formatCurrency(inv.total - inv.paid, inv.currency)}</span>
+                INR Equivalent: ${money(inv.totalINR, 'INR')} (Rate: ${inv.exchangeRate})
               </div>` : ''}
             </div>
 
@@ -1252,7 +1334,7 @@
 
             <!-- Footer -->
             <div class="invoice-footer">
-              <p>This is a system generated invoice. | ${company.name} | ${company.phone}</p>
+              <p>This is a system generated ${isProforma ? 'proforma invoice' : 'invoice'}. | ${company.name} | ${company.phone}</p>
             </div>
 
           </div>
@@ -1269,39 +1351,46 @@
     }
 
     // =============================================================
-    // ADD / EDIT INVOICE
+    // ADD / EDIT INVOICE  (invoiceType: 'invoice')
     // =============================================================
 
-    function openAddInvoice() { openInvoiceModal(null); }
+    function openAddInvoice() { openInvoiceModal(null, 'invoice'); }
+    function openAddProforma() { openInvoiceModal(null, 'proforma'); }
 
     function editInvoice(id) {
       var inv = invoices.find(function(x) { return x.id === id; });
-      if (inv) openInvoiceModal(inv);
+      if (inv) openInvoiceModal(inv, 'invoice');
+    }
+    function editProforma(id) {
+      var inv = invoices.find(function(x) { return x.id === id; });
+      if (inv) openInvoiceModal(inv, 'proforma');
     }
 
-    function openInvoiceModal(existing) {
+    function openInvoiceModal(existing, type) {
+      var isProforma = type === 'proforma';
+      var defaultCurrency = globalCurrency || 'INR';
+
       var e = existing || {
-        number: 'INV/25-26/' + String(invoices.length + 1).padStart(3, '0'),
+        invoiceType: type,
+        number: isProforma
+          ? 'PI/25-26/' + String(nextProNo).padStart(3, '0')
+          : 'INV/25-26/' + String(nextInvNo).padStart(3, '0'),
         date: new Date().toISOString().split('T')[0],
         dueDate: new Date(new Date().setDate(new Date().getDate() + 15)).toISOString().split('T')[0],
+        validUntil: new Date(new Date().setDate(new Date().getDate() + 15)).toISOString().split('T')[0],
         customerId: customers[0].id,
-        currency: 'INR',
-        exchangeRate: 1,
+        currency: defaultCurrency,
+        exchangeRate: getCurrencyRate(defaultCurrency),
         items: [],
         discount: 0,
         tax: 18,
         shipping: 0,
         otherCharges: 0,
-        status: 'draft',
+        status: isProforma ? 'open' : 'unpaid',
         total: 0,
-        terms: ''
+        terms: isProforma ? 'Quotation valid for 15 days. Advance payment required to confirm order.' : ''
       };
       var isEdit = !!existing;
-
-      // Logo upload section
-      var logoHtml = companyLogo ?
-        '<img src="' + companyLogo + '" class="logo-preview" alt="Logo">' :
-        '<div class="w-20 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs border border-gray-200 mx-auto">Logo</div>';
 
       // Build line items HTML
       var lineItemsHtml = '';
@@ -1327,40 +1416,37 @@
         }).join('');
       }
 
-      var currencyOptions = ['INR', 'USD', 'EUR', 'GBP', 'AED'];
+      var currencyOptions = Object.keys(currencyMeta);
+      var statusOpts = statusOptions[type];
 
       var modalContent = `
-        ${modalHeader(isEdit ? 'Edit Invoice' : 'New Invoice', isEdit ? e.number : 'Create a tax invoice for customer')}
+        ${modalHeader(
+          isEdit ? (isProforma ? 'Edit Proforma Invoice' : 'Edit Invoice') : (isProforma ? 'Proforma Invoice' : 'New Invoice'),
+          isEdit ? e.number : (isProforma ? 'Create a proforma / quotation for customer' : 'Create a tax invoice for customer')
+        )}
 
         <div class="px-5 py-4 modal-scroll">
 
-          <!-- Logo Upload -->
-          <div class="flex items-center gap-4 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div class="logo-upload-area" onclick="document.getElementById('logoInput').click()">
-              ${logoHtml}
-              <p class="text-[9px] text-gray-400 mt-1">Click to upload logo</p>
-              <input type="file" id="logoInput" accept="image/*" class="hidden" onchange="previewLogo(event)">
-            </div>
-            <div class="text-[10px] text-gray-500">
-              <span class="font-semibold text-gray-700">Company Logo</span><br>
-              Upload your company logo for invoices
-            </div>
-          </div>
+          ${!isProforma ? `
+          <div class="flex items-center justify-between mb-3 p-2.5 bg-gray-50 rounded-lg border border-gray-200 text-[10px] text-gray-500">
+            <span>Template: <span class="font-semibold text-gray-700">${savedTemplateId ? (invoiceTemplates.find(function(t){return t.id===savedTemplateId;}) || {}).name : 'Default (Classic Green)'}</span></span>
+            <button type="button" onclick="closeModal();openChooseTemplate();" class="text-primary font-semibold hover:underline">Change</button>
+          </div>` : ''}
 
           <!-- Header Fields -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            ${fld('Invoice #', '<input type="text" class="form-input" id="f_number" value="' + e.number + '" disabled>')}
+            ${fld((isProforma ? 'Proforma #' : 'Invoice #'), '<input type="text" class="form-input" id="f_number" value="' + e.number + '" disabled>')}
             ${fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">')}
-            ${fld('Customer *', '<select id="f_customer" class="form-input" onchange="updateCustomerDetails()">' + customers.map(function(c) { return '<option ' + (c.id === e.customerId ? 'selected' : '') + ' value="' + c.id + '">' + c.name + '</option>'; }).join('') + '</select>')}
-            ${fld('Due Date *', '<input type="date" class="form-input" id="f_dueDate" value="' + e.dueDate + '">')}
+            ${fld('Customer *', '<select id="f_customer" class="form-input" onchange="updateCustomerDetails()">' + customers.map(function(c) { return '<option ' + (c.id === e.customerId ? 'selected' : '') + ' value="' + c.id + '">' + c.name + ' (' + c.country + ')</option>'; }).join('') + '</select>')}
+            ${fld((isProforma ? 'Valid Until *' : 'Due Date *'), '<input type="date" class="form-input" id="f_dueDate" value="' + (isProforma ? (e.validUntil || e.dueDate) : e.dueDate) + '">')}
           </div>
 
           <!-- Multi-Currency -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-            ${fld('Currency', '<select id="f_currency" class="form-input" onchange="updateCurrency()">' + currencyOptions.map(function(c) { return '<option ' + (c === e.currency ? 'selected' : '') + ' value="' + c + '">' + c + '</option>'; }).join('') + '</select>', 'Select currency for this invoice')}
+            ${fld('Currency', '<select id="f_currency" class="form-input" onchange="updateCurrency()">' + currencyOptions.map(function(c) { return '<option ' + (c === e.currency ? 'selected' : '') + ' value="' + c + '">' + currencyMeta[c].label + ' — ' + c + ' (' + currencyMeta[c].symbol + ')</option>'; }).join('') + '</select>', 'Auto-set from customer\'s country; override if needed')}
             ${fld('Exchange Rate', '<input type="number" class="form-input" id="f_exchangeRate" value="' + e.exchangeRate + '" step="0.01" onchange="calcInvoiceTotal()">')}
-            ${fld('INR Equivalent', '<input type="text" class="form-input" id="f_inrEquivalent" value="' + (e.totalINR ? money(e.totalINR) : '₹0') + '" disabled style="background:#f3f4f6;">')}
-            ${fld('Place of Supply', '<select class="form-input" id="f_placeSupply"><option value="Maharashtra">Maharashtra</option><option value="Delhi">Delhi</option><option value="Karnataka">Karnataka</option><option value="Tamil Nadu">Tamil Nadu</option><option value="Gujarat">Gujarat</option><option value="Uttar Pradesh">Uttar Pradesh</option></select>')}
+            ${fld('INR Equivalent', '<input type="text" class="form-input" id="f_inrEquivalent" value="' + (e.totalINR ? money(e.totalINR, 'INR') : '₹0') + '" disabled style="background:#f3f4f6;">')}
+            ${fld('Place of Supply', '<input type="text" class="form-input" id="f_placeSupply" value="' + (e.placeOfSupply || '') + '">')}
           </div>
 
           <!-- Line Items -->
@@ -1397,38 +1483,17 @@
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            ${fld('Status', '<select class="form-input" id="f_status"><option ' + (e.status === 'draft' ? 'selected' : '') + ' value="draft">Draft</option><option ' + (e.status === 'sent' ? 'selected' : '') + ' value="sent">Sent</option><option ' + (e.status === 'viewed' ? 'selected' : '') + ' value="viewed">Viewed</option><option ' + (e.status === 'partial' ? 'selected' : '') + ' value="partial">Partially Paid</option><option ' + (e.status === 'paid' ? 'selected' : '') + ' value="paid">Paid</option><option ' + (e.status === 'overdue' ? 'selected' : '') + ' value="overdue">Overdue</option><option ' + (e.status === 'cancelled' ? 'selected' : '') + ' value="cancelled">Cancelled</option></select>')}
+            ${fld('Status', '<select class="form-input" id="f_status">' + statusOpts.map(function(s) { return '<option ' + (e.status === s.v ? 'selected' : '') + ' value="' + s.v + '">' + s.l + '</option>'; }).join('') + '</select>')}
             ${fld('Total Amount', '<input type="text" class="form-input" id="f_total" value="' + (e.total ? formatCurrency(e.total, e.currency) : '0') + '" disabled style="font-weight:bold;color:#6da84c;">')}
-            ${fld('Amount Paid', '<input type="number" class="form-input" id="f_paid" value="' + (e.paid || 0) + '" placeholder="0" onchange="calcInvoiceTotal()">')}
           </div>
 
           ${fld('Terms & Conditions', '<textarea rows="2" class="form-input" id="f_terms" placeholder="Payment terms, delivery terms, etc.">' + (e.terms || '') + '</textarea>')}
         </div>
-        ${modalFooter(isEdit ? 'Update Invoice' : 'Save Invoice', 'onclick="saveInvoice(\'' + (isEdit ? e.id : '') + '\')"')}
+        ${modalFooter(isEdit ? ('Update ' + (isProforma ? 'Proforma' : 'Invoice')) : ('Save ' + (isProforma ? 'Proforma' : 'Invoice')), 'onclick="saveInvoice(\'' + (isEdit ? e.id : '') + '\', \'' + type + '\')"')}
       `;
 
       openModal(modalContent, { width: 'max-w-4xl' });
       setTimeout(function() { calcInvoiceTotal(); }, 100);
-    }
-
-    // =============================================================
-    // LOGO PREVIEW
-    // =============================================================
-    function previewLogo(event) {
-      var file = event.target.files[0];
-      if (file) {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-          companyLogo = e.target.result;
-          showToast('Logo uploaded successfully', 'success');
-          // Update logo preview in modal
-          var preview = document.querySelector('.logo-upload-area');
-          if (preview) {
-            preview.innerHTML = '<img src="' + companyLogo + '" class="logo-preview" alt="Logo"><p class="text-[9px] text-gray-400 mt-1">Click to change logo</p><input type="file" accept="image/*" class="hidden" onchange="previewLogo(event)">';
-          }
-        };
-        reader.readAsDataURL(file);
-      }
     }
 
     // =============================================================
@@ -1485,18 +1550,20 @@
     }
 
     function updateCustomerDetails() {
-      // Auto-set place of supply
+      // Auto-set place of supply AND currency based on the customer's country
       var customerId = document.getElementById('f_customer').value;
       var customer = customers.find(function(c) { return c.id === customerId; });
       if (customer) {
-        document.getElementById('f_placeSupply').value = customer.state;
+        document.getElementById('f_placeSupply').value = customer.state || customer.country;
+        var autoCurrency = currencyForCountry(customer.country);
+        document.getElementById('f_currency').value = autoCurrency;
+        updateCurrency();
       }
     }
 
     function updateCurrency() {
       var currency = document.getElementById('f_currency').value;
-      var rates = { INR: 1, USD: 83.5, EUR: 90.2, GBP: 105.8, AED: 22.7 };
-      document.getElementById('f_exchangeRate').value = rates[currency] || 1;
+      document.getElementById('f_exchangeRate').value = getCurrencyRate(currency);
       calcInvoiceTotal();
     }
 
@@ -1521,11 +1588,10 @@
       var taxAmt = afterDiscount * (tax / 100);
       var total = afterDiscount + taxAmt + shipping + otherCharges;
 
-      var currencySymbol = getCurrencySymbol(currency);
-      document.getElementById('f_total').value = currencySymbol + Number(total).toLocaleString('en-IN');
+      document.getElementById('f_total').value = formatCurrency(total, currency);
 
       var totalINR = total * exchangeRate;
-      document.getElementById('f_inrEquivalent').value = '₹' + Number(totalINR).toLocaleString('en-IN');
+      document.getElementById('f_inrEquivalent').value = money(totalINR, 'INR');
 
       return total;
     }
@@ -1534,7 +1600,8 @@
     // SAVE / DELETE INVOICE
     // =============================================================
 
-    function saveInvoice(existingId) {
+    function saveInvoice(existingId, type) {
+      var isProforma = type === 'proforma';
       var number = document.getElementById('f_number').value;
       var date = document.getElementById('f_date').value;
       var customerId = document.getElementById('f_customer').value;
@@ -1546,12 +1613,11 @@
       var shipping = parseFloat(document.getElementById('f_shipping').value) || 0;
       var otherCharges = parseFloat(document.getElementById('f_otherCharges').value) || 0;
       var status = document.getElementById('f_status').value;
-      var paid = parseFloat(document.getElementById('f_paid').value) || 0;
       var placeSupply = document.getElementById('f_placeSupply').value || '';
       var terms = document.getElementById('f_terms').value || '';
 
       if (!date || !customerId || !dueDate) {
-        showToast('Please fill all required fields (Date, Customer, Due Date)', 'error');
+        showToast('Please fill all required fields (Date, Customer, ' + (isProforma ? 'Valid Until' : 'Due Date') + ')', 'error');
         return;
       }
 
@@ -1576,7 +1642,7 @@
       });
 
       if (itemsData.length === 0) {
-        showToast('Please add at least one item to the invoice', 'error');
+        showToast('Please add at least one item to the ' + (isProforma ? 'proforma invoice' : 'invoice'), 'error');
         return;
       }
 
@@ -1595,7 +1661,7 @@
         if (inv) {
           inv.number = number;
           inv.date = date;
-          inv.dueDate = dueDate;
+          if (isProforma) { inv.validUntil = dueDate; inv.dueDate = dueDate; } else { inv.dueDate = dueDate; }
           inv.customerId = customerId;
           inv.customerName = customerName;
           inv.customerGST = customer ? customer.gst : '';
@@ -1612,17 +1678,18 @@
           inv.status = status;
           inv.total = total;
           inv.totalINR = totalINR;
-          inv.paid = paid;
-          inv.placeOfSupply = placeSupply || customer.state;
+          inv.placeOfSupply = placeSupply || (customer ? customer.state : '');
           inv.terms = terms;
-          showToast('Invoice updated successfully', 'success');
+          showToast((isProforma ? 'Proforma invoice' : 'Invoice') + ' updated successfully', 'success');
         }
       } else {
         var newInvoice = {
-          id: 'INV-' + String(nextInvNo++).padStart(3, '0'),
-          number: number || 'INV/25-26/' + String(invoices.length + 1).padStart(3, '0'),
+          id: (isProforma ? 'PRO-' : 'INV-') + String(isProforma ? nextProNo++ : nextInvNo++).padStart(3, '0'),
+          invoiceType: type,
+          number: number || (isProforma ? ('PI/25-26/' + String(invoices.length + 1).padStart(3, '0')) : ('INV/25-26/' + String(invoices.length + 1).padStart(3, '0'))),
           date: date,
           dueDate: dueDate,
+          validUntil: isProforma ? dueDate : undefined,
           customerId: customerId,
           customerName: customerName,
           customerGST: customer ? customer.gst : '',
@@ -1639,13 +1706,15 @@
           status: status,
           total: total,
           totalINR: totalINR,
-          paid: paid,
+          paid: 0,
           createdAt: date,
-          placeOfSupply: placeSupply || customer.state,
-          terms: terms
+          placeOfSupply: placeSupply || (customer ? customer.state : ''),
+          terms: terms,
+          // Backend note: populate once the PDF is generated/stored server-side.
+          pdfUrl: null
         };
         invoices.unshift(newInvoice);
-        showToast('Invoice created successfully', 'success');
+        showToast((isProforma ? 'Proforma invoice' : 'Invoice') + ' created successfully', 'success');
       }
 
       closeModal();
@@ -1655,9 +1724,10 @@
     function delInvoice(id) {
       var inv = invoices.find(function(x) { return x.id === id; });
       if (!inv) return;
+      var isProforma = inv.invoiceType === 'proforma';
 
       var modalContent = `
-        ${modalHeader('Delete Invoice', inv.number)}
+        ${modalHeader('Delete ' + (isProforma ? 'Proforma Invoice' : 'Invoice'), inv.number)}
         <div class="px-5 py-4 text-sm text-gray-600">
           <p>Are you sure you want to permanently delete <b class="text-gray-800">${inv.number}</b>?</p>
           <p class="text-gray-400 text-[11px] mt-1">This action cannot be undone. All associated data will be removed.</p>
@@ -1672,7 +1742,7 @@
       invoices = invoices.filter(function(x) { return x.id !== id; });
       closeModal();
       renderInvoices();
-      showToast('Invoice deleted successfully', 'warning');
+      showToast('Deleted successfully', 'warning');
     }
 
     // =============================================================
@@ -1682,9 +1752,11 @@
     function sendInvoice(id) {
       var inv = invoices.find(function(x) { return x.id === id; });
       if (!inv) return;
-      inv.status = 'sent';
-      renderInvoices();
-      showToast('Invoice ' + inv.number + ' sent to customer!', 'success');
+      if (inv.invoiceType === 'proforma') {
+        showToast('Proforma ' + inv.number + ' sent to customer!', 'success');
+      } else {
+        showToast('Invoice ' + inv.number + ' sent to customer!', 'success');
+      }
     }
 
     function downloadInvoice(id) {
@@ -1693,27 +1765,148 @@
       showToast('Downloading PDF for ' + inv.number + '...', 'info');
     }
 
-    function recordPayment(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (!inv) return;
+    // =============================================================
+    // CHOOSE TEMPLATE (Invoices only)
+    // =============================================================
 
-      var balance = inv.total - inv.paid;
-      var amount = prompt('Enter payment amount for ' + inv.number + ' (' + formatCurrency(balance, inv.currency) + ' remaining):');
-      if (amount !== null) {
-        var paymentAmount = parseFloat(amount);
-        if (paymentAmount > 0 && paymentAmount <= balance) {
-          inv.paid = (inv.paid || 0) + paymentAmount;
-          if (inv.paid >= inv.total) {
-            inv.status = 'paid';
-          } else if (inv.paid > 0) {
-            inv.status = 'partial';
-          }
-          renderInvoices();
-          showToast('Payment of ' + formatCurrency(paymentAmount, inv.currency) + ' recorded for ' + inv.number, 'success');
-        } else if (paymentAmount > 0) {
-          showToast('Amount exceeds balance due: ' + formatCurrency(balance, inv.currency), 'error');
-        }
+    function openChooseTemplate() {
+      var selected = savedTemplateId || invoiceTemplates[0].id;
+      renderChooseTemplate(selected);
+    }
+
+    function renderChooseTemplate(selectedId) {
+      var cardsHtml = invoiceTemplates.map(function(t) {
+        return `
+          <div class="template-card ${t.id === selectedId ? 'selected' : ''}" onclick="renderChooseTemplate('${t.id}')">
+            <div class="template-thumb mb-2">
+              ${templateThumbSvg(t.id)}
+            </div>
+            <div class="text-xs font-semibold text-gray-800">${t.name}</div>
+            <div class="text-[10px] text-gray-500 mt-0.5">${t.description}</div>
+          </div>`;
+      }).join('');
+
+      var previewHtml = templatePreviewHtml(selectedId);
+
+      var modalContent = `
+        <div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div>
+            <h3 class="modal-title text-gray-900">Choose Invoice Template</h3>
+            <p class="modal-subtitle mt-0.5">Pick a layout, preview it with placeholder data, then save it as your default.</p>
+          </div>
+          <button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-0">
+          <div class="p-4 border-r border-gray-100 space-y-3 modal-scroll" style="max-height:60vh;">
+            ${cardsHtml}
+          </div>
+          <div class="p-4 modal-scroll" style="max-height:60vh;">
+            ${previewHtml}
+          </div>
+        </div>
+        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
+          <div class="text-[10px] text-gray-400">Saved template is used automatically whenever you create a new invoice.</div>
+          <div class="flex gap-2">
+            <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+            <button onclick="saveTemplateChoice('${selectedId}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
+              ${iconSave()} Save Template
+            </button>
+          </div>
+        </div>
+      `;
+      openModal(modalContent, { width: 'max-w-4xl' });
+    }
+
+    function templateThumbSvg(id) {
+      if (id === 'tpl-modern') {
+        return `<div style="height:70px;" class="flex flex-col gap-1">
+          <div style="height:14px;background:#6da84c;border-radius:3px;"></div>
+          <div style="height:6px;width:60%;background:#e5e7eb;border-radius:2px;"></div>
+          <div style="height:6px;width:80%;background:#e5e7eb;border-radius:2px;"></div>
+          <div style="height:6px;width:40%;background:#e5e7eb;border-radius:2px;"></div>
+        </div>`;
       }
+      return `<div style="height:70px;" class="flex flex-col gap-1">
+        <div class="flex justify-between"><div style="height:10px;width:30%;background:#d1d5db;border-radius:2px;"></div><div style="height:10px;width:35%;background:#6da84c;border-radius:2px;"></div></div>
+        <div style="height:6px;width:100%;background:#e5e7eb;border-radius:2px;margin-top:6px;"></div>
+        <div style="height:6px;width:90%;background:#e5e7eb;border-radius:2px;"></div>
+        <div style="height:6px;width:70%;background:#e5e7eb;border-radius:2px;"></div>
+      </div>`;
+    }
+
+    function templatePreviewHtml(id) {
+      // Dummy placeholder data for preview purposes only
+      var dummy = {
+        company: 'Kunash Media Pvt. Ltd.',
+        number: 'INV/25-26/00X',
+        date: '2026-01-01',
+        due: '2026-01-15',
+        customer: 'Sample Customer Pvt. Ltd.',
+        items: [
+          { name: 'Sample Product / Service', qty: 2, rate: 10000, amount: 20000 },
+          { name: 'Sample Add-on Service', qty: 1, rate: 5000, amount: 5000 },
+        ],
+        total: 29500
+      };
+
+      if (id === 'tpl-modern') {
+        return `
+          <div class="border border-gray-200 rounded-lg overflow-hidden" style="max-width:480px;margin:0 auto;">
+            <div style="background:#6da84c;" class="text-white px-4 py-3">
+              <div class="text-[10px] uppercase tracking-wide opacity-80">Invoice</div>
+              <div class="text-sm font-bold">${dummy.number}</div>
+            </div>
+            <div class="p-3 text-[11px] text-gray-600">
+              <div class="flex justify-between mb-2">
+                <div><div class="font-semibold text-gray-800">${dummy.company}</div><div>${dummy.date}</div></div>
+                <div class="text-right"><div class="font-semibold text-gray-800">${dummy.customer}</div><div>Due ${dummy.due}</div></div>
+              </div>
+              <table class="w-full text-[10px] mt-2">
+                <thead><tr class="text-gray-400"><th class="text-left py-1">Item</th><th class="text-center">Qty</th><th class="text-right">Amount</th></tr></thead>
+                <tbody>
+                  ${dummy.items.map(function(it){ return '<tr><td class="py-1">'+it.name+'</td><td class="text-center">'+it.qty+'</td><td class="text-right">₹'+it.amount.toLocaleString('en-IN')+'</td></tr>'; }).join('')}
+                </tbody>
+              </table>
+              <div class="text-right font-bold text-primary mt-2 text-xs">Total: ₹${dummy.total.toLocaleString('en-IN')}</div>
+            </div>
+          </div>
+          <p class="text-[10px] text-gray-400 text-center mt-2">Placeholder preview — actual values populate once wired to real data.</p>
+        `;
+      }
+
+      return `
+        <div class="invoice-preview" style="max-width:480px;padding:16px 18px;">
+          <div class="invoice-header" style="padding-bottom:10px;margin-bottom:10px;">
+            <div class="w-16 h-12 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[9px] border border-gray-200">Logo</div>
+            <div class="invoice-company">
+              <div class="invoice-company-name" style="font-size:13px;">${dummy.company}</div>
+              <div class="invoice-company-details" style="font-size:9px;">Sample Address, City</div>
+            </div>
+          </div>
+          <div class="text-center mb-2"><span class="invoice-title" style="font-size:14px;">TAX INVOICE</span></div>
+          <div class="invoice-meta" style="font-size:9px;gap:6px;margin-bottom:8px;">
+            <div><div class="meta-label" style="font-size:8px;">Bill To</div><div class="meta-value">${dummy.customer}</div></div>
+            <div style="text-align:right;"><div>Invoice # ${dummy.number}</div><div>Date ${dummy.date}</div></div>
+          </div>
+          <table class="invoice-table" style="font-size:9px;">
+            <thead><tr><th>Item</th><th class="text-center">Qty</th><th class="text-right">Amount</th></tr></thead>
+            <tbody>
+              ${dummy.items.map(function(it){ return '<tr><td>'+it.name+'</td><td class="text-center">'+it.qty+'</td><td class="text-right">₹'+it.amount.toLocaleString('en-IN')+'</td></tr>'; }).join('')}
+            </tbody>
+          </table>
+          <div class="invoice-totals" style="font-size:10px;margin-top:6px;padding-top:6px;">
+            <div class="grand-total total-row" style="font-size:12px;"><span class="label">Total</span><span class="value">₹${dummy.total.toLocaleString('en-IN')}</span></div>
+          </div>
+        </div>
+        <p class="text-[10px] text-gray-400 text-center mt-2">Placeholder preview — actual values populate once wired to real data.</p>
+      `;
+    }
+
+    function saveTemplateChoice(id) {
+      savedTemplateId = id;
+      closeModal();
+      var t = invoiceTemplates.find(function(x) { return x.id === id; });
+      showToast('"' + (t ? t.name : id) + '" saved as your default invoice template', 'success');
     }
 
     // =============================================================
@@ -1746,13 +1939,8 @@
     // INIT
     // =============================================================
 
+    buildStatusFilterOptions();
     renderInvoices();
-
-    console.log('📄 Invoices Module Loaded Successfully');
-    console.log('🏢 Company:', company.name);
-    console.log('📊 Total Invoices:', invoices.length);
-    console.log('🌐 Multi-Currency Support enabled');
-    console.log('🖼️ Logo upload ready');
 
   </script>
 

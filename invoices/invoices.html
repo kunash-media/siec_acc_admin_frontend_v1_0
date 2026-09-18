@@ -108,7 +108,7 @@
   .stat-card {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     padding: 10px 14px !important;
-    border: 1px solid #6da84c33 !important;
+    border: 1px solid #6da84c;
   }
   .stat-card:hover {
     transform: translateY(-2px);
@@ -119,7 +119,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #6b7280;
+    color: #474b53;
   }
   .stat-card .stat-value {
     font-size: 17px;
@@ -142,7 +142,7 @@
     justify-content: center;
     color: #94a3b8;
     background: transparent;
-    border: none;
+    border: 1px solid #6da84c;
     cursor: pointer;
   }
   .btn-icon-action:hover {
@@ -419,9 +419,9 @@
   }
   .tab-btn:hover { color: #5c9140; }
   .tab-btn.active {
-    color: #5c9140;
-    background: #ffffff;
-    border-color: #6da84c55;
+    color: #33720e;
+    background: #faf9f9;
+    border-color: #6da84c;
     box-shadow: 0 -2px 0 0 #6da84c inset;
   }
   .tab-bar {
@@ -471,7 +471,7 @@
             <div>
               <div class="page-breadcrumb">Sales</div>
               <h1 class="page-title text-gray-900">Invoices</h1>
-              <p class="page-subtitle mt-0.5">Tax invoices, proforma and recurring invoices. Track payments and outstanding.</p>
+              <p class="page-subtitle mt-0.5">Tax invoices, proforma and recurring invoices.</p>
             </div>
             <div class="flex gap-2 flex-wrap items-center">
 
@@ -549,7 +549,7 @@
           </div>
 
           <!-- ===== TABS ===== -->
-          <div class="tab-bar flex gap-1 mb-0 px-1">
+          <div class="tab-bar flex gap-1 mb-0">
             <button class="tab-btn active" id="tabBtn_invoice" onclick="switchTab('invoice')">Invoices</button>
             <button class="tab-btn" id="tabBtn_proforma" onclick="switchTab('proforma')">Proforma Invoices</button>
           </div>
@@ -798,7 +798,7 @@
 
     function panelWrap(titleHtml, bodyHtml, extraHead) {
       return `
-        <div class="bg-white border border-primary/30 rounded-xl rounded-tl-none shadow-sm overflow-hidden">
+        <div class="bg-white border border-[#6da84c] rounded-xl rounded-tl-none shadow-sm overflow-hidden">
           <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
             <div class="font-semibold text-sm text-gray-800 flex items-center gap-2">${titleHtml}</div>
             ${extraHead || ''}
@@ -815,7 +815,7 @@
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead>
-              <tr class="bg-gray-50 border-b border-gray-200">${colHeaders}</tr>
+              <tr class="bg-gray-200 border border-[#6da84c]">${colHeaders}</tr>
             </thead>
             <tbody id="tbody-anchor">${rowsHtml}</tbody>
           </table>
@@ -828,6 +828,8 @@
 
     var activeTab = 'invoice'; // 'invoice' | 'proforma'
     var globalCurrency = 'INR'; // reflects the top currency dropdown selection
+    var currentPage = 1;
+    var pageSize = 25;
 
     // ---- Saved Invoice Template (selected via Choose Template) ----
     // Backend note: persist the chosen template id/name against the account/user
@@ -1038,6 +1040,7 @@
       document.getElementById('chooseTemplateBtn').classList.toggle('hidden', tab !== 'invoice');
       buildStatusFilterOptions();
       clearFilters(true);
+      currentPage = 1;
       renderInvoices();
     }
 
@@ -1108,9 +1111,26 @@
       });
     }
 
+    function changePageSize(val) {
+      pageSize = parseInt(val, 10) || 25;
+      currentPage = 1;
+      renderInvoices();
+    }
+
+    function goToPage(p) {
+      currentPage = p;
+      renderInvoices();
+    }
+
     function renderInvoices() {
       var filtered = getFilteredInvoices();
       var isProforma = activeTab === 'proforma';
+
+      var totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+      var pageStart = (currentPage - 1) * pageSize;
+      var pageItems = filtered.slice(pageStart, pageStart + pageSize);
 
       var rowsHtml = '';
       if (filtered.length === 0) {
@@ -1123,11 +1143,11 @@
             </td>
           </tr>`;
       } else {
-        rowsHtml = filtered.map(function(inv) {
+        rowsHtml = pageItems.map(function(inv) {
           var canSend = isProforma ? inv.status === 'open' : (inv.status === 'unpaid');
           var currencySymbol = getCurrencySymbol(inv.currency);
           return `
-            <tr class="border-b border-gray-100 table-row-hover">
+            <tr class="border-b border-gray-400 table-row-hover">
               <td class="px-3 py-2.5">
                 <div class="font-semibold text-gray-800 text-sm">${inv.number}</div>
                 <div class="text-[10px] text-gray-400 font-mono">${inv.id}</div>
@@ -1148,17 +1168,40 @@
         }).join('');
       }
 
+      var sizeOptions = [10, 25, 50, 100].map(function(n) {
+        return '<option value="' + n + '"' + (n === pageSize ? ' selected' : '') + '>' + n + '</option>';
+      }).join('');
+
+      var paginationHtml = '';
+      if (filtered.length > 0) {
+        var rangeStart = pageStart + 1;
+        var rangeEnd = Math.min(pageStart + pageSize, filtered.length);
+        paginationHtml = `
+          <div class="flex items-center justify-between gap-2 px-4 py-2.5 border-t border-gray-100">
+            <span class="text-[10px] text-gray-400">Showing ${rangeStart}–${rangeEnd} of ${filtered.length}</span>
+            <div class="flex items-center gap-1">
+              <button onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} class="btn-icon-action" style="width:24px;height:24px;${currentPage <= 1 ? 'opacity:.35;cursor:not-allowed;' : ''}" title="Previous">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <span class="text-[10px] text-gray-500 px-1">Page ${currentPage} of ${totalPages}</span>
+              <button onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} class="btn-icon-action" style="width:24px;height:24px;${currentPage >= totalPages ? 'opacity:.35;cursor:not-allowed;' : ''}" title="Next">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+          </div>`;
+      }
+
       var panelHtml = panelWrap(
-        (isProforma ? 'All Proforma Invoices' : 'All Invoices') + ' <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
-        tableHtml(['Invoice #', 'Date', 'Customer', 'Total', 'Due Date', 'Status', 'Actions'], rowsHtml),
-        '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderInvoices()" class="text-[10px] border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
+        (isProforma ? 'All Proforma Invoices' : 'All Invoices') + ' <span class="text-[9px] border border-[#6da84c] font-bold bg-primary-soft text-primary-dark px-2 py-0.3 rounded-full">' + filtered.length + '</span>',
+        tableHtml(['Invoice #', 'Date', 'Customer', 'Total', 'Due Date', 'Status', 'Actions'], rowsHtml) + paginationHtml,
+        '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="changePageSize(this.value)" class="text-[10px] border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none">' + sizeOptions + '</select></div>'
       );
 
       document.getElementById('invoicesPanel').innerHTML = panelHtml;
       renderStats();
     }
 
-    function filterInvoices() { renderInvoices(); }
+    function filterInvoices() { currentPage = 1; renderInvoices(); }
 
     function clearFilters(silent) {
       buildStatusFilterOptions();
@@ -1749,20 +1792,168 @@
     // ACTIONS
     // =============================================================
 
-    function sendInvoice(id) {
+    // ---- SEND OVERLAY: choose Email or WhatsApp ----
+    function openSendOverlay(id) {
       var inv = invoices.find(function(x) { return x.id === id; });
       if (!inv) return;
-      if (inv.invoiceType === 'proforma') {
-        showToast('Proforma ' + inv.number + ' sent to customer!', 'success');
-      } else {
-        showToast('Invoice ' + inv.number + ' sent to customer!', 'success');
+      var isProforma = inv.invoiceType === 'proforma';
+
+      var modalContent = `
+        ${modalHeader('Send ' + (isProforma ? 'Proforma Invoice' : 'Invoice'), inv.number)}
+        <div class="px-5 py-5">
+          <p class="text-xs text-gray-500 mb-4">Choose how you'd like to send this ${isProforma ? 'proforma invoice' : 'invoice'} to <b class="text-gray-700">${inv.customerName}</b>.</p>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="openSendEmail('${id}')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary-soft transition">
+              <svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+              <span class="text-xs font-semibold text-gray-700">Email</span>
+            </button>
+            <button onclick="sendViaWhatsapp('${id}')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary-soft transition">
+              <svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.02c-.25.68-1.44 1.31-1.98 1.35-.5.05-1.14.07-1.84-.12-.42-.11-.96-.31-1.66-.6-2.92-1.26-4.82-4.2-4.97-4.4-.15-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.65.5.24.58.83 2 .9 2.15.07.15.12.32.02.52-.1.2-.15.32-.29.49-.15.17-.31.38-.44.51-.15.15-.3.31-.13.61.17.3.75 1.24 1.61 2 1.11.99 2.04 1.3 2.34 1.45.3.15.48.12.65-.07.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.35.07.13.07.75-.18 1.43z"/></svg>
+              <span class="text-xs font-semibold text-gray-700">WhatsApp</span>
+            </button>
+          </div>
+        </div>
+      `;
+      openModal(modalContent, { width: 'max-w-sm' });
+    }
+
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function openSendEmail(id) {
+      var inv = invoices.find(function(x) { return x.id === id; });
+      if (!inv) return;
+      var customer = customers.find(function(c) { return c.id === inv.customerId; });
+      var prefillEmail = (customer && customer.email) || '';
+      var isProforma = inv.invoiceType === 'proforma';
+
+      var modalContent = `
+        ${modalHeader('Send via Email', inv.number)}
+        <div class="px-5 py-4">
+          ${fld('Recipient Email *', '<input type="email" class="form-input" id="f_sendEmail" value="' + prefillEmail + '" placeholder="customer@example.com">', 'Pre-filled from the customer record — edit if needed')}
+          <div class="mt-2 text-[10px] text-gray-400 p-2.5 bg-gray-50 rounded-lg border border-gray-100">
+            Subject: ${(isProforma ? 'Proforma Invoice' : 'Invoice')} ${inv.number} from ${company.name}<br>
+            Attachment: ${inv.number}.pdf
+          </div>
+          <div id="emailSendError" class="hidden text-[10px] text-red-600 mt-1.5"></div>
+        </div>
+        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+          <button onclick="openSendOverlay('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Back</button>
+          <button id="emailSendBtn" onclick="sendViaEmail('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
+            ${iconSend()} Send Email
+          </button>
+        </div>
+      `;
+      openModal(modalContent, { width: 'max-w-sm' });
+    }
+
+    function sendViaEmail(id) {
+      var inv = invoices.find(function(x) { return x.id === id; });
+      if (!inv) return;
+      var emailInput = document.getElementById('f_sendEmail');
+      var errBox = document.getElementById('emailSendError');
+      var email = (emailInput.value || '').trim();
+
+      if (!isValidEmail(email)) {
+        errBox.textContent = 'Please enter a valid email address.';
+        errBox.classList.remove('hidden');
+        emailInput.classList.add('border-red-400');
+        return;
       }
+      errBox.classList.add('hidden');
+      emailInput.classList.remove('border-red-400');
+
+      var btn = document.getElementById('emailSendBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M22 12a10 10 0 00-10-10"/></svg> Sending…';
+
+      // Backend note: replace this simulated call with the real email-send API
+      // (POST { invoiceId, to: email, pdfUrl }) once available.
+      setTimeout(function() {
+        closeModal();
+        showToast((inv.invoiceType === 'proforma' ? 'Proforma' : 'Invoice') + ' ' + inv.number + ' emailed to ' + email, 'success');
+      }, 1400);
+    }
+
+    function sendViaWhatsapp(id) {
+      var inv = invoices.find(function(x) { return x.id === id; });
+      if (!inv) return;
+      var customer = customers.find(function(c) { return c.id === inv.customerId; });
+      var isProforma = inv.invoiceType === 'proforma';
+      var docLabel = isProforma ? 'Proforma Invoice' : 'Invoice';
+
+      // Backend note: inv.pdfUrl should be the stored, publicly-downloadable PDF link
+      // returned once the invoice is created/saved on the server.
+      var pdfUrl = inv.pdfUrl || (window.location.origin + '/invoices/' + inv.id + '.pdf');
+
+      var message = docLabel + ' ' + inv.number + ' from ' + company.name + '\n' +
+        'Customer: ' + inv.customerName + '\n' +
+        'Amount: ' + formatCurrency(inv.total, inv.currency) + '\n' +
+        (isProforma ? ('Valid Until: ' + (inv.validUntil || inv.dueDate)) : ('Due Date: ' + inv.dueDate)) + '\n' +
+        'View / Download: ' + pdfUrl;
+
+      var phone = customer && customer.phone ? customer.phone.replace(/[^0-9]/g, '') : '';
+      var waUrl = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(message);
+
+      window.open(waUrl, '_blank');
+      closeModal();
+      showToast('Opening WhatsApp to send ' + inv.number + '…', 'info');
     }
 
     function downloadInvoice(id) {
       var inv = invoices.find(function(x) { return x.id === id; });
       if (!inv) return;
-      showToast('Downloading PDF for ' + inv.number + '...', 'info');
+
+      // Backend note: once inv.pdfUrl points to a real stored PDF, just do
+      // window.open(inv.pdfUrl, '_blank') instead of this placeholder file.
+      if (inv.pdfUrl) {
+        showToast('Downloading ' + inv.number + '…', 'info');
+        var a = document.createElement('a');
+        a.href = inv.pdfUrl;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
+
+      showToast('Downloading ' + inv.number + '…', 'info');
+      var summary = buildPlainTextSummary(inv);
+      var blob = new Blob([summary], { type: 'text/plain' });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = url;
+      link.download = inv.number.replace(/\//g, '-') + '.txt';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
+      setTimeout(function() { showToast(inv.number + ' downloaded (placeholder file — will be a real PDF once the API is wired)', 'success'); }, 400);
+    }
+
+    function buildPlainTextSummary(inv) {
+      var isProforma = inv.invoiceType === 'proforma';
+      var lines = [
+        (isProforma ? 'PROFORMA INVOICE' : 'TAX INVOICE') + ' — ' + inv.number,
+        company.name,
+        company.address,
+        '',
+        'Bill To: ' + inv.customerName,
+        inv.customerAddress || '',
+        '',
+        'Date: ' + inv.date,
+        (isProforma ? 'Valid Until: ' + (inv.validUntil || inv.dueDate) : 'Due Date: ' + inv.dueDate),
+        '',
+        'Items:'
+      ];
+      inv.items.forEach(function(it) {
+        lines.push('  - ' + it.name + '  x' + it.qty + '  @ ' + formatCurrency(it.rate, inv.currency) + '  = ' + formatCurrency(it.qty * it.rate, inv.currency));
+      });
+      lines.push('');
+      lines.push('Grand Total: ' + formatCurrency(inv.total, inv.currency));
+      return lines.join('\n');
     }
 
     // =============================================================

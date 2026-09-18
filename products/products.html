@@ -98,6 +98,7 @@
   .stat-card {
     border: 1px solid #7dc057;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+    height: 70px;
   }
   .stat-card:hover {
     transform: translateY(-2px);
@@ -107,6 +108,7 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
+    border: 1px solid #6da84c;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -163,7 +165,7 @@
     justify-content: center;
     color: #94a3b8;
     background: transparent;
-    border: none;
+    border: 1px solid gray;
     cursor: pointer;
   }
   .btn-icon-action:hover {
@@ -240,7 +242,7 @@
             <div class="flex gap-2.5 flex-wrap">
               <!-- Filter Button -->
               <div class="relative inline-block" data-dd-trigger>
-                <button onclick="toggleFilterDD()" class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[13px] font-semibold px-4 py-2.5 rounded-lg transition">
+                <button onclick="toggleFilterDD()" class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-4 py-2.5 rounded-lg transition">
                   <i class="fa-solid fa-filter"></i>
                   Filter
                   <span id="filterBadge" class="hidden text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full">0</span>
@@ -266,13 +268,13 @@
               </div>
 
               <!-- Vendor Purchase Button -->
-              <button onclick="openVendorPurchase()" class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[13px] font-semibold px-4 py-2.5 rounded-lg transition shadow-sm">
+              <button onclick="openVendorPurchase()" class="inline-flex items-center gap-2 bg-white border border-[#6da84c] hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-4 py-1.5 rounded-lg transition shadow-sm">
                 <i class="fa-solid fa-truck-fast"></i>
                 Vendor Purchase
               </button>
 
               <!-- Add Item Button -->
-              <button onclick="openAddItem()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[13px] font-semibold px-4 py-2.5 rounded-lg transition shadow-sm">
+              <button onclick="openAddItem()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[12px] font-semibold px-4 py-1.5 rounded-lg transition shadow-sm">
                 <i class="fa-solid fa-plus"></i>
                 Add Item
               </button>
@@ -285,28 +287,28 @@
               <div class="stat-icon-wrap bg-primary-soft text-primary"><i class="fa-solid fa-boxes-stacked"></i></div>
               <div>
                 <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Total Items</div>
-                <div class="text-[22px] font-bold text-gray-900" id="totalItems">0</div>
+                <div class="text-[16px] font-bold text-gray-900" id="totalItems">0</div>
               </div>
             </div>
             <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
               <div class="stat-icon-wrap bg-secondary-soft text-secondary"><i class="fa-solid fa-layer-group"></i></div>
               <div>
                 <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Categories</div>
-                <div class="text-[22px] font-bold text-gray-900" id="totalCategories">0</div>
+                <div class="text-[16px] font-bold text-gray-900" id="totalCategories">0</div>
               </div>
             </div>
             <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
               <div class="stat-icon-wrap bg-amber-50 text-amber-600"><i class="fa-solid fa-triangle-exclamation"></i></div>
               <div>
                 <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Low Stock</div>
-                <div class="text-[22px] font-bold text-amber-600" id="lowStockCount">0</div>
+                <div class="text-[16px] font-bold text-amber-600" id="lowStockCount">0</div>
               </div>
             </div>
             <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
               <div class="stat-icon-wrap bg-primary-soft text-primary"><i class="fa-solid fa-sack-dollar"></i></div>
               <div>
                 <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Stock Value</div>
-                <div class="text-[22px] font-bold text-primary" id="totalStockValue">₹0</div>
+                <div class="text-[16px] font-bold text-primary" id="totalStockValue">₹0</div>
               </div>
             </div>
           </div>
@@ -508,7 +510,7 @@
         <div class="overflow-auto h-[370px]">
           <table class="w-full text-[13px]">
             <thead class="sticky top-0">
-              <tr class="bg-gray-50 border-b border-gray-200">${colHeaders}</tr>
+              <tr class="bg-gray-200 border border-[#6da84c]">${colHeaders}</tr>
             </thead>
             <tbody id="tbody-anchor">${rowsHtml}</tbody>
           </table>
@@ -648,7 +650,7 @@
       } else {
         rowsHtml = filtered.map(function(it) {
           return `
-            <tr class="border-b border-gray-100 table-row-hover">
+            <tr class="border-b border-gray-400 table-row-hover">
               <td class="px-4 py-3">
                 <div class="font-semibold text-gray-800">${it.name}</div>
                 <div class="text-[11.5px] text-gray-400 font-mono">${it.id} · ${it.sku}</div>

@@ -1,0 +1,404 @@
+
+
+/* =============================================================
+   Purchase Management — styles
+   Mirrors the Vendors / Suppliers page design system so both
+   modules feel like one product: same primary green (#6da84c),
+   secondary blue (#1985bf), same badges, stat cards, modal and
+   table patterns.
+   ============================================================= */
+
+/* ---------- Page header (breadcrumb / title) ---------- */
+.page-breadcrumb {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #6da84c;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+/* ---------- Module tab strip (PR / PO / PB) ---------- */
+.module-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0;
+}
+.module-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.module-tab-btn:hover:not(.active) {
+  color: #1f2937;
+  background: #f8fafc;
+}
+.module-tab-btn.active {
+  color: #5c9140;
+  background: #eef5e8;
+  border-bottom-color: #6da84c;
+}
+.module-tab-btn:focus-visible,
+.btn-icon-action:focus-visible,
+.pagination-btn:focus-visible,
+.inline-filter-reset:focus-visible {
+  outline: 2px solid #6da84c;
+  outline-offset: 2px;
+}
+
+.module-tab-panel { animation: pmFadeIn 0.2s ease; }
+.module-tab-panel.hidden { display: none; }
+
+.module-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.01em;
+}
+
+@keyframes pmFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pmModalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-modal { animation: pmModalIn 0.18s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .module-tab-panel, .animate-modal, .toast { animation: none; }
+}
+
+/* ---------- Inline per-table filters ---------- */
+.inline-filter-select {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 7px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  max-width: 150px;
+}
+.inline-filter-select:hover { border-color: #d1d5db; }
+.inline-filter-select:focus {
+  border-color: #6da84c;
+  box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.15);
+}
+
+/* ---------- Reset-filters button (green-tinted, labelled, never reads as "delete") ---------- */
+.inline-filter-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #d7e8cc;
+  background: #f4f9f0;
+  color: #5c9140;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.inline-filter-reset:hover {
+  background: #eef5e8;
+  border-color: #6da84c;
+  color: #4a7633;
+}
+.inline-filter-reset svg { flex-shrink: 0; }
+
+/* ---------- Export button (neutral outline) ---------- */
+.inline-filter-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.inline-filter-export:hover { border-color: #6da84c; color: #5c9140; background: #f4f9f0; }
+.inline-filter-export:focus-visible { outline: 2px solid #6da84c; outline-offset: 2px; }
+
+/* ---------- Form controls ---------- */
+.form-input {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fafafa;
+  color: #1a1a2e;
+}
+.form-input:focus {
+  border-color: #6da84c;
+  box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.15);
+  background: #ffffff;
+}
+.form-input:disabled { background: #f3f4f6; cursor: not-allowed; }
+.form-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #374151;
+  display: block;
+  margin-bottom: 4px;
+}
+.form-label .required { color: #ef4444; margin-left: 2px; }
+.form-hint { font-size: 10.5px; color: #9ca3af; margin-top: 3px; }
+
+/* ---------- Stat cards ---------- */
+.stat-card {
+  padding: 14px 16px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+.stat-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 2px;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.badge-green { background: #dcfce7; color: #166534; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-gray { background: #f1f5f9; color: #475569; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.badge-dot-green { background: #22c55e; }
+.badge-dot-amber { background: #f59e0b; }
+.badge-dot-red { background: #ef4444; }
+.badge-dot-gray { background: #94a3b8; }
+.badge-dot-blue { background: #3b82f6; }
+
+/* ---------- Table ---------- */
+.table-row-hover:hover { background: #f8fafc; }
+
+/* ---------- Panel wrapper (matches Vendors table card) ---------- */
+.panel-card {
+  background: #fff;
+  border: 1px solid #6da84c;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  overflow: hidden;
+}
+.panel-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.panel-card-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-count-chip {
+  font-size: 11px;
+  font-weight: 700;
+  background: #eef5e8;
+  color: #5c9140;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+/* ---------- Icon action buttons ---------- */
+.btn-icon-action {
+  transition: all 0.15s ease;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.btn-icon-action:hover { background: #f1f5f9; color: #6da84c; }
+.btn-icon-action.success:hover { background: #dcfce7; color: #16a34a; }
+.btn-icon-action.danger:hover { background: #fee2e2; color: #ef4444; }
+
+/* ---------- Toast ---------- */
+.toast { animation: pmFadeIn 0.2s ease; }
+
+/* ---------- Modal scroll area ---------- */
+.modal-scroll { max-height: 60vh; overflow-y: auto; }
+.modal-scroll::-webkit-scrollbar { width: 4px; }
+.modal-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+/* ---------- Pagination bar (bottom of every table) ---------- */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+.pagination-info {
+  font-size: 11.5px;
+  color: #6b7280;
+  font-weight: 500;
+}
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pagination-size-select {
+  border: 1px solid #6da84c;
+  background: #fff;
+  color: #374151;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 6px 8px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.pagination-size-select:hover { border-color: #d1d5db; }
+.pagination-size-select:focus {
+  border-color: #6da84c;
+  box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.15);
+}
+.pagination-page-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+.pagination-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #4b5563;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pagination-btn:hover:not(:disabled) { background: #eef5e8; color: #5c9140; border-color: #cfe3c1; }
+.pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- Empty state ---------- */
+.empty-icon-svg { opacity: 0.25; color: #94a3b8; }
+.empty-icon-svg svg { width: 48px; height: 48px; } /* size the svg, not the wrapper */
+
+/* ---------- Line item rows (PO item builder) ---------- */
+.line-item-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 90px 100px 32px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.line-item-header {
+  display: grid;
+  grid-template-columns: 1fr 90px 90px 100px 32px;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+/* ---------- Live totals box (PO modal) ---------- */
+.po-totals {
+  margin-top: 12px;
+  margin-left: auto;
+  max-width: 260px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafbfc;
+  font-size: 12.5px;
+  color: #4b5563;
+}
+.po-totals > div { padding: 2px 0; }
+
+@media (max-width: 640px) {
+  .line-item-row, .line-item-header { grid-template-columns: 1fr 64px 64px 80px 32px; }
+}
+
+/* ---------- Purchase bill item rows (item, qty, unit, rate, GST %, remove) ---------- */
+.line-item-row.pb-row, .line-item-header.pb-row {
+  grid-template-columns: 1fr 70px 70px 90px 70px 32px;
+}
+@media (max-width: 640px) {
+  .line-item-row.pb-row, .line-item-header.pb-row { grid-template-columns: 1fr 54px 54px 72px 54px 28px; }
+}

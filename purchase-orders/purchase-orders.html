@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+<link rel="manifest" href="/favicon_io/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Purchase Management — Aquilon ERP</title>
+
+<script>
+  (function () {
+    try {
+      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+    } catch (e) {
+      document.documentElement.classList.add("sidebar-expanded");
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { colors: {
+      primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
+      secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+    } } },
+  };
+</script>
+
+<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+<link rel="stylesheet" href="/purchase-orders/purchase.css" />
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased text-sm">
+
+  <div class="flex min-h-screen">
+    <div id="sidebar-root"></div>
+
+    <div class="app-main flex-1 flex flex-col min-w-0">
+      <div id="topbar-root"></div>
+
+      <main class="p-3 sm:p-4 lg:p-5">
+
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end" aria-live="polite"></div>
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <div class="page-breadcrumb">Purchase</div>
+              <h1 class="page-title text-gray-900">Purchase Management</h1>
+            </div>
+          </div>
+
+          <!-- Flow: Requirement → Order → Goods Receipt → Bill tabs -->
+          <div class="module-tabs mb-4" role="tablist">
+            <button class="module-tab-btn active" data-module="pr" onclick="switchModuleTab('pr')" role="tab"><i class="fa-solid fa-cart-shopping"></i> Purchase Requirement</button>
+            <button class="module-tab-btn" data-module="po" onclick="switchModuleTab('po')" role="tab"><i class="fa-solid fa-file-lines"></i> Purchase Orders</button>
+            <button class="module-tab-btn" data-module="grn" onclick="switchModuleTab('grn')" role="tab"><i class="fa-solid fa-boxes-packing"></i> Goods Receipt</button>
+            <button class="module-tab-btn" data-module="pb" onclick="switchModuleTab('pb')" role="tab"><i class="fa-solid fa-file-invoice"></i> Purchase Bills</button>
+          </div>
+
+          <!-- ===== PURCHASE REQUIREMENT ===== -->
+          <section class="module-tab-panel" data-module="pr">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <h2 class="module-title">Purchase Requirements</h2>
+              <div class="flex gap-2 flex-wrap items-center">
+                <input type="text" id="search-pr" placeholder="Search by number, item, requester…" aria-label="Search requirements" oninput="renderPR()"
+                  class="border border-gray-200 bg-white rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-w-[180px] max-w-[260px] placeholder:text-gray-400">
+                <select id="filterPriority-pr" onchange="filterPR()" class="inline-filter-select" aria-label="Filter by priority">
+                  <option value="all">All Priority</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
+                </select>
+                <select id="filterStatus-pr" onchange="filterPR()" class="inline-filter-select" aria-label="Filter by status">
+                  <option value="all">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+                </select>
+                <button onclick="clearFiltersPR()" class="inline-filter-reset" title="Reset filters"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                <button onclick="exportPR()" class="inline-filter-export" title="Export filtered rows to CSV"><i class="fa-solid fa-download"></i> Export</button>
+                <button onclick="openAddPR()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm"><i class="fa-solid fa-plus"></i> New Requirement</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Total</div><div class="stat-value" id="totalPR">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Pending Approval</div><div class="stat-value text-amber-600" id="pendingPR">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Approved</div><div class="stat-value text-green-600" id="approvedPR">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Rejected</div><div class="stat-value text-red-600" id="rejectedPR">0</div></div>
+            </div>
+            <div id="prPanel"></div>
+          </section>
+
+          <!-- ===== PURCHASE ORDERS ===== -->
+          <section class="module-tab-panel hidden" data-module="po">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <h2 class="module-title">Purchase Orders</h2>
+              <div class="flex gap-2 flex-wrap items-center">
+                <input type="text" id="search-po" placeholder="Search POs by number, vendor…" aria-label="Search purchase orders" oninput="renderPO()"
+                  class="border border-gray-200 bg-white rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-w-[180px] max-w-[260px] placeholder:text-gray-400">
+                <select id="filterStatus-po" onchange="filterPO()" class="inline-filter-select" aria-label="Filter by status">
+                  <option value="all">All Status</option><option value="draft">Draft</option><option value="approved">Approved</option><option value="sent">Sent</option>
+                  <option value="partial">Partial</option><option value="fully_received">Fully Received</option><option value="closed">Closed</option>
+                </select>
+                <button onclick="clearFiltersPO()" class="inline-filter-reset" title="Reset filters"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                <button onclick="exportPO()" class="inline-filter-export" title="Export filtered rows to CSV"><i class="fa-solid fa-download"></i> Export</button>
+                <button onclick="openAddPO()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm"><i class="fa-solid fa-plus"></i> New Purchase Order</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5 mb-4">
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Total</div><div class="stat-value" id="totalPO">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Draft</div><div class="stat-value text-gray-500" id="draftPO">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Open (Sent/Partial)</div><div class="stat-value text-amber-600" id="openPO">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Fully Received</div><div class="stat-value text-green-600" id="receivedPO">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Total Value</div><div class="stat-value text-primary" id="totalValuePO">₹0</div></div>
+            </div>
+            <div id="poPanel"></div>
+          </section>
+
+          <!-- ===== PURCHASE BILLS ===== -->
+          <section class="module-tab-panel hidden" data-module="pb">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <h2 class="module-title">Purchase Bills</h2>
+              <div class="flex gap-2 flex-wrap items-center">
+                <input type="text" id="search-pb" placeholder="Search bills by number, vendor…" aria-label="Search purchase bills" oninput="renderPB()"
+                  class="border border-gray-200 bg-white rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-w-[180px] max-w-[260px] placeholder:text-gray-400">
+                <!-- Bill status is derived automatically from payments + due date -->
+                <select id="filterStatus-pb" onchange="filterPB()" class="inline-filter-select" aria-label="Filter by status">
+                  <option value="all">All Status</option><option value="received">Unpaid</option><option value="partial">Partially Paid</option>
+                  <option value="paid">Paid</option><option value="overdue">Overdue</option>
+                </select>
+                <button onclick="clearFiltersPB()" class="inline-filter-reset" title="Reset filters"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                <button onclick="exportPB()" class="inline-filter-export" title="Export filtered rows to CSV"><i class="fa-solid fa-download"></i> Export</button>
+                <button onclick="openAddPB()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm"><i class="fa-solid fa-plus"></i> New Purchase Bill</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5 mb-4">
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Total</div><div class="stat-value" id="totalPB">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Unpaid</div><div class="stat-value text-amber-600" id="unpaidPB">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Overdue</div><div class="stat-value text-red-600" id="overduePB">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Paid</div><div class="stat-value text-green-600" id="paidPB">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Total Payable</div><div class="stat-value text-primary" id="totalPayable">₹0</div></div>
+            </div>
+            <div id="pbPanel"></div>
+          </section>
+
+          <!-- ===== GOODS RECEIPT (GRN) ===== -->
+          <section class="module-tab-panel hidden" data-module="grn">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <h2 class="module-title">Goods Receipts</h2>
+              <div class="flex gap-2 flex-wrap items-center">
+                <input type="text" id="search-grn" placeholder="Search GRN, PO, vendor, challan…" aria-label="Search goods receipts" oninput="renderGRN()"
+                  class="border border-gray-200 bg-white rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-w-[180px] max-w-[260px] placeholder:text-gray-400">
+                <!-- GRN status is derived from cumulative received qty vs. PO qty -->
+                <select id="filterStatus-grn" onchange="filterGRN()" class="inline-filter-select" aria-label="Filter by status">
+                  <option value="all">All Status</option><option value="partial">Partial</option><option value="completed">Completed</option>
+                </select>
+                <button onclick="clearFiltersGRN()" class="inline-filter-reset" title="Reset filters"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                <button onclick="exportGRN()" class="inline-filter-export" title="Export filtered rows to CSV"><i class="fa-solid fa-download"></i> Export</button>
+                <button onclick="openAddGRN()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm"><i class="fa-solid fa-plus"></i> New Goods Receipt</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Total Receipts</div><div class="stat-value" id="totalGRN">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Partial</div><div class="stat-value text-amber-600" id="partialGRN">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Completed</div><div class="stat-value text-green-600" id="completedGRN">0</div></div>
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card"><div class="stat-label">Rejected Qty</div><div class="stat-value text-red-600" id="rejectedQtyGRN">0</div></div>
+            </div>
+            <div id="grnPanel"></div>
+          </section>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/assets/js/shared-data.js"></script>
+  <script src="/assets/js/nav-sidebar.js"></script>
+  <script>
+    NavSidebar.init({
+      basePath: "",
+      activePage: "purchaseManagement",
+      pageTitle: "Purchase Management",
+      user: { name: "Admin", role: "Super Admin", avatarUrl: "" },
+    });
+  </script>
+  <script>
+   /* =========================================================================
+   Purchase Management — PR → PO → GRN → PB   (Spring Boot, port 9093)
+   Flow: Requirement (approved) → Convert to PO → PO approved/sent → Goods Receipt
+         (PO becomes partial / fully_received) → Bill → Payment → PO closed
+   Every field name below matches the backend DTOs (PurchaseOrderRequestDto,
+   PurchaseBillRequestDto, PurchaseBillPaymentRequestDto, GoodsReceiptRequestDto).
+   Vendors come from the vendor master: GET /api/vendor/vendor-list (raw array, not wrapped).
+   ========================================================================= */
+const API_HOST = window.API_HOST || "http://localhost:9093"; // set window.API_HOST once (e.g. in shared-data.js) to change it everywhere
+const PR_API_BASE = `${API_HOST}/api/purchases/v1`;
+const PO_API_BASE = `${API_HOST}/api/purchase-orders/v1`;
+const PB_API_BASE = `${API_HOST}/api/purchase-bills/v1`;
+const GRN_API_BASE = `${API_HOST}/api/goods-receipts/v1`;
+const VENDOR_API_BASE = `${API_HOST}/api/vendor`;
+const RECEIVABLE_PO = ["approved", "sent", "partial"];       // PO states that can receive goods
+const BILLABLE_PO = ["partial", "fully_received"];           // PO states that have goods received
+
+/* ---------- vendor master ---------- */
+let VENDORS = []; // [{ vendorStrId, vendorName, companyName }]
+
+async function loadVendors() {
+  try {
+    const d = await apiRequest("GET", VENDOR_API_BASE, "/vendor-list");
+    // vendor API returns a raw list; tolerate a wrapped / paged response just in case
+    VENDORS = Array.isArray(d) ? d : (d && Array.isArray(d.content) ? d.content : []);
+  } catch (e) {
+    VENDORS = [];
+    showToast("Could not load vendor list: " + (e.message || e), "error");
+  }
+}
+
+// [[value, label]] for the dropdown. value = vendorName because purchase APIs match vendors by plain text.
+function vendorOptions(src) {
+  const list = VENDORS
+    .map((v) => {
+      const n = (v.vendorName || "").trim(), c = (v.companyName || "").trim();
+      return [n, c && lc(c) !== lc(n) ? `${n} (${c})` : n];
+    })
+    .filter(([n]) => n)
+    .sort((a, b) => a[1].localeCompare(b[1]));
+  const cur = (src?.vendorName || "").trim(); // keep old records editable even if the vendor is not in the master
+  if (cur && !list.some(([n]) => lc(n) === lc(cur))) list.unshift([cur, `${cur} (not in vendor master)`]);
+  return list;
+}
+
+// set a vendor <select> value, adding the option first if it is missing
+function setVendorValue(sel, name) {
+  if (!sel || !name) return;
+  if (![...sel.options].some((o) => o.value === name)) sel.add(new Option(name, name));
+  sel.value = name;
+}
+
+/* ---------- small utils ---------- */
+function escapeHtml(s) {
+  if (s === null || s === undefined) return "";
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+const E = escapeHtml;
+const lc = (s) => (s || "").toString().trim().toLowerCase();
+const today = () => new Date().toISOString().slice(0, 10);
+const count = (a, ...st) => a.filter((x) => st.includes(lc(x.status))).length;
+const sum = (a, f) => a.reduce((s, x) => s + (Number(f(x)) || 0), 0);
+const round2 = (n) => Math.round(n * 100) / 100;
+const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+const emptyModulePanel = (m) => `<div class="bg-white border border-gray-200 rounded-xl p-10 text-center text-gray-400 text-xs">${E(m)}</div>`;
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function formatDate(iso) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+function formatCurrency(a) {
+  if (a === null || a === undefined || a === "") return "-";
+  const n = Number(a);
+  return isNaN(n) ? "-" : n.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
+}
+const fmtTs = (t) => (t ? new Date(t).toLocaleString() : "-");
+
+const GRAY = "bg-gray-50 text-gray-500 border-gray-200", AMBER = "bg-amber-50 text-amber-600 border-amber-200",
+  GREEN = "bg-green-50 text-green-600 border-green-200", RED = "bg-red-50 text-red-600 border-red-200",
+  BLUE = "bg-blue-50 text-blue-600 border-blue-200";
+function badge(value, map, fallback) {
+  const s = lc(value);
+  const label = s === "received" ? "unpaid" : s.replace(/_/g, " "); // bill status "received" = unpaid
+  return `<span class="inline-block px-2 py-0.5 rounded-full border text-[10px] font-semibold capitalize ${map[s] || fallback}">${E(label || "-")}</span>`;
+}
+const priorityBadge = (p) => badge(p, { high: RED, medium: AMBER, low: GRAY }, AMBER);
+const statusBadge = (s) => badge(s, {
+  pending: AMBER, approved: GREEN, rejected: RED,                                // PR
+  draft: GRAY, sent: BLUE, partial: AMBER, fully_received: GREEN, closed: GRAY,  // PO / GRN
+  completed: GREEN,                                                              // GRN
+  received: BLUE, paid: GREEN, overdue: RED,                                     // PB (received = unpaid)
+}, GRAY);
+
+function showToast(message, type = "success") {
+  const wrap = document.getElementById("toastWrap");
+  if (!wrap) return;
+  const t = document.createElement("div");
+  t.className = `toast px-4 py-2.5 rounded-lg shadow-lg text-xs font-medium text-white transition-opacity duration-300 ${type === "error" ? "bg-red-600" : "bg-primary"}`;
+  t.textContent = message;
+  wrap.appendChild(t);
+  setTimeout(() => { t.classList.add("opacity-0"); setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+function downloadCsv(lines, prefix) {
+  const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = `${prefix}-${today()}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+const csvEscape = (v) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+
+/* ---------- API (purchase APIs wrap as { status, message, data }; vendor API returns a raw list) ---------- */
+async function apiRequest(method, base, path, body) {
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  let res, json = null;
+  try { res = await fetch(`${base}${path}`, opts); }
+  catch { throw new Error("Could not reach the server. Is it running on port 9093?"); }
+  try { json = await res.json(); } catch { /* empty body */ }
+  if (!res.ok) throw new Error((json && (json.message || json.details || json.error)) || `Request failed with status ${res.status}`);
+  return json && typeof json === "object" && !Array.isArray(json) && "data" in json ? json.data : json;
+}
+
+/* ---------- modal + form helpers ---------- */
+function showModal(title, body, width = "max-w-lg") {
+  const root = document.getElementById("modalRoot");
+  if (!root) return;
+  root.innerHTML = `
+    <div class="fixed inset-0 bg-black/40 z-[150] flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full ${width} max-h-[90vh] overflow-y-auto animate-modal">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+          <h3 class="text-sm font-semibold text-gray-900">${E(title)}</h3>
+          <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>${body}
+      </div>
+    </div>`;
+}
+function closeModal() {
+  const root = document.getElementById("modalRoot");
+  if (root) root.innerHTML = "";
+  Object.values(ST).forEach((s) => (s.editingId = null));
+}
+const footer = (label, cls = "bg-primary text-white hover:bg-primary-dark") => `
+  <div class="col-span-2 flex justify-end gap-2 pt-2">
+    <button type="button" onclick="closeModal()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 font-medium hover:bg-gray-50">Cancel</button>
+    <button type="submit" class="px-3 py-1.5 rounded-lg font-semibold ${cls}">${label}</button>
+  </div>`;
+
+/* field spec: n name, l label, t type, req, max, min, step, d default, o options ([[value,label]] or fn(src)),
+   a raw attrs, full (span 2 cols), editOnly, dis (disabled when editing), blank (placeholder option), ph, ro (never sent) */
+function fieldHtml(f, src, editing) {
+  if (f.t === "info") return `<div id="${f.n}" class="col-span-2 form-hint"></div>`;
+  const v = src ? src[f.n] : undefined;
+  const req = f.req ? "required" : "";
+  let inp;
+  if (f.t === "select") {
+    const opts = typeof f.o === "function" ? f.o(src) : f.o;
+    inp = `<select name="${f.n}" class="form-input" ${req} ${f.dis && editing ? "disabled" : ""} ${f.a || ""}>
+      ${f.blank ? `<option value="">${E(f.blank)}</option>` : ""}
+      ${opts.map(([val, lab]) => `<option value="${E(val)}" ${(v ?? f.d) === val ? "selected" : ""}>${E(lab)}</option>`).join("")}</select>`;
+  } else if (f.t === "textarea") {
+    inp = `<textarea name="${f.n}" rows="3" maxlength="2000" class="form-input" placeholder="${E(f.ph || "")}">${E(v || "")}</textarea>`;
+  } else {
+    inp = `<input name="${f.n}" type="${f.t || "text"}" class="form-input" ${req} ${f.a || ""}
+      ${f.max ? `maxlength="${f.max}"` : ""} ${f.min != null ? `min="${f.min}"` : ""} ${f.step ? `step="${f.step}"` : ""}
+      placeholder="${E(f.ph || "")}" value="${E(v ?? f.d ?? "")}" />`;
+  }
+  return `<div class="${f.full || f.t === "textarea" ? "col-span-2" : ""}"><label class="form-label">${E(f.l)}${f.req ? " *" : ""}</label>${inp}</div>`;
+}
+const formFields = (fields, src, editing) => fields.filter((f) => !f.editOnly || editing).map((f) => fieldHtml(f, src, editing)).join("");
+
+function readFields(fields, fd) {
+  const p = {};
+  fields.forEach((f) => {
+    if (f.ro || f.t === "info") return;
+    if (f.editOnly && !fd.has(f.n)) return;
+    const raw = (fd.get(f.n) ?? "").toString();
+    if (f.t === "number") p[f.n] = raw === "" ? undefined : Number(raw);
+    else p[f.n] = (f.t === "date" ? raw : raw.trim()) || undefined;
+  });
+  return p;
+}
+
+/* =========================================================================
+   MODULE CONFIG — one entry per tab; CRUD / filter / stats / CSV are shared
+   ========================================================================= */
+const ST = {
+  pr: { all: [], filtered: [], loading: false, editingId: null },
+  po: { all: [], filtered: [], loading: false, editingId: null },
+  pb: { all: [], filtered: [], loading: false, editingId: null },
+  grn: { all: [], filtered: [], loading: false, editingId: null },
+};
+const txt = (f) => (r) => E(r[f] || "-");
+const dt = (f) => (r) => formatDate(r[f]);
+const cur = (f) => (r) => formatCurrency(r[f]);
+const ab = (cls, fn, title, icon) => `<button onclick="${fn}" class="btn-icon-action ${cls}" title="${title}"><i class="${icon}"></i></button>`;
+const itemsSummary = (r) => {
+  const it = r.items || [];
+  return it.length ? `${E(it[0].name)}${it.length > 1 ? ` <span class="text-gray-400">+${it.length - 1} more</span>` : ""}` : "-";
+};
+const itemsCsv = (r) => (r.items || []).map((i) => `${i.name} x${i.qty} @${i.rate}`).join(" | ");
+
+const poOptions = (statuses, keep) => (ST.po.all || [])
+  .filter((o) => statuses.includes(lc(o.status)) || (keep && keep(o)))
+  .map((o) => [o.poStrId, `${o.poNumber} — ${o.vendorName}`]);
+
+const PO_HEAD = [
+  { n: "vendorName", l: "Vendor", t: "select", req: 1, full: 1, blank: "Select vendor…", o: (s) => vendorOptions(s) },
+  { n: "poDate", l: "PO Date", t: "date", d: today() }, { n: "deliveryDate", l: "Delivery Date", t: "date" },
+  { n: "taxPct", l: "GST %", t: "number", min: 0, step: "0.01", d: 18, a: 'oninput="recalcPo()"' },
+  { n: "status", l: "Status", t: "select", editOnly: 1, o: (s) => {
+    // draft -> approved -> sent are chosen by hand. partial / fully received / closed are set by the server
+    // (goods receipts, bills, payments), so they are shown but cannot be picked.
+    const cur = lc(s?.status);
+    if (["partial", "fully_received", "closed"].includes(cur)) return [[cur, cap(cur.replace("_", " ")) + " (automatic)"]];
+    return [["draft", "Draft"], ["approved", "Approved"], ["sent", "Sent"]];
+  } },
+];
+
+const PB_HEAD = [
+  { n: "poNumber", l: "Purchase Order (goods must be received)", t: "select", full: 1, blank: "No PO (direct bill)", a: 'onchange="onBillPoChange(this.value)"',
+    o: (src) => ST.po.all
+      .filter((o) => BILLABLE_PO.includes(lc(o.status)) || (src && o.poNumber === src.poNumber))
+      .map((o) => [o.poNumber, `${o.poNumber} — ${o.vendorName}`]) },
+  { n: "vendorName", l: "Vendor", t: "select", req: 1, full: 1, blank: "Select vendor…", o: (s) => vendorOptions(s) },
+  { n: "billDate", l: "Bill Date", t: "date", d: today() }, { n: "dueDate", l: "Due Date", t: "date" },
+];
+
+const MODULES = {
+  /* ---------------- Purchase Requirement ---------------- */
+  pr: {
+    noun: "purchase requirement", panel: "prPanel", base: PR_API_BASE, id: "purchaseStrId", file: "purchase-requirements",
+    list: "/get-all-purchases", create: "/create-purchase", update: "/update-purchase/", del: "/delete-purchase/",
+    createLabel: "Create Requirement", editTitle: "Edit Purchase Requirement", newTitle: "New Purchase Requirement",
+    emptyMsg: 'No purchase requirements yet. Click "New Requirement" to create one.',
+    search: ["purchaseNumber", "itemName", "requestedBy", "department"],
+    filters: { "filterPriority-pr": "priority", "filterStatus-pr": "status" },
+    cols: [["PR Number", txt("purchaseNumber")], ["Item", txt("itemName")], ["Qty", (r) => `${r.quantity ?? "-"} ${E(r.unit || "")}`],
+      ["Requested By", txt("requestedBy")], ["Department", txt("department")], ["Required Date", dt("requiredDate")],
+      ["Priority", (r) => priorityBadge(r.priority)], ["Status", (r) => statusBadge(r.status)],
+      ["PO", (r) => (r.convertedPoNumber ? E(r.convertedPoNumber) : '<span class="text-gray-300">-</span>')]],
+    fields: [
+      { n: "itemName", l: "Item Name", req: 1, max: 255, full: 1 },
+      { n: "quantity", l: "Quantity", t: "number", min: 1, req: 1 }, { n: "unit", l: "Unit", max: 30, ph: "Pcs" },
+      { n: "requestedBy", l: "Requested By", req: 1, max: 255 }, { n: "department", l: "Department", max: 255 },
+      { n: "requiredDate", l: "Required Date", t: "date" },
+      { n: "priority", l: "Priority", t: "select", d: "medium", o: [["low", "Low"], ["medium", "Medium"], ["high", "High"]] },
+      { n: "status", l: "Status", t: "select", editOnly: 1, full: 1, o: [["pending", "Pending"], ["approved", "Approved"], ["rejected", "Rejected"]] },
+      { n: "remarks", l: "Remarks", t: "textarea" },
+    ],
+    actions: (r) => {
+      const s = lc(r.status);
+      if (s === "pending") return ab("success", `approvePR('${r.purchaseStrId}')`, "Approve", "fa-solid fa-check") + ab("danger", `openRejectPR('${r.purchaseStrId}')`, "Reject", "fa-solid fa-xmark");
+      if (s === "approved" && !r.convertedPoNumber) return ab("success", `convertPRtoPO('${r.purchaseStrId}')`, "Convert to Purchase Order", "fa-solid fa-arrow-right");
+      return "";
+    },
+    view: (r) => [["PR Number", r.purchaseNumber], ["Item", r.itemName], ["Quantity", `${r.quantity ?? "-"} ${r.unit || ""}`], ["Requested By", r.requestedBy],
+      ["Department", r.department], ["Required Date", formatDate(r.requiredDate)], ["Priority", r.priority], ["Status", r.status], ["Remarks", r.remarks],
+      ["Rejection Reason", r.rejectionReason], ["Converted PO", r.convertedPoNumber], ["Created", fmtTs(r.createdAt)], ["Updated", fmtTs(r.updatedAt)]],
+    stats: (a) => ({ totalPR: a.length, pendingPR: count(a, "pending"), approvedPR: count(a, "approved"), rejectedPR: count(a, "rejected") }),
+    csv: [["PR Number", "purchaseNumber"], ["Item Name", "itemName"], ["Quantity", "quantity"], ["Unit", "unit"], ["Requested By", "requestedBy"], ["Department", "department"],
+      ["Required Date", "requiredDate"], ["Priority", "priority"], ["Status", "status"], ["Remarks", "remarks"], ["Rejection Reason", "rejectionReason"],
+      ["Converted PO", "convertedPoNumber"], ["Created At", "createdAt"], ["Updated At", "updatedAt"]],
+  },
+
+  /* ---------------- Purchase Order (multi-item, GST) ---------------- */
+  po: {
+    noun: "purchase order", panel: "poPanel", base: PO_API_BASE, id: "poStrId", file: "purchase-orders",
+    list: "/get-all-purchase-orders", create: "/create-purchase-order", update: "/update-purchase-order/", del: "/delete-purchase-order/",
+    createLabel: "Create Order", editTitle: "Edit Purchase Order", newTitle: "New Purchase Order", width: "max-w-2xl",
+    emptyMsg: 'No purchase orders yet. Click "New Purchase Order" to create one.',
+    refresh: ["pr", "grn"], // converting / deleting a PO changes the source PR; editing items re-syncs receipts
+    search: ["poNumber", "vendorName", "status"],
+    searchExtra: (r) => (r.items || []).map((i) => i.name).join(" "),
+    filters: { "filterStatus-po": "status" },
+    cols: [["PO Number", txt("poNumber")], ["Vendor", txt("vendorName")], ["Items", itemsSummary], ["PO Date", dt("poDate")],
+      ["Delivery", dt("deliveryDate")], ["Amount", cur("subtotal")], ["Total", cur("total")], ["Status", (r) => statusBadge(r.status)]],
+    fields: PO_HEAD,
+    beforeOpen: async () => { await loadVendors(); }, // fresh vendor master every time the form opens
+    customForm: (src, editing) => `
+      ${formFields(PO_HEAD, src, editing)}
+      <input type="hidden" name="sourcePurchaseStrId" value="${E(src?.sourcePurchaseStrId || "")}" />
+      <div class="col-span-2">
+        <label class="form-label">Items *</label>
+        <div class="line-item-header"><span>Item</span><span>Qty</span><span>Unit</span><span>Rate (₹)</span><span style="text-align:right">Amount (₹)</span><span></span></div>
+        <div id="poItems">${((src?.items && src.items.length) ? src.items : [{}]).map(poItemRow).join("")}</div>
+        <button type="button" onclick="addPoItem()" class="text-primary font-semibold text-[11px] mt-1"><i class="fa-solid fa-plus"></i> Add item</button>
+        <div class="po-totals" id="poTotals"></div>
+      </div>`,
+    afterOpen: () => {
+      recalcPo();
+      const sel = document.querySelector('#modalRoot [name="vendorName"]');
+      if (sel && sel.options.length <= 1) {
+        const hint = document.createElement("div");
+        hint.className = "form-hint text-red-600";
+        hint.textContent = "No vendors found. Add a vendor in the Vendors module, and check the server is running on port 9093.";
+        sel.parentElement.appendChild(hint);
+      }
+    },
+    formNote: "Partial, fully received and closed are set automatically from goods receipts, bills and payments.",
+    collect: (fd, form, ex) => {
+      const p = readFields(PO_HEAD, fd);
+      if (p.taxPct === undefined) p.taxPct = 0;
+      const src = fd.get("sourcePurchaseStrId");
+      if (src && !ex) p.sourcePurchaseStrId = src;
+      p.items = [...form.querySelectorAll(".line-item-row")].map((r) => ({
+        name: r.querySelector(".li-name").value.trim(),
+        qty: Number(r.querySelector(".li-qty").value),
+        unit: r.querySelector(".li-unit").value.trim() || undefined,
+        rate: Number(r.querySelector(".li-rate").value),
+      }));
+      p.items.forEach((it, i) => {
+        if (!it.name) throw new Error(`Item ${i + 1}: enter an item name.`);
+        if (!(it.qty > 0)) throw new Error(`Item ${i + 1}: quantity must be greater than 0.`);
+        if (!(it.rate > 0)) throw new Error(`Item ${i + 1}: enter a rate greater than 0.`);
+      });
+      return p;
+    },
+    actions: (r) => {
+      const s = lc(r.status), id = r.poStrId;
+      let h = "";
+      if (s === "draft") h += ab("success", `patchPOStatus('${id}','approved')`, "Approve PO", "fa-solid fa-check");
+      if (s === "approved") h += ab("success", `patchPOStatus('${id}','sent')`, "Mark as Sent to vendor", "fa-regular fa-paper-plane");
+      if (RECEIVABLE_PO.includes(s)) h += ab("success", `receiveGoodsForPO('${id}')`, "Receive goods (GRN)", "fa-solid fa-boxes-packing");
+      if (BILLABLE_PO.includes(s)) h += ab("success", `billForPO('${id}')`, "Create purchase bill", "fa-solid fa-file-invoice");
+      return h;
+    },
+    view: (r) => [["PO Number", r.poNumber], ["Vendor", r.vendorName], ["PO Date", formatDate(r.poDate)], ["Delivery Date", formatDate(r.deliveryDate)],
+      ["Status", r.status], ["Source PR", r.sourcePurchaseStrId],
+      ...(r.items || []).map((i, n) => [`Item ${n + 1}`, `${i.name} — ${i.qty} ${i.unit || ""} × ${formatCurrency(i.rate)} = ${formatCurrency(i.amount)}`]),
+      ["Subtotal", formatCurrency(r.subtotal)], [`GST (${r.taxPct ?? 0}%)`, formatCurrency(r.taxAmount)], ["Total", formatCurrency(r.total)],
+      ["Created", fmtTs(r.createdAt)], ["Updated", fmtTs(r.updatedAt)]],
+    stats: (a) => ({ totalPO: a.length, draftPO: count(a, "draft"), openPO: count(a, "sent", "partial"), receivedPO: count(a, "fully_received"),
+      totalValuePO: formatCurrency(sum(a, (o) => o.total)) }),
+    csv: [["PO Number", "poNumber"], ["Vendor", "vendorName"], ["Items", itemsCsv], ["PO Date", "poDate"], ["Delivery Date", "deliveryDate"], ["GST %", "taxPct"],
+      ["Subtotal", "subtotal"], ["GST Amount", "taxAmount"], ["Total", "total"], ["Status", "status"], ["Source PR", "sourcePurchaseStrId"], ["Created At", "createdAt"]],
+  },
+
+  /* ---------------- Purchase Bill (items + GST; total and status are calculated server-side) ---------------- */
+  pb: {
+    noun: "purchase bill", panel: "pbPanel", base: PB_API_BASE, id: "pbStrId", file: "purchase-bills",
+    list: "/get-all-purchase-bills", create: "/create-purchase-bill", update: "/update-purchase-bill/", del: "/delete-purchase-bill/",
+    createLabel: "Create Bill", editTitle: "Edit Purchase Bill", newTitle: "New Purchase Bill", width: "max-w-2xl",
+    emptyMsg: 'No purchase bills yet. Click "New Purchase Bill" to create one.',
+    refresh: ["po"],
+    search: ["pbNumber", "vendorName", "poNumber"],
+    searchExtra: (r) => (r.items || []).map((i) => i.name).join(" "),
+    filters: { "filterStatus-pb": "status" },
+    cols: [["Bill Number", txt("pbNumber")], ["Vendor", txt("vendorName")], ["PO", txt("poNumber")], ["Items", itemsSummary], ["Bill Date", dt("billDate")], ["Due Date", dt("dueDate")],
+      ["Total", cur("amount")], ["Paid", cur("paidAmount")], ["Balance", cur("balance")], ["Status", (r) => statusBadge(r.status)]],
+    fields: PB_HEAD,
+    customForm: (src, editing) => `
+      ${formFields(PB_HEAD, src, editing)}
+      <div class="col-span-2">
+        <label class="form-label">Items *</label>
+        <div class="line-item-header pb-row"><span>Item</span><span>Qty</span><span>Unit</span><span>Rate (₹)</span><span>GST %</span><span></span></div>
+        <div id="pbItems">${((src?.items && src.items.length) ? src.items : [{}]).map(pbItemRow).join("")}</div>
+        <button type="button" onclick="addPbItem()" class="text-primary font-semibold text-[11px] mt-1"><i class="fa-solid fa-plus"></i> Add item</button>
+        <div id="pbInfo" class="form-hint mt-1"></div>
+        <div class="po-totals" id="pbTotals"></div>
+      </div>`,
+    formNote: "Total and status are calculated automatically from the items, payments and due date.",
+    beforeOpen: async () => {
+      await loadVendors(); // fresh vendor master for the dropdown
+      if (!ST.po.all.length) await loadModule("po");
+    },
+    afterOpen: (src, editing) => {
+      recalcPb();
+      if (editing && !(src?.items && src.items.length)) {
+        const info = document.getElementById("pbInfo");
+        if (info) info.textContent = `This bill was created before item details were recorded (stored total ${formatCurrency(src.amount)}). Enter its items to save changes.`;
+      }
+    },
+    collect: (fd, form, ex) => {
+      const p = readFields(PB_HEAD, fd);
+      p.items = [...form.querySelectorAll("#pbItems .line-item-row")].map((r) => ({
+        name: r.querySelector(".li-name").value.trim(),
+        qty: Number(r.querySelector(".li-qty").value),
+        unit: r.querySelector(".li-unit").value.trim() || undefined,
+        rate: Number(r.querySelector(".li-rate").value),
+        gstPct: Number(r.querySelector(".li-gst").value) || 0,
+      }));
+      p.items.forEach((it, i) => {
+        if (!it.name) throw new Error(`Item ${i + 1}: enter an item name.`);
+        if (!(it.qty > 0) || !Number.isInteger(it.qty)) throw new Error(`Item ${i + 1}: quantity must be a whole number greater than 0.`);
+        if (!(it.rate > 0)) throw new Error(`Item ${i + 1}: enter a rate greater than 0.`);
+        if (it.gstPct < 0 || it.gstPct > 100) throw new Error(`Item ${i + 1}: GST must be between 0 and 100.`);
+      });
+      if (p.billDate && p.dueDate && p.dueDate < p.billDate) throw new Error("Due date cannot be before the bill date.");
+      return p;
+    },
+    actions: (r) => {
+      let h = "";
+      if (Number(r.balance) > 0) h += ab("success", `openRecordPaymentPB('${r.pbStrId}')`, "Record Payment", "fa-solid fa-indian-rupee-sign");
+      if ((r.payments || []).length) h += ab("", `openPaymentsPB('${r.pbStrId}')`, "View / delete payments", "fa-solid fa-receipt");
+      return h;
+    },
+    view: (r) => [["Bill Number", r.pbNumber], ["Vendor", r.vendorName], ["PO Number", r.poNumber], ["Bill Date", formatDate(r.billDate)], ["Due Date", formatDate(r.dueDate)],
+      ...(r.items || []).map((i, n) => [`Item ${n + 1}`, `${i.name} — ${i.qty} ${i.unit || ""} × ${formatCurrency(i.rate)} + GST ${i.gstPct ?? 0}% = ${formatCurrency(i.total)}`]),
+      ["Subtotal", formatCurrency(r.subtotal)], ["GST", formatCurrency(r.gstAmount)], ["Total", formatCurrency(r.amount)],
+      ["Paid", formatCurrency(r.paidAmount)], ["Balance", formatCurrency(r.balance)], ["Status", r.status],
+      ...(r.payments || []).map((p, i) => [`Payment ${i + 1}`, `${formatDate(p.date)} · ${formatCurrency(p.amount)} · ${(p.mode || "-").replace("_", " ")}${p.ref ? " · " + p.ref : ""}`]),
+      ["Created", fmtTs(r.createdAt)], ["Updated", fmtTs(r.updatedAt)]],
+    stats: (a) => ({ totalPB: a.length, unpaidPB: count(a, "received", "partial"), overduePB: count(a, "overdue"), paidPB: count(a, "paid"),
+      totalPayable: formatCurrency(sum(a, (b) => b.balance)) }),
+    csv: [["Bill Number", "pbNumber"], ["Vendor", "vendorName"], ["PO Number", "poNumber"], ["Items", itemsCsv], ["Bill Date", "billDate"], ["Due Date", "dueDate"],
+      ["Subtotal", "subtotal"], ["GST", "gstAmount"], ["Total", "amount"], ["Paid", "paidAmount"], ["Balance", "balance"], ["Status", "status"], ["Created At", "createdAt"]],
+  },
+
+  /* ---------------- Goods Receipt (one PO item per receipt) ---------------- */
+  grn: {
+    noun: "goods receipt", panel: "grnPanel", base: GRN_API_BASE, id: "grnStrId", file: "goods-receipts",
+    list: "/get-all-goods-receipts", create: "/create-goods-receipt", update: "/update-goods-receipt/", del: "/delete-goods-receipt/",
+    createLabel: "Create Receipt", editTitle: "Edit Goods Receipt", newTitle: "New Goods Receipt",
+    emptyMsg: 'No goods receipts yet. Click "New Goods Receipt" to record a delivery against a PO.',
+    refresh: ["po"], // PO status (partial / fully_received) is recalculated by the server
+    search: ["grnNumber", "poNumber", "vendorName", "itemName", "challanNumber"],
+    filters: { "filterStatus-grn": "status" },
+    cols: [["GRN No.", txt("grnNumber")], ["PO", txt("poNumber")], ["Vendor", txt("vendorName")], ["Item", txt("itemName")],
+      ["Received / Ordered", (r) => `${r.receivedQty ?? "-"} / ${r.orderedQty ?? "-"} ${E(r.unit || "")}`],
+      ["Rejected", (r) => `<span class="text-red-600">${r.rejectedQty ?? 0}</span>`], ["Date", dt("receivedDate")], ["Status", (r) => statusBadge(r.status)]],
+    fields: [
+      { n: "poStrId", l: "Purchase Order", t: "select", req: 1, full: 1, dis: 1, blank: "Select a PO…", a: 'onchange="onGRNPoChange(this.value)"',
+        o: (src) => poOptions(RECEIVABLE_PO, (o) => src && o.poStrId === src.poStrId) },
+      { n: "itemName", l: "Item", t: "select", req: 1, full: 1, dis: 1, blank: "Select item…", a: 'id="grnItem" onchange="onGRNItemChange()"', o: [] },
+      { n: "grnInfo", t: "info" },
+      { n: "receivedQty", l: "Received Qty", t: "number", min: 1, req: 1, a: 'id="grnRecv"' },
+      { n: "rejectedQty", l: "Rejected Qty", t: "number", min: 0, d: 0 },
+      { n: "receivedDate", l: "Received Date", t: "date", req: 1, d: today() }, { n: "challanNumber", l: "Challan / Invoice No.", max: 100 },
+      { n: "receivedBy", l: "Received By", max: 255, full: 1 },
+      { n: "remarks", l: "Remarks (damage, shortage…)", t: "textarea" },
+    ],
+    formNote: "PO and item can't be changed after saving. Status (partial / completed) is set automatically by the server.",
+    beforeOpen: async () => {
+      await loadModule("po"); // always fetch fresh, so a PO approved a moment ago shows up
+      if (!ST.grn.all.length && !ST.grn.loading) await loadModule("grn");
+    },
+    afterOpen: (src, editing) => {
+      if (src?.poStrId) { onGRNPoChange(src.poStrId, editing ? src.itemName : undefined); return; }
+      // Explain an empty PO dropdown instead of leaving it silently blank.
+      const sel = document.querySelector('#modalRoot [name="poStrId"]'), info = document.getElementById("grnInfo");
+      if (sel && info && sel.options.length <= 1) {
+        info.classList.add("text-red-600");
+        info.textContent = ST.po.all.length
+          ? `No PO is open for receiving. ${ST.po.all.length} PO(s) exist, but none is Approved, Sent or Partial. Approve a Draft PO in the Purchase Orders tab first.`
+          : "No purchase orders found. Create a PO (Purchase Orders tab), approve it, then record the receipt. If you already have POs, check the server is running on port 9093.";
+      }
+    },
+    prep: (p, ex) => {
+      if (ex) { p.poStrId = ex.poStrId; p.itemName = ex.itemName; } // disabled selects aren't submitted
+      const po = ST.po.all.find((o) => o.poStrId === p.poStrId);
+      if (!po) throw new Error("Select a purchase order.");
+      if (!p.itemName) throw new Error("Select the item being received.");
+      if (!ex && !RECEIVABLE_PO.includes(lc(po.status))) throw new Error("This PO is not open for receiving (must be approved or sent).");
+      p.rejectedQty = p.rejectedQty || 0;
+      if (p.rejectedQty > p.receivedQty) throw new Error("Rejected qty cannot exceed received qty.");
+      const remaining = grnRemaining(po, p.itemName, ex?.grnStrId);
+      if (p.receivedQty > remaining) throw new Error(`Only ${remaining} left to receive of '${p.itemName}' on ${po.poNumber}.`);
+    },
+    actions: () => "",
+    view: (r) => [["GRN Number", r.grnNumber], ["PO Number", r.poNumber], ["Vendor", r.vendorName], ["Item", r.itemName],
+      ["Ordered", `${r.orderedQty ?? "-"} ${r.unit || ""}`], ["Received", r.receivedQty], ["Accepted", r.acceptedQty], ["Rejected", r.rejectedQty],
+      ["Received Date", formatDate(r.receivedDate)], ["Challan No.", r.challanNumber], ["Received By", r.receivedBy], ["Status", r.status],
+      ["Remarks", r.remarks], ["Created", fmtTs(r.createdAt)]],
+    stats: (a) => ({ totalGRN: a.length, partialGRN: count(a, "partial"), completedGRN: count(a, "completed"), rejectedQtyGRN: sum(a, (g) => g.rejectedQty) }),
+    csv: [["GRN Number", "grnNumber"], ["PO Number", "poNumber"], ["Vendor", "vendorName"], ["Item", "itemName"], ["Unit", "unit"], ["Ordered", "orderedQty"],
+      ["Received", "receivedQty"], ["Accepted", "acceptedQty"], ["Rejected", "rejectedQty"], ["Received Date", "receivedDate"], ["Challan", "challanNumber"],
+      ["Received By", "receivedBy"], ["Status", "status"], ["Remarks", "remarks"]],
+  },
+};
+
+/* =========================================================================
+   Generic engine
+   ========================================================================= */
+async function loadModule(key) {
+  const M = MODULES[key], S = ST[key];
+  S.loading = true;
+  const panel = document.getElementById(M.panel);
+  if (panel) panel.innerHTML = emptyModulePanel(`Loading ${M.noun}s…`);
+  try {
+    const data = await apiRequest("GET", M.base, M.list);
+    S.all = Array.isArray(data) ? data : [];
+  } catch (err) {
+    showToast(err.message || `Failed to load ${M.noun}s`, "error");
+    S.all = [];
+  } finally {
+    S.loading = false;
+  }
+  applyFilters(key);
+  Object.entries(M.stats(S.all)).forEach(([id, v]) => setText(id, v));
+}
+const reload = (key) => Promise.all([loadModule(key), ...(MODULES[key].refresh || []).map(loadModule)]);
+
+function applyFilters(key) {
+  const M = MODULES[key], S = ST[key];
+  const q = (document.getElementById(`search-${key}`)?.value || "").trim().toLowerCase();
+  const active = Object.entries(M.filters).map(([el, field]) => [field, document.getElementById(el)?.value || "all"]);
+  S.filtered = S.all.filter((r) => {
+    const hay = M.search.map((f) => lc(r[f])).join(" ") + " " + lc(M.searchExtra ? M.searchExtra(r) : "");
+    return (!q || hay.includes(q)) && active.every(([f, v]) => v === "all" || lc(r[f]) === v);
+  });
+  renderTable(key);
+}
+
+function clearFilters(key) {
+  const s = document.getElementById(`search-${key}`);
+  if (s) s.value = "";
+  Object.keys(MODULES[key].filters).forEach((el) => { const e = document.getElementById(el); if (e) e.value = "all"; });
+  applyFilters(key);
+}
+
+function renderTable(key) {
+  const M = MODULES[key], S = ST[key];
+  const panel = document.getElementById(M.panel);
+  if (!panel) return;
+  if (S.filtered.length === 0) {
+    panel.innerHTML = emptyModulePanel(S.all.length === 0 ? M.emptyMsg : `No ${M.noun}s match your search / filters.`);
+    return;
+  }
+  const rows = S.filtered.map((r) => {
+    const id = r[M.id];
+    return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+      ${M.cols.map(([, fn], i) => `<td class="px-3 py-2 ${i === 0 ? "font-medium text-gray-900" : ""}">${fn(r)}</td>`).join("")}
+      <td class="px-3 py-2"><div class="flex items-center gap-1.5 flex-wrap">
+        ${ab("", `viewRecord('${key}','${id}')`, "View", "fa-regular fa-eye")}
+        ${ab("", `openAdd('${key}','${id}')`, "Edit", "fa-regular fa-pen-to-square")}
+        ${M.actions(r)}
+        ${ab("danger", `deleteRecord('${key}','${id}')`, "Delete", "fa-regular fa-trash-can")}
+      </div></td></tr>`;
+  }).join("");
+  panel.innerHTML = `
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden"><div class="overflow-x-auto">
+      <table class="w-full text-xs"><thead><tr class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wide border-b border-gray-200">
+        ${M.cols.map(([h]) => `<th class="px-3 py-2 text-left">${h}</th>`).join("")}<th class="px-3 py-2 text-left">Actions</th>
+      </tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* id = record being edited; pre = prefilled values for a NEW record (e.g. PO from a PR) */
+async function openAdd(key, id, pre) {
+  const M = MODULES[key], S = ST[key];
+  if (M.beforeOpen) await M.beforeOpen();
+  S.editingId = id || null;
+  const ex = id ? S.all.find((r) => r[M.id] === id) : null;
+  const src = ex || pre || null, editing = !!ex;
+  showModal(editing ? M.editTitle : M.newTitle, `
+    <form class="p-5 grid grid-cols-2 gap-3 text-xs" onsubmit="submitForm(event,'${key}')">
+      ${M.customForm ? M.customForm(src, editing) : formFields(M.fields, src, editing)}
+      ${editing && M.formNote ? `<p class="col-span-2 form-hint">${E(M.formNote)}</p>` : ""}
+      ${footer(editing ? "Save Changes" : M.createLabel)}
+    </form>`, M.width);
+  if (M.afterOpen) M.afterOpen(src, editing);
+}
+
+async function submitForm(evt, key) {
+  evt.preventDefault();
+  const M = MODULES[key], S = ST[key], form = evt.target;
+  const ex = S.editingId ? S.all.find((r) => r[M.id] === S.editingId) : null;
+  const fd = new FormData(form);
+  let payload;
+  try {
+    payload = M.collect ? M.collect(fd, form, ex) : readFields(M.fields, fd);
+    if (M.prep) M.prep(payload, ex);
+  } catch (e) { return showToast(e.message, "error"); }
+
+  const btn = form.querySelector('button[type="submit"]');
+  const label = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+  try {
+    if (S.editingId) await apiRequest("PUT", M.base, `${M.update}${encodeURIComponent(S.editingId)}`, payload);
+    else await apiRequest("POST", M.base, M.create, payload);
+    showToast(`${cap(M.noun)} ${S.editingId ? "updated" : "created"} successfully.`, "success");
+    closeModal();
+    await reload(key);
+  } catch (err) {
+    showToast(err.message || `Failed to save ${M.noun}`, "error");
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+  }
+}
+
+function viewRecord(key, id) {
+  const M = MODULES[key], r = ST[key].all.find((x) => x[M.id] === id);
+  if (!r) return;
+  showModal(`${cap(M.noun)} Details`, `<div class="p-5 text-xs space-y-2">${M.view(r).map(([l, v]) => `
+    <div class="flex justify-between gap-3 py-1 border-b border-gray-50">
+      <span class="text-gray-400">${E(l)}</span><span class="text-gray-800 font-medium text-right">${E(String(v === undefined || v === null || v === "" ? "-" : v))}</span>
+    </div>`).join("")}</div>`, "max-w-md");
+}
+
+async function deleteRecord(key, id) {
+  const M = MODULES[key];
+  if (!confirm(`Delete this ${M.noun}? This cannot be undone.`)) return;
+  try {
+    await apiRequest("DELETE", M.base, `${M.del}${encodeURIComponent(id)}`);
+    showToast(`${cap(M.noun)} deleted.`, "success");
+    await reload(key);
+  } catch (err) {
+    showToast(err.message || `Failed to delete ${M.noun}`, "error");
+  }
+}
+
+function exportModule(key) {
+  const M = MODULES[key], S = ST[key];
+  if (S.filtered.length === 0) return showToast("Nothing to export.", "error");
+  const lines = [M.csv.map(([h]) => h).join(",")];
+  S.filtered.forEach((r) => lines.push(M.csv.map(([, f]) => csvEscape(typeof f === "function" ? f(r) : r[f])).join(",")));
+  downloadCsv(lines, M.file);
+}
+
+/* Names used by the HTML (oninput / onclick) */
+Object.keys(MODULES).forEach((key) => {
+  const K = key.toUpperCase();
+  window[`render${K}`] = () => applyFilters(key);
+  window[`filter${K}`] = () => applyFilters(key);
+  window[`clearFilters${K}`] = () => clearFilters(key);
+  window[`export${K}`] = () => exportModule(key);
+  window[`openAdd${K}`] = (id) => openAdd(key, id);
+});
+
+/* =========================================================================
+   Tabs + bootstrap
+   ========================================================================= */
+function switchModuleTab(module) {
+  document.querySelectorAll(".module-tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.module === module));
+  document.querySelectorAll(".module-tab-panel").forEach((p) => p.classList.toggle("hidden", p.dataset.module !== module));
+  if (ST[module] && ST[module].all.length === 0 && !ST[module].loading) loadModule(module);
+}
+document.addEventListener("DOMContentLoaded", () => { loadModule("pr"); loadVendors(); });
+
+/* =========================================================================
+   PR: approve / reject / convert to PO
+   ========================================================================= */
+async function approvePR(id) {
+  if (!confirm("Approve this purchase requirement?")) return;
+  try {
+    await apiRequest("PATCH", PR_API_BASE, `/approve-purchase/${encodeURIComponent(id)}`);
+    showToast("Purchase requirement approved.", "success");
+    await loadModule("pr");
+  } catch (err) { showToast(err.message || "Failed to approve requirement", "error"); }
+}
+
+function openRejectPR(id) {
+  showModal("Reject Requirement", `
+    <form class="p-5 grid grid-cols-2 gap-3 text-xs" onsubmit="submitRejectPR(event,'${id}')">
+      ${fieldHtml({ n: "reason", l: "Reason (optional)", t: "textarea", ph: "Why is this being rejected?" })}
+      ${footer("Reject", "bg-red-600 text-white hover:bg-red-700")}
+    </form>`, "max-w-sm");
+}
+async function submitRejectPR(evt, id) {
+  evt.preventDefault();
+  const reason = ((new FormData(evt.target).get("reason")) || "").toString().trim() || undefined;
+  try {
+    await apiRequest("PATCH", PR_API_BASE, `/reject-purchase/${encodeURIComponent(id)}`, { reason });
+    showToast("Purchase requirement rejected.", "success");
+    closeModal();
+    await loadModule("pr");
+  } catch (err) { showToast(err.message || "Failed to reject requirement", "error"); }
+}
+
+/* Opens the PO form pre-filled from an approved PR (backend links it via sourcePurchaseStrId) */
+function convertPRtoPO(id) {
+  const pr = ST.pr.all.find((p) => p.purchaseStrId === id);
+  if (!pr) return;
+  switchModuleTab("po");
+  openAdd("po", null, {
+    sourcePurchaseStrId: pr.purchaseStrId,
+    deliveryDate: pr.requiredDate,
+    items: [{ name: pr.itemName, qty: pr.quantity, unit: pr.unit, rate: "" }],
+  });
+}
+
+/* =========================================================================
+   PO: line-item builder, status patch, shortcuts to GRN / bill
+   ========================================================================= */
+function poItemRow(it = {}) {
+  return `<div class="line-item-row">
+    <input class="form-input li-name" maxlength="255" placeholder="Item name" value="${E(it.name ?? "")}" oninput="recalcPo()" />
+    <input class="form-input li-qty" type="number" min="1" placeholder="Qty" value="${E(it.qty ?? "")}" oninput="recalcPo()" />
+    <input class="form-input li-unit" maxlength="30" placeholder="Pcs" value="${E(it.unit ?? "")}" />
+    <input class="form-input li-rate" type="number" min="0.01" step="0.01" placeholder="Rate" value="${E(it.rate ?? "")}" oninput="recalcPo()" />
+    <div class="li-amount text-right text-[12px] font-semibold text-gray-700">${formatCurrency(round2((Number(it.qty) || 0) * (Number(it.rate) || 0)))}</div>
+    <button type="button" class="btn-icon-action danger" title="Remove" onclick="removePoItem(this)"><i class="fa-solid fa-xmark"></i></button>
+  </div>`;
+}
+function addPoItem() { document.getElementById("poItems")?.insertAdjacentHTML("beforeend", poItemRow()); }
+function removePoItem(btn) {
+  const rows = document.querySelectorAll("#poItems .line-item-row");
+  if (rows.length > 1) { btn.closest(".line-item-row").remove(); recalcPo(); }
+}
+function recalcPo() {
+  const box = document.getElementById("poTotals");
+  if (!box) return;
+  let subtotal = 0;
+  document.querySelectorAll("#poItems .line-item-row").forEach((r) => {
+    const lineAmt = round2((Number(r.querySelector(".li-qty").value) || 0) * (Number(r.querySelector(".li-rate").value) || 0));
+    const amtEl = r.querySelector(".li-amount");
+    if (amtEl) amtEl.textContent = formatCurrency(lineAmt); // per-line Amount = qty x rate (read-only)
+    subtotal += lineAmt;
+  });
+  const pct = Number(document.querySelector('#modalRoot [name="taxPct"]')?.value) || 0;
+  const tax = round2(subtotal * pct / 100);
+  box.innerHTML = `<div class="flex justify-between"><span>Subtotal</span><span>${formatCurrency(round2(subtotal))}</span></div>
+    <div class="flex justify-between"><span>GST (${pct}%)</span><span>${formatCurrency(tax)}</span></div>
+    <div class="flex justify-between font-bold text-gray-900"><span>Total</span><span>${formatCurrency(round2(subtotal + tax))}</span></div>`;
+}
+
+async function patchPOStatus(id, status) {
+  try {
+    await apiRequest("PATCH", PO_API_BASE, `/patch-purchase-order/${encodeURIComponent(id)}`, { status });
+    showToast(`Purchase order marked ${status}.`, "success");
+    await loadModule("po");
+  } catch (err) { showToast(err.message || "Failed to update purchase order", "error"); }
+}
+
+function receiveGoodsForPO(poStrId) {
+  switchModuleTab("grn");
+  openAdd("grn", null, { poStrId });
+}
+async function billForPO(poStrId) {
+  const po = ST.po.all.find((o) => o.poStrId === poStrId);
+  if (!po) return;
+  let items;
+  try { items = await apiRequest("GET", PB_API_BASE, `/billable-items/${encodeURIComponent(po.poNumber)}`); }
+  catch (err) { return showToast(err.message || "Could not load billable items", "error"); }
+  if (!items.length) return showToast("Everything received on this PO has already been billed.", "error");
+  switchModuleTab("pb");
+  openAdd("pb", null, { poNumber: po.poNumber, vendorName: po.vendorName, items });
+}
+
+/* =========================================================================
+   PB: item rows, live totals, PO picker pre-fills billable items, payments
+   ========================================================================= */
+function pbItemRow(it = {}) {
+  return `<div class="line-item-row pb-row">
+    <input class="form-input li-name" maxlength="255" placeholder="Item name" value="${E(it.name ?? "")}" oninput="recalcPb()" />
+    <input class="form-input li-qty" type="number" min="1" step="1" placeholder="Qty" value="${E(it.qty ?? "")}" oninput="recalcPb()" />
+    <input class="form-input li-unit" maxlength="30" placeholder="Pcs" value="${E(it.unit ?? "")}" />
+    <input class="form-input li-rate" type="number" min="0.01" step="0.01" placeholder="Rate" value="${E(it.rate ?? "")}" oninput="recalcPb()" />
+    <input class="form-input li-gst" type="number" min="0" max="100" step="0.01" placeholder="GST %" value="${E(it.gstPct ?? 18)}" oninput="recalcPb()" />
+    <button type="button" class="btn-icon-action danger" title="Remove" onclick="removePbItem(this)"><i class="fa-solid fa-xmark"></i></button>
+  </div>`;
+}
+function addPbItem() { document.getElementById("pbItems")?.insertAdjacentHTML("beforeend", pbItemRow()); }
+function removePbItem(btn) {
+  if (document.querySelectorAll("#pbItems .line-item-row").length > 1) { btn.closest(".line-item-row").remove(); recalcPb(); }
+}
+function recalcPb() {
+  const box = document.getElementById("pbTotals");
+  if (!box) return;
+  let subtotal = 0, gst = 0;
+  document.querySelectorAll("#pbItems .line-item-row").forEach((r) => {
+    const amount = round2((Number(r.querySelector(".li-qty").value) || 0) * (Number(r.querySelector(".li-rate").value) || 0));
+    subtotal += amount;
+    gst += round2(amount * (Number(r.querySelector(".li-gst").value) || 0) / 100);
+  });
+  box.innerHTML = `<div class="flex justify-between"><span>Subtotal</span><span>${formatCurrency(round2(subtotal))}</span></div>
+    <div class="flex justify-between"><span>GST</span><span>${formatCurrency(round2(gst))}</span></div>
+    <div class="flex justify-between font-bold text-gray-900"><span>Total</span><span>${formatCurrency(round2(subtotal + gst))}</span></div>`;
+}
+
+/* Choosing a PO fills the vendor and replaces the rows with what can still be billed (accepted - already billed). */
+async function onBillPoChange(poNumber) {
+  const info = document.getElementById("pbInfo");
+  if (!poNumber) { if (info) info.textContent = ""; return; }
+  const po = ST.po.all.find((o) => o.poNumber === poNumber);
+  const v = document.querySelector('#modalRoot [name="vendorName"]');
+  if (po && v) setVendorValue(v, po.vendorName); // vendor is a <select> now
+  try {
+    const q = ST.pb.editingId ? `?excludePbStrId=${encodeURIComponent(ST.pb.editingId)}` : "";
+    const items = await apiRequest("GET", PB_API_BASE, `/billable-items/${encodeURIComponent(poNumber)}${q}`);
+    const box = document.getElementById("pbItems");
+    if (box) box.innerHTML = (items.length ? items : [{}]).map(pbItemRow).join("");
+    if (info) info.textContent = items.length
+      ? "Billable now: " + items.map((i) => `${i.name} ${i.qty} ${i.unit || ""}`.trim()).join(", ") + ". You cannot bill more than the accepted quantity."
+      : "Everything received on this PO has already been billed.";
+    recalcPb();
+  } catch (err) { showToast(err.message || "Could not load billable items", "error"); }
+}
+
+function openPaymentsPB(id) {
+  const b = ST.pb.all.find((x) => x.pbStrId === id);
+  if (!b) return;
+  const rows = (b.payments || []).map((p) => `
+    <div class="flex items-center justify-between gap-3 py-2 border-b border-gray-50">
+      <div><div class="font-semibold text-gray-800">${formatCurrency(p.amount)}</div>
+        <div class="text-gray-400">${formatDate(p.date)} · ${E((p.mode || "-").replace("_", " "))}${p.ref ? " · " + E(p.ref) : ""}</div></div>
+      <button class="btn-icon-action danger" title="Delete payment" onclick="deletePaymentPB('${id}', ${Number(p.paymentId)})"><i class="fa-regular fa-trash-can"></i></button>
+    </div>`).join("");
+  showModal(`Payments — ${b.pbNumber || ""}`, `<div class="p-5 text-xs">${rows || '<p class="text-gray-400">No payments recorded.</p>'}</div>`, "max-w-sm");
+}
+async function deletePaymentPB(id, paymentId) {
+  if (!confirm("Delete this payment? The bill balance will go up again.")) return;
+  try {
+    await apiRequest("DELETE", PB_API_BASE, `/delete-payment/${encodeURIComponent(id)}/${paymentId}`);
+    showToast("Payment deleted.", "success");
+    closeModal();
+    await reload("pb"); // the PO may re-open
+  } catch (err) { showToast(err.message || "Failed to delete payment", "error"); }
+}
+
+const payFields = (b) => [
+  { n: "amount", l: "Amount", t: "number", min: 0.01, step: "0.01", req: 1, full: 1, d: b ? b.balance : undefined },
+  { n: "date", l: "Payment Date", t: "date", req: 1, d: today() },
+  { n: "mode", l: "Payment Mode", t: "select", o: [["bank_transfer", "Bank Transfer"], ["neft", "NEFT"], ["rtgs", "RTGS"], ["upi", "UPI"], ["cheque", "Cheque"], ["cash", "Cash"], ["card", "Card"]] },
+  { n: "ref", l: "Reference / UTR", max: 100, full: 1 },
+];
+function openRecordPaymentPB(id) {
+  const b = ST.pb.all.find((x) => x.pbStrId === id);
+  if (!b) return;
+  showModal(`Record Payment — ${b.pbNumber || ""}`, `
+    <form class="p-5 grid grid-cols-2 gap-3 text-xs" onsubmit="submitRecordPaymentPB(event,'${id}')">
+      <p class="col-span-2 form-hint">Outstanding balance: ${formatCurrency(b.balance)}</p>
+      ${formFields(payFields(b))}${footer("Record Payment")}
+    </form>`, "max-w-sm");
+}
+async function submitRecordPaymentPB(evt, id) {
+  evt.preventDefault();
+  try {
+    await apiRequest("POST", PB_API_BASE, `/record-payment/${encodeURIComponent(id)}`, readFields(payFields(), new FormData(evt.target)));
+    showToast("Payment recorded successfully.", "success");
+    closeModal();
+    await reload("pb"); // a fully paid bill can close its PO
+  } catch (err) { showToast(err.message || "Failed to record payment", "error"); }
+}
+
+/* =========================================================================
+   GRN helpers: item picker per PO, remaining qty per item
+   ========================================================================= */
+function grnRemaining(po, itemName, excludeGrnId) {
+  const item = (po.items || []).find((i) => lc(i.name) === lc(itemName));
+  if (!item) return 0;
+  const received = ST.grn.all
+    .filter((g) => g.poStrId === po.poStrId && lc(g.itemName) === lc(itemName) && g.grnStrId !== excludeGrnId)
+    .reduce((s, g) => s + (Number(g.receivedQty) || 0), 0);
+  return Math.max(0, (Number(item.qty) || 0) - received);
+}
+
+function onGRNPoChange(poId, selectedItem) {
+  const sel = document.getElementById("grnItem");
+  const po = ST.po.all.find((o) => o.poStrId === poId);
+  if (!sel) return;
+  const items = po ? po.items || [] : [];
+  sel.innerHTML = `<option value="">Select item…</option>` +
+    items.map((i) => `<option value="${E(i.name)}">${E(i.name)} (${i.qty} ${E(i.unit || "")})</option>`).join("");
+  if (selectedItem) sel.value = selectedItem;
+  else if (items.length === 1) sel.value = items[0].name;
+  onGRNItemChange();
+}
+
+function onGRNItemChange() {
+  const info = document.getElementById("grnInfo"), recv = document.getElementById("grnRecv");
+  const poSel = document.querySelector('#modalRoot [name="poStrId"]');
+  const itemSel = document.getElementById("grnItem");
+  const poId = poSel?.value || ST.grn.all.find((g) => g.grnStrId === ST.grn.editingId)?.poStrId;
+  const po = ST.po.all.find((o) => o.poStrId === poId);
+  if (!info) return;
+  if (!po || !itemSel?.value) { info.textContent = po ? `Vendor: ${po.vendorName}` : ""; return; }
+  const item = po.items.find((i) => lc(i.name) === lc(itemSel.value));
+  const remaining = grnRemaining(po, itemSel.value, ST.grn.editingId);
+  info.textContent = `${po.vendorName} · Ordered: ${item.qty} ${item.unit || ""} · Remaining to receive: ${remaining}`;
+  if (recv) recv.max = remaining;
+}
+  </script>
+
+</body>
+</html>
+

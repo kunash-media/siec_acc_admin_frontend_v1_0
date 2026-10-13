@@ -7,16 +7,9 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
 <link rel="manifest" href="/favicon_io/site.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Dashboard</title>
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Dashboard — Aquilon ERP</title>
 
-<!--
-  ANTI-FLICKER SCRIPT — must be the first thing in <head>, before any
-  stylesheet. It reads the saved collapse state synchronously and sets
-  it on <html> so the sidebar is the correct width on the very first
-  paint. Copy this exact block, unchanged, to the top of every admin page.
--->
 <script>
   (function () {
     try {
@@ -28,7 +21,6 @@
   })();
 </script>
 
-<!-- Tailwind (utility classes for page content) -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -43,37 +35,1019 @@
   };
 </script>
 
-<!-- Shell styling (sidebar / topbar / overlays) — source of truth, loads after Tailwind -->
+<!-- Apache ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script>window.echarts || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.1/echarts.min.js"><\/script>');</script>
+
 <link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<style>
+  :root {
+    --ink: #16182a;
+    --muted: #64748b;
+    --hair: #6da84c;
+    --panel: #ffffff;
+    --bg: #f4f5f7;
+  }
+
+  body { font-size: 12px; background: var(--bg); }
+
+  /* ========== LAYOUT / RESPONSIVE RHYTHM ========== */
+  .page-shell { max-width: 1400px; }
+
+  @media (max-width: 640px) {
+    body { font-size: 12.5px; }
+  }
+
+  /* ========== STAT CARDS ========== */
+  .stat-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    padding: 13px 15px !important;
+    position: relative;
+    border-top-width: 3px !important;
+    border-top-style: solid !important;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -8px rgba(16, 24, 40, 0.12);
+  }
+  .stat-accent-primary { border-top-color: #6da84c !important; }
+  .stat-accent-amber { border-top-color: #d97706 !important; }
+  .stat-accent-amber2 { border-top-color: #b45309 !important; }
+  .stat-accent-rose { border-top-color: #e11d48 !important; }
+  .stat-accent-emerald { border-top-color: #059669 !important; }
+  .stat-card .stat-label {
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.03em;
+    color: var(--muted);
+  }
+  .stat-card .stat-value {
+    font-size: clamp(17px, 2.4vw, 20px); font-weight: 800;
+    color: var(--ink); margin-top: 5px; letter-spacing: -0.01em;
+  }
+  .stat-card .stat-icon {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 12.5px;
+  }
+  .stat-trend { font-size: 10.5px; margin-top: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+
+  .table-row-hover { transition: background 0.12s ease; }
+  .table-row-hover:hover { background: #fafbfc; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade { animation: fadeIn 0.2s ease; }
+
+  /* ========== CARD SHELL ========== */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--hair);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 13px 16px;
+    border-bottom: 1px solid #dcebd2;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .card-title-row { display: flex; align-items: center; gap: 9px; }
+  .card-title-icon {
+    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 12px;
+  }
+  .card-title {
+    font-size: 13.5px; font-weight: 800; color: var(--ink); letter-spacing: -0.01em;
+  }
+  .card-sub { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+  .card-link {
+    font-size: 11px; font-weight: 600; color: #1985bf;
+    white-space: nowrap;
+  }
+  .card-link:hover { text-decoration: underline; }
+  .card-body { padding: 14px 16px; }
+
+  @media (max-width: 480px) {
+    .card-body { padding: 12px; }
+    .card-header { padding: 11px 12px; }
+  }
+
+  /* ========== LINE CHARTS (SVG) ========== */
+  .line-chart-wrap { width: 100%; }
+  .line-chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .lc-grid-line { stroke: #eef0f4; stroke-width: 1; }
+  .lc-axis-labels {
+    display: flex; justify-content: space-between;
+    margin-top: 6px; padding: 0 2px;
+  }
+  .lc-axis-labels span {
+    font-size: 10px; color: #9aa3b2; font-weight: 600;
+  }
+  .lc-dot { transition: r 0.15s ease; cursor: pointer; }
+  .lc-point-group:hover .lc-dot { r: 5.5; }
+  .chart-tooltip {
+    position: fixed;
+    z-index: 300;
+    background: #16182a;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px -6px rgba(16, 24, 40, 0.35);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(-8px);
+    transition: opacity 0.1s ease;
+    white-space: nowrap;
+  }
+  .chart-tooltip.show { opacity: 1; }
+  .chart-tooltip .ct-month { color: #9aa3b2; font-weight: 700; margin-right: 6px; }
+  .chart-tooltip .ct-swatch {
+    width: 7px; height: 7px; border-radius: 50%;
+    display: inline-block; margin-right: 5px;
+  }
+  .lc-legend { display: flex; align-items: center; gap: 14px; font-size: 11px; color: #475569; }
+  .lc-legend .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .lc-summary-row {
+    display: flex; flex-wrap: wrap; justify-content: space-between;
+    gap: 10px 18px;
+    margin-top: 14px; padding-top: 12px; border-top: 1px solid #dcebd2;
+    font-size: 12px; color: var(--muted);
+  }
+  .lc-summary-row b { color: var(--ink); font-weight: 700; }
+
+  .prog-bar {
+    height: 6px; border-radius: 3px;
+    background: #f1f5f9; overflow: hidden;
+    margin-top: 6px;
+  }
+  .prog-bar .fill {
+    height: 100%; border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+  .prog-green { background: #22c55e; }
+  .prog-amber { background: #f59e0b; }
+  .prog-red { background: #ef4444; }
+  .prog-blue { background: #3b82f6; }
+
+  /* ========== HERO ========== */
+  .hero-gradient {
+    background: linear-gradient(135deg, #0f2a1a, #17331f 55%, #1a3a28);
+    border-radius: 14px;
+    padding: 20px 22px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-gradient::after {
+    content: '';
+    position: absolute;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(109,168,76,0.16) 0%, transparent 70%);
+    top: -110px; right: -100px;
+    pointer-events: none;
+  }
+  @media (max-width: 480px) {
+    .hero-gradient { padding: 16px; border-radius: 12px; }
+  }
+
+  .pipeline {
+    display: flex; gap: 0;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    position: relative; z-index: 1;
+    scrollbar-width: thin;
+  }
+  .pipeline-step {
+    flex-shrink: 0;
+    min-width: 84px;
+    text-align: center;
+    position: relative;
+  }
+  @media (max-width: 480px) {
+    .pipeline-step { min-width: 72px; }
+  }
+  .pipeline-step .line {
+    position: absolute;
+    top: 13px; left: 50%;
+    width: 100%; height: 2px;
+    background: rgba(255,255,255,0.15);
+    z-index: 0;
+  }
+  .pipeline-step:last-child .line { display: none; }
+  .pipeline-step .circle {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    position: relative; z-index: 1;
+  }
+  .pipeline-step .label {
+    font-size: 10px; margin-top: 6px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.2;
+  }
+  .pipe-complete .circle { background: #6da84c; color: white; }
+  .pipe-current .circle {
+    background: #d97706; color: #2a1b08;
+    box-shadow: 0 0 0 4px rgba(217,119,6,0.3);
+  }
+  .pipe-pending .circle {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ========== ALERTS ========== */
+  .alert-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fafbfc;
+    border: 1px solid #6da84c;
+    border-left-width: 3px;
+    margin-bottom: 6px;
+    transition: all 0.15s ease;
+  }
+  .alert-item:hover { background: #f4f6f8; }
+  .alert-item.al-red { border-left-color: #ef4444; }
+  .alert-item.al-amber { border-left-color: #f59e0b; }
+  .alert-item.al-blue { border-left-color: #3b82f6; }
+  .alert-item.al-green { border-left-color: #22c55e; }
+  .alert-item.al-purple { border-left-color: #8b5cf6; }
+  .alert-item .alert-icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 11.5px;
+  }
+  .ai-red { background: #fee2e2; color: #991b1b; }
+  .ai-amber { background: #fef3c7; color: #92400e; }
+  .ai-blue { background: #dbeafe; color: #1e40af; }
+  .ai-green { background: #dcfce7; color: #166534; }
+  .ai-purple { background: #ede9fe; color: #5b21b6; }
+
+  .alert-item .alert-title {
+    font-size: 12px; font-weight: 700; color: var(--ink);
+  }
+  .alert-item .alert-desc {
+    font-size: 10.5px; color: var(--muted); margin-top: 2px; line-height: 1.4;
+  }
+  .alert-item .alert-time {
+    font-size: 9.5px; color: #a3adbd; margin-top: 3px; font-weight: 600;
+  }
+
+  .ring-wrap { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-center {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+
+  /* ========== QUICK ACTIONS ========== */
+  .quick-action {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid #6da84c;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+  .quick-action:hover {
+    border-color: #6da84c;
+    background: #f8fbf6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -4px rgba(93, 145, 64, 0.25);
+  }
+  .quick-action .qa-icon {
+    width: 30px; height: 30px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    background: #eef5e8; color: #6da84c;
+    flex-shrink: 0; font-size: 12.5px;
+  }
+  .quick-action .qa-label {
+    font-size: 12px; font-weight: 700; color: var(--ink);
+  }
+  .quick-action .qa-desc {
+    font-size: 10px; color: #94a3b8; margin-top: 1px;
+  }
+
+  /* ========== PERIOD DROPDOWN (Zoho-style) ========== */
+  .period-dropdown { position: relative; }
+  .period-dropdown-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; color: #334155;
+    background: #ffffff; border: 1px solid #6da84c;
+    padding: 6px 10px; border-radius: 8px; cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .period-dropdown-btn:hover { background: #f8fbf6; }
+  .period-dropdown-btn i { font-size: 9px; color: #94a3b8; transition: transform .15s ease; }
+  .period-dropdown.open .period-dropdown-btn i { transform: rotate(180deg); }
+  .period-dropdown-menu {
+    display: none;
+    position: absolute; top: calc(100% + 6px); right: 0;
+    background: #fff; border: 1px solid #6da84c;
+    border-radius: 10px; min-width: 168px;
+    box-shadow: 0 12px 28px -8px rgba(16,24,40,0.18);
+    z-index: 50; overflow: hidden; padding: 4px;
+  }
+  .period-dropdown.open .period-dropdown-menu { display: block; }
+  .period-dropdown-item {
+    font-size: 11.5px; font-weight: 600; color: #475569;
+    padding: 8px 10px; border-radius: 7px; cursor: pointer;
+    transition: background .12s ease, color .12s ease;
+  }
+  .period-dropdown-item:hover { background: #f1f5f9; }
+  .period-dropdown-item.active { background: #6da84c; color: #fff; }
+
+  /* ========== PIE / DONUT CHART ========== */
+  .pie-donut { width: 100%; max-width: 168px; aspect-ratio: 1 / 1; flex-shrink: 0; }
+  .pie-svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .pie-seg {
+    cursor: pointer;
+    pointer-events: stroke;
+    transition: stroke-width .15s ease, opacity .15s ease;
+  }
+  .pie-seg:hover, .pie-seg.pie-seg-active { stroke-width: 40; }
+  .pie-legend { display: flex; flex-direction: column; gap: 10px; width: 100%; min-width: 0; }
+  .pie-legend-item { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #475569; cursor: pointer; padding: 2px 4px; border-radius: 6px; transition: background .12s ease; }
+  .pie-legend-item:hover, .pie-legend-item.pie-seg-active { background: #f1f5f9; }
+  .pie-legend-item .pl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .pie-legend-item .pl-label { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pie-legend-item .pl-pct { margin-left: auto; font-weight: 700; color: var(--ink); padding-left: 8px; }
+
+  /* ========== #6da84c BORDER OVERRIDES ========== */
+  .stat-card { border-color: #6da84c !important; }
+  .card, .period-dropdown-btn, .period-dropdown-menu, .quick-action { border-color: #6da84c !important; }
+  .divide-y > :not([hidden]) ~ :not([hidden]) { border-color: #dcebd2 !important; }
+
+  /* ========== ICON BORDERS ========== */
+  .stat-card .stat-icon,
+  .card-title-icon,
+  .quick-action .qa-icon,
+  .alert-item .alert-icon {
+    border: 1px solid #6da84c !important;
+  }
+</style>
 </head>
 
 <body class="bg-gray-50 text-gray-800 antialiased">
 
   <div class="flex min-h-screen">
-    <!-- Sidebar gets injected here by nav-sidebar.js -->
     <div id="sidebar-root"></div>
 
     <div class="app-main flex-1 flex flex-col min-w-0">
-      <!-- Top bar gets injected here -->
       <div id="topbar-root"></div>
 
-      <!-- ============= PAGE CONTENT STARTS HERE ============= -->
-      <main class="p-4 sm:p-6 lg:p-8">
-        <div class="max-w-6xl mx-auto">
-          <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 class="text-base font-semibold text-gray-800 mb-1">Dashboard</h2>
-            <p class="text-sm text-gray-500">
-              Placeholder page template
-            </p>
+      <main class="p-3 sm:p-5 lg:p-7">
+
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+        <div id="chartTooltip" class="chart-tooltip"></div>
+        <div id="projectModalRoot"></div>
+
+        <div class="page-shell mx-auto">
+
+          <!-- ===== PAGE HEADER ===== -->
+          <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+            <div>
+              <div class="text-[11px] font-semibold tracking-wide text-primary mb-1">Overview</div>
+              <h1 class="text-[22px] sm:text-[26px] font-bold tracking-tight text-gray-900">Dashboard</h1>
+              <p class="text-[12.5px] text-gray-500 mt-1">Real-time snapshot of your business performance</p>
+            </div>
+            <div class="flex gap-2.5 flex-wrap">
+              <button onclick="showToast('Export started...', 'info')"
+                class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-3.5 py-2.5 rounded-lg transition">
+                <i class="fa-solid fa-download"></i>
+                Export
+              </button>
+              <button onclick="showToast('Refreshing dashboard...', 'info')"
+                class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[12px] font-semibold px-3.5 py-2.5 rounded-lg transition shadow-sm">
+                <i class="fa-solid fa-rotate"></i>
+                Refresh
+              </button>
+            </div>
           </div>
+
+          <!-- ===== HERO: PROJECT LIFECYCLE (WHE) — COMMENTED OUT ===== -->
+          <!--
+          <div class="hero-gradient mb-5">
+            <div class="flex flex-wrap justify-between items-start gap-3 mb-4 relative z-10">
+              <div>
+                <h3 class="text-[15px] sm:text-[16px] font-semibold">Operation &amp; Supervision Contract — WHE</h3>
+                <p class="text-[11.5px] text-primary-soft/70 mt-0.5">Sustro Speciality Oils Pvt Ltd · Project Code 26LW069</p>
+              </div>
+              <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">
+                <span class="w-[6px] h-[6px] rounded-full bg-amber-500"></span>In Progress
+              </span>
+            </div>
+
+            <div class="pipeline">
+              <div class="pipeline-step pipe-complete">
+                <div class="line"></div>
+                <div class="circle">✓</div>
+                <div class="label">Enquiry</div>
+              </div>
+              <div class="pipeline-step pipe-complete">
+                <div class="line"></div>
+                <div class="circle">✓</div>
+                <div class="label">Proposal</div>
+              </div>
+              <div class="pipeline-step pipe-complete">
+                <div class="line"></div>
+                <div class="circle">✓</div>
+                <div class="label">Onboarding</div>
+              </div>
+              <div class="pipeline-step pipe-complete">
+                <div class="line"></div>
+                <div class="circle">✓</div>
+                <div class="label">Budget</div>
+              </div>
+              <div class="pipeline-step pipe-complete">
+                <div class="line"></div>
+                <div class="circle">✓</div>
+                <div class="label">Purchase</div>
+              </div>
+              <div class="pipeline-step pipe-current">
+                <div class="line"></div>
+                <div class="circle">6</div>
+                <div class="label text-white font-semibold">Timesheet</div>
+              </div>
+              <div class="pipeline-step pipe-pending">
+                <div class="line"></div>
+                <div class="circle">7</div>
+                <div class="label">Invoice</div>
+              </div>
+              <div class="pipeline-step pipe-pending">
+                <div class="line"></div>
+                <div class="circle">8</div>
+                <div class="label">Payment</div>
+              </div>
+              <div class="pipeline-step pipe-pending">
+                <div class="line"></div>
+                <div class="circle">9</div>
+                <div class="label">Reconcile</div>
+              </div>
+              <div class="pipeline-step pipe-pending">
+                <div class="line"></div>
+                <div class="circle">10</div>
+                <div class="label">GST Filing</div>
+              </div>
+              <div class="pipeline-step pipe-pending">
+                <div class="circle">11</div>
+                <div class="label">Profitability</div>
+              </div>
+            </div>
+          </div>
+          -->
+
+          <!-- ===== STAT CARDS ===== -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 mb-5">
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-primary">
+              <div class="flex items-center justify-between mb-2">
+                <span class="stat-label">Sales</span>
+                <span class="stat-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-cart-shopping"></i></span>
+              </div>
+              <div class="stat-value">₹42.5L</div>
+              <div class="stat-trend text-emerald-600"><i class="fa-solid fa-arrow-up"></i> +12.4%</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-amber">
+              <div class="flex items-center justify-between mb-2">
+                <span class="stat-label">Purchases</span>
+                <span class="stat-icon bg-amber-50 text-amber-600"><i class="fa-solid fa-truck-fast"></i></span>
+              </div>
+              <div class="stat-value">₹18.2L</div>
+              <div class="stat-trend text-emerald-600"><i class="fa-solid fa-arrow-up"></i> +4.1%</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-amber2">
+              <div class="flex items-center justify-between mb-2">
+                <span class="stat-label">Receivables</span>
+                <span class="stat-icon bg-amber-50 text-amber-700"><i class="fa-solid fa-hand-holding-dollar"></i></span>
+              </div>
+              <div class="stat-value">₹9.8L</div>
+              <div class="stat-trend text-amber-600"><i class="fa-solid fa-triangle-exclamation"></i> 3 overdue</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-rose">
+              <div class="flex items-center justify-between mb-2">
+                <span class="stat-label">Payables</span>
+                <span class="stat-icon bg-rose-50 text-rose-700"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+              </div>
+              <div class="stat-value">₹4.1L</div>
+              <div class="stat-trend text-rose-600">Due in 12 days</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-emerald">
+              <div class="flex items-center justify-between mb-2">
+                <span class="stat-label">Bank Balance</span>
+                <span class="stat-icon bg-emerald-50 text-emerald-700"><i class="fa-solid fa-building-columns"></i></span>
+              </div>
+              <div class="stat-value">₹12.6L</div>
+              <div class="stat-trend text-emerald-600">3 accounts</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-primary">
+              <div class="flex items-center justify-between mb-2">
+                <span class="stat-label">GST Payable</span>
+                <span class="stat-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-shield-halved"></i></span>
+              </div>
+              <div class="stat-value">₹3.15L</div>
+              <div class="stat-trend text-amber-600">Due 20th</div>
+            </div>
+          </div>
+
+          <!-- ===== CHARTS: INCOME vs EXPENSE + TOP EXPENSES ===== -->
+          <div class="grid lg:grid-cols-3 gap-4 mb-5">
+
+            <!-- Income & Expense (Apache ECharts) -->
+            <div class="card lg:col-span-2">
+              <div class="card-header">
+                <div class="card-title-row">
+                  <span class="card-title-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-chart-line"></i></span>
+                  <div>
+                    <div class="card-title">Income &amp; Expense</div>
+                    <div class="card-sub">Last 6 months</div>
+                  </div>
+                </div>
+                <div class="period-dropdown" id="incomeExpPeriod">
+                  <button class="period-dropdown-btn" onclick="togglePeriodDropdown('incomeExpPeriod')" type="button">
+                    <span class="pd-label">This Fiscal Year</span> <i class="fa-solid fa-chevron-down"></i>
+                  </button>
+                  <div class="period-dropdown-menu">
+                    <div class="period-dropdown-item active" onclick="selectPeriod(this,'incomeExpPeriod')">This Fiscal Year</div>
+                    <div class="period-dropdown-item" onclick="selectPeriod(this,'incomeExpPeriod')">Previous Fiscal Year</div>
+                    <div class="period-dropdown-item" onclick="selectPeriod(this,'incomeExpPeriod')">Last 12 Months</div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="incExpChart" style="width:100%;height:328px;margin-top:-28px;"></div>
+                <div class="lc-summary-row">
+                  <span>Total Income: <b>₹6,82,000</b></span>
+                  <span>Total Expense: <b>₹4,15,000</b></span>
+                  <span class="text-emerald-600 font-semibold">Net: +₹2,67,000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Expenses -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row">
+                  <span class="card-title-icon bg-secondary-soft text-secondary"><i class="fa-solid fa-chart-pie"></i></span>
+                  <div class="card-title">Top Expenses</div>
+                </div>
+                <div class="period-dropdown" id="topExpPeriod">
+                  <button class="period-dropdown-btn" onclick="togglePeriodDropdown('topExpPeriod')" type="button">
+                    <span class="pd-label">This Fiscal Year</span> <i class="fa-solid fa-chevron-down"></i>
+                  </button>
+                  <div class="period-dropdown-menu">
+                    <div class="period-dropdown-item active" onclick="selectPeriod(this,'topExpPeriod')">This Fiscal Year</div>
+                    <div class="period-dropdown-item" onclick="selectPeriod(this,'topExpPeriod')">Previous Fiscal Year</div>
+                    <div class="period-dropdown-item" onclick="selectPeriod(this,'topExpPeriod')">Last 12 Months</div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="flex flex-col items-center gap-4">
+                  <div class="pie-donut">
+                    <svg class="pie-svg" viewBox="0 0 200 200" role="img" aria-label="Top expenses breakdown by category">
+                      <g transform="rotate(-90 100 100)">
+                        <circle class="pie-seg" id="pieSeg0" cx="100" cy="100" r="70" fill="none" stroke="#6da84c" stroke-width="34"
+                          stroke-dasharray="146.45 293.37" stroke-dashoffset="0"
+                          data-label="Office Rent" data-pct="33.3%" data-value="₹85,000" data-color="#6da84c"></circle>
+                        <circle class="pie-seg" id="pieSeg1" cx="100" cy="100" r="70" fill="none" stroke="#1985bf" stroke-width="34"
+                          stroke-dasharray="124.03 315.79" stroke-dashoffset="-146.45"
+                          data-label="Staff Salaries" data-pct="28.2%" data-value="₹72,000" data-color="#1985bf"></circle>
+                        <circle class="pie-seg" id="pieSeg2" cx="100" cy="100" r="70" fill="none" stroke="#d97706" stroke-width="34"
+                          stroke-dasharray="83.57 356.25" stroke-dashoffset="-270.48"
+                          data-label="Raw Materials" data-pct="19.0%" data-value="₹48,500" data-color="#d97706"></circle>
+                        <circle class="pie-seg" id="pieSeg3" cx="100" cy="100" r="70" fill="none" stroke="#059669" stroke-width="34"
+                          stroke-dasharray="53.66 386.16" stroke-dashoffset="-354.05"
+                          data-label="Transport &amp; Logistics" data-pct="12.2%" data-value="₹31,200" data-color="#059669"></circle>
+                        <circle class="pie-seg" id="pieSeg4" cx="100" cy="100" r="70" fill="none" stroke="#b45309" stroke-width="34"
+                          stroke-dasharray="32.11 407.71" stroke-dashoffset="-407.71"
+                          data-label="Utilities" data-pct="7.3%" data-value="₹18,750" data-color="#b45309"></circle>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="pie-legend">
+                    <div class="pie-legend-item" data-seg="pieSeg0">
+                      <span class="pl-dot" style="background:#6da84c;"></span>
+                      <span class="pl-label">Office Rent</span>
+                      <span class="pl-pct">33.3%</span>
+                    </div>
+                    <div class="pie-legend-item" data-seg="pieSeg1">
+                      <span class="pl-dot" style="background:#1985bf;"></span>
+                      <span class="pl-label">Staff Salaries</span>
+                      <span class="pl-pct">28.2%</span>
+                    </div>
+                    <div class="pie-legend-item" data-seg="pieSeg2">
+                      <span class="pl-dot" style="background:#d97706;"></span>
+                      <span class="pl-label">Raw Materials</span>
+                      <span class="pl-pct">19.0%</span>
+                    </div>
+                    <div class="pie-legend-item" data-seg="pieSeg3">
+                      <span class="pl-dot" style="background:#059669;"></span>
+                      <span class="pl-label">Transport &amp; Logistics</span>
+                      <span class="pl-pct">12.2%</span>
+                    </div>
+                    <div class="pie-legend-item" data-seg="pieSeg4">
+                      <span class="pl-dot" style="background:#b45309;"></span>
+                      <span class="pl-label">Utilities</span>
+                      <span class="pl-pct">7.3%</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="lc-summary-row" style="margin-top:16px;">
+                  <span>Total Expenses: <b>₹2,55,450</b></span>
+                  <a href="/expenses/expenses.html" class="card-link">View All →</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== CASH FLOW — COMMENTED OUT ===== -->
+          <!--
+          <div class="card mb-5">
+            <div class="card-header">
+              <div class="card-title-row">
+                <span class="card-title-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-water"></i></span>
+                <div>
+                  <div class="card-title">Cash Flow</div>
+                  <div class="card-sub">Last 6 months · Net cash position</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 flex-wrap">
+                <div class="lc-legend">
+                  <span><span class="dot" style="background:#22c55e;"></span>Inflow</span>
+                  <span><span class="dot" style="background:#ef4444;"></span>Outflow</span>
+                </div>
+                <div class="period-dropdown" id="cashFlowPeriod">
+                  <button class="period-dropdown-btn" onclick="togglePeriodDropdown('cashFlowPeriod')" type="button">
+                    <span class="pd-label">This Fiscal Year</span> <i class="fa-solid fa-chevron-down"></i>
+                  </button>
+                  <div class="period-dropdown-menu">
+                    <div class="period-dropdown-item active" onclick="selectPeriod(this,'cashFlowPeriod')">This Fiscal Year</div>
+                    <div class="period-dropdown-item" onclick="selectPeriod(this,'cashFlowPeriod')">Previous Fiscal Year</div>
+                    <div class="period-dropdown-item" onclick="selectPeriod(this,'cashFlowPeriod')">Last 12 Months</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="line-chart-wrap">
+                <svg class="line-chart-svg" viewBox="0 0 600 165" preserveAspectRatio="none" role="img" aria-label="Cash inflow and outflow trend over the last 6 months">
+                  <line class="lc-grid-line" x1="50" y1="35" x2="550" y2="35"></line>
+                  <line class="lc-grid-line" x1="50" y1="75" x2="550" y2="75"></line>
+                  <line class="lc-grid-line" x1="50" y1="115" x2="550" y2="115"></line>
+                  <line class="lc-grid-line" x1="50" y1="150" x2="550" y2="150"></line>
+
+                  <defs>
+                    <linearGradient id="inFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.20"></stop>
+                      <stop offset="100%" stop-color="#22c55e" stop-opacity="0"></stop>
+                    </linearGradient>
+                    <linearGradient id="outFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#f87171" stop-opacity="0.14"></stop>
+                      <stop offset="100%" stop-color="#f87171" stop-opacity="0"></stop>
+                    </linearGradient>
+                  </defs>
+
+                  <path d="M50,88.4 L150,75.6 L250,50.8 L350,63.6 L450,38 L550,55.2 L550,150 L50,150 Z" fill="url(#inFill)"></path>
+                  <path d="M50,113.8 L150,101 L250,94.6 L350,81.8 L450,72.2 L550,62.6 L550,150 L50,150 Z" fill="url(#outFill)"></path>
+
+                  <polyline points="50,88.4 150,75.6 250,50.8 350,63.6 450,38 550,55.2" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <polyline points="50,113.8 150,101 250,94.6 350,81.8 450,72.2 550,62.6" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+
+                  <g class="lc-point-group"><circle class="lc-dot" cx="50" cy="88.4" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Jan" data-value="₹1,16,907" data-color="#22c55e"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="150" cy="75.6" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Feb" data-value="₹1,36,388" data-color="#22c55e"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="250" cy="50.8" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Mar" data-value="₹1,75,364" data-color="#22c55e"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="350" cy="63.6" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Apr" data-value="₹1,55,876" data-color="#22c55e"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="450" cy="38" r="4.2" fill="#22c55e" data-series="Inflow" data-month="May" data-value="₹1,94,876" data-color="#22c55e"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="550" cy="55.2" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Jun" data-value="₹1,65,589" data-color="#22c55e"></circle></g>
+
+                  <g class="lc-point-group"><circle class="lc-dot" cx="50" cy="113.8" r="4.2" fill="#f87171" data-series="Outflow" data-month="Jan" data-value="₹64,221" data-color="#f87171"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="150" cy="101" r="4.2" fill="#f87171" data-series="Outflow" data-month="Feb" data-value="₹80,276" data-color="#f87171"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="250" cy="94.6" r="4.2" fill="#f87171" data-series="Outflow" data-month="Mar" data-value="₹88,303" data-color="#f87171"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="350" cy="81.8" r="4.2" fill="#f87171" data-series="Outflow" data-month="Apr" data-value="₹1,04,359" data-color="#f87171"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="450" cy="72.2" r="4.2" fill="#f87171" data-series="Outflow" data-month="May" data-value="₹1,16,400" data-color="#f87171"></circle></g>
+                  <g class="lc-point-group"><circle class="lc-dot" cx="550" cy="62.6" r="4.2" fill="#f87171" data-series="Outflow" data-month="Jun" data-value="₹1,28,441" data-color="#f87171"></circle></g>
+                </svg>
+                <div class="lc-axis-labels">
+                  <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+                </div>
+              </div>
+              <div class="lc-summary-row">
+                <span>Total Inflow: <b>₹9,45,000</b></span>
+                <span>Total Outflow: <b>₹5,82,000</b></span>
+                <span class="text-emerald-600 font-semibold">Net Cash Flow: +₹3,63,000</span>
+                <span>Ending Balance: <b>₹12,60,000</b></span>
+              </div>
+            </div>
+          </div>
+          -->
+
+          <!-- ===== RECEIVABLES / PAYABLES ===== -->
+          <div class="grid lg:grid-cols-2 gap-4 mb-5">
+
+            <!-- Receivables -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row">
+                  <span class="card-title-icon bg-secondary-soft text-secondary"><i class="fa-solid fa-arrow-down"></i></span>
+                  <div class="card-title">Receivables</div>
+                </div>
+                <a href="/customer-payments/customer-payments.html" class="card-link">View All →</a>
+              </div>
+              <div class="card-body">
+                <div class="text-[11.5px] text-gray-500 mb-2">Total Unpaid <b class="text-gray-800">₹3,72,580</b></div>
+                <div class="prog-bar mb-4"><div class="fill prog-amber" style="width:100%"></div></div>
+                <div class="flex gap-2.5">
+                  <a href="/sales-orders/sales-orders.html" class="flex-1 bg-gray-50 hover:bg-gray-100 transition rounded-lg px-3.5 py-2.5">
+                    <div class="text-[10.5px] font-bold uppercase text-primary-dark">Current</div>
+                    <div class="text-[16px] font-semibold">₹0.00</div>
+                  </a>
+                  <a href="/invoices/invoices.html" class="flex-1 bg-gray-50 hover:bg-gray-100 transition rounded-lg px-3.5 py-2.5">
+                    <div class="text-[10.5px] font-bold uppercase text-amber-600">Overdue</div>
+                    <div class="text-[16px] font-semibold">₹3,72,580</div>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payables -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row">
+                  <span class="card-title-icon bg-rose-50 text-rose-700"><i class="fa-solid fa-arrow-up"></i></span>
+                  <div class="card-title">Payables</div>
+                </div>
+                <a href="/vendor-payments/vendor-payments.html" class="card-link">View All →</a>
+              </div>
+              <div class="card-body">
+                <div class="text-[11.5px] text-gray-500 mb-2">Total Unpaid <b class="text-gray-800">₹2,49,849</b></div>
+                <div class="prog-bar mb-4">
+                  <div class="fill prog-amber" style="width:98%"></div>
+                </div>
+                <div class="flex gap-2.5">
+                  <a href="/purchaseBills/purchaseBills.html" class="flex-1 bg-gray-50 hover:bg-gray-100 transition rounded-lg px-3.5 py-2.5">
+                    <div class="text-[10.5px] font-bold uppercase text-primary-dark">Current</div>
+                    <div class="text-[16px] font-semibold">₹5,837</div>
+                  </a>
+                  <a href="/purchaseBills/purchaseBills.html" class="flex-1 bg-gray-50 hover:bg-gray-100 transition rounded-lg px-3.5 py-2.5">
+                    <div class="text-[10.5px] font-bold uppercase text-amber-600">Overdue</div>
+                    <div class="text-[16px] font-semibold">₹2,44,013</div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== ACTIVE PROJECTS (Bank Accounts commented out → full width) ===== -->
+          <div class="grid gap-4 mb-5">
+
+            <!-- Active Projects -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row">
+                  <span class="card-title-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-diagram-project"></i></span>
+                  <div class="card-title">Active Projects</div>
+                </div>
+                <a href="/projects/projects.html" class="card-link">View All →</a>
+              </div>
+              <div class="divide-y divide-gray-100">
+                <a href="/projects/projects.html?project=PRJ-001" onclick="openProjectModal('PRJ-001'); return false;" class="flex items-center gap-3.5 px-4 py-3.5 table-row-hover cursor-pointer" title="Open project">
+                  <div class="ring-wrap">
+                    <svg viewBox="0 0 40 40" class="w-11 h-11">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="#E8EDED" stroke-width="4" />
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="#6da84c" stroke-width="4" stroke-linecap="round" stroke-dasharray="106.81" stroke-dashoffset="40.59" />
+                    </svg>
+                    <div class="ring-center text-primary-dark">62%</div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[12.8px] font-semibold text-gray-800 truncate">Operation &amp; Supervision — WHE</div>
+                    <div class="text-[11px] text-gray-400">Sustro Speciality Oils</div>
+                    <div class="prog-bar"><div class="fill prog-green" style="width:62%"></div></div>
+                  </div>
+                </a>
+                <a href="/projects/projects.html?project=PRJ-002" onclick="openProjectModal('PRJ-002'); return false;" class="flex items-center gap-3.5 px-4 py-3.5 table-row-hover cursor-pointer" title="Open project">
+                  <div class="ring-wrap">
+                    <svg viewBox="0 0 40 40" class="w-11 h-11">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="#E8EDED" stroke-width="4" />
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="#d97706" stroke-width="4" stroke-linecap="round" stroke-dasharray="106.81" stroke-dashoffset="73.70" />
+                    </svg>
+                    <div class="ring-center text-amber-600">31%</div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[12.8px] font-semibold text-gray-800 truncate">Odor Control Unit — Retrofit</div>
+                    <div class="text-[11px] text-gray-400">XYZ Technologies</div>
+                    <div class="prog-bar"><div class="fill prog-amber" style="width:31%"></div></div>
+                  </div>
+                </a>
+                <a href="/projects/projects.html?project=PRJ-003" onclick="openProjectModal('PRJ-003'); return false;" class="flex items-center gap-3.5 px-4 py-3.5 table-row-hover cursor-pointer" title="Open project">
+                  <div class="ring-wrap">
+                    <svg viewBox="0 0 40 40" class="w-11 h-11">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="#E8EDED" stroke-width="4" />
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="#6da84c" stroke-width="4" stroke-linecap="round" stroke-dasharray="106.81" stroke-dashoffset="12.82" />
+                    </svg>
+                    <div class="ring-center text-primary-dark">88%</div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[12.8px] font-semibold text-gray-800 truncate">Dual Media Filter — Phase II</div>
+                    <div class="text-[11px] text-gray-400">ABC Distributor Group</div>
+                    <div class="prog-bar"><div class="fill prog-green" style="width:88%"></div></div>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- Bank Accounts — COMMENTED OUT -->
+            <!--
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row">
+                  <span class="card-title-icon bg-secondary-soft text-secondary"><i class="fa-solid fa-building-columns"></i></span>
+                  <div class="card-title">Bank Accounts</div>
+                </div>
+                <a href="/banking/banking.html" class="card-link">View All →</a>
+              </div>
+              <div class="divide-y divide-gray-100">
+                <div class="flex items-center justify-between px-4 py-3.5 table-row-hover">
+                  <div class="flex items-center gap-2.5 text-[13px] font-semibold">
+                    <span class="w-[30px] h-[30px] rounded-lg bg-primary-soft text-primary-dark flex items-center justify-center">
+                      <i class="fa-solid fa-building-columns"></i>
+                    </span>
+                    HDFC Bank — Current
+                  </div>
+                  <div class="font-mono text-[12.5px] font-semibold text-primary">₹8,40,000</div>
+                </div>
+                <div class="flex items-center justify-between px-4 py-3.5 table-row-hover">
+                  <div class="flex items-center gap-2.5 text-[13px] font-semibold">
+                    <span class="w-[30px] h-[30px] rounded-lg bg-primary-soft text-primary-dark flex items-center justify-center">
+                      <i class="fa-solid fa-building-columns"></i>
+                    </span>
+                    ICICI Bank — Current
+                  </div>
+                  <div class="font-mono text-[12.5px] font-semibold text-primary">₹3,60,000</div>
+                </div>
+                <div class="flex items-center justify-between px-4 py-3.5 table-row-hover">
+                  <div class="flex items-center gap-2.5 text-[13px] font-semibold">
+                    <span class="w-[30px] h-[30px] rounded-lg bg-primary-soft text-primary-dark flex items-center justify-center">
+                      <i class="fa-solid fa-money-bill-wave"></i>
+                    </span>
+                    Petty Cash
+                  </div>
+                  <div class="font-mono text-[12.5px] font-semibold text-primary">₹60,000</div>
+                </div>
+                <div class="flex items-center justify-between px-4 py-3.5 table-row-hover">
+                  <div class="flex items-center gap-2.5 text-[13px] font-semibold">
+                    <span class="w-[30px] h-[30px] rounded-lg bg-primary-soft text-primary-dark flex items-center justify-center">
+                      <i class="fa-solid fa-money-check"></i>
+                    </span>
+                    Payment Clearing
+                  </div>
+                  <div class="font-mono text-[12.5px] font-semibold text-primary">₹1,04,822</div>
+                </div>
+              </div>
+            </div>
+            -->
+          </div>
+
+          <!-- ===== ALERTS & QUICK ACTIONS ===== -->
+          <div class="grid lg:grid-cols-3 gap-4">
+
+            <!-- Alerts -->
+            <div class="card lg:col-span-2">
+              <div class="card-header">
+                <div class="card-title-row">
+                  <span class="card-title-icon bg-rose-50 text-rose-700"><i class="fa-solid fa-bell"></i></span>
+                  <div class="card-title">Alerts &amp; Notifications</div>
+                </div>
+                <a href="/notifications/notifications.html" class="card-link">View All →</a>
+              </div>
+              <div class="card-body">
+                <div class="alert-item al-red">
+                  <div class="alert-icon ai-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                  <div class="flex-1">
+                    <div class="alert-title">Low Stock Alert: Chemical Dosing Pump</div>
+                    <div class="alert-desc">Stock is 3 units (Reorder level: 5 units). Please reorder soon.</div>
+                    <div class="alert-time">10 minutes ago</div>
+                  </div>
+                </div>
+                <div class="alert-item al-amber">
+                  <div class="alert-icon ai-amber"><i class="fa-solid fa-clock"></i></div>
+                  <div class="flex-1">
+                    <div class="alert-title">Invoice Overdue: INV/25-26/002</div>
+                    <div class="alert-desc">Invoice for ABC Enterprises (₹1,41,865) is 5 days overdue.</div>
+                    <div class="alert-time">1 hour ago</div>
+                  </div>
+                </div>
+                <div class="alert-item al-blue">
+                  <div class="alert-icon ai-blue"><i class="fa-solid fa-check"></i></div>
+                  <div class="flex-1">
+                    <div class="alert-title">Purchase Order Awaiting Approval</div>
+                    <div class="alert-desc">PO/25-26/005 for Premium Raw Materials (₹2,18,500) needs approval.</div>
+                    <div class="alert-time">2 hours ago</div>
+                  </div>
+                </div>
+                <div class="alert-item al-green">
+                  <div class="alert-icon ai-green"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                  <div class="flex-1">
+                    <div class="alert-title">Payment Received: ₹1,00,000</div>
+                    <div class="alert-desc">Payment received from XYZ Retail Store against INV/25-26/001.</div>
+                    <div class="alert-time">3 hours ago</div>
+                  </div>
+                </div>
+                <div class="alert-item al-purple">
+                  <div class="alert-icon ai-purple"><i class="fa-solid fa-bullseye"></i></div>
+                  <div class="flex-1">
+                    <div class="alert-title">Project Budget Alert: PRJ-001</div>
+                    <div class="alert-desc">Operation &amp; Supervision — WHE budget usage reached 62%.</div>
+                    <div class="alert-time">5 hours ago</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row">
+                  <span class="card-title-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-bolt"></i></span>
+                  <div class="card-title">Quick Actions</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="space-y-2">
+                  <a href="/invoices/invoices.html" class="quick-action">
+                    <div class="qa-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                    <div>
+                      <div class="qa-label">New Invoice</div>
+                      <div class="qa-desc">Create tax invoice</div>
+                    </div>
+                  </a>
+                  <a href="/purchase-orders/purchase-orders.html" class="quick-action">
+                    <div class="qa-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                    <div>
+                      <div class="qa-label">New Purchase Order</div>
+                      <div class="qa-desc">Order from vendor</div>
+                    </div>
+                  </a>
+                  <a href="/customer-payments/customer-payments.html" class="quick-action">
+                    <div class="qa-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                    <div>
+                      <div class="qa-label">Record Payment</div>
+                      <div class="qa-desc">Customer receipt</div>
+                    </div>
+                  </a>
+                  <a href="/expenses/expenses.html" class="quick-action">
+                    <div class="qa-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                    <div>
+                      <div class="qa-label">Log Expense</div>
+                      <div class="qa-desc">Record business expense</div>
+                    </div>
+                  </a>
+                  <a href="/projects/projects.html" class="quick-action">
+                    <div class="qa-icon"><i class="fa-solid fa-folder"></i></div>
+                    <div>
+                      <div class="qa-label">New Project</div>
+                      <div class="qa-desc">Start a new project</div>
+                    </div>
+                  </a>
+                  <a href="/timetracking/timesheet.html" class="quick-action">
+                    <div class="qa-icon"><i class="fa-solid fa-clock"></i></div>
+                    <div>
+                      <div class="qa-label">Log Time</div>
+                      <div class="qa-desc">Track billable hours</div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </main>
-      <!-- ============= PAGE CONTENT ENDS HERE ============= -->
     </div>
   </div>
 
+  <!-- ========================================================== -->
+  <!-- SCRIPTS -->
+  <!-- ========================================================== -->
+
   <script src="/assets/js/nav-sidebar.js"></script>
   <script>
+    // =============================================================
+    // NAV-SIDEBAR INIT
+    // =============================================================
     NavSidebar.init({
       basePath: "",
       activePage: "dashboard",
@@ -81,10 +1055,406 @@
       user: {
         name: "Admin",
         role: "Super Admin",
-        avatarUrl: "", 
+        avatarUrl: "",
       },
     });
 
+    // =============================================================
+    // TOAST
+    // =============================================================
+    function showToast(message, kind) {
+      kind = kind || 'success';
+      var wrap = document.getElementById('toastWrap');
+      if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = 'toastWrap';
+        wrap.className = 'fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end';
+        document.body.appendChild(wrap);
+      }
+      var colors = {
+        success: 'background:#16a34a',
+        info: 'background:#6da84c',
+        warning: 'background:#f59e0b',
+        error: 'background:#dc2626'
+      };
+      var el = document.createElement('div');
+      el.style.cssText = colors[kind] + ';color:white;font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:280px;';
+      el.innerHTML = '<span>' + message + '</span>';
+      wrap.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = 'opacity .3s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 300);
+      }, 2600);
+    }
+
+    // =============================================================
+    // CHART POINT TOOLTIPS (pie segments + any SVG dots)
+    // =============================================================
+    (function () {
+      var tip = document.getElementById('chartTooltip');
+      if (!tip) return;
+      var pinnedDot = null;
+
+      function renderTip(dot) {
+        var series = dot.getAttribute('data-series');
+        var month = dot.getAttribute('data-month');
+        var value = dot.getAttribute('data-value');
+        var color = dot.getAttribute('data-color') || '#6da84c';
+        tip.innerHTML =
+          '<span class="ct-swatch" style="background:' + color + '"></span>' +
+          '<span class="ct-month">' + month + '</span>' +
+          series + ': ' + value;
+      }
+
+      function positionAt(x, y) {
+        tip.style.left = x + 'px';
+        tip.style.top = y + 'px';
+      }
+
+      function positionAtDot(dot) {
+        var rect = dot.getBoundingClientRect();
+        positionAt(rect.left + rect.width / 2, rect.top);
+      }
+
+      function showTip(dot) {
+        renderTip(dot);
+        positionAtDot(dot);
+        tip.classList.add('show');
+      }
+
+      function hideTip() {
+        tip.classList.remove('show');
+        pinnedDot = null;
+      }
+
+      document.querySelectorAll('.lc-dot').forEach(function (dot) {
+        dot.addEventListener('mouseenter', function () {
+          if (pinnedDot) return;
+          showTip(dot);
+        });
+        dot.addEventListener('mousemove', function (evt) {
+          if (pinnedDot) return;
+          positionAt(evt.clientX, evt.clientY - 10);
+        });
+        dot.addEventListener('mouseleave', function () {
+          if (pinnedDot) return;
+          hideTip();
+        });
+        dot.addEventListener('click', function (evt) {
+          evt.stopPropagation();
+          if (pinnedDot === dot) {
+            hideTip();
+            return;
+          }
+          pinnedDot = dot;
+          showTip(dot);
+        });
+      });
+
+      document.addEventListener('click', function (evt) {
+        if (!evt.target.closest('.lc-dot') && !evt.target.closest('.pie-seg') && !evt.target.closest('.pie-legend-item')) hideTip();
+      });
+      window.addEventListener('scroll', function () {
+        if (pinnedDot && pinnedDot.classList.contains('lc-dot')) positionAtDot(pinnedDot);
+      }, true);
+      window.addEventListener('resize', function () {
+        if (pinnedDot && pinnedDot.classList.contains('lc-dot')) positionAtDot(pinnedDot);
+      });
+
+      // ---- Pie chart segments (Top Expenses) ----
+      function renderPieTip(seg) {
+        var label = seg.getAttribute('data-label');
+        var pct = seg.getAttribute('data-pct');
+        var value = seg.getAttribute('data-value');
+        var color = seg.getAttribute('data-color') || '#6da84c';
+        tip.innerHTML =
+          '<span class="ct-swatch" style="background:' + color + '"></span>' +
+          '<span class="ct-month">' + label + '</span>' +
+          value + ' (' + pct + ')';
+      }
+
+      function setActiveSeg(seg) {
+        document.querySelectorAll('.pie-seg-active').forEach(function (el) { el.classList.remove('pie-seg-active'); });
+        if (!seg) return;
+        seg.classList.add('pie-seg-active');
+        var legendRow = document.querySelector('.pie-legend-item[data-seg="' + seg.id + '"]');
+        if (legendRow) legendRow.classList.add('pie-seg-active');
+      }
+
+      function showPieTip(seg, x, y) {
+        renderPieTip(seg);
+        positionAt(x, y - 10);
+        tip.classList.add('show');
+        pinnedDot = seg;
+        setActiveSeg(seg);
+      }
+
+      document.querySelectorAll('.pie-seg').forEach(function (seg) {
+        seg.addEventListener('click', function (evt) {
+          evt.stopPropagation();
+          if (pinnedDot === seg) {
+            hideTip();
+            setActiveSeg(null);
+            return;
+          }
+          showPieTip(seg, evt.clientX, evt.clientY);
+        });
+      });
+
+      document.querySelectorAll('.pie-legend-item').forEach(function (row) {
+        row.addEventListener('click', function (evt) {
+          evt.stopPropagation();
+          var seg = document.getElementById(row.getAttribute('data-seg'));
+          if (!seg) return;
+          if (pinnedDot === seg) {
+            hideTip();
+            setActiveSeg(null);
+            return;
+          }
+          var rect = row.getBoundingClientRect();
+          showPieTip(seg, rect.left + 14, rect.top + rect.height / 2);
+        });
+      });
+
+      var origHideTip = hideTip;
+      hideTip = function () {
+        origHideTip();
+        setActiveSeg(null);
+      };
+    })();
+
+    // =============================================================
+    // PERIOD DROPDOWNS (This Fiscal Year / Previous / Last 12 Months)
+    // =============================================================
+    function togglePeriodDropdown(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var isOpen = el.classList.contains('open');
+      document.querySelectorAll('.period-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+      if (!isOpen) el.classList.add('open');
+    }
+
+    function selectPeriod(itemEl, dropdownId) {
+      var dropdown = document.getElementById(dropdownId);
+      if (!dropdown) return;
+      dropdown.querySelectorAll('.period-dropdown-item').forEach(function (i) { i.classList.remove('active'); });
+      itemEl.classList.add('active');
+      var label = dropdown.querySelector('.pd-label');
+      if (label) label.textContent = itemEl.textContent.trim();
+      dropdown.classList.remove('open');
+      showToast('Showing data for "' + itemEl.textContent.trim() + '"', 'info');
+      if (dropdownId === 'incomeExpPeriod' && window.replayIncExpChart) window.replayIncExpChart();
+    }
+
+    document.addEventListener('click', function (evt) {
+      if (!evt.target.closest('.period-dropdown')) {
+        document.querySelectorAll('.period-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+      }
+    });
+
+    // =============================================================
+    // INCOME & EXPENSE — Apache ECharts (mix-line-bar)
+    // =============================================================
+    function initIncExpChart() {
+      var dom = document.getElementById('incExpChart');
+      if (!dom) return;
+      if (typeof echarts === 'undefined') {
+        dom.innerHTML = '<div style="padding:60px 10px;text-align:center;color:#ef4444;font-size:12px;font-weight:600;">ECharts load zali nahi. Internet / ad-blocker tapasa (F12 → Console).</div>';
+        return;
+      }
+      try {
+        var existing = echarts.getInstanceByDom(dom);
+        if (existing) existing.dispose();
+        var chart = echarts.init(dom, null, {
+          width: dom.clientWidth || (dom.parentNode ? dom.parentNode.clientWidth : 600) || 600,
+          height: 328
+        });
+        var inr = function (v) { return '₹' + Number(v).toLocaleString('en-IN'); };
+        var short = function (v) { return '₹' + (v / 1000) + 'k'; };
+
+        var option = {
+          color: ['#6da84c', '#ef4444', '#1985bf'],
+          animation: true,
+          animationDuration: 1200,
+          animationEasing: 'cubicOut',
+          animationDurationUpdate: 600,
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'cross', crossStyle: { color: '#999' } },
+            formatter: function (params) {
+              var out = params[0].axisValueLabel;
+              params.forEach(function (p) {
+                out += '<br/>' + p.marker + p.seriesName + ': <b>' + inr(p.value) + '</b>';
+              });
+              return out;
+            }
+          },
+          toolbox: {
+            top: 28,
+            feature: {
+              dataView: { show: true, readOnly: false, title: 'Data View' },
+              magicType: { show: true, type: ['line', 'bar'],
+                title: { line: 'Switch to Line Chart', bar: 'Switch to Bar Chart' } },
+              restore: { show: true, title: 'Restore' }
+            },
+            emphasis: {
+              iconStyle: {
+                textPosition: 'top',
+                textAlign: 'right',
+                textFill: '#ffffff',
+                textBackgroundColor: '#000000',
+                textPadding: [5, 9],
+                textBorderRadius: 4
+              }
+            }
+          },
+          legend: { data: ['Income', 'Expense', 'Net'], bottom: 0 },
+          grid: { left: 10, right: 10, top: 88, bottom: 40, containLabel: true },
+          xAxis: [{
+            type: 'category',
+            data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            axisPointer: { type: 'shadow' }
+          }],
+          yAxis: [
+            { type: 'value', name: 'Amount', min: 0, max: 150000, interval: 30000,
+              axisLabel: { formatter: short } },
+            { type: 'value', name: 'Net', min: 0, max: 75000, interval: 15000,
+              axisLabel: { formatter: short }, splitLine: { show: false } }
+          ],
+          series: [
+            { name: 'Income', type: 'bar', barMaxWidth: 26,
+              animationDuration: 1000,
+              animationDelay: function (i) { return i * 120; },
+              data: [96282, 112329, 123043, 104306, 128376, 117663] },
+            { name: 'Expense', type: 'bar', barMaxWidth: 26,
+              animationDuration: 1000,
+              animationDelay: function (i) { return 200 + i * 120; },
+              data: [51077, 59590, 68103, 76615, 72359, 87256] },
+            { name: 'Net', type: 'line', yAxisIndex: 1, symbolSize: 8,
+              animationDuration: 1800,
+              animationDelay: 900,
+              data: [45205, 52739, 54940, 27691, 56017, 30407] }
+          ]
+        };
+
+        // Chart pahilyanda screen var disla ki draw hoto (bars vadhtat, Net line kadhli jate)
+        var drawn = false;
+        function play() {
+          if (drawn) return;
+          drawn = true;
+          chart.resize({ width: dom.clientWidth || undefined, height: 328 });
+          chart.setOption(option, true);
+        }
+        window.replayIncExpChart = function () {
+          chart.clear();
+          chart.resize({ width: dom.clientWidth || undefined, height: 328 });
+          chart.setOption(option, true);
+        };
+
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(function (entries) {
+            if (entries[0].isIntersecting) { play(); io.disconnect(); }
+          }, { threshold: 0.25 });
+          io.observe(dom);
+          setTimeout(play, 1500); // fallback
+        } else {
+          play();
+        }
+
+        var fit = function () {
+          chart.resize({ width: dom.clientWidth || undefined, height: 328 });
+        };
+        window.addEventListener('resize', fit);
+        if (window.ResizeObserver) new ResizeObserver(fit).observe(dom);
+      } catch (err) {
+        console.error('Income & Expense chart error:', err);
+        dom.innerHTML = '<div style="padding:60px 10px;text-align:center;color:#ef4444;font-size:12px;">Chart error: ' + err.message + '</div>';
+      }
+    }
+    if (document.readyState === 'complete') initIncExpChart();
+    else window.addEventListener('load', initIncExpChart);
+
+    // =============================================================
+    // PROJECT DETAILS POPUP (dashboard varunach details dakhva)
+    // =============================================================
+    var DASH_PROJECTS = {
+      'PRJ-001': { name: 'Operation & Supervision — WHE', code: '26LW069', customer: 'Sustro Speciality Oils Pvt Ltd', status: 'active', pm: 'Rajesh Sharma', startDate: '2025-11-01', endDate: '2026-06-30', progress: 62, budget: 500000, actualCost: 310000, revenue: 450000, profit: 140000, description: 'Operation and supervision contract for WHE' },
+      'PRJ-002': { name: 'Odor Control Unit — Retrofit', code: '26LW070', customer: 'XYZ Technologies', status: 'active', pm: 'Priya Patel', startDate: '2025-12-15', endDate: '2026-05-31', progress: 31, budget: 350000, actualCost: 120000, revenue: 200000, profit: 80000, description: 'Retrofit of odor control unit' },
+      'PRJ-003': { name: 'Dual Media Filter — Phase II', code: '26LW071', customer: 'ABC Distributor Group', status: 'completed', pm: 'Rajesh Sharma', startDate: '2025-08-01', endDate: '2026-01-15', progress: 100, budget: 750000, actualCost: 720000, revenue: 950000, profit: 230000, description: 'Dual media filter installation phase II' }
+    };
+
+    function pmMoney(n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); }
+
+    function openProjectModal(id) {
+      var p = DASH_PROJECTS[id];
+      if (!p) { window.location.href = '/projects/projects.html?project=' + id; return; }
+      var st = {
+        active:    { label: 'Active',    cls: 'bg-blue-100 text-blue-800',   bar: '#3b82f6' },
+        completed: { label: 'Completed', cls: 'bg-green-100 text-green-800', bar: '#22c55e' },
+        onhold:    { label: 'On Hold',   cls: 'bg-amber-100 text-amber-800', bar: '#f59e0b' }
+      }[p.status] || { label: p.status, cls: 'bg-gray-100 text-gray-700', bar: '#94a3b8' };
+      var margin = p.revenue > 0 ? ((p.profit / p.revenue) * 100).toFixed(1) : '0';
+      var profitCls = p.profit >= 0 ? 'text-emerald-600' : 'text-rose-600';
+
+      function row(label, value, extra) {
+        return '<div class="px-4 py-3 border-b border-gray-100 last:border-b-0">' +
+          '<div class="text-[10.5px] font-semibold uppercase tracking-wide text-gray-400">' + label + '</div>' +
+          '<div class="text-[13px] font-semibold text-gray-900 mt-0.5 ' + (extra || '') + '">' + value + '</div></div>';
+      }
+      function line(label, value, cls) {
+        return '<tr class="border-b border-gray-100"><td class="py-2.5 text-gray-500">' + label + '</td>' +
+          '<td class="py-2.5 text-right font-mono font-semibold ' + (cls || '') + '">' + value + '</td></tr>';
+      }
+
+      document.getElementById('projectModalRoot').innerHTML =
+        '<div class="fixed inset-0 z-[150] flex items-center justify-center p-4">' +
+          '<div class="absolute inset-0 bg-black/40" onclick="closeProjectModal()"></div>' +
+          '<div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto animate-fade">' +
+            '<div class="flex items-center gap-3 flex-wrap px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">' +
+              '<h2 class="text-[18px] sm:text-[20px] font-bold text-gray-900">' + p.name + '</h2>' +
+              '<span class="text-[11px] font-bold px-2.5 py-1 rounded-full ' + st.cls + '">' + st.label + '</span>' +
+              '<div class="flex-1"></div>' +
+              '<button onclick="closeProjectModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 flex items-center justify-center" title="Close"><i class="fa-solid fa-xmark"></i></button>' +
+            '</div>' +
+            '<div class="p-6 grid grid-cols-1 md:grid-cols-[280px_1fr] gap-5">' +
+              '<div class="border border-gray-200 rounded-xl bg-gray-50/60 h-fit">' +
+                row('Project Code', p.code) +
+                row('Customer', p.customer, 'text-secondary') +
+                row('Project Manager', p.pm) +
+                row('Start Date', p.startDate) +
+                row('End Date', p.endDate) +
+                row('Progress', p.progress + '%<div class="prog-bar" style="margin-top:8px;"><div class="fill" style="width:' + p.progress + '%;background:' + st.bar + ';"></div></div>') +
+                row('Description', p.description, 'font-medium text-gray-600 text-[12.5px]') +
+              '</div>' +
+              '<div class="border border-gray-200 rounded-xl p-5">' +
+                '<div class="font-bold text-[14px] text-gray-800 mb-3"><i class="fa-solid fa-chart-pie text-primary mr-2"></i>Financial Summary</div>' +
+                '<table class="w-full text-[13px]"><tbody>' +
+                  line('Total Budget', pmMoney(p.budget)) +
+                  line('Revenue Generated', pmMoney(p.revenue), 'text-primary') +
+                  line('Actual Cost', pmMoney(p.actualCost), 'text-rose-600') +
+                  line('Net Profit', pmMoney(p.profit), profitCls) +
+                  line('Margin', margin + '%') +
+                '</tbody></table>' +
+                '<div class="text-[11px] text-gray-400 font-mono mt-4">Project ID: ' + id + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeProjectModal() {
+      document.getElementById('projectModalRoot').innerHTML = '';
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeProjectModal(); });
+
+    // =============================================================
+    // INIT
+    // =============================================================
+    console.log('📊 Dashboard Module Loaded Successfully');
   </script>
+
 </body>
 </html>

@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+<link rel="manifest" href="/favicon_io/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Projects — Aquilon ERP</title>
+
+<script>
+  (function () {
+    try {
+      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+    } catch (e) {
+      document.documentElement.classList.add("sidebar-expanded");
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
+          secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<style>
+  .form-input {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    color: #1a1a2e;
+  }
+  .form-input:focus {
+    border-color: #6da84c;
+    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.15);
+    background: #ffffff;
+  }
+  .form-input:disabled { background: #f3f4f6; cursor: not-allowed; }
+  .form-label { font-size: 11.5px; font-weight: 600; color: #374151; display: block; margin-bottom: 4px; }
+  .form-label .required { color: #ef4444; margin-left: 2px; }
+  .form-hint { font-size: 10.5px; color: #9ca3af; margin-top: 3px; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .badge-dot-green { background: #22c55e; }
+  .badge-dot-amber { background: #f59e0b; }
+  .badge-dot-red { background: #ef4444; }
+  .badge-dot-gray { background: #94a3b8; }
+  .badge-dot-blue { background: #3b82f6; }
+  .badge-dot-purple { background: #8b5cf6; }
+
+  .stat-card { border: 1px solid #7dc057; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06); }
+  .stat-icon-wrap { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+
+  .table-row-hover:hover { background: #f8fafc; }
+
+  .page-tab-btn {
+    transition: all 0.2s ease; padding: 10px 18px; font-size: 13px; font-weight: 500;
+    border-bottom: 2px solid transparent; color: #6b7280; cursor: pointer; background: transparent; white-space: nowrap;
+  }
+  .page-tab-btn.active { color: #6da84c; border-bottom-color: #6da84c; font-weight: 600; }
+  .page-tab-btn:hover:not(.active) { color: #1f2937; border-bottom-color: #d1d5db; }
+  .page-tab-panel { display: none; }
+  .page-tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+  .animate-modal { animation: modalIn 0.18s ease; }
+  .animate-slidein { animation: slideIn 0.22s ease; }
+
+  .btn-icon-action {
+    transition: all 0.15s ease; width: 32px; height: 32px; border-radius: 8px; display: inline-flex;
+    align-items: center; justify-content: center; color: #94a3b8; background: transparent; border: none; cursor: pointer;
+  }
+  .btn-icon-action:hover { background: #f1f5f9; color: #6da84c; }
+  .btn-icon-action.danger:hover { background: #fee2e2; color: #ef4444; }
+
+  .toast { animation: fadeIn 0.2s ease; }
+  .toast-success { background: #16a34a; }
+  .toast-error { background: #dc2626; }
+  .toast-warning { background: #f59e0b; }
+  .toast-info { background: #6da84c; }
+
+  .modal-scroll { max-height: 60vh; overflow-y: auto; }
+  .modal-scroll::-webkit-scrollbar { width: 4px; }
+  .modal-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+  .empty-icon-svg { opacity: 0.2; width: 48px; height: 48px; color: #94a3b8; }
+
+  /* Project row (table, list view) */
+  .project-row { cursor: pointer; transition: background 0.15s; }
+  .project-row:hover { background: #f8fafc; }
+  .proj-name-link { font-size: 13px; font-weight: 700; color: #1a1a2e; cursor: pointer; }
+  .proj-name-link:hover { color: #6da84c; text-decoration: underline; }
+  .proj-customer-sm { font-size: 11px; color: #6b7280; }
+
+  .progress-bar { height: 6px; border-radius: 3px; background: #e5e7eb; overflow: hidden; margin-top: 6px; }
+  .progress-bar .fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .progress-bar .fill-green { background: #22c55e; }
+  .progress-bar .fill-amber { background: #f59e0b; }
+  .progress-bar .fill-blue { background: #3b82f6; }
+
+  .doc-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid #e5e7eb;
+    border-radius: 8px; background: #ffffff; transition: border-color 0.2s, background 0.15s;
+  }
+  .doc-item:hover { border-color: #6da84c; background: #f8fafc; }
+  .doc-item .doc-icon {
+    width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    background: #eef5e8; color: #6da84c; flex-shrink: 0;
+  }
+  .doc-item .doc-name { font-size: 12px; font-weight: 600; color: #1a1a2e; }
+  .doc-item .doc-meta { font-size: 10px; color: #6b7280; }
+
+  .report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .report-table th {
+    background: #f8fafc; text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; border-bottom: 2px solid #e5e7eb;
+  }
+  .report-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; }
+  .report-table .text-right { text-align: right; }
+  .report-table .total-row { border-top: 2px solid #e5e7eb; border-bottom: 2px solid #e5e7eb; font-weight: 700; background: #f8fafc; }
+  .report-table .grand-total { font-weight: 700; color: #6da84c; background: #eef5e8; }
+
+  /* ===== PROJECT DETAIL VIEW (Zoho-style) ===== */
+  .back-btn {
+    width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
+    color: #4b5563; background: #f1f5f9; border: none; cursor: pointer; transition: all 0.15s;
+  }
+  .back-btn:hover { background: #e5e7eb; color: #1a1a2e; }
+
+  .detail-info-panel {
+    background: #fafbfc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+  }
+  .detail-info-panel .info-row { padding: 14px 18px; border-bottom: 1px solid #eef0f2; }
+  .detail-info-panel .info-row:last-child { border-bottom: none; }
+  .detail-info-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 3px; }
+  .detail-info-value { font-size: 13.5px; font-weight: 600; color: #1a1a2e; }
+  .detail-info-value.link { color: #1985bf; cursor: pointer; }
+  .detail-info-value.link:hover { text-decoration: underline; }
+
+  .no-scrollbar::-webkit-scrollbar {
+  display: none;               /* Chrome, Safari, Edge (Chromium) */
+}
+</style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased">
+
+  <div class="flex min-h-screen">
+    <div id="sidebar-root"></div>
+
+    <div class="app-main flex-1 flex flex-col min-w-0">
+      <div id="topbar-root"></div>
+
+      <main class="p-4 sm:p-6 lg:p-8">
+
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+          <!-- ===================================================== -->
+          <!-- ================ LIST VIEW (default) ================= -->
+          <!-- ===================================================== -->
+          <div id="listView">
+
+            <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+              <div>
+                <div class="text-[11px] font-semibold tracking-wide uppercase text-primary">Operations</div>
+                <h1 class="text-[24px] sm:text-[28px] font-bold tracking-tight text-gray-900">Project Management</h1>
+                <p class="text-[13px] text-gray-500 mt-1">Project overview, sales, purchases, expenses, timesheets, budgets and documents.</p>
+              </div>
+              <div class="flex gap-2.5 flex-wrap">
+                <button onclick="exportProjectReport()" class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[13px] font-semibold px-4 py-2.5 rounded-lg transition shadow-sm">
+                  <i class="fa-solid fa-download"></i> Export
+                </button>
+                <button onclick="openAddProject()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[13px] font-semibold px-4 py-2.5 rounded-lg transition shadow-sm">
+                  <i class="fa-solid fa-plus"></i> New Project
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5 mb-6">
+              <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+                <div class="stat-icon-wrap bg-primary-soft text-primary"><i class="fa-solid fa-folder-tree"></i></div>
+                <div>
+                  <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Total Projects</div>
+                  <div class="text-[22px] font-bold text-gray-900" id="totalProjects">0</div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+                <div class="stat-icon-wrap bg-blue-50 text-blue-600"><i class="fa-solid fa-play"></i></div>
+                <div>
+                  <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Active</div>
+                  <div class="text-[22px] font-bold text-blue-600" id="activeProjects">0</div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+                <div class="stat-icon-wrap bg-green-50 text-green-600"><i class="fa-solid fa-check-circle"></i></div>
+                <div>
+                  <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Completed</div>
+                  <div class="text-[22px] font-bold text-green-600" id="completedProjects">0</div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+                <div class="stat-icon-wrap bg-primary-soft text-primary"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div>
+                  <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Total Budget</div>
+                  <div class="text-[18px] font-bold text-primary" id="totalBudget">₹0</div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+                <div class="stat-icon-wrap bg-amber-50 text-amber-600"><i class="fa-solid fa-chart-line"></i></div>
+                <div>
+                  <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Total Profit</div>
+                  <div class="text-[18px] font-bold text-amber-600" id="totalProfit">₹0</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="projectsList" class="mb-6"></div>
+
+          </div>
+          <!-- ===================== END LIST VIEW ===================== -->
+
+          <!-- ===================================================== -->
+          <!-- ============== DETAIL VIEW (hidden by default) ======== -->
+          <!-- ===================================================== -->
+          <div id="detailView" class="hidden animate-slidein">
+
+            <!-- Header with back arrow -->
+            <div class="flex flex-wrap items-center gap-3 mb-5">
+              <button class="back-btn" onclick="backToList()" title="Back to Projects">
+                <i class="fa-solid fa-arrow-left"></i>
+              </button>
+              <h1 class="text-[22px] sm:text-[26px] font-bold tracking-tight text-gray-900" id="detailProjectName">Project Name</h1>
+              <div id="detailStatusBadge"></div>
+              <div class="flex-1"></div>
+              <div class="flex gap-2 flex-wrap">
+                <button onclick="editSelectedProject()" class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[13px] font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
+                  <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button onclick="deleteSelectedProject()" class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-gray-700 text-[13px] font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
+                  <i class="fa-solid fa-trash"></i> Delete
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5">
+
+              <!-- Left info panel (Zoho-style) -->
+              <div class="detail-info-panel h-fit">
+                <div class="info-row">
+                  <div class="detail-info-label">Project Code</div>
+                  <div class="detail-info-value" id="di_code">—</div>
+                </div>
+                <div class="info-row">
+                  <div class="detail-info-label">Customer</div>
+                  <div class="detail-info-value link" id="di_customer">—</div>
+                </div>
+                <div class="info-row">
+                  <div class="detail-info-label">Project Manager</div>
+                  <div class="detail-info-value" id="di_pm">—</div>
+                </div>
+                <div class="info-row">
+                  <div class="detail-info-label">Start Date</div>
+                  <div class="detail-info-value" id="di_start">—</div>
+                </div>
+                <div class="info-row">
+                  <div class="detail-info-label">End Date</div>
+                  <div class="detail-info-value" id="di_end">—</div>
+                </div>
+                <div class="info-row">
+                  <div class="detail-info-label">Progress</div>
+                  <div class="detail-info-value" id="di_progress">—</div>
+                  <div class="progress-bar" style="margin-top:8px;">
+                    <div class="fill fill-blue" id="di_progress_fill" style="width:0%;"></div>
+                  </div>
+                </div>
+                <div class="info-row">
+                  <div class="detail-info-label">Total Budget</div>
+                  <div class="detail-info-value text-primary" id="di_budget">—</div>
+                </div>
+                <div class="info-row">
+                  <div class="detail-info-label">Net Profit</div>
+                  <div class="detail-info-value" id="di_profit">—</div>
+                </div>
+                <div class="info-row">
+                  <div class="detail-info-label">Description</div>
+                  <div class="detail-info-value text-[12.5px] font-medium text-gray-600" id="di_desc" style="font-weight:500;">—</div>
+                </div>
+                <div class="info-row" id="di_hold_row" style="display:none;">
+                  <div class="detail-info-label text-amber-500">Hold Reason</div>
+                  <div class="detail-info-value text-amber-600 text-[12.5px]" id="di_hold" style="font-weight:500;">—</div>
+                </div>
+              </div>
+
+              <!-- Right side: Tabs + content -->
+              <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
+               <div class="flex overflow-x-auto no-scrollbar border-b border-gray-200 px-4 pt-2 gap-1" id="projTabs">
+                  <button class="page-tab-btn active" data-tab="tab-overview"><i class="fa-solid fa-chart-pie mr-1.5"></i>Overview</button>
+                  <button class="page-tab-btn" data-tab="tab-sales"><i class="fa-solid fa-cart-shopping mr-1.5"></i>Sales</button>
+                  <button class="page-tab-btn" data-tab="tab-purchases"><i class="fa-solid fa-truck-fast mr-1.5"></i>Purchases</button>
+                  <button class="page-tab-btn" data-tab="tab-expenses"><i class="fa-solid fa-receipt mr-1.5"></i>Expenses</button>
+                  <button class="page-tab-btn" data-tab="tab-timesheet"><i class="fa-solid fa-clock mr-1.5"></i>Timesheet</button>
+                  <button class="page-tab-btn" data-tab="tab-budget"><i class="fa-solid fa-chart-simple mr-1.5"></i>Budget</button>
+                  <button class="page-tab-btn" data-tab="tab-journals"><i class="fa-solid fa-book mr-1.5"></i>Journals</button>
+                  <button class="page-tab-btn" data-tab="tab-documents"><i class="fa-solid fa-folder-open mr-1.5"></i>Documents</button>
+                  <button class="page-tab-btn" data-tab="tab-activity"><i class="fa-solid fa-list-check mr-1.5"></i>Activity</button>
+                </div>
+
+                <div class="p-5">
+                  <div id="tab-overview" class="page-tab-panel active"><div id="overviewPanel"></div></div>
+                  <div id="tab-sales" class="page-tab-panel"><div id="salesPanel"></div></div>
+                  <div id="tab-purchases" class="page-tab-panel"><div id="purchasesPanel"></div></div>
+                  <div id="tab-expenses" class="page-tab-panel"><div id="expensesPanel"></div></div>
+                  <div id="tab-timesheet" class="page-tab-panel"><div id="timesheetPanel"></div></div>
+                  <div id="tab-budget" class="page-tab-panel"><div id="budgetPanel"></div></div>
+                  <div id="tab-journals" class="page-tab-panel"><div id="journalsPanel"></div></div>
+                  <div id="tab-documents" class="page-tab-panel"><div id="documentsPanel"></div></div>
+                  <div id="tab-activity" class="page-tab-panel"><div id="activityPanel"></div></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <!-- ===================== END DETAIL VIEW ===================== -->
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/assets/js/nav-sidebar.js"></script>
+  <script>
+    NavSidebar.init({
+      basePath: "",
+      activePage: "projects",
+      pageTitle: "Projects",
+      user: { name: "Admin", role: "Super Admin", avatarUrl: "" },
+    });
+
+    // =============================================================
+    // SVG ICONS
+    // =============================================================
+    function iconEdit() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`; }
+    function iconTrash() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`; }
+    function iconEye() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`; }
+    function iconX() { return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`; }
+    function iconSave() { return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`; }
+    function iconBox() { return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`; }
+    function iconSearch() { return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`; }
+    function iconDocument() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>`; }
+    function iconPdf() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 11h6"/></svg>`; }
+    function iconImage() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`; }
+    function iconDownload() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>`; }
+    function iconInfo() { return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>`; }
+
+    // =============================================================
+    // TOAST
+    // =============================================================
+    function showToast(message, kind) {
+      kind = kind || 'success';
+      var wrap = document.getElementById('toastWrap');
+      var colors = { success: 'bg-green-600', info: 'bg-primary', warning: 'bg-amber-600', error: 'bg-red-600' };
+      var el = document.createElement('div');
+      el.className = 'toast ' + colors[kind] + ' text-white text-sm font-semibold px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
+      el.innerHTML = '<span>' + message + '</span>';
+      wrap.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = 'opacity .3s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 300);
+      }, 2600);
+    }
+
+    // =============================================================
+    // MODAL
+    // =============================================================
+    function openModal(innerHtml, opts) {
+      opts = opts || {};
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = `
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4" id="modalOverlay">
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" id="modalBackdrop"></div>
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full ${opts.width || 'max-w-2xl'} max-h-[92vh] overflow-hidden animate-modal">
+            ${innerHtml}
+          </div>
+        </div>`;
+      document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('modalRoot').innerHTML = '';
+      document.body.style.overflow = '';
+    }
+
+    function modalHeader(title, subtitle) {
+      return `
+        <div class="flex items-start justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">${title}</h3>
+            ${subtitle ? '<p class="text-xs text-gray-500 mt-0.5">' + subtitle + '</p>' : ''}
+          </div>
+          <button onclick="closeModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
+        </div>`;
+    }
+
+    function modalFooter(saveLabel, onSaveAttr, extraBtns) {
+      return `
+        <div class="flex items-center justify-between gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl sticky bottom-0">
+          <div>${extraBtns || ''}</div>
+          <div class="flex gap-2">
+            <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+            <button ${onSaveAttr} class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
+              ${iconSave()} ${saveLabel}
+            </button>
+          </div>
+        </div>`;
+    }
+
+    function fld(label, inputHtml, hint) {
+      return `<div class="mb-3"><label class="form-label">${label}</label>${inputHtml}${hint ? '<div class="form-hint">' + hint + '</div>' : ''}</div>`;
+    }
+
+    // =============================================================
+    // HELPERS
+    // =============================================================
+    function money(n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); }
+
+    function badge(text, color) {
+      var map = { green: 'badge-green', amber: 'badge-amber', red: 'badge-red', gray: 'badge-gray', blue: 'badge-blue', purple: 'badge-purple' };
+      var dot = { green: 'badge-dot-green', amber: 'badge-dot-amber', red: 'badge-dot-red', gray: 'badge-dot-gray', blue: 'badge-dot-blue', purple: 'badge-dot-purple' };
+      return '<span class="badge ' + map[color] + '"><span class="badge-dot ' + dot[color] + '"></span>' + text + '</span>';
+    }
+
+    function statusBadge(status) {
+      var map = { active: 'blue', completed: 'green', onhold: 'amber', cancelled: 'red', pending: 'gray', paid: 'green', partial: 'amber', sent: 'blue', received: 'green', approved: 'green' };
+      var label = status.charAt(0).toUpperCase() + status.slice(1);
+      if (status === 'onhold') label = 'On Hold';
+      return badge(label, map[status] || 'gray');
+    }
+
+    function panelWrap(titleHtml, bodyHtml, extraHead) {
+      return `
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-gray-100">
+            <div class="font-bold text-[14.5px] text-gray-800 flex items-center gap-2">${titleHtml}</div>
+            ${extraHead || ''}
+          </div>
+          <div>${bodyHtml}</div>
+        </div>`;
+    }
+
+    function tableHtml(cols, rowsHtml) {
+      var colHeaders = cols.map(function(c) {
+        return '<th class="text-left text-[11px] font-bold uppercase tracking-wide text-gray-500 px-4 py-3 whitespace-nowrap">' + c + '</th>';
+      }).join('');
+      return `
+        <div class="overflow-auto h-[370px]">
+          <table class="w-full text-[13px]">
+            <thead class="sticky top-0"><tr class="bg-gray-50 border-b border-gray-200">${colHeaders}</tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // =============================================================
+    // PAGE TABS
+    // =============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      var tabs = document.querySelectorAll('#projTabs .page-tab-btn');
+      tabs.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          tabs.forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          document.querySelectorAll('.page-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+          document.getElementById(this.dataset.tab).classList.add('active');
+        });
+      });
+    });
+
+    // =============================================================
+    // DATA
+    // =============================================================
+    var projects = [{
+      id: 'PRJ-001', name: 'Operation & Supervision — WHE', code: '26LW069',
+      customer: 'Sustro Speciality Oils Pvt Ltd', status: 'active',
+      startDate: '2025-11-01', endDate: '2026-06-30', progress: 62,
+      budget: 500000, actualCost: 310000, revenue: 450000, profit: 140000,
+      pm: 'Rajesh Sharma', description: 'Operation and supervision contract for WHE'
+    }, {
+      id: 'PRJ-002', name: 'Odor Control Unit — Retrofit', code: '26LW070',
+      customer: 'XYZ Technologies', status: 'active',
+      startDate: '2025-12-15', endDate: '2026-05-31', progress: 31,
+      budget: 350000, actualCost: 120000, revenue: 200000, profit: 80000,
+      pm: 'Priya Patel', description: 'Retrofit of odor control unit'
+    }, {
+      id: 'PRJ-003', name: 'Dual Media Filter — Phase II', code: '26LW071',
+      customer: 'ABC Distributor Group', status: 'completed',
+      startDate: '2025-08-01', endDate: '2026-01-15', progress: 100,
+      budget: 750000, actualCost: 720000, revenue: 950000, profit: 230000,
+      pm: 'Rajesh Sharma', description: 'Dual media filter installation phase II'
+    }, {
+      id: 'PRJ-004', name: 'Site Survey & Consulting', code: '26LW072',
+      customer: 'Global Exports Ltd.', status: 'onhold',
+      startDate: '2026-01-10', endDate: '2026-08-31', progress: 15,
+      budget: 150000, actualCost: 25000, revenue: 0, profit: -25000,
+      pm: 'Amit Kumar', description: 'Site survey and consulting services',
+      holdReason: 'Client requested hold for 2 months'
+    }];
+
+    var projectSales = [
+      { id: 'INV-001', date: '2026-01-15', number: 'INV/25-26/001', customer: 'Sustro Speciality Oils Pvt Ltd', amount: 167029, status: 'paid', projectId: 'PRJ-001' },
+      { id: 'INV-002', date: '2026-02-01', number: 'INV/25-26/002', customer: 'Sustro Speciality Oils Pvt Ltd', amount: 250000, status: 'partial', projectId: 'PRJ-001' },
+      { id: 'INV-003', date: '2026-02-10', number: 'INV/25-26/003', customer: 'XYZ Technologies', amount: 200000, status: 'sent', projectId: 'PRJ-002' },
+      { id: 'INV-004', date: '2026-02-15', number: 'INV/25-26/004', customer: 'ABC Distributor Group', amount: 950000, status: 'paid', projectId: 'PRJ-003' }
+    ];
+
+    var projectPurchases = [
+      { id: 'PUR-001', date: '2026-01-10', number: 'PUR/25-26/001', vendor: 'Global Imports Inc.', amount: 118000, status: 'received', projectId: 'PRJ-001' },
+      { id: 'PUR-002', date: '2026-01-20', number: 'PUR/25-26/002', vendor: 'Tech Components Ltd.', amount: 95000, status: 'partial', projectId: 'PRJ-001' },
+      { id: 'PUR-003', date: '2026-02-05', number: 'PUR/25-26/003', vendor: 'Premium Raw Materials', amount: 72000, status: 'received', projectId: 'PRJ-002' }
+    ];
+
+    var projectExpenses = [
+      { id: 'EXP-001', date: '2026-01-15', category: 'Raw Materials', amount: 48500, vendor: 'Global Imports Inc.', status: 'approved', projectId: 'PRJ-001' },
+      { id: 'EXP-002', date: '2026-01-20', category: 'Transport & Logistics', amount: 31200, vendor: 'ABC Logistics', status: 'approved', projectId: 'PRJ-001' },
+      { id: 'EXP-003', date: '2026-02-01', category: 'Marketing & Advertising', amount: 25000, vendor: 'Google Ads', status: 'pending', projectId: null },
+      { id: 'EXP-004', date: '2026-02-05', category: 'Travel', amount: 15000, vendor: null, status: 'pending', projectId: 'PRJ-002' }
+    ];
+
+    var timesheets = [
+      { id: 'TS-001', date: '2026-01-15', employee: 'Rajesh Sharma', projectId: 'PRJ-001', task: 'Project Supervision', hours: 8, billable: true, rate: 1500, description: 'Site supervision and coordination' },
+      { id: 'TS-002', date: '2026-01-20', employee: 'Priya Patel', projectId: 'PRJ-002', task: 'Client Meeting', hours: 4, billable: true, rate: 2000, description: 'Requirements gathering' },
+      { id: 'TS-003', date: '2026-02-01', employee: 'Amit Kumar', projectId: 'PRJ-004', task: 'Documentation', hours: 6, billable: false, rate: 0, description: 'Internal docs' },
+      { id: 'TS-004', date: '2026-02-05', employee: 'Rajesh Sharma', projectId: 'PRJ-001', task: 'Site Survey', hours: 10, billable: true, rate: 1500, description: 'Field survey and measurements' }
+    ];
+
+    var projectBudgets = [
+      { projectId: 'PRJ-001', totalBudget: 500000, purchaseBudget: 200000, expenseBudget: 100000, hoursBudget: 200000, actualCost: 310000, variance: 190000 },
+      { projectId: 'PRJ-002', totalBudget: 350000, purchaseBudget: 150000, expenseBudget: 80000, hoursBudget: 120000, actualCost: 120000, variance: 230000 },
+      { projectId: 'PRJ-003', totalBudget: 750000, purchaseBudget: 400000, expenseBudget: 150000, hoursBudget: 200000, actualCost: 720000, variance: 30000 },
+      { projectId: 'PRJ-004', totalBudget: 150000, purchaseBudget: 50000, expenseBudget: 50000, hoursBudget: 50000, actualCost: 25000, variance: 125000 }
+    ];
+
+    var projectJournals = [
+      { id: 'JV-001', date: '2026-01-15', narration: 'Sale to Sustro Speciality Oils', reference: 'INV-001', amount: 167029, projectId: 'PRJ-001' },
+      { id: 'JV-002', date: '2026-01-20', narration: 'Purchase from Global Imports', reference: 'PUR-001', amount: 118000, projectId: 'PRJ-001' },
+      { id: 'JV-003', date: '2026-02-01', narration: 'Payment to Tech Components', reference: 'PV-001', amount: 95000, projectId: 'PRJ-001' }
+    ];
+
+    var projectDocuments = [
+      { id: 'DOC-001', type: 'Invoice', name: 'INV/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-15', size: '245 KB', uploadedBy: 'System', description: 'Tax invoice to Sustro' },
+      { id: 'DOC-002', type: 'Purchase Order', name: 'PO/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-10', size: '180 KB', uploadedBy: 'System', description: 'PO to Global Imports' },
+      { id: 'DOC-003', type: 'Purchase Bill', name: 'PUR/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-20', size: '210 KB', uploadedBy: 'System', description: 'Bill from Global Imports' },
+      { id: 'DOC-004', type: 'Delivery Challan', name: 'DC/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-22', size: '150 KB', uploadedBy: 'System', description: 'DC to Sustro' },
+      { id: 'DOC-005', type: 'Packing List', name: 'PL/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-22', size: '120 KB', uploadedBy: 'System', description: 'Packing list for DC-001' },
+      { id: 'DOC-006', type: 'Contract', name: 'Contract_Sustro_2025.pdf', projectId: 'PRJ-001', date: '2025-11-01', size: '1.2 MB', uploadedBy: 'Rajesh Sharma', description: 'Signed contract document' },
+      { id: 'DOC-007', type: 'Site Photo', name: 'site_photo_01.jpg', projectId: 'PRJ-001', date: '2025-11-15', size: '3.4 MB', uploadedBy: 'Amit Kumar', description: 'Site photos from initial survey' },
+      { id: 'DOC-008', type: 'Invoice', name: 'INV/25-26/003.pdf', projectId: 'PRJ-002', date: '2026-02-10', size: '250 KB', uploadedBy: 'System', description: 'Invoice to XYZ Technologies' },
+      { id: 'DOC-009', type: 'Contract', name: 'Contract_XYZ_2025.pdf', projectId: 'PRJ-002', date: '2025-12-15', size: '950 KB', uploadedBy: 'Priya Patel', description: 'Signed contract with XYZ' }
+    ];
+
+    var activityLogs = [
+      { id: 'ACT-001', date: '2026-01-15', user: 'Rajesh Sharma', action: 'Created Invoice', detail: 'Invoice INV/25-26/001 created for PRJ-001', projectId: 'PRJ-001' },
+      { id: 'ACT-002', date: '2026-01-20', user: 'Priya Patel', action: 'Recorded Purchase', detail: 'Purchase PUR/25-26/001 recorded', projectId: 'PRJ-001' },
+      { id: 'ACT-003', date: '2026-02-01', user: 'Amit Kumar', action: 'Submitted Timesheet', detail: '6 hours logged on documentation', projectId: 'PRJ-004' },
+      { id: 'ACT-004', date: '2026-02-05', user: 'Rajesh Sharma', action: 'Uploaded Document', detail: 'Site photos uploaded', projectId: 'PRJ-001' }
+    ];
+
+    var selectedProjectId = null;
+
+    // =============================================================
+    // RENDER STATS
+    // =============================================================
+    function renderStats() {
+      var total = projects.length;
+      var active = projects.filter(function(p) { return p.status === 'active'; }).length;
+      var completed = projects.filter(function(p) { return p.status === 'completed'; }).length;
+      var totalBudget = projects.reduce(function(sum, p) { return sum + p.budget; }, 0);
+      var totalProfit = projects.reduce(function(sum, p) { return sum + p.profit; }, 0);
+
+      document.getElementById('totalProjects').textContent = total;
+      document.getElementById('activeProjects').textContent = active;
+      document.getElementById('completedProjects').textContent = completed;
+      document.getElementById('totalBudget').textContent = money(totalBudget);
+      document.getElementById('totalProfit').textContent = money(totalProfit);
+    }
+
+    // =============================================================
+    // RENDER PROJECTS (list/table view)
+    // =============================================================
+    function renderProjects() {
+      var rowsHtml = projects.map(function(p) {
+        var progressFill = p.status === 'completed' ? 'fill-green' : (p.status === 'onhold' ? 'fill-amber' : 'fill-blue');
+        return `
+          <tr class="project-row border-b border-gray-100" onclick="openProjectDetail('${p.id}')">
+            <td class="px-4 py-3">
+              <div class="proj-name-link">${p.name}</div>
+              <div class="proj-customer-sm">${p.customer}</div>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-500 font-mono">${p.code}</td>
+            <td class="px-4 py-3">${statusBadge(p.status)}</td>
+            <td class="px-4 py-3" style="min-width:120px;">
+              <div class="flex justify-between text-[11px] text-gray-500 mb-1"><span>${p.progress}%</span></div>
+              <div class="progress-bar"><div class="fill ${progressFill}" style="width:${p.progress}%;"></div></div>
+            </td>
+            <td class="px-4 py-3 font-mono font-semibold text-right text-primary">${money(p.budget)}</td>
+            <td class="px-4 py-3 font-mono font-semibold text-right ${p.profit >= 0 ? 'text-green-600' : 'text-red-600'}">${money(p.profit)}</td>
+           <td class="px-4 py-3">
+            <div class="flex gap-1 justify-end" onclick="event.stopPropagation();">
+              <button onclick="openProjectDetail('${p.id}')" class="btn-icon-action" title="View">${iconEye()}</button>
+              <button onclick="editProjectFromList('${p.id}')" class="btn-icon-action" title="Edit">${iconEdit()}</button>
+              <button onclick="deleteProjectFromList('${p.id}')" class="btn-icon-action danger" title="Delete">${iconTrash()}</button>
+            </div>
+          </td>
+          </tr>`;
+      }).join('');
+
+      document.getElementById('projectsList').innerHTML = panelWrap(
+        '<i class="fa-solid fa-folder-tree text-primary"></i> All Projects',
+        tableHtml(['Project', 'Code', 'Status', 'Progress', 'Budget', 'Profit', ''], rowsHtml),
+        '<span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full">' + projects.length + '</span>'
+      );
+    }
+
+    // =============================================================
+    // VIEW SWITCHING (List <-> Detail)
+    // =============================================================
+    function openProjectDetail(id) {
+      selectedProjectId = id;
+      var p = projects.find(function(x) { return x.id === id; });
+      if (!p) return;
+
+      document.getElementById('listView').classList.add('hidden');
+      var dv = document.getElementById('detailView');
+      dv.classList.remove('hidden');
+      dv.classList.remove('animate-slidein');
+      void dv.offsetWidth; // restart animation
+      dv.classList.add('animate-slidein');
+
+      // Reset to first tab
+      document.querySelectorAll('#projTabs .page-tab-btn').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
+      document.querySelectorAll('.page-tab-panel').forEach(function(pnl, i) { pnl.classList.toggle('active', i === 0); });
+
+      renderDetailHeader(p);
+      renderOverview();
+      renderSales();
+      renderPurchases();
+      renderExpenses();
+      renderTimesheet();
+      renderBudget();
+      renderJournals();
+      renderDocuments();
+      renderActivity();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function backToList() {
+      document.getElementById('detailView').classList.add('hidden');
+      document.getElementById('listView').classList.remove('hidden');
+      selectedProjectId = null;
+      renderProjects();
+      renderStats();
+    }
+
+    function renderDetailHeader(p) {
+      document.getElementById('detailProjectName').textContent = p.name;
+      document.getElementById('detailStatusBadge').innerHTML = statusBadge(p.status);
+
+      document.getElementById('di_code').textContent = p.code;
+      document.getElementById('di_customer').textContent = p.customer;
+      document.getElementById('di_pm').textContent = p.pm;
+      document.getElementById('di_start').textContent = p.startDate;
+      document.getElementById('di_end').textContent = p.endDate;
+      document.getElementById('di_progress').textContent = p.progress + '%';
+      document.getElementById('di_progress_fill').style.width = p.progress + '%';
+      document.getElementById('di_progress_fill').className = 'fill ' + (p.status === 'completed' ? 'fill-green' : (p.status === 'onhold' ? 'fill-amber' : 'fill-blue'));
+      document.getElementById('di_budget').textContent = money(p.budget);
+      var profitEl = document.getElementById('di_profit');
+      profitEl.textContent = money(p.profit);
+      profitEl.className = 'detail-info-value ' + (p.profit >= 0 ? 'text-green-600' : 'text-red-600');
+      document.getElementById('di_desc').textContent = p.description || '—';
+
+      var holdRow = document.getElementById('di_hold_row');
+      if (p.holdReason) {
+        holdRow.style.display = '';
+        document.getElementById('di_hold').textContent = p.holdReason;
+      } else {
+        holdRow.style.display = 'none';
+      }
+    }
+
+  function editSelectedProject() {
+  var p = projects.find(function(x) { return x.id === selectedProjectId; });
+  if (p) openProjectForm(p);
+}
+
+    function deleteSelectedProject() {
+      var p = projects.find(function(x) { return x.id === selectedProjectId; });
+      if (!p) return;
+      var modalContent = `
+        ${modalHeader('Delete Project', p.name)}
+        <div class="px-6 py-4 text-sm text-gray-600">
+          <p>Are you sure you want to permanently delete <b class="text-gray-800">${p.name}</b>?</p>
+          <p class="text-gray-400 text-[12px] mt-1">This action cannot be undone.</p>
+        </div>
+        ${modalFooter('Delete', 'onclick="confirmDeleteProject()"', '')}
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
+
+    function confirmDeleteProject() {
+      projects = projects.filter(function(x) { return x.id !== selectedProjectId; });
+      closeModal();
+      backToList();
+      showToast('Project deleted', 'warning');
+    }
+
+    function deleteProjectFromList(id) {
+  var p = projects.find(function(x) { return x.id === id; });
+  if (!p) return;
+  var modalContent = `
+    ${modalHeader('Delete Project', p.name)}
+    <div class="px-6 py-4 text-sm text-gray-600">
+      <p>Are you sure you want to permanently delete <b class="text-gray-800">${p.name}</b>?</p>
+      <p class="text-gray-400 text-[12px] mt-1">This action cannot be undone.</p>
+    </div>
+    ${modalFooter('Delete', 'onclick="confirmDeleteProjectFromList(\'' + id + '\')"', '')}
+  `;
+  openModal(modalContent, { width: 'max-w-md' });
+}
+
+function confirmDeleteProjectFromList(id) {
+  projects = projects.filter(function(x) { return x.id !== id; });
+  closeModal();
+  renderProjects();
+  renderStats();
+  showToast('Project deleted', 'warning');
+}
+
+    // =============================================================
+    // RENDER OVERVIEW
+    // =============================================================
+    function renderOverview() {
+      var p = projects.find(function(x) { return x.id === selectedProjectId; });
+      if (!p) return;
+
+      var html = `
+        <div>
+          <h3 class="text-[14px] font-bold text-gray-800 mb-3 flex items-center gap-2">
+            
+            Financial Summary
+          </h3>
+          <table class="report-table">
+            <tbody>
+              <tr><td class="text-gray-500">Total Budget</td><td class="text-right font-mono font-semibold">${money(p.budget)}</td></tr>
+              <tr><td class="text-gray-500">Revenue Generated</td><td class="text-right font-mono font-semibold text-primary">${money(p.revenue)}</td></tr>
+              <tr><td class="text-gray-500">Actual Cost</td><td class="text-right font-mono font-semibold text-red-600">${money(p.actualCost)}</td></tr>
+              <tr class="total-row"><td class="text-right font-bold">Net Profit</td><td class="text-right font-mono font-bold ${p.profit >= 0 ? 'text-green-600' : 'text-red-600'}">${money(p.profit)}</td></tr>
+              <tr><td class="text-gray-500">Margin</td><td class="text-right font-semibold">${p.revenue > 0 ? ((p.profit / p.revenue) * 100).toFixed(1) : 0}%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById('overviewPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-chart-pie text-primary"></i> Project Overview',
+        html,
+        '<div class="text-[11px] text-gray-400 font-mono">Project ID: ' + p.id + '</div>'
+      );
+    }
+
+    // =============================================================
+    // RENDER SALES
+    // =============================================================
+    function renderSales() {
+      var rowsHtml = projectSales.filter(function(s) { return s.projectId === selectedProjectId; }).map(function(s) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-4 py-3 text-sm font-semibold">${s.number}</td>
+            <td class="px-4 py-3 text-xs text-gray-500">${s.date}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">${s.customer}</td>
+            <td class="px-4 py-3 font-mono font-semibold text-right text-primary">${money(s.amount)}</td>
+            <td class="px-4 py-3">${statusBadge(s.status)}</td>
+          </tr>`;
+      }).join('');
+
+      if (!rowsHtml) rowsHtml = '<tr><td colspan="5" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>No sales linked to this project</td></tr>';
+
+      document.getElementById('salesPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-cart-shopping text-primary"></i> Project Sales',
+        tableHtml(['Invoice #', 'Date', 'Customer', 'Amount', 'Status'], rowsHtml),
+        '<span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full">' + projectSales.filter(function(s) { return s.projectId === selectedProjectId; }).length + '</span>'
+      );
+    }
+
+    // =============================================================
+    // RENDER PURCHASES
+    // =============================================================
+    function renderPurchases() {
+      var rowsHtml = projectPurchases.filter(function(p) { return p.projectId === selectedProjectId; }).map(function(p) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-4 py-3 text-sm font-semibold">${p.number}</td>
+            <td class="px-4 py-3 text-xs text-gray-500">${p.date}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">${p.vendor}</td>
+            <td class="px-4 py-3 font-mono font-semibold text-right text-red-600">${money(p.amount)}</td>
+            <td class="px-4 py-3">${statusBadge(p.status)}</td>
+          </tr>`;
+      }).join('');
+
+      if (!rowsHtml) rowsHtml = '<tr><td colspan="5" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>No purchases linked to this project</td></tr>';
+
+      document.getElementById('purchasesPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-truck-fast text-primary"></i> Project Purchases',
+        tableHtml(['Bill #', 'Date', 'Vendor', 'Amount', 'Status'], rowsHtml),
+        '<span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full">' + projectPurchases.filter(function(p) { return p.projectId === selectedProjectId; }).length + '</span>'
+      );
+    }
+
+    // =============================================================
+    // RENDER EXPENSES
+    // =============================================================
+    function renderExpenses() {
+      var rowsHtml = projectExpenses.filter(function(e) { return e.projectId === selectedProjectId; }).map(function(e) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-4 py-3 text-xs text-gray-500">${e.date}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">${e.category}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">${e.vendor || '—'}</td>
+            <td class="px-4 py-3 font-mono font-semibold text-right text-amber-600">${money(e.amount)}</td>
+            <td class="px-4 py-3">${statusBadge(e.status)}</td>
+          </tr>`;
+      }).join('');
+
+      if (!rowsHtml) rowsHtml = '<tr><td colspan="5" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>No expenses linked to this project</td></tr>';
+
+      document.getElementById('expensesPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-receipt text-primary"></i> Project Expenses',
+        tableHtml(['Date', 'Category', 'Vendor', 'Amount', 'Status'], rowsHtml),
+        '<span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full">' + projectExpenses.filter(function(e) { return e.projectId === selectedProjectId; }).length + '</span>'
+      );
+    }
+
+    // =============================================================
+    // RENDER TIMESHEET
+    // =============================================================
+    function renderTimesheet() {
+      var rowsHtml = timesheets.filter(function(t) { return t.projectId === selectedProjectId; }).map(function(t) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-4 py-3 text-xs text-gray-500">${t.date}</td>
+            <td class="px-4 py-3 text-sm font-semibold">${t.employee}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">${t.task}</td>
+            <td class="px-4 py-3 text-center font-mono text-sm">${t.hours}h</td>
+            <td class="px-4 py-3 text-center">${t.billable ? badge('Billable', 'green') : badge('Non-Billable', 'gray')}</td>
+            <td class="px-4 py-3 font-mono text-sm text-right">${t.billable ? money(t.rate) : '—'}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">${t.description}</td>
+          </tr>`;
+      }).join('');
+
+      if (!rowsHtml) rowsHtml = '<tr><td colspan="7" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>No timesheets for this project</td></tr>';
+
+      document.getElementById('timesheetPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-clock text-primary"></i> Project Timesheets',
+        tableHtml(['Date', 'Employee', 'Task', 'Hours', 'Type', 'Rate', 'Description'], rowsHtml),
+        '<span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full">' + timesheets.filter(function(t) { return t.projectId === selectedProjectId; }).length + '</span>'
+      );
+    }
+
+    // =============================================================
+    // RENDER BUDGET
+    // =============================================================
+    function renderBudget() {
+      var b = projectBudgets.find(function(x) { return x.projectId === selectedProjectId; });
+      if (!b) {
+        document.getElementById('budgetPanel').innerHTML = panelWrap('Project Budget', '<div class="text-center py-10 text-gray-400 text-sm">No budget configured</div>');
+        return;
+      }
+
+      var usagePct = b.totalBudget > 0 ? ((b.actualCost / b.totalBudget) * 100).toFixed(1) : 0;
+
+      var html = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h3 class="text-[14px] font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-chart-simple text-primary"></i> Budget Breakdown
+            </h3>
+            <table class="report-table">
+              <tbody>
+                <tr><td class="text-gray-500">Total Budget</td><td class="text-right font-mono font-semibold">${money(b.totalBudget)}</td></tr>
+                <tr><td class="text-gray-500">Purchase Budget</td><td class="text-right font-mono">${money(b.purchaseBudget)}</td></tr>
+                <tr><td class="text-gray-500">Expense Budget</td><td class="text-right font-mono">${money(b.expenseBudget)}</td></tr>
+                <tr><td class="text-gray-500">Hours Budget</td><td class="text-right font-mono">${money(b.hoursBudget)}</td></tr>
+                <tr class="total-row"><td class="text-right font-bold">Actual Cost</td><td class="text-right font-mono font-bold text-red-600">${money(b.actualCost)}</td></tr>
+                <tr class="grand-total"><td class="text-right font-bold">Budget Variance</td><td class="text-right font-mono font-bold text-primary">${money(b.variance)}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h3 class="text-[14px] font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-gauge-high text-primary"></i> Budget Utilization
+            </h3>
+            <div class="progress-bar" style="height:12px;">
+              <div class="fill ${usagePct > 90 ? 'fill-amber' : 'fill-blue'}" style="width:${Math.min(usagePct, 100)}%;height:100%;"></div>
+            </div>
+            <div class="flex justify-between text-xs mt-1">
+              <span class="text-gray-500">${usagePct}% used</span>
+              <span class="text-gray-500">${money(b.actualCost)} / ${money(b.totalBudget)}</span>
+            </div>
+            <div class="mt-4 p-3 bg-primary-soft rounded-lg text-xs text-gray-600 border border-primary/20">
+              <div class="flex items-start gap-2">${iconInfo()}<span>Budget alerts trigger automatically when usage exceeds thresholds.</span></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('budgetPanel').innerHTML = panelWrap('<i class="fa-solid fa-chart-simple text-primary"></i> Budget Configuration & Variance', html);
+    }
+
+    // =============================================================
+    // RENDER JOURNALS
+    // =============================================================
+    function renderJournals() {
+      var rowsHtml = projectJournals.filter(function(j) { return j.projectId === selectedProjectId; }).map(function(j) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-4 py-3 text-sm font-semibold">${j.id}</td>
+            <td class="px-4 py-3 text-xs text-gray-500">${j.date}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">${j.narration}</td>
+            <td class="px-4 py-3 text-xs text-gray-500">${j.reference}</td>
+            <td class="px-4 py-3 font-mono font-semibold text-right text-primary">${money(j.amount)}</td>
+          </tr>`;
+      }).join('');
+
+      if (!rowsHtml) rowsHtml = '<tr><td colspan="5" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>No journals linked to this project</td></tr>';
+
+      document.getElementById('journalsPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-book text-primary"></i> Project Journal Entries',
+        tableHtml(['Journal #', 'Date', 'Narration', 'Reference', 'Amount'], rowsHtml),
+        '<span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full">' + projectJournals.filter(function(j) { return j.projectId === selectedProjectId; }).length + '</span>'
+      );
+    }
+
+    // =============================================================
+    // RENDER DOCUMENTS
+    // =============================================================
+    function renderDocuments() {
+      var docs = projectDocuments.filter(function(d) { return d.projectId === selectedProjectId; });
+
+      var typeFilter = document.getElementById('docTypeFilter') ? document.getElementById('docTypeFilter').value : 'all';
+      if (typeFilter !== 'all') docs = docs.filter(function(d) { return d.type === typeFilter; });
+
+      var docsHtml = docs.map(function(d) {
+        var iconHtml = (d.type === 'Invoice' || d.type === 'Purchase Bill' || d.type === 'Purchase Order') ? iconDocument() :
+                       (d.type === 'Contract' || d.type === 'Packing List' || d.type === 'Delivery Challan') ? iconPdf() :
+                       (d.type === 'Site Photo') ? iconImage() : iconDocument();
+        return `
+          <div class="doc-item">
+            <div class="doc-icon">${iconHtml}</div>
+            <div class="flex-1 min-w-0">
+              <div class="doc-name truncate">${d.name}</div>
+              <div class="doc-meta">${d.type} · ${d.date} · ${d.size} · ${d.uploadedBy}</div>
+            </div>
+            <div class="flex gap-1">
+              <button onclick="downloadDocument('${d.id}')" class="btn-icon-action" title="Download">${iconDownload()}</button>
+              <button onclick="deleteDocument('${d.id}')" class="btn-icon-action danger" title="Delete">${iconTrash()}</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      if (!docsHtml) docsHtml = '<div class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>No documents uploaded for this project</div>';
+
+      var types = ['all'];
+      projectDocuments.filter(function(d) { return d.projectId === selectedProjectId; }).forEach(function(d) {
+        if (types.indexOf(d.type) === -1) types.push(d.type);
+      });
+
+      var filterOptions = types.map(function(t) {
+        return '<option value="' + t + '">' + (t === 'all' ? 'All Types' : t) + '</option>';
+      }).join('');
+
+      var html = `
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2">
+            <label class="form-label mb-0">Filter by Type</label>
+            <select id="docTypeFilter" class="form-input text-[12px] max-w-xs" onchange="renderDocuments()">${filterOptions}</select>
+          </div>
+          <button onclick="uploadDocument()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12px] font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
+            <i class="fa-solid fa-plus"></i> Upload Document
+          </button>
+        </div>
+        <div class="space-y-2" id="docsList">${docsHtml}</div>
+        <div class="mt-3 p-3 bg-primary-soft rounded-lg text-xs text-gray-600 border border-primary/20">
+          <div class="flex items-start gap-2">
+            ${iconInfo()}
+            <div><b>Enhancement #5 — Project-Wise Document Management</b><br>
+            All Purchase Orders, Purchase Bills, Sales Invoices, Delivery Challans and Packing Lists auto-appear here. Manually uploaded documents (contracts, site photos) also stay linked.</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('documentsPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-folder-open text-primary"></i> Project Documents <span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + docs.length + '</span>',
+        html
+      );
+    }
+
+    // =============================================================
+    // RENDER ACTIVITY
+    // =============================================================
+    function renderActivity() {
+      var rowsHtml = activityLogs.filter(function(a) { return a.projectId === selectedProjectId; }).map(function(a) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-4 py-3 text-xs text-gray-500">${a.date}</td>
+            <td class="px-4 py-3 text-sm font-semibold">${a.user}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">${a.action}</td>
+            <td class="px-4 py-3 text-xs text-gray-500">${a.detail}</td>
+          </tr>`;
+      }).join('');
+
+      if (!rowsHtml) rowsHtml = '<tr><td colspan="4" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>No activity logged</td></tr>';
+
+      document.getElementById('activityPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-list-check text-primary"></i> Activity Log',
+        tableHtml(['Date', 'User', 'Action', 'Details'], rowsHtml),
+        '<span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full">' + activityLogs.filter(function(a) { return a.projectId === selectedProjectId; }).length + '</span>'
+      );
+    }
+
+    // =============================================================
+    // DOCUMENT ACTIONS
+    // =============================================================
+    function uploadDocument() { showToast('Document upload — coming soon!', 'info'); }
+
+    function downloadDocument(id) {
+      var d = projectDocuments.find(function(x) { return x.id === id; });
+      if (d) showToast('Downloading ' + d.name + '...', 'info');
+    }
+
+    function deleteDocument(id) {
+      var d = projectDocuments.find(function(x) { return x.id === id; });
+      if (!d) return;
+      var modalContent = `
+        ${modalHeader('Delete Document', d.name)}
+        <div class="px-6 py-4 text-sm text-gray-600">
+          <p>Are you sure you want to permanently delete <b class="text-gray-800">${d.name}</b>?</p>
+          <p class="text-gray-400 text-[12px] mt-1">This action cannot be undone.</p>
+        </div>
+        ${modalFooter('Delete', 'onclick="confirmDeleteDocument(\'' + id + '\')"', '')}
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
+
+    function confirmDeleteDocument(id) {
+      projectDocuments = projectDocuments.filter(function(x) { return x.id !== id; });
+      closeModal();
+      renderDocuments();
+      showToast('Document deleted', 'warning');
+    }
+
+    // =============================================================
+    // PROJECT ACTIONS (Add New)
+    // =============================================================
+   function openAddProject() {
+  openProjectForm(null);
+}
+
+function editProjectFromList(id) {
+  var p = projects.find(function(x) { return x.id === id; });
+  if (p) openProjectForm(p);
+}
+
+function openProjectForm(existing) {
+  var isEdit = !!existing;
+  var e = existing || {
+    name: '', code: '', customer: '', pm: '',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: '', budget: '', status: 'active', description: ''
+  };
+
+  var modalContent = `
+    ${modalHeader(isEdit ? 'Edit Project' : 'New Project', isEdit ? e.code : 'Create a new project')}
+    <div class="px-6 py-4 modal-scroll">
+      <div class="grid grid-cols-2 gap-3">
+        ${fld('Project Name <span class="required">*</span>', '<input type="text" class="form-input" id="p_name" value="' + e.name + '" placeholder="Project name">')}
+        ${fld('Project Code <span class="required">*</span>', '<input type="text" class="form-input" id="p_code" value="' + e.code + '" placeholder="e.g. 26LW073">')}
+        ${fld('Customer <span class="required">*</span>', '<input type="text" class="form-input" id="p_customer" value="' + e.customer + '" placeholder="Customer name">')}
+        ${fld('Project Manager', '<input type="text" class="form-input" id="p_pm" value="' + (e.pm || '') + '" placeholder="PM name">')}
+        ${fld('Start Date', '<input type="date" class="form-input" id="p_start" value="' + e.startDate + '">')}
+        ${fld('End Date', '<input type="date" class="form-input" id="p_end" value="' + (e.endDate || '') + '">')}
+        ${fld('Total Budget (₹)', '<input type="number" class="form-input" id="p_budget" value="' + e.budget + '" placeholder="0.00">')}
+        ${fld('Status', '<select class="form-input" id="p_status">' +
+          ['active','pending','onhold','completed'].map(function(s) {
+            return '<option value="' + s + '" ' + (e.status === s ? 'selected' : '') + '>' + (s === 'onhold' ? 'On Hold' : s.charAt(0).toUpperCase() + s.slice(1)) + '</option>';
+          }).join('') + '</select>')}
+      </div>
+      ${fld('Description', '<textarea rows="2" class="form-input" id="p_desc" placeholder="Project description">' + (e.description || '') + '</textarea>')}
+    </div>
+    ${modalFooter(isEdit ? 'Update Project' : 'Create Project', 'onclick="saveProject(\'' + (isEdit ? e.id : '') + '\')"')}
+  `;
+  openModal(modalContent, { width: 'max-w-2xl' });
+}
+
+function saveProject(existingId) {
+  var name = document.getElementById('p_name').value.trim();
+  var code = document.getElementById('p_code').value.trim();
+  var customer = document.getElementById('p_customer').value.trim();
+  if (!name || !code || !customer) {
+    showToast('Please fill required fields (Name, Code, Customer)', 'error');
+    return;
+  }
+
+  if (existingId) {
+    var p = projects.find(function(x) { return x.id === existingId; });
+    if (p) {
+      p.name = name;
+      p.code = code;
+      p.customer = customer;
+      p.pm = document.getElementById('p_pm').value || '—';
+      p.startDate = document.getElementById('p_start').value;
+      p.endDate = document.getElementById('p_end').value;
+      p.budget = parseFloat(document.getElementById('p_budget').value) || 0;
+      p.status = document.getElementById('p_status').value;
+      p.description = document.getElementById('p_desc').value || '';
+      showToast('Project updated successfully', 'success');
+
+      // If this project's detail view is currently open, refresh it too
+      if (selectedProjectId === existingId) renderDetailHeader(p);
+    }
+  } else {
+    var newProject = {
+      id: 'PRJ-' + String(projects.length + 1).padStart(3, '0'),
+      name: name, code: code, customer: customer,
+      status: document.getElementById('p_status').value,
+      startDate: document.getElementById('p_start').value,
+      endDate: document.getElementById('p_end').value,
+      progress: 0,
+      budget: parseFloat(document.getElementById('p_budget').value) || 0,
+      actualCost: 0, revenue: 0, profit: 0,
+      pm: document.getElementById('p_pm').value || '—',
+      description: document.getElementById('p_desc').value || ''
+    };
+    projects.unshift(newProject);
+    showToast('Project created successfully', 'success');
+  }
+
+  closeModal();
+  renderProjects();
+  renderStats();
+}
+
+
+    function exportProjectReport() {
+      showToast('Exporting project report...', 'info');
+      setTimeout(function() { showToast('Report exported successfully!', 'success'); }, 1200);
+    }
+
+    // =============================================================
+    // SEARCH (list view only)
+    // =============================================================
+    var searchDebounceTimer = null;
+
+    function onSearchInput() {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(function() { filterProjects(); }, 300);
+    }
+
+    function filterProjects() {
+      var input = document.getElementById('searchInput');
+      if (!input) return;
+      var q = input.value.trim().toLowerCase();
+      var rows = document.querySelectorAll('.project-row');
+      rows.forEach(function(r) {
+        var text = r.textContent.toLowerCase();
+        r.style.display = (q.length < 2 || text.indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    (function addSearchToTopbar() {
+      var searchContainer = document.querySelector('.app-main header');
+      if (searchContainer) {
+        var searchHtml = `
+          <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+            <input type="text" id="searchInput" placeholder="Search projects by name, customer, code… (min 2 letters)"
+              oninput="onSearchInput()"
+              class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+          </div>
+        `;
+        var headerContent = searchContainer.innerHTML;
+        var hamburgerIndex = headerContent.indexOf('lg:hidden');
+        if (hamburgerIndex !== -1) {
+          var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
+          var before = headerContent.substring(0, firstDivEnd);
+          var after = headerContent.substring(firstDivEnd);
+          searchContainer.innerHTML = before + searchHtml + after;
+        }
+      }
+    })();
+
+    // =============================================================
+    // INIT (list view only, detail view stays hidden)
+    // =============================================================
+    renderProjects();
+    renderStats();
+
+    console.log('Projects Module Loaded Successfully');
+    console.log('Total Projects:', projects.length);
+    console.log('Enhancement — Zoho-style Project Detail View enabled');
+
+  </script>
+
+</body>
+</html>

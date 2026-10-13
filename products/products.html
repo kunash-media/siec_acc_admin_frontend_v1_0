@@ -177,6 +177,7 @@
     color: #ef4444;
   }
 
+
   /* Toast */
   .toast {
     animation: fadeIn 0.2s ease;
@@ -332,7 +333,7 @@
   <script src="/assets/js/nav-sidebar.js"></script>
 
   <!-- Main Items JS (all logic) -->
-  <script>
+ <script>
     // =============================================================
     // NAV-SIDEBAR INIT
     // =============================================================
@@ -348,8 +349,102 @@
     });
 
     // =============================================================
-    // ITEMS MODULE — Complete Logic
+    // CONFIG  (only these 3 lines may need adjusting)
     // =============================================================
+    var API_BASE = 'http://localhost:9093';                 // e.g. 'http://localhost:9093' when the page is served from another origin
+    var AUTH_TOKEN_KEY = 'token';      // localStorage key holding the JWT
+    var VENDOR_LIST_URL = '/api/vendor/vendor-list';          // e.g. '/api/vendor/get-all-vendors' once a vendor list endpoint exists
+
+    var EP = {
+      products: '/api/products/v1',
+      variants: '/api/variants/v1',
+      inventory: '/api/inventory/v1',
+      warehouses: '/api/warehouses/v1',
+      vendorQuickCreate: '/api/vendor/quick-create'
+    };
+
+    // =============================================================
+    // CORE UTILITIES
+    // =============================================================
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // blank -> null, otherwise trimmed string
+    function nz(v) {
+      if (v === undefined || v === null) return null;
+      var s = String(v).trim();
+      return s === '' ? null : s;
+    }
+
+    // '' -> null, valid number -> number, invalid -> NaN
+    function numOrNull(s) {
+      if (s === '' || s === null || s === undefined) return null;
+      var n = Number(s);
+      return isFinite(n) ? n : NaN;
+    }
+
+    function val(id) {
+      var el = document.getElementById(id);
+      return el ? String(el.value).trim() : '';
+    }
+
+    function errMsg(e) {
+      if (!e) return 'Something went wrong';
+      if (e.name === 'TypeError') return 'Cannot reach the server. Please check your connection.';
+      return e.message || 'Something went wrong';
+    }
+
+    function getAuthToken() {
+      try { return localStorage.getItem(AUTH_TOKEN_KEY) || sessionStorage.getItem(AUTH_TOKEN_KEY) || ''; }
+      catch (e) { return ''; }
+    }
+
+    // Returns the "data" part of the ApiResponse wrapper; throws Error(message) on failure
+    async function apiRequest(method, path, body, signal) {
+      var headers = { 'Accept': 'application/json' };
+      var token = getAuthToken();
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      var opts = { method: method, headers: headers };
+      if (body !== undefined && body !== null) {
+        headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      if (signal) opts.signal = signal;
+
+      var res = await fetch(API_BASE + path, opts);
+      var json = null;
+      try { json = await res.json(); } catch (e) { json = null; }
+
+      if (!res.ok) {
+        var msg = (json && (json.message || json.error)) || ('Request failed (' + res.status + ')');
+        if (res.status === 401) msg = 'Session expired. Please log in again.';
+        var err = new Error(msg);
+        err.status = res.status;
+        throw err;
+      }
+      return json && json.data !== undefined ? json.data : json;
+    }
+
+    // Disables a button while its async action runs (blocks double submits)
+    async function withBusy(btn, fn) {
+      if (btn) {
+        if (btn.dataset.busy === '1') return;
+        btn.dataset.busy = '1';
+        btn.disabled = true;
+        btn.classList.add('opacity-60', 'cursor-not-allowed');
+      }
+      try { return await fn(); }
+      finally {
+        if (btn && btn.isConnected) {
+          btn.dataset.busy = '';
+          btn.disabled = false;
+          btn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+      }
+    }
 
     // ---------- SVG Icons (used inside modals/table rows) ----------
     function iconEdit() {
@@ -380,7 +475,7 @@
       return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
     }
 
-    // ---------- Toast System ----------
+    // ---------- Toast System (text only, never injects HTML) ----------
     function showToast(message, kind) {
       kind = kind || 'success';
       var wrap = document.getElementById('toastWrap');
@@ -392,18 +487,31 @@
       };
       var el = document.createElement('div');
       el.className = 'toast ' + colors[kind] + ' text-white text-sm font-semibold px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
-      el.innerHTML = '<span>' + message + '</span>';
+      var span = document.createElement('span');
+      span.textContent = message;
+      el.appendChild(span);
       wrap.appendChild(el);
       setTimeout(function() {
         el.style.transition = 'opacity .3s';
         el.style.opacity = '0';
         setTimeout(function() { el.remove(); }, 300);
-      }, 2600);
+      }, kind === 'error' ? 4500 : 2600);
     }
 
     // ---------- Modal System ----------
+    // modalSeq changes on every open/close, so async flows can detect a stale modal and stop.
+    var modalSeq = 0;
+    var modalPickers = [];
+
+    function destroyPickers() {
+      modalPickers.forEach(function(p) { p.destroy(); });
+      modalPickers = [];
+    }
+
     function openModal(innerHtml, opts) {
       opts = opts || {};
+      destroyPickers();
+      modalSeq++;
       var root = document.getElementById('modalRoot');
       root.innerHTML = `
         <div class="fixed inset-0 z-[100] flex items-center justify-center p-4" id="modalOverlay">
@@ -417,6 +525,8 @@
     }
 
     function closeModal() {
+      destroyPickers();
+      modalSeq++;
       var root = document.getElementById('modalRoot');
       root.innerHTML = '';
       document.body.style.overflow = '';
@@ -424,10 +534,10 @@
 
     function modalHeader(title, subtitle) {
       return `
-        <div class="flex items-start justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+        <div class="flex items-start justify-between px-6 py-5 border-b border-gray-300 sticky top-0 bg-white z-10">
           <div>
-            <h3 class="text-lg font-bold text-gray-900">${title}</h3>
-            ${subtitle ? '<p class="text-xs text-gray-500 mt-0.5">' + subtitle + '</p>' : ''}
+            <h3 class="text-lg font-bold text-gray-900">${esc(title)}</h3>
+            ${subtitle ? '<p class="text-xs text-gray-500 mt-0.5">' + esc(subtitle) + '</p>' : ''}
           </div>
           <button onclick="closeModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
         </div>`;
@@ -446,6 +556,15 @@
         </div>`;
     }
 
+    function openLoadingModal(title, subtitle, width) {
+      openModal(
+        modalHeader(title, subtitle) +
+        '<div class="px-6 py-10 text-center text-sm text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading…</div>',
+        { width: width || 'max-w-2xl' }
+      );
+      return modalSeq;
+    }
+
     function fld(label, inputHtml, hint) {
       return `
         <div class="mb-3">
@@ -456,6 +575,17 @@
     }
 
     function inputBase() { return "form-input"; }
+
+    function fldErr(id) {
+      return '<div id="err_' + id + '" class="hidden text-[10.5px] text-red-500 mt-1">This field is required</div>';
+    }
+
+    function setFieldError(id, hasError) {
+      var el = document.getElementById(id);
+      var err = document.getElementById('err_' + id);
+      if (el) el.classList.toggle('border-red-500', !!hasError);
+      if (err) err.classList.toggle('hidden', !hasError);
+    }
 
     // ---------- Dropdown ----------
     document.addEventListener('click', function(e) {
@@ -477,7 +607,8 @@
     function badge(text, color) {
       var map = { green: 'badge-green', amber: 'badge-amber', red: 'badge-red', gray: 'badge-gray' };
       var dot = { green: 'badge-dot-green', amber: 'badge-dot-amber', red: 'badge-dot-red', gray: 'badge-dot-gray' };
-      return '<span class="badge ' + map[color] + '"><span class="badge-dot ' + dot[color] + '"></span>' + text + '</span>';
+      color = map[color] ? color : 'gray';
+      return '<span class="badge ' + map[color] + '"><span class="badge-dot ' + dot[color] + '"></span>' + esc(text) + '</span>';
     }
 
     function rowActionsHtml(editFn, delFn, viewFn) {
@@ -518,77 +649,87 @@
     }
 
     // =============================================================
-    // DATA (only 2 dummy items retained)
+    // STATE + DATA LOADING
     // =============================================================
-
-    var warehouses = [
-      { id: 'WH-001', name: 'Main Warehouse - Mumbai' },
-      { id: 'WH-002', name: 'Branch Warehouse - Pune' },
-      { id: 'WH-003', name: 'Storage - Bhiwandi' },
-    ];
-
-    // Fallback dummy vendors — replace with live API data (see fetchVendorList below)
-    var vendors = [
-      { id: 'VEN-001', name: 'Global Imports Inc.' },
-      { id: 'VEN-002', name: 'Local Supplier Co.' },
-    ];
-
-    var items = [{
-      id: 'ITM-1001',
-      name: 'Centrifugal Blower — 5HP',
-      sku: 'BLW-5HP-001',
-      category: 'Blowers',
-      subCategory: 'Industrial Blowers',
-      hsn: '9503',
-      unit: 'Pcs',
-      sellingPrice: 42000,
-      mrpPrice: 45000,
-      gstRate: '18',
-      stock: 48,
-      warehouse: 'WH-001',
-      description: 'Heavy duty industrial blower',
-      status: 'green'
-    }, {
-      id: 'ITM-1002',
-      name: 'Dual Media Filter Vessel — 500L',
-      sku: 'FIL-500L-002',
-      category: 'Filtration',
-      subCategory: 'Filter Vessels',
-      hsn: '8421',
-      unit: 'Pcs',
-      sellingPrice: 118000,
-      mrpPrice: 125000,
-      gstRate: '18',
-      stock: 6,
-      warehouse: 'WH-001',
-      description: '500L capacity filtration vessel',
-      status: 'amber'
-    }];
-
-    // Variant field id -> label map (also reused for the product's own extra spec fields)
-    var variantSpecFields = [
-      { id: 'height', label: 'Height' },
-      { id: 'width', label: 'Width' },
-      { id: 'length', label: 'Length' },
-      { id: 'materialType', label: 'Material Type' },
-      { id: 'size', label: 'Size' },
-      { id: 'productNumber', label: 'Product Number' }
-    ];
-
-    var nextItemNo = 1003;
-
-    // =============================================================
-    // FUNCTIONS
-    // =============================================================
+    var items = [];
+    var itemsState = { loading: true, error: '' };
+    var tableState = { page: 1, pageSize: 25 };
+    var warehouses = [];
+    var vendors = [];   // session list; replaced by the API list when VENDOR_LIST_URL is set
 
     function statusLabel(s) {
       return s === 'green' ? 'In Stock' : s === 'amber' ? 'Low Stock' : 'Reorder';
     }
 
-    // No reorder-level field anymore — derive status purely from stock quantity
+    // Same thresholds as the backend (> 20 green, > 5 amber, else red); only a fallback
     function stockStatus(qty) {
       qty = Number(qty) || 0;
       return qty > 20 ? 'green' : qty > 5 ? 'amber' : 'red';
+    }
+
+    function normalizeProduct(p) {
+      var stock = Number(p.productStock) || 0;
+      return {
+        id: p.productStrId,
+        primeId: p.productPrimeId,
+        name: p.productName || '',
+        sku: p.productSku || '',
+        category: p.productCategory || '',
+        subCategory: p.productSubCategory || '',
+        hsn: p.productHsnCode || '',
+        unit: p.productUnit || '',
+        height: p.productHeight || '',
+        width: p.productWidth || '',
+        length: p.productLength || '',
+        materialType: p.productMaterialType || '',
+        size: p.productSize || '',
+        productNumber: p.productNumber || '',
+        description: p.productDescription || '',
+        sellingPrice: p.productSellingPrice == null ? '' : Number(p.productSellingPrice),
+        mrpPrice: p.productMrpPrice == null ? '' : Number(p.productMrpPrice),
+        gstRate: p.productGstRate || '',
+        vendorName: p.productVendorName || '',
+        vendorCompany: p.productVendorCompany || '',
+        stock: stock,
+        status: p.productStatus || stockStatus(stock)
+      };
+    }
+
+    function normalizeVendor(v) {
+      var name = v.vendorName || v.name || '';
+      var company = v.companyName || v.vendorCompany || '';
+      return {
+        id: v.vendorStrId || v.vendorId || v.id || '',
+        vendorName: name,
+        companyName: company,
+        label: company ? (name ? name + ' — ' + company : company) : (name || 'Unnamed vendor')
+      };
+    }
+
+    async function loadWarehouses() {
+      try {
+        var data = await apiRequest('GET', EP.warehouses + '/get-all-warehouses');
+        warehouses = (data || []).map(function(w) {
+          return {
+            id: w.warehouseStrId,
+            name: w.warehouseName,
+            isDefault: !!w.warehouseIsDefault,
+            active: w.warehouseStatus === 'ACTIVE'
+          };
+        });
+      } catch (e) {
+        warehouses = [];
+        showToast('Could not load warehouses: ' + errMsg(e), 'error');
+      }
+    }
+
+    function activeWarehouses() { return warehouses.filter(function(w) { return w.active; }); }
+
+    function defaultWarehouseId() {
+      var d = warehouses.find(function(w) { return w.isDefault; });
+      if (d) return d.id;
+      var a = activeWarehouses()[0];
+      return a ? a.id : '';
     }
 
     function getWarehouseName(id) {
@@ -596,23 +737,49 @@
       return w ? w.name : id;
     }
 
+    // Empty list -> a blank option, which makes the server use the default warehouse
+    function warehouseOptionsHtml(list, selectedId) {
+      if (!list.length) return '<option value="">Default warehouse</option>';
+      return list.map(function(w) {
+        return '<option value="' + esc(w.id) + '"' + (w.id === selectedId ? ' selected' : '') + '>' +
+          esc(w.name) + (w.active ? '' : ' (inactive)') + '</option>';
+      }).join('');
+    }
+
+    async function loadItems() {
+      itemsState.loading = true;
+      itemsState.error = '';
+      renderItems();
+      try {
+        var data = await apiRequest('GET', EP.products + '/get-all-products');
+        items = (data || []).map(normalizeProduct).sort(function(a, b) { return (b.primeId || 0) - (a.primeId || 0); });
+      } catch (e) {
+        itemsState.error = errMsg(e);
+        if (items.length) showToast('Could not refresh items: ' + itemsState.error, 'error');
+      } finally {
+        itemsState.loading = false;
+        renderItems();
+      }
+    }
+
+    // =============================================================
+    // TABLE, STATS, FILTERS, PAGINATION
+    // =============================================================
     function renderStats() {
       document.getElementById('totalItems').textContent = items.length;
       var uniqueCats = new Set(items.map(function(i) { return (i.category || '').trim().toLowerCase(); }).filter(Boolean));
       document.getElementById('totalCategories').textContent = uniqueCats.size;
       var lowStock = items.filter(function(i) { return i.status === 'amber' || i.status === 'red'; });
       document.getElementById('lowStockCount').textContent = lowStock.length;
-      var totalVal = items.reduce(function(sum, i) { return sum + (i.stock * i.sellingPrice); }, 0);
+      var totalVal = items.reduce(function(sum, i) { return sum + (i.stock * (Number(i.sellingPrice) || 0)); }, 0);
       document.getElementById('totalStockValue').textContent = money(totalVal);
 
       var filterCat = document.getElementById('filterCategory');
       var currentVal = filterCat.value;
       var distinctCats = Array.from(new Set(items.map(function(i) { return i.category; }).filter(Boolean))).sort();
-      filterCat.innerHTML = '<option value="all">All Categories</option>';
-      distinctCats.forEach(function(c) {
-        filterCat.innerHTML += '<option value="' + c + '">' + c + '</option>';
-      });
-      filterCat.value = currentVal;
+      filterCat.innerHTML = '<option value="all">All Categories</option>' +
+        distinctCats.map(function(c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+      filterCat.value = distinctCats.indexOf(currentVal) !== -1 ? currentVal : 'all';
     }
 
     function getFilteredItems() {
@@ -625,8 +792,10 @@
         var matchSearch = q.length < 2 ? true : (
           it.name.toLowerCase().indexOf(q) !== -1 ||
           it.sku.toLowerCase().indexOf(q) !== -1 ||
-          it.id.toLowerCase().indexOf(q) !== -1 ||
-          it.hsn.indexOf(q) !== -1
+          String(it.id).toLowerCase().indexOf(q) !== -1 ||
+          it.hsn.toLowerCase().indexOf(q) !== -1 ||
+          it.category.toLowerCase().indexOf(q) !== -1 ||
+          it.vendorName.toLowerCase().indexOf(q) !== -1
         );
         var matchCat = cat === 'all' || it.category === cat;
         var matchStatus = status === 'all' || it.status === status;
@@ -636,9 +805,24 @@
 
     function renderItems() {
       var filtered = getFilteredItems();
+      var total = filtered.length;
+      var pages = Math.max(1, Math.ceil(total / tableState.pageSize));
+      if (tableState.page > pages) tableState.page = pages;
+      var start = (tableState.page - 1) * tableState.pageSize;
+      var pageRows = filtered.slice(start, start + tableState.pageSize);
 
       var rowsHtml = '';
-      if (filtered.length === 0) {
+      if (itemsState.loading && items.length === 0) {
+        rowsHtml = `<tr><td colspan="8" class="text-center py-10 text-gray-400 text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading items…</td></tr>`;
+      } else if (itemsState.error && items.length === 0) {
+        rowsHtml = `
+          <tr>
+            <td colspan="8" class="text-center py-10 text-sm">
+              <div class="text-red-500 mb-2">${esc(itemsState.error)}</div>
+              <button onclick="loadItems()" class="text-primary font-semibold hover:underline">Retry</button>
+            </td>
+          </tr>`;
+      } else if (total === 0) {
         rowsHtml = `
           <tr>
             <td colspan="8" class="text-center py-10 text-gray-400 text-sm">
@@ -648,201 +832,449 @@
             </td>
           </tr>`;
       } else {
-        rowsHtml = filtered.map(function(it) {
+        rowsHtml = pageRows.map(function(it) {
+          var idAttr = esc(it.id);
           return `
             <tr class="border-b border-gray-400 table-row-hover">
               <td class="px-4 py-3">
-                <div class="font-semibold text-gray-800">${it.name}</div>
-                <div class="text-[11.5px] text-gray-400 font-mono">${it.id} · ${it.sku}</div>
+                <div class="font-semibold text-gray-800">${esc(it.name)}</div>
+                <div class="text-[11.5px] text-gray-400 font-mono">${esc(it.id)}${it.sku ? ' · ' + esc(it.sku) : ''}</div>
               </td>
-              <td class="px-4 py-3 text-gray-600">${it.category}${it.subCategory ? '<div class="text-[11px] text-gray-400">' + it.subCategory + '</div>' : ''}</td>
-              <td class="px-4 py-3 font-mono font-semibold">${it.stock}</td>
-              <td class="px-4 py-3 text-[11px] text-gray-500">${getWarehouseName(it.warehouse)}</td>
+              <td class="px-4 py-3 text-gray-600">${esc(it.category) || '—'}${it.subCategory ? '<div class="text-[11px] text-gray-400">' + esc(it.subCategory) + '</div>' : ''}</td>
+              <td class="px-4 py-3 font-mono font-semibold">${esc(it.stock)}${it.unit ? ' <span class="text-[10.5px] text-gray-400 font-sans">' + esc(it.unit) + '</span>' : ''}</td>
+              <td class="px-4 py-3 text-[11px] text-gray-500">${esc(it.vendorName) || '—'}${it.vendorCompany ? '<div class="text-gray-400">' + esc(it.vendorCompany) + '</div>' : ''}</td>
               <td class="px-4 py-3 font-mono font-semibold">${money(it.sellingPrice)}</td>
-              <td class="px-4 py-3 font-mono text-gray-500">${it.gstRate}%</td>
+              <td class="px-4 py-3 font-mono text-gray-500">${it.gstRate ? esc(it.gstRate) + '%' : '—'}</td>
               <td class="px-4 py-3">${badge(statusLabel(it.status), it.status)}</td>
               <td class="px-4 py-3">${rowActionsHtml(
-                "editItem('"+it.id+"')",
-                "delItem('"+it.id+"')",
-                "viewItem('"+it.id+"')"
+                "editItem('" + idAttr + "')",
+                "delItem('" + idAttr + "')",
+                "viewItem('" + idAttr + "')"
               )}</td>
             </tr>`;
         }).join('');
       }
 
+      var from = total === 0 ? 0 : start + 1;
+      var to = Math.min(start + tableState.pageSize, total);
+      var footer = `
+        <div class="flex items-center justify-between flex-wrap gap-2 px-5 py-3 border-t border-gray-100 text-[12px] text-gray-500">
+          <span>Showing ${from}–${to} of ${total}</span>
+          <div class="flex items-center gap-2">
+            <button onclick="goTablePage(-1)" ${tableState.page <= 1 ? 'disabled' : ''} class="px-3 py-1 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Prev</button>
+            <span>Page ${tableState.page} / ${pages}</span>
+            <button onclick="goTablePage(1)" ${tableState.page >= pages ? 'disabled' : ''} class="px-3 py-1 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+          </div>
+        </div>`;
+
+      var sizes = [10, 25, 50, 100].map(function(n) {
+        return '<option value="' + n + '"' + (n === tableState.pageSize ? ' selected' : '') + '>' + n + '</option>';
+      }).join('');
+
       var panelHtml = panelWrap(
-        'All Items <span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
-        tableHtml(['Item', 'Category', 'Stock', 'Warehouse', 'Price', 'GST', 'Status', 'Actions'], rowsHtml),
-        '<div class="flex items-center gap-2"><span class="text-[11px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderItems()" class="text-[12px] border border-[#6da84c] rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
+        'All Items <span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + total + '</span>',
+        tableHtml(['Item', 'Category', 'Stock', 'Vendor', 'Price', 'GST', 'Status', 'Actions'], rowsHtml) + footer,
+        '<div class="flex items-center gap-2"><span class="text-[11px] text-gray-400">Show:</span><select onchange="changePageSize(this.value)" class="text-[12px] border border-[#6da84c] rounded-lg px-2 py-1 bg-white outline-none">' + sizes + '</select></div>'
       );
 
       document.getElementById('itemsPanel').innerHTML = panelHtml;
       renderStats();
     }
 
-    function filterItems() { renderItems(); }
+    function goTablePage(delta) {
+      tableState.page = Math.max(1, tableState.page + delta);
+      renderItems();
+    }
+
+    function changePageSize(v) {
+      tableState.pageSize = Number(v) || 25;
+      tableState.page = 1;
+      renderItems();
+    }
+
+    function filterItems() { tableState.page = 1; renderItems(); }
 
     function clearFilters() {
       document.getElementById('filterCategory').value = 'all';
       document.getElementById('filterStatus').value = 'all';
       var searchInput = document.getElementById('searchInput');
       if (searchInput) searchInput.value = '';
+      tableState.page = 1;
       renderItems();
       toggleFilterDD();
     }
 
     // =============================================================
-    // ADD / EDIT ITEM  (Basic Info · Pricing & Tax · Inventory only)
+    // PRODUCT PICKER  (debounced search + infinite scroll over get-product-list)
+    // mode 'product': only products are selectable (variants shown for reference)
+    // mode 'stock'  : products and variants are both selectable
     // =============================================================
+    function createProductPicker(cfg) {
+      var inputEl = document.getElementById(cfg.inputId);
+      var listEl = document.getElementById(cfg.listId);
+      if (!inputEl || !listEl) return null;
 
-    function openAddItem() { openItemModal(null); }
+      var PAGE_SIZE = 20;
+      var destroyed = false;
+      var st = {
+        query: '', nextPage: 0, hasNext: true, loading: false, started: false,
+        error: '', reqId: 0, controller: null, rows: [], selectedKey: '', timer: null
+      };
 
-    function editItem(id) {
-      var it = items.find(function(x) { return x.id === id; });
-      if (it) openItemModal(it);
+      function pKey(pid) { return 'p:' + pid; }
+      function vKey(vid) { return 'v:' + vid; }
+
+      function render() {
+        if (destroyed) return;
+        var html = '';
+        st.rows.forEach(function(p) {
+          var sel = st.selectedKey === pKey(p.productStrId);
+          var meta = [p.productUnit, p.productSize].filter(Boolean).join(' · ');
+          var sub = [meta, p.productSellingPrice != null ? money(p.productSellingPrice) : '', p.productVendorName].filter(Boolean).join(' · ');
+          html += '<div data-pick="product" data-pid="' + esc(p.productStrId) + '" class="px-3 py-2 text-[12.5px] cursor-pointer ' + (sel ? 'bg-primary-soft' : 'hover:bg-gray-50') + '">' +
+            '<div class="flex items-center  justify-between gap-2"><span class="font-semibold text-gray-700 truncate">' + esc(p.productName) + '</span>' +
+            '<span class="text-gray-400 font-mono text-[11px] whitespace-nowrap">' + esc(p.productStrId) + '</span></div>' +
+            (sub ? '<div class="text-[11px] text-gray-400">' + esc(sub) + '</div>' : '') + '</div>';
+
+          (p.variants || []).forEach(function(v) {
+            var selectable = cfg.mode === 'stock';
+            var vSel = st.selectedKey === vKey(v.variantStrId);
+            var price = v.variantSellingPrice != null ? v.variantSellingPrice : p.productSellingPrice;
+            var vMeta = [v.variantSku, v.variantSize, price != null ? money(price) : ''].filter(Boolean).join(' · ');
+            html += '<div data-pick="variant border-b border-gray-300" data-pid="' + esc(p.productStrId) + '" data-vid="' + esc(v.variantStrId) + '" class="pl-8 pr-3 py-1.5 text-[12px] ' +
+              (selectable ? 'cursor-pointer ' + (vSel ? 'bg-primary-soft' : 'hover:bg-gray-50') : 'text-gray-500') + '">' +
+              '<span class="text-gray-600 mr-1">↳ VAR :</span><span class="font-semibold text-gray-600">' + esc(v.variantName || 'Unnamed variant') + '</span>' +
+              (vMeta ? ' <span class="text-[11px] text-gray-500">' + esc(vMeta) + '</span>' : '') + '</div>';
+          });
+        });
+
+        if (st.error) {
+          html += '<div data-retry="1" class="px-3 py-2 text-[12px] text-red-500 cursor-pointer">' + esc(st.error) + ' — click to retry</div>';
+        } else if (st.loading) {
+          html += '<div class="text-center py-3 text-gray-400 text-[12px]"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Loading…</div>';
+        } else if (st.started && st.rows.length === 0) {
+          html += '<div class="text-center py-4 text-gray-400 text-[12.5px]">No matching products</div>';
+        } else if (st.rows.length && !st.hasNext) {
+          html += '<div class="text-center py-2 text-gray-300 text-[11px]">End of list</div>';
+        }
+        listEl.innerHTML = html;
+
+        // short first page that does not fill the box: keep loading (only while the list is visible)
+        if (st.started && st.hasNext && !st.loading && !st.error && listEl.offsetParent !== null &&
+            listEl.scrollHeight <= listEl.clientHeight + 4) {
+          loadNext();
+        }
+      }
+
+      function reset() {
+        st.reqId++;
+        if (st.controller) st.controller.abort();
+        st.rows = [];
+        st.nextPage = 0;
+        st.hasNext = true;
+        st.loading = false;
+        st.error = '';
+        listEl.scrollTop = 0;
+      }
+
+      async function loadNext() {
+        if (destroyed || st.loading || !st.hasNext || st.error) return;
+        st.loading = true;
+        var myReq = st.reqId;
+        var ctrl = new AbortController();
+        st.controller = ctrl;
+        render();
+        try {
+          var qs = '?page=' + st.nextPage + '&size=' + PAGE_SIZE + (st.query ? '&search=' + encodeURIComponent(st.query) : '');
+          var data = await apiRequest('GET', EP.products + '/get-product-list' + qs, null, ctrl.signal);
+          if (destroyed || myReq !== st.reqId) return;
+          st.rows = st.rows.concat((data && data.content) || []);
+          st.hasNext = !!(data && data.hasNext);
+          if (st.hasNext && data.nextPage != null) st.nextPage = data.nextPage;
+        } catch (e) {
+          if (destroyed || e.name === 'AbortError' || myReq !== st.reqId) return;
+          st.error = errMsg(e);
+        } finally {
+          if (!destroyed && myReq === st.reqId) { st.loading = false; render(); }
+        }
+      }
+
+      listEl.addEventListener('scroll', function() {
+        if (listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - 40) loadNext();
+      });
+
+      listEl.addEventListener('click', function(e) {
+        if (e.target.closest('[data-retry]')) { st.error = ''; loadNext(); return; }
+        var el = e.target.closest('[data-pick]');
+        if (!el || !listEl.contains(el)) return;
+        var kind = el.getAttribute('data-pick');
+        if (kind === 'variant' && cfg.mode !== 'stock') return;
+        var pid = el.getAttribute('data-pid');
+        var product = st.rows.find(function(p) { return p.productStrId === pid; });
+        if (!product) return;
+        var variant = null;
+        if (kind === 'variant') {
+          var vid = el.getAttribute('data-vid');
+          variant = (product.variants || []).find(function(v) { return v.variantStrId === vid; }) || null;
+          if (!variant) return;
+          st.selectedKey = vKey(vid);
+        } else {
+          st.selectedKey = pKey(pid);
+        }
+        render();
+        cfg.onSelect({ kind: kind, product: product, variant: variant });
+      });
+
+      inputEl.addEventListener('input', function() {
+        clearTimeout(st.timer);
+        st.timer = setTimeout(function() {
+          var q = inputEl.value.trim();
+          if (q.length === 1) return;          // wait for at least 2 characters
+          if (q === st.query && st.started) return;
+          st.query = q;
+          reset();
+          st.started = true;
+          loadNext();
+        }, 300);
+      });
+
+      return {
+        activate: function() { if (!st.started) { st.started = true; loadNext(); } },
+        clearSelection: function() { st.selectedKey = ''; render(); },
+        destroy: function() { destroyed = true; clearTimeout(st.timer); if (st.controller) st.controller.abort(); }
+      };
     }
 
-    function viewItem(id) {
+    // =============================================================
+    // VIEW ITEM
+    // =============================================================
+    async function viewItem(id) {
       var it = items.find(function(x) { return x.id === id; });
       if (!it) return;
+      var seq = openLoadingModal('Item Details — ' + it.name, it.id + (it.sku ? ' · ' + it.sku : ''), 'max-w-2xl');
+
+      var results = await Promise.allSettled([
+        apiRequest('GET', EP.inventory + '/get-product-stock/' + encodeURIComponent(id)),
+        apiRequest('GET', EP.variants + '/get-variants-by-product/' + encodeURIComponent(id))
+      ]);
+      if (seq !== modalSeq) return;
+
+      var stockSummary = results[0].status === 'fulfilled' ? results[0].value : null;
+      var variantList = results[1].status === 'fulfilled' ? (results[1].value || []) : null;
+      var totalStock = stockSummary ? stockSummary.totalStock : it.stock;
+
+      var whHtml;
+      if (!stockSummary) {
+        whHtml = '<div class="text-[12px] text-red-500">Could not load warehouse stock: ' + esc(errMsg(results[0].reason)) + '</div>';
+      } else if (!stockSummary.warehouses || !stockSummary.warehouses.length) {
+        whHtml = '<div class="text-[12px] text-gray-400">No stock recorded yet.</div>';
+      } else {
+        whHtml = '<div class="border border-gray-300 rounded-lg divide-y divide-gray-300">' +
+          stockSummary.warehouses.map(function(r) {
+            return '<div class="px-3 py-2 text-sm flex items-center justify-between"><span class="font-semibold">' + esc(r.warehouseName) +
+              '</span><span class="font-mono font-semibold">' + esc(r.productStock) + ' ' + esc(it.unit) + '</span></div>';
+          }).join('') + '</div>';
+      }
+
+      var variantHtml;
+      if (variantList === null) {
+        variantHtml = '<div class="text-[12px] text-red-500">Could not load variants: ' + esc(errMsg(results[1].reason)) + '</div>';
+      } else if (!variantList.length) {
+        variantHtml = '<div class="text-[12px] text-gray-400">No variants.</div>';
+      } else {
+        variantHtml = '<div class="border border-gray-300 rounded-lg divide-y divide-gray-300">' +
+          variantList.map(function(v) {
+            var meta = [v.variantSku, v.variantSize, v.variantSellingPrice != null ? 'Sell ' + money(v.variantSellingPrice) : '', v.variantMrpPrice != null ? 'MRP ' + money(v.variantMrpPrice) : ''].filter(Boolean).join(' · ');
+            return '<div class="px-3 py-2 text-sm flex items-center justify-between gap-3"><div><div class="font-semibold">' + esc(v.variantName || 'Unnamed Variant') +
+              '</div><div class="text-[11px] text-gray-500 font-mono">' + esc(v.variantStrId) + (meta ? ' · ' + esc(meta) : '') + '</div></div>' +
+              '<span class="font-mono font-semibold whitespace-nowrap">' + esc(v.variantStock == null ? 0 : v.variantStock) + ' ' + esc(v.variantUnit || it.unit) + '</span></div>';
+          }).join('') + '</div>';
+      }
+
+      var cell = function(label, valueHtml) {
+        return '<div><span class="text-gray-500">' + label + '</span><br>' + valueHtml + '</div>';
+      };
+      var strong = function(t) { return '<span class="font-semibold">' + (esc(t) || '—') + '</span>'; };
 
       var modalContent = `
-        ${modalHeader('Item Details — ' + it.name, it.id + ' · ' + it.sku)}
+        ${modalHeader('Item Details — ' + it.name, it.id + (it.sku ? ' · ' + it.sku : ''))}
         <div class="px-6 py-4 modal-scroll">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div><span class="text-gray-500">Category</span><br><span class="font-semibold">${it.category}</span></div>
-            <div><span class="text-gray-500">Sub Category</span><br><span class="font-semibold">${it.subCategory || '—'}</span></div>
-            <div><span class="text-gray-500">HSN/SAC</span><br><span class="font-mono font-semibold">${it.hsn}</span></div>
-            <div><span class="text-gray-500">Unit</span><br><span class="font-semibold">${it.unit}</span></div>
-            <div><span class="text-gray-500">Status</span><br>${badge(statusLabel(it.status), it.status)}</div>
-            <div><span class="text-gray-500">Total Stock</span><br><span class="font-semibold">${it.stock} ${it.unit}</span></div>
-            <div><span class="text-gray-500">Selling Price</span><br><span class="font-semibold text-primary">${money(it.sellingPrice)}</span></div>
-            <div><span class="text-gray-500">MRP Price</span><br><span class="font-semibold">${money(it.mrpPrice)}</span></div>
-            <div><span class="text-gray-500">GST Rate</span><br><span class="font-semibold">${it.gstRate}%</span></div>
-            <div><span class="text-gray-500">Warehouse</span><br><span class="font-semibold">${getWarehouseName(it.warehouse)}</span></div>
-            <div><span class="text-gray-500">Height</span><br><span class="font-semibold">${it.height || '—'}</span></div>
-            <div><span class="text-gray-500">Width</span><br><span class="font-semibold">${it.width || '—'}</span></div>
-            <div><span class="text-gray-500">Length</span><br><span class="font-semibold">${it.length || '—'}</span></div>
-            <div><span class="text-gray-500">Material Type</span><br><span class="font-semibold">${it.materialType || '—'}</span></div>
-            <div><span class="text-gray-500">Size</span><br><span class="font-semibold">${it.size || '—'}</span></div>
-            <div><span class="text-gray-500">Product Number</span><br><span class="font-semibold">${it.productNumber || '—'}</span></div>
-            ${it.description ? '<div class="col-span-2"><span class="text-gray-500">Description</span><br><span class="text-sm">' + it.description + '</span></div>' : ''}
+          <div class="grid grid-cols-2 gap-4 text-sm p-3 rounded-lg border border-gray-300">
+            ${cell('Category', strong(it.category))}
+            ${cell('Sub Category', strong(it.subCategory))}
+            ${cell('HSN/SAC', '<span class="font-mono font-semibold">' + (esc(it.hsn) || '—') + '</span>')}
+            ${cell('Unit', strong(it.unit))}
+            ${cell('Status', badge(statusLabel(it.status), it.status))}
+            ${cell('Total Stock (all warehouses)', '<span class="font-semibold">' + esc(totalStock) + ' ' + esc(it.unit) + '</span>')}
+            ${cell('Selling Price', '<span class="font-semibold text-primary">' + money(it.sellingPrice) + '</span>')}
+            ${cell('MRP Price', '<span class="font-semibold">' + money(it.mrpPrice) + '</span>')}
+            ${cell('GST Rate', strong(it.gstRate ? it.gstRate + '%' : ''))}
+            ${cell('Vendor', strong([it.vendorName, it.vendorCompany].filter(Boolean).join(' — ')))}
+            ${cell('Height', strong(it.height))}
+            ${cell('Width', strong(it.width))}
+            ${cell('Length', strong(it.length))}
+            ${cell('Material Type', strong(it.materialType))}
+            ${cell('Size', strong(it.size))}
+            ${cell('Product Number', strong(it.productNumber))}
+            ${it.description ? '<div class="col-span-2"><span class="text-gray-500">Description</span><br><span class="text-sm">' + esc(it.description) + '</span></div>' : ''}
           </div>
 
-          ${it.variants && it.variants.length ? `
           <div class="mt-5 pt-4 border-t border-gray-100">
-            <h4 class="text-[13px] font-semibold text-gray-800 mb-2">Variants (${it.variants.length})</h4>
-            <div class="border border-gray-200 rounded-lg divide-y divide-gray-100">
-              ${it.variants.map(function(v) {
-                return '<div class="px-3 py-2 text-sm flex items-center justify-between"><span class="font-semibold">' + (v.variantName || 'Unnamed Variant') + '</span><span class="text-gray-400 text-[11px] font-mono">' + (v.sku || '') + '</span></div>';
-              }).join('')}
-            </div>
-          </div>` : ''}
+            <h4 class="text-[13px] font-semibold text-gray-800 mb-2">Stock by warehouse</h4>
+            ${whHtml}
+          </div>
+
+          <div class="mt-5 pt-4 border-t border-gray-100">
+            <h4 class="text-[13px] font-semibold text-gray-800 mb-2">Variants${variantList ? ' (' + variantList.length + ')' : ''}</h4>
+            ${variantHtml}
+          </div>
         </div>
         ${modalFooter('Close', 'onclick="closeModal()"')}
       `;
-
       openModal(modalContent, { width: 'max-w-2xl' });
     }
 
-    // Tracks which product row is selected inside the "Add Variant" tab for the currently open modal
-    var variantSelectedProductId = null;
+    // =============================================================
+    // ADD / EDIT ITEM  (Basic Info · Pricing & Tax · Inventory · Add Variant)
+    // =============================================================
+    var itemModalCtx = { isEdit: false, id: '', stockByWh: {} };
+    var variantTarget = null;       // { productStrId, name } chosen in the Add Variant tab
+    var variantRowCounter = 0;
+    var variantPickerRef = null;
 
-    function fldErr(id) {
-      // Inline required-field error message, hidden by default
-      return '<div id="err_' + id + '" class="hidden text-[10.5px] text-red-500 mt-1">This field is required</div>';
+    function openAddItem() { openItemModal(null, null); }
+
+    async function editItem(id) {
+      var it = items.find(function(x) { return x.id === id; });
+      if (!it) return;
+      var seq = openLoadingModal('Edit Item', it.id, 'max-w-2xl');
+      try {
+        var summary = await apiRequest('GET', EP.inventory + '/get-product-stock/' + encodeURIComponent(id));
+        if (seq !== modalSeq) return;
+        openItemModal(it, summary);
+      } catch (e) {
+        if (seq !== modalSeq) return;
+        closeModal();
+        showToast('Could not load item stock: ' + errMsg(e), 'error');
+      }
     }
 
-    function openItemModal(existing) {
+    function onItemWarehouseChange() {
+      var wh = val('f_warehouse');
+      var input = document.getElementById('f_stock');
+      if (!input || !itemModalCtx.isEdit) return;
+      var current = itemModalCtx.stockByWh[wh];
+      input.value = current === undefined ? 0 : current;
+    }
+
+    function openItemModal(existing, stockSummary) {
       var e = existing || {
-        name: '',
-        sku: '',
-        category: '',
-        subCategory: '',
-        hsn: '',
-        unit: '',
-        sellingPrice: '',
-        mrpPrice: '',
-        gstRate: '',
-        stock: '',
-        warehouse: warehouses[0].id,
-        description: '',
-        height: '',
-        width: '',
-        length: '',
-        materialType: '',
-        size: '',
-        productNumber: '',
-        variants: []
+        name: '', sku: '', category: '', subCategory: '', hsn: '', unit: '',
+        sellingPrice: '', mrpPrice: '', gstRate: '', description: '',
+        height: '', width: '', length: '', materialType: '', size: '', productNumber: '',
+        vendorName: '', vendorCompany: '', stock: 0
       };
       var isEdit = !!existing;
-      variantSelectedProductId = null;
+      variantTarget = null;
+      variantRowCounter = 0;
+
+      var stockRows = (stockSummary && stockSummary.warehouses) || [];
+      var stockByWh = {};
+      stockRows.forEach(function(r) { stockByWh[r.warehouseStrId] = Number(r.productStock) || 0; });
+
+      var defId = defaultWarehouseId();
+      var initialWh = defId;
+      if (isEdit && stockRows.length && stockByWh[defId] === undefined) initialWh = stockRows[0].warehouseStrId;
+      itemModalCtx = { isEdit: isEdit, id: isEdit ? e.id : '', stockByWh: stockByWh };
+
+      var whList = isEdit ? warehouses : activeWarehouses();
+      var totalStock = stockSummary ? stockSummary.totalStock : e.stock;
+      var initialStock = isEdit ? (stockByWh[initialWh] === undefined ? 0 : stockByWh[initialWh]) : '';
+
+      var breakdown = stockRows.length
+        ? stockRows.map(function(r) {
+            return '<div class="flex justify-between text-[12px]"><span class="text-gray-600">' + esc(r.warehouseName) + '</span><span class="font-mono font-semibold">' + esc(r.productStock) + '</span></div>';
+          }).join('')
+        : '<div class="text-[12px] text-gray-400">No stock recorded yet.</div>';
+
+      var inventoryTab = isEdit ? `
+            <div class="mb-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+              <div class="flex justify-between text-[12.5px] mb-2"><span class="font-semibold text-gray-700">Total stock (all warehouses)</span><span class="font-mono font-bold">${esc(totalStock)} ${esc(e.unit)}</span></div>
+              ${breakdown}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${fld('Warehouse', '<select id="f_warehouse" onchange="onItemWarehouseChange()" class="' + inputBase() + '">' + warehouseOptionsHtml(whList, initialWh) + '</select>')}
+              <div class="mb-3">
+                <label class="form-label">Stock in this warehouse</label>
+                <input id="f_stock" type="number" min="0" step="any" value="${esc(initialStock)}" class="${inputBase()}">
+                ${fldErr('f_stock')}
+              </div>
+            </div>
+            <div class="form-hint">Changing this sets the stock for the selected warehouse and is logged as a manual update. For purchases use Vendor Purchase.</div>`
+        : `
+            <div class="grid grid-cols-2 gap-3">
+              <div class="mb-3">
+                <label class="form-label">Opening Stock <span class="required">*</span></label>
+                <input id="f_stock" type="number" min="0" step="any" class="${inputBase()}">
+                ${fldErr('f_stock')}
+              </div>
+              ${fld('Warehouse', '<select id="f_warehouse" class="' + inputBase() + '">' + warehouseOptionsHtml(whList, initialWh) + '</select>')}
+            </div>`;
 
       var modalContent = `
         ${modalHeader(isEdit ? 'Edit Item' : 'Add New Item', isEdit ? e.id : 'Create a new product/service master record')}
         <div class="px-6 py-4 modal-scroll">
           <div class="flex border-b border-gray-200 mb-4 gap-1 flex-wrap" id="modalTabs">
-            <button class="modal-tab-btn active" data-tab="tab-basic">
-              ${iconUser()} Basic Info
-            </button>
-            <button class="modal-tab-btn" data-tab="tab-pricing">
-              ${iconTag()} Pricing & Tax
-            </button>
-            <button class="modal-tab-btn" data-tab="tab-inventory">
-              ${iconBox()} Inventory
-            </button>
-            <button class="modal-tab-btn" data-tab="tab-variant">
-              ${iconTag()} Add Variant
-            </button>
+            <button class="modal-tab-btn active" data-tab="tab-basic">${iconUser()} Basic Info</button>
+            <button class="modal-tab-btn" data-tab="tab-pricing">${iconTag()} Pricing & Tax</button>
+            <button class="modal-tab-btn" data-tab="tab-inventory">${iconBox()} Inventory</button>
+            <button class="modal-tab-btn" data-tab="tab-variant">${iconTag()} Add Variant</button>
           </div>
 
           <div id="tab-basic" class="modal-tab-panel active">
             <div class="grid grid-cols-2 gap-3">
               <div class="mb-3">
                 <label class="form-label">Item Name <span class="required">*</span></label>
-                <input id="f_name" value="${e.name}" placeholder="e.g. Centrifugal Blower — 5HP" class="${inputBase()}">
+                <input id="f_name" value="${esc(e.name)}" placeholder="e.g. Centrifugal Blower — 5HP" class="${inputBase()}">
                 ${fldErr('f_name')}
               </div>
-              ${fld('SKU / Code', '<input id="f_sku" value="' + e.sku + '" placeholder="e.g. BLW-5HP-001" class="' + inputBase() + '">')}
+              ${fld('SKU / Code', '<input id="f_sku" value="' + esc(e.sku) + '" placeholder="e.g. BLW-5HP-001" class="' + inputBase() + '">')}
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${fld('Category', '<input id="f_category" value="' + e.category + '" placeholder="e.g. Blowers" class="' + inputBase() + '">')}
-              ${fld('Sub Category', '<input id="f_subcategory" value="' + (e.subCategory || '') + '" placeholder="e.g. Industrial Blowers" class="' + inputBase() + '">')}
+              ${fld('Category', '<input id="f_category" value="' + esc(e.category) + '" placeholder="e.g. Blowers" class="' + inputBase() + '">')}
+              ${fld('Sub Category', '<input id="f_subcategory" value="' + esc(e.subCategory) + '" placeholder="e.g. Industrial Blowers" class="' + inputBase() + '">')}
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${fld('HSN / SAC Code', '<input id="f_hsn" value="' + e.hsn + '" placeholder="e.g. 9503" class="' + inputBase() + '">')}
-              ${fld('Unit', '<input id="f_unit" value="' + e.unit + '" placeholder="e.g. Pcs / Kg / Ltr" class="' + inputBase() + '">')}
+              ${fld('HSN / SAC Code', '<input id="f_hsn" value="' + esc(e.hsn) + '" placeholder="e.g. 9503" class="' + inputBase() + '">')}
+              ${fld('Unit', '<input id="f_unit" value="' + esc(e.unit) + '" placeholder="e.g. Pcs / Kg / Ltr" class="' + inputBase() + '">')}
             </div>
             <div class="grid grid-cols-3 gap-3">
-              ${fld('Height', '<input id="f_height" value="' + (e.height || '') + '" placeholder="e.g. 45 cm" class="' + inputBase() + '">')}
-              ${fld('Width', '<input id="f_width" value="' + (e.width || '') + '" placeholder="e.g. 30 cm" class="' + inputBase() + '">')}
-              ${fld('Length', '<input id="f_length" value="' + (e.length || '') + '" placeholder="e.g. 60 cm" class="' + inputBase() + '">')}
+              ${fld('Height', '<input id="f_height" value="' + esc(e.height) + '" placeholder="e.g. 45 cm" class="' + inputBase() + '">')}
+              ${fld('Width', '<input id="f_width" value="' + esc(e.width) + '" placeholder="e.g. 30 cm" class="' + inputBase() + '">')}
+              ${fld('Length', '<input id="f_length" value="' + esc(e.length) + '" placeholder="e.g. 60 cm" class="' + inputBase() + '">')}
             </div>
             <div class="grid grid-cols-3 gap-3">
-              ${fld('Material Type', '<input id="f_materialType" value="' + (e.materialType || '') + '" placeholder="e.g. Stainless Steel" class="' + inputBase() + '">')}
-              ${fld('Size', '<input id="f_size" value="' + (e.size || '') + '" placeholder="e.g. Medium" class="' + inputBase() + '">')}
-              ${fld('Product Number', '<input id="f_productNumber" value="' + (e.productNumber || '') + '" placeholder="e.g. PN-1024" class="' + inputBase() + '">')}
+              ${fld('Material Type', '<input id="f_materialType" value="' + esc(e.materialType) + '" placeholder="e.g. Stainless Steel" class="' + inputBase() + '">')}
+              ${fld('Size', '<input id="f_size" value="' + esc(e.size) + '" placeholder="e.g. Medium" class="' + inputBase() + '">')}
+              ${fld('Product Number', '<input id="f_productNumber" value="' + esc(e.productNumber) + '" placeholder="e.g. PN-1024" class="' + inputBase() + '">')}
             </div>
-            ${fld('Description', '<textarea id="f_description" rows="2" class="' + inputBase() + '" placeholder="Brief description">' + (e.description || '') + '</textarea>')}
+            <div class="grid grid-cols-2 gap-3">
+              ${fld('Vendor Name', '<input id="f_vendorName" value="' + esc(e.vendorName) + '" placeholder="e.g. Rajesh Kumar" class="' + inputBase() + '">')}
+              ${fld('Vendor Company', '<input id="f_vendorCompany" value="' + esc(e.vendorCompany) + '" placeholder="e.g. Global Imports Inc." class="' + inputBase() + '">')}
+            </div>
+            ${fld('Description', '<textarea id="f_description" rows="2" class="' + inputBase() + '" placeholder="Brief description">' + esc(e.description) + '</textarea>')}
           </div>
 
           <div id="tab-pricing" class="modal-tab-panel">
             <div class="grid grid-cols-2 gap-3">
-              ${fld('Selling Price (₹)', '<input id="f_selling" type="number" value="' + e.sellingPrice + '" class="' + inputBase() + '">')}
-              ${fld('MRP Price (₹)', '<input id="f_mrp" type="number" value="' + e.mrpPrice + '" class="' + inputBase() + '">')}
+              ${fld('Selling Price (₹)', '<input id="f_selling" type="number" min="0" step="any" value="' + esc(e.sellingPrice) + '" class="' + inputBase() + '">')}
+              ${fld('MRP Price (₹)', '<input id="f_mrp" type="number" min="0" step="any" value="' + esc(e.mrpPrice) + '" class="' + inputBase() + '">')}
             </div>
-            ${fld('GST Rate (%)', '<input id="f_gst" type="text" value="' + e.gstRate + '" placeholder="e.g. 18" class="' + inputBase() + '">', 'GST rate as per HSN/SAC classification')}
+            ${fld('GST Rate (%)', '<input id="f_gst" type="text" value="' + esc(e.gstRate) + '" placeholder="e.g. 18" class="' + inputBase() + '">', 'GST rate as per HSN/SAC classification')}
           </div>
 
           <div id="tab-inventory" class="modal-tab-panel">
-            <div class="grid grid-cols-2 gap-3">
-              <div class="mb-3">
-                <label class="form-label">Total Stock <span class="required">*</span></label>
-                <input id="f_stock" type="number" value="${e.stock}" class="${inputBase()}">
-                ${fldErr('f_stock')}
-              </div>
-              ${fld('Warehouse', '<select id="f_warehouse" class="' + inputBase() + '">' + warehouses.map(function(w) { return '<option ' + (w.id === e.warehouse ? 'selected' : '') + ' value="' + w.id + '">' + w.name + '</option>'; }).join('') + '</select>')}
-            </div>
+            ${inventoryTab}
           </div>
 
           <div id="tab-variant" class="modal-tab-panel">
@@ -850,15 +1282,15 @@
               <label class="form-label">Search Product</label>
               <div class="relative">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
-                <input id="variantProductSearch" oninput="renderVariantProductList()" placeholder="Search existing products by name or SKU…" class="${inputBase()}" style="padding-left:34px;">
+                <input id="variantProductSearch" autocomplete="off" placeholder="Search by name, SKU, ID or variant… (min 2 letters)" class="${inputBase()}" style="padding-left:34px;">
               </div>
             </div>
-            <div id="variantProductList" class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-40 overflow-y-auto"></div>
+            <div id="variantProductList" class="border border-gray-300 rounded-lg divide-y divide-gray-300 max-h-48 overflow-y-auto"></div>
 
-            <div id="variantFormWrap" class="hidden mt-4 pt-4 border-t border-gray-100">
+            <div id="variantFormWrap" class="hidden mt-4 pt-4 border-t border-gray-300">
               <div class="flex items-center justify-between mb-3">
                 <div class="text-[12.5px] font-semibold text-gray-700">Adding variant(s) for: <span id="variantForProductName" class="text-primary"></span></div>
-                <button onclick="clearVariantSelection()" class="text-[11px] text-gray-400 hover:text-gray-600">${iconX()} Change product</button>
+                <button onclick="clearVariantSelection()" class="text-[11px] flex border border-gray-300 px-2 py-1 rounded-md bg-red-500 gap-1 text-white hover:bg-red-600">${iconX()} Change</button>
               </div>
 
               <div id="variantRowsWrap" class="space-y-3"></div>
@@ -867,92 +1299,67 @@
                 ${iconUser()} + Add Variant
               </button>
 
-              <div class="mt-4 pt-3 border-t border-gray-100">
-                <button onclick="saveVariant()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
+              <div class="mt-4 pt-3 border-t border-gray-300">
+                <button onclick="saveVariant(this)" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
                   ${iconSave()} Save Variant(s)
                 </button>
               </div>
             </div>
           </div>
         </div>
-        ${modalFooter(isEdit ? 'Update Item' : 'Save Item', 'onclick="saveItem(\'' + (isEdit ? e.id : '') + '\')"')}
+        ${modalFooter(isEdit ? 'Update Item' : 'Save Item', 'onclick="saveItem(this)"')}
       `;
 
       openModal(modalContent, { width: 'max-w-2xl' });
 
-      // Tab switching
-      setTimeout(function() {
-        var tabs = document.querySelectorAll('.modal-tab-btn');
-        tabs.forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            tabs.forEach(function(b) { b.classList.remove('active'); });
-            this.classList.add('active');
-            var panels = document.querySelectorAll('.modal-tab-panel');
-            panels.forEach(function(p) { p.classList.remove('active'); });
-            document.getElementById(this.dataset.tab).classList.add('active');
-            if (btn.dataset.tab === 'tab-variant') renderVariantProductList();
-          });
+      // product picker for the Add Variant tab
+      variantPickerRef = createProductPicker({
+        inputId: 'variantProductSearch',
+        listId: 'variantProductList',
+        mode: 'product',
+        onSelect: function(sel) {
+          if (variantTarget && variantTarget.productStrId === sel.product.productStrId) return;
+          variantTarget = { productStrId: sel.product.productStrId, name: sel.product.productName };
+          document.getElementById('variantFormWrap').classList.remove('hidden');
+          document.getElementById('variantForProductName').textContent = sel.product.productName + ' (' + sel.product.productStrId + ')';
+          variantRowCounter = 0;
+          document.getElementById('variantRowsWrap').innerHTML = '';
+          addVariantRow();
+        }
+      });
+      if (variantPickerRef) modalPickers.push(variantPickerRef);
+
+      // tab switching
+      var tabs = document.querySelectorAll('#modalTabs .modal-tab-btn');
+      tabs.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          tabs.forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          document.querySelectorAll('.modal-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+          document.getElementById(btn.dataset.tab).classList.add('active');
+          if (btn.dataset.tab === 'tab-variant' && variantPickerRef) variantPickerRef.activate();
         });
-      }, 50);
+      });
     }
 
     // ---------- Add Variant tab helpers ----------
-    function renderVariantProductList() {
-      var wrap = document.getElementById('variantProductList');
-      if (!wrap) return;
-      var q = (document.getElementById('variantProductSearch') || {}).value || '';
-      q = q.trim().toLowerCase();
-      var matches = items.filter(function(it) {
-        return q.length === 0 ||
-          it.name.toLowerCase().indexOf(q) !== -1 ||
-          it.sku.toLowerCase().indexOf(q) !== -1;
-      });
-      if (matches.length === 0) {
-        wrap.innerHTML = '<div class="text-center py-4 text-gray-400 text-[12.5px]">No matching products</div>';
-        return;
-      }
-      wrap.innerHTML = matches.map(function(it) {
-        var isSel = it.id === variantSelectedProductId;
-        return '<div onclick="selectVariantProduct(\'' + it.id + '\')" class="px-3 py-2 text-[12.5px] cursor-pointer flex items-center justify-between ' + (isSel ? 'bg-primary-soft' : 'hover:bg-gray-50') + '">' +
-          '<span class="font-semibold text-gray-700">' + it.name + '</span>' +
-          '<span class="text-gray-400 font-mono">' + it.sku + '</span></div>';
-      }).join('');
-    }
-
-    function selectVariantProduct(itemId) {
-      variantSelectedProductId = itemId;
-      var it = items.find(function(x) { return x.id === itemId; });
-      renderVariantProductList();
-      var formWrap = document.getElementById('variantFormWrap');
-      if (!it || !formWrap) return;
-      formWrap.classList.remove('hidden');
-      document.getElementById('variantForProductName').textContent = it.name + ' (' + it.sku + ')';
-
-      // start fresh with a single blank variant row
-      variantRowCounter = 0;
-      document.getElementById('variantRowsWrap').innerHTML = '';
-      addVariantRow();
-    }
-
     function clearVariantSelection() {
-      variantSelectedProductId = null;
+      variantTarget = null;
       var formWrap = document.getElementById('variantFormWrap');
       if (formWrap) formWrap.classList.add('hidden');
       var rowsWrap = document.getElementById('variantRowsWrap');
       if (rowsWrap) rowsWrap.innerHTML = '';
       variantRowCounter = 0;
-      renderVariantProductList();
+      if (variantPickerRef) variantPickerRef.clearSelection();
     }
 
-    // ---------- Multiple variant rows (one product can have many variants) ----------
-    var variantRowCounter = 0;
-
     function buildVariantRowHtml(idx) {
+      var whHtml = warehouseOptionsHtml(activeWarehouses(), defaultWarehouseId());
       return `
         <div class="variant-row border border-gray-200 rounded-lg p-3 relative" data-idx="${idx}">
           <button onclick="removeVariantRow(${idx})" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition" title="Remove this variant">${iconX()}</button>
           <div class="grid grid-cols-2 gap-3 pr-6">
-            ${fld('Variant Name', '<input id="v_variantName_' + idx + '" placeholder="e.g. Red / Large" class="' + inputBase() + '">')}
+            ${fld('Variant Name <span class="required">*</span>', '<input id="v_variantName_' + idx + '" placeholder="e.g. Red / Large" class="' + inputBase() + '">')}
             ${fld('SKU', '<input id="v_sku_' + idx + '" placeholder="e.g. BLW-5HP-001-RED-L" class="' + inputBase() + '">')}
           </div>
           <div class="grid grid-cols-3 gap-3">
@@ -972,6 +1379,14 @@
             ${fld('Variant Category', '<input id="v_variantCategory_' + idx + '" class="' + inputBase() + '">')}
             ${fld('Variant Sub Category', '<input id="v_variantSubCategory_' + idx + '" class="' + inputBase() + '">')}
           </div>
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Selling Price (₹)', '<input id="v_sellingPrice_' + idx + '" type="number" min="0" step="any" class="' + inputBase() + '">')}
+            ${fld('MRP Price (₹)', '<input id="v_mrpPrice_' + idx + '" type="number" min="0" step="any" class="' + inputBase() + '">')}
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Opening Stock', '<input id="v_stock_' + idx + '" type="number" min="0" step="any" placeholder="0" class="' + inputBase() + '">')}
+            ${fld('Warehouse', '<select id="v_warehouse_' + idx + '" class="' + inputBase() + '">' + whHtml + '</select>')}
+          </div>
         </div>`;
     }
 
@@ -987,160 +1402,153 @@
       if (!rowsWrap) return;
       var row = rowsWrap.querySelector('.variant-row[data-idx="' + idx + '"]');
       if (row) row.remove();
-      // always keep at least one row available to fill in
-      if (rowsWrap.children.length === 0) addVariantRow();
+      if (rowsWrap.children.length === 0) addVariantRow();   // always keep one row to fill in
     }
 
-    function saveVariant() {
-      if (!variantSelectedProductId) {
-        showToast('Please select a product first', 'error');
-        return;
-      }
-      var it = items.find(function(x) { return x.id === variantSelectedProductId; });
-      if (!it) return;
+    async function saveVariant(btn) {
+      if (!variantTarget) { showToast('Please select a product first', 'error'); return; }
 
-      var rows = document.querySelectorAll('#variantRowsWrap .variant-row');
-      var addedCount = 0;
-      it.variants = it.variants || [];
+      var rows = Array.prototype.slice.call(document.querySelectorAll('#variantRowsWrap .variant-row'));
+      var entries = [];
+      var invalid = '';
 
-      rows.forEach(function(row) {
+      rows.forEach(function(row, n) {
         var idx = row.dataset.idx;
-        var get = function(field) {
-          var el = document.getElementById('v_' + field + '_' + idx);
-          return el ? el.value.trim() : '';
-        };
-        var variant = {
-          variantName: get('variantName'),
-          sku: get('sku'),
-          height: get('height'),
-          width: get('width'),
-          length: get('length'),
-          unit: get('unit'),
-          materialType: get('materialType'),
-          size: get('size'),
-          productNumber: get('productNumber'),
-          variantCategory: get('variantCategory'),
-          variantSubCategory: get('variantSubCategory')
-        };
-        // skip a row that was left completely empty
-        var isEmpty = Object.keys(variant).every(function(k) { return !variant[k]; });
-        if (!isEmpty) {
-          it.variants.push(variant);
-          addedCount++;
-        }
+        var get = function(f) { return val('v_' + f + '_' + idx); };
+        var textFields = ['variantName', 'sku', 'height', 'width', 'length', 'unit', 'materialType', 'size',
+                          'productNumber', 'variantCategory', 'variantSubCategory', 'sellingPrice', 'mrpPrice', 'stock'];
+        var isEmpty = textFields.every(function(f) { return get(f) === ''; });
+        if (isEmpty) return;   // untouched row
+
+        var name = get('variantName');
+        var selling = numOrNull(get('sellingPrice'));
+        var mrp = numOrNull(get('mrpPrice'));
+        var stock = numOrNull(get('stock'));
+        if (!name) { invalid = invalid || ('Variant name is required (row ' + (n + 1) + ')'); setFieldError('v_variantName_' + idx, true); return; }
+        setFieldError('v_variantName_' + idx, false);
+        [selling, mrp, stock].forEach(function(x) {
+          if (Number.isNaN(x) || (x !== null && x < 0)) invalid = invalid || ('Prices and stock must be valid non-negative numbers (row ' + (n + 1) + ')');
+        });
+
+        entries.push({
+          row: row,
+          label: name,
+          payload: {
+            productStrId: variantTarget.productStrId,
+            variantName: name,
+            variantSku: nz(get('sku')),
+            variantHeight: nz(get('height')),
+            variantWidth: nz(get('width')),
+            variantLength: nz(get('length')),
+            variantUnit: nz(get('unit')),
+            variantMaterialType: nz(get('materialType')),
+            variantSize: nz(get('size')),
+            variantProductNumber: nz(get('productNumber')),
+            variantCategory: nz(get('variantCategory')),
+            variantSubCategory: nz(get('variantSubCategory')),
+            variantSellingPrice: selling,
+            variantMrpPrice: mrp,
+            variantStock: stock,
+            warehouseStrId: nz(val('v_warehouse_' + idx))
+          }
+        });
       });
 
-      if (addedCount === 0) {
-        showToast('Fill in at least one variant before saving', 'error');
-        return;
-      }
+      if (invalid) { showToast(invalid, 'error'); return; }
+      if (entries.length === 0) { showToast('Fill in at least one variant before saving', 'error'); return; }
 
-      showToast(addedCount + ' variant(s) added to ' + it.name, 'success');
+      var seq = modalSeq;
+      var target = variantTarget;
+      await withBusy(btn, async function() {
+        var ok = 0;
+        var failures = [];
+        // sequential, so one bad row (e.g. duplicate SKU) does not hide the result of the others
+        for (var i = 0; i < entries.length; i++) {
+          try {
+            await apiRequest('POST', EP.variants + '/create-variant', entries[i].payload);
+            ok++;
+            if (seq === modalSeq && entries[i].row.isConnected) entries[i].row.remove();
+          } catch (e) {
+            failures.push(entries[i].label + ': ' + errMsg(e));
+          }
+        }
+        if (ok > 0) showToast(ok + ' variant(s) added to ' + target.name, 'success');
+        if (failures.length) showToast(failures[0] + (failures.length > 1 ? ' (+' + (failures.length - 1) + ' more failed)' : ''), 'error');
 
-      // reset back to a single blank row for the next batch
-      variantRowCounter = 0;
-      document.getElementById('variantRowsWrap').innerHTML = '';
-      addVariantRow();
+        if (seq === modalSeq) {
+          var rowsWrap = document.getElementById('variantRowsWrap');
+          if (rowsWrap && rowsWrap.children.length === 0) addVariantRow();
+        }
+      });
     }
 
     // =============================================================
     // SAVE / DELETE ITEM
     // =============================================================
+    async function saveItem(btn) {
+      var ctx = itemModalCtx;
+      var name = val('f_name');
+      var stockRaw = val('f_stock');
 
-    // Toggles the red border + inline message for a required field
-    function setFieldError(id, hasError) {
-      var el = document.getElementById(id);
-      var err = document.getElementById('err_' + id);
-      if (el) el.classList.toggle('border-red-500', !!hasError);
-      if (err) err.classList.toggle('hidden', !hasError);
-    }
-
-    function saveItem(existingId) {
-      var name = document.getElementById('f_name') ? document.getElementById('f_name').value.trim() : '';
-      var sku = document.getElementById('f_sku') ? document.getElementById('f_sku').value.trim() : '';
-      var category = document.getElementById('f_category') ? document.getElementById('f_category').value.trim() : '';
-      var subCategory = document.getElementById('f_subcategory') ? document.getElementById('f_subcategory').value.trim() : '';
-      var hsn = document.getElementById('f_hsn') ? document.getElementById('f_hsn').value.trim() : '';
-      var unit = document.getElementById('f_unit') ? document.getElementById('f_unit').value.trim() : '';
-      var height = document.getElementById('f_height') ? document.getElementById('f_height').value.trim() : '';
-      var width = document.getElementById('f_width') ? document.getElementById('f_width').value.trim() : '';
-      var length = document.getElementById('f_length') ? document.getElementById('f_length').value.trim() : '';
-      var materialType = document.getElementById('f_materialType') ? document.getElementById('f_materialType').value.trim() : '';
-      var size = document.getElementById('f_size') ? document.getElementById('f_size').value.trim() : '';
-      var productNumber = document.getElementById('f_productNumber') ? document.getElementById('f_productNumber').value.trim() : '';
-      var sellingPrice = document.getElementById('f_selling') ? parseFloat(document.getElementById('f_selling').value) || 0 : 0;
-      var mrpPrice = document.getElementById('f_mrp') ? parseFloat(document.getElementById('f_mrp').value) || 0 : 0;
-      var gstRate = document.getElementById('f_gst') ? document.getElementById('f_gst').value.trim() : '';
-      var stockRaw = document.getElementById('f_stock') ? document.getElementById('f_stock').value.trim() : '';
-      var stock = stockRaw === '' ? '' : (parseInt(stockRaw) || 0);
-      var warehouse = document.getElementById('f_warehouse') ? document.getElementById('f_warehouse').value || 'WH-001' : 'WH-001';
-      var description = document.getElementById('f_description') ? document.getElementById('f_description').value || '' : '';
-
-      // Only Item Name and Total Stock are mandatory
       var nameMissing = !name;
-      var stockMissing = stockRaw === '';
+      var stockMissing = !ctx.isEdit && stockRaw === '';
       setFieldError('f_name', nameMissing);
       setFieldError('f_stock', stockMissing);
+      if (nameMissing || stockMissing) { showToast('Please fill the required fields', 'error'); return; }
 
-      if (nameMissing || stockMissing) {
-        showToast('Please fill the required fields', 'error');
-        return;
-      }
+      var selling = numOrNull(val('f_selling'));
+      var mrp = numOrNull(val('f_mrp'));
+      var stock = numOrNull(stockRaw);
+      var bad = [selling, mrp, stock].some(function(x) { return Number.isNaN(x) || (x !== null && x < 0); });
+      if (bad) { showToast('Prices and stock must be valid non-negative numbers', 'error'); return; }
 
-      if (existingId) {
-        var it = items.find(function(x) { return x.id === existingId; });
-        if (it) {
-          it.name = name;
-          it.sku = sku;
-          it.category = category;
-          it.subCategory = subCategory;
-          it.hsn = hsn;
-          it.unit = unit;
-          it.height = height;
-          it.width = width;
-          it.length = length;
-          it.materialType = materialType;
-          it.size = size;
-          it.productNumber = productNumber;
-          it.sellingPrice = sellingPrice;
-          it.mrpPrice = mrpPrice;
-          it.gstRate = gstRate;
-          it.stock = stock;
-          it.warehouse = warehouse;
-          it.description = description;
-          it.status = stockStatus(stock);
-          showToast('Item updated successfully', 'success');
+      var payload = {
+        productName: name,
+        productSku: nz(val('f_sku')),
+        productCategory: nz(val('f_category')),
+        productSubCategory: nz(val('f_subcategory')),
+        productHsnCode: nz(val('f_hsn')),
+        productUnit: nz(val('f_unit')),
+        productHeight: nz(val('f_height')),
+        productWidth: nz(val('f_width')),
+        productLength: nz(val('f_length')),
+        productMaterialType: nz(val('f_materialType')),
+        productSize: nz(val('f_size')),
+        productNumber: nz(val('f_productNumber')),
+        productDescription: nz(val('f_description')),
+        productSellingPrice: selling,
+        productMrpPrice: mrp,
+        productGstRate: nz(val('f_gst')),
+        productVendorName: nz(val('f_vendorName')),
+        productVendorCompany: nz(val('f_vendorCompany'))
+      };
+
+      var wh = nz(val('f_warehouse'));
+      if (ctx.isEdit) {
+        // send stock only when it really changed for the selected warehouse
+        if (stock !== null) {
+          var original = Number(ctx.stockByWh[wh] || 0);
+          if (stock !== original) { payload.productStock = stock; payload.warehouseStrId = wh; }
         }
       } else {
-        var newItem = {
-          id: 'ITM-' + (nextItemNo++),
-          name: name,
-          sku: sku,
-          category: category,
-          subCategory: subCategory,
-          hsn: hsn,
-          unit: unit,
-          height: height,
-          width: width,
-          length: length,
-          materialType: materialType,
-          size: size,
-          productNumber: productNumber,
-          sellingPrice: sellingPrice,
-          mrpPrice: mrpPrice,
-          gstRate: gstRate,
-          stock: stock,
-          warehouse: warehouse,
-          description: description,
-          variants: [],
-          status: stockStatus(stock)
-        };
-        items.unshift(newItem);
-        showToast('Item added successfully', 'success');
+        payload.productStock = stock;
+        payload.warehouseStrId = wh;
       }
 
-      closeModal();
-      renderItems();
+      await withBusy(btn, async function() {
+        try {
+          if (ctx.isEdit) {
+            await apiRequest('PATCH', EP.products + '/patch-product/' + encodeURIComponent(ctx.id), payload);
+          } else {
+            await apiRequest('POST', EP.products + '/create-product', payload);
+          }
+          closeModal();
+          showToast(ctx.isEdit ? 'Item updated successfully' : 'Item added successfully', 'success');
+          await loadItems();
+        } catch (e) {
+          showToast(errMsg(e), 'error');
+        }
+      });
     }
 
     function delItem(id) {
@@ -1150,62 +1558,73 @@
       var modalContent = `
         ${modalHeader('Delete Item', it.name)}
         <div class="px-6 py-4 text-sm text-gray-600">
-          <p>Are you sure you want to permanently delete <b class="text-gray-800">${it.name}</b>?</p>
-          <p class="text-gray-400 text-[12px] mt-1">This action cannot be undone. All associated transactions will be affected.</p>
+          <p>Are you sure you want to permanently delete <b class="text-gray-800">${esc(it.name)}</b>?</p>
+          <p class="text-gray-400 text-[12px] mt-1">Its variants and stock in every warehouse will be deleted too. Stock history is kept. This action cannot be undone.</p>
         </div>
-        ${modalFooter('Delete', 'onclick="confirmDeleteItem(\'' + id + '\')"', '')}
+        ${modalFooter('Delete', 'onclick="confirmDeleteItem(\'' + esc(id) + '\', this)"', '')}
       `;
       openModal(modalContent, { width: 'max-w-md' });
     }
 
-    function confirmDeleteItem(id) {
-      items = items.filter(function(x) { return x.id !== id; });
-      closeModal();
-      renderItems();
-      showToast('Item deleted successfully', 'warning');
+    async function confirmDeleteItem(id, btn) {
+      await withBusy(btn, async function() {
+        try {
+          await apiRequest('DELETE', EP.products + '/delete-product/' + encodeURIComponent(id));
+          closeModal();
+          showToast('Item deleted successfully', 'warning');
+          await loadItems();
+        } catch (e) {
+          showToast(errMsg(e), 'error');
+        }
+      });
     }
 
     // =============================================================
-    // VENDOR PURCHASE (select vendor overlay)
+    // VENDOR PURCHASE
     // =============================================================
+    var vpTarget = null;        // { kind, productStrId, variantStrId, label, unit, seq }
+    var vpTargetSeq = 0;
+    var vpPicker = null;
 
-    // TODO: replace fallback with live API once backend endpoint is ready.
     async function fetchVendorList() {
+      if (!VENDOR_LIST_URL) return vendors;
       try {
-        // const res = await fetch('/api/vendors'); // <-- enable this when the vendors API is live
-        // if (!res.ok) throw new Error('Vendor API failed');
-        // const data = await res.json();
-        // return data;
-        throw new Error('Vendor API not wired up yet — using fallback list');
-      } catch (err) {
-        console.warn(err.message);
-        return vendors; // dummy fallback (1-2 entries)
+        var data = await apiRequest('GET', VENDOR_LIST_URL);
+        var list = Array.isArray(data) ? data : ((data && data.content) || []);
+        vendors = list.map(normalizeVendor).filter(function(v) { return v.id || v.vendorName || v.companyName; });
+      } catch (e) {
+        showToast('Could not load vendors: ' + errMsg(e), 'error');
       }
+      return vendors;
     }
 
     async function openVendorPurchase() {
-      var loadingContent = `
-        ${modalHeader('Vendor Purchase', 'Select a vendor to start a purchase')}
-        <div class="px-6 py-10 text-center text-sm text-gray-400">Loading vendors…</div>
-        ${modalFooter('Proceed', 'disabled class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gray-300 cursor-not-allowed flex items-center gap-1.5"')}
-      `;
-      openModal(loadingContent, { width: 'max-w-lg' });
-
+      var seq = openLoadingModal('Vendor Purchase', 'Select a vendor to start a purchase', 'max-w-lg');
       var vendorList = await fetchVendorList();
+      if (seq !== modalSeq) return;
       renderVendorPurchaseModal(vendorList);
     }
 
+    function selectedVendor() {
+      var sel = document.getElementById('f_vendorPurchase');
+      if (!sel || !sel.value) return null;
+      return vendors.find(function(v) { return v.id === sel.value; }) || null;
+    }
+
     function renderVendorPurchaseModal(vendorList, selectVendorId) {
+      vpTarget = null;
       var vendorOptions = vendorList.map(function(v) {
-        return '<option ' + (v.id === selectVendorId ? 'selected' : '') + ' value="' + v.id + '">' + v.name + '</option>';
+        return '<option ' + (v.id === selectVendorId ? 'selected' : '') + ' value="' + esc(v.id) + '">' + esc(v.label) + '</option>';
       }).join('');
+      var activeWh = activeWarehouses();
+      var defWh = defaultWarehouseId();
 
       var modalContent = `
         ${modalHeader('Vendor Purchase', 'Select a vendor to start a purchase')}
         <div class="px-6 py-5 modal-scroll">
           <div class="flex items-end gap-2">
             <div class="flex-1">
-              ${fld('Vendor', '<select id="f_vendorPurchase" class="' + inputBase() + '">' + vendorOptions + '</select>', vendorList.length ? '' : 'No vendors found')}
+              ${fld('Vendor', '<select id="f_vendorPurchase" class="' + inputBase() + '">' + vendorOptions + '</select>', vendorList.length ? '' : 'No vendors yet — use Add New Vendor')}
             </div>
           </div>
 
@@ -1220,10 +1639,10 @@
 
           <div id="addVendorFormWrap" class="hidden mt-2 pt-4 border-t border-gray-100">
             <div class="text-[12.5px] font-semibold text-gray-700 mb-2">New Vendor</div>
-            ${fld('Vendor Name', '<input id="nv_vendorName" placeholder="e.g. Rajesh Kumar" class="' + inputBase() + '">')}
+            ${fld('Vendor Name <span class="required">*</span>', '<input id="nv_vendorName" placeholder="e.g. Rajesh Kumar" class="' + inputBase() + '">')}
             ${fld('Company Name', '<input id="nv_companyName" placeholder="e.g. Global Imports Inc." class="' + inputBase() + '">')}
             ${fld('Phone', '<input id="nv_phone" type="tel" placeholder="e.g. 9876543210" class="' + inputBase() + '">')}
-            <button onclick="saveNewVendor()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
+            <button onclick="saveNewVendor(this)" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
               ${iconSave()} Save Vendor
             </button>
           </div>
@@ -1231,10 +1650,9 @@
           <div id="addItemFormWrap" class="hidden mt-2 pt-4 border-t border-gray-100">
             <div class="text-[12.5px] font-semibold text-gray-700 mb-2">Add Item <span class="font-normal text-gray-400">— adds directly to your product inventory</span></div>
 
-            <!-- New vs Existing mode switch -->
             <div class="flex gap-2 mb-3">
               <button type="button" id="vpModeBtn_new" onclick="switchVpItemMode('new')" class="modal-tab-btn active" style="border:1px solid #e5e7eb; border-radius:8px; padding:6px 12px;">New Item</button>
-              <button type="button" id="vpModeBtn_existing" onclick="switchVpItemMode('existing')" class="modal-tab-btn" style="border:1px solid #e5e7eb; border-radius:8px; padding:6px 12px;">Existing Item</button>
+              <button type="button" id="vpModeBtn_existing" onclick="switchVpItemMode('existing')" class="modal-tab-btn" style="border:1px solid #e5e7eb; border-radius:8px; padding:6px 12px;">Existing Item / Variant</button>
             </div>
 
             <!-- ============ NEW ITEM PANEL ============ -->
@@ -1266,52 +1684,53 @@
                 ${fld('Product Number', '<input id="vp_productNumber" class="' + inputBase() + '">')}
               </div>
               <div class="grid grid-cols-2 gap-3">
-                ${fld('Selling Price (₹)', '<input id="vp_selling" type="number" class="' + inputBase() + '">')}
-                ${fld('MRP Price (₹)', '<input id="vp_mrp" type="number" class="' + inputBase() + '">')}
+                ${fld('Selling Price (₹)', '<input id="vp_selling" type="number" min="0" step="any" class="' + inputBase() + '">')}
+                ${fld('MRP Price (₹)', '<input id="vp_mrp" type="number" min="0" step="any" class="' + inputBase() + '">')}
               </div>
               <div class="grid grid-cols-2 gap-3">
                 ${fld('GST Rate (%)', '<input id="vp_gst" placeholder="e.g. 18" class="' + inputBase() + '">')}
                 <div class="mb-3">
-                  <label class="form-label">Total Stock <span class="required">*</span></label>
-                  <input id="vp_stock" type="number" class="${inputBase()}">
+                  <label class="form-label">Opening Stock <span class="required">*</span></label>
+                  <input id="vp_stock" type="number" min="0" step="any" class="${inputBase()}">
                   ${fldErr('vp_stock')}
                 </div>
               </div>
-              ${fld('Warehouse', '<select id="vp_warehouse" class="' + inputBase() + '">' + warehouses.map(function(w) { return '<option value="' + w.id + '">' + w.name + '</option>'; }).join('') + '</select>')}
+              ${fld('Warehouse', '<select id="vp_warehouse" class="' + inputBase() + '">' + warehouseOptionsHtml(activeWh, defWh) + '</select>')}
               ${fld('Description', '<textarea id="vp_description" rows="2" class="' + inputBase() + '" placeholder="Brief description"></textarea>')}
 
-              <div class="form-hint mb-2">Only Item Name and Total Stock are required — rest can be filled in later by editing the item.</div>
-              <button onclick="saveVendorPurchaseItem()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
+              <div class="form-hint mb-2">Only Item Name and Stock are required. The selected vendor is saved on the item.</div>
+              <button onclick="saveVendorPurchaseItem(this)" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
                 ${iconSave()} Save Item to Inventory
               </button>
             </div>
 
-            <!-- ============ EXISTING ITEM PANEL ============ -->
+            <!-- ============ EXISTING ITEM / VARIANT PANEL ============ -->
             <div id="vpExistingItemPanel" class="hidden">
               <div class="mb-3">
                 <label class="form-label">Search Existing Product</label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
-                  <input id="vpExistingSearch" oninput="renderVpExistingProductList()" placeholder="Search by name or SKU…" class="${inputBase()}" style="padding-left:34px;">
+                  <input id="vpExistingSearch" autocomplete="off" placeholder="Search by name, SKU, ID or variant… (min 2 letters)" class="${inputBase()}" style="padding-left:34px;">
                 </div>
               </div>
-              <div id="vpExistingProductList" class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-40 overflow-y-auto"></div>
+              <div id="vpExistingProductList" class="border border-gray-200 rounded-lg divide-y divide-gray-300 max-h-48 overflow-y-auto"></div>
 
               <div id="vpExistingStockFormWrap" class="hidden mt-4 pt-4 border-t border-gray-100">
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center justify-between mb-1">
                   <div class="text-[12.5px] font-semibold text-gray-700">Adding stock for: <span id="vpExistingProductName" class="text-primary"></span></div>
-                  <button onclick="clearVpExistingSelection()" class="text-[11px] text-gray-400 hover:text-gray-600">${iconX()} Change product</button>
+                  <button onclick="clearVpExistingSelection()" class="text-[11px] text-gray-400 hover:text-gray-600">${iconX()} Change</button>
                 </div>
+                <div id="vpExistingStockInfo" class="text-[11.5px] text-gray-500 mb-3"></div>
                 <div class="grid grid-cols-2 gap-3">
                   <div class="mb-3">
                     <label class="form-label">Add Stock Qty <span class="required">*</span></label>
-                    <input id="vpExistingQty" type="number" placeholder="e.g. 25" class="${inputBase()}">
+                    <input id="vpExistingQty" type="number" min="0" step="any" placeholder="e.g. 25" class="${inputBase()}">
                     ${fldErr('vpExistingQty')}
                   </div>
-                  ${fld('Warehouse', '<select id="vpExistingWarehouse" class="' + inputBase() + '">' + warehouses.map(function(w) { return '<option value="' + w.id + '">' + w.name + '</option>'; }).join('') + '</select>')}
+                  ${fld('Warehouse', '<select id="vpExistingWarehouse" class="' + inputBase() + '">' + warehouseOptionsHtml(activeWh, defWh) + '</select>')}
                 </div>
-                <div class="form-hint mb-2">This adds to the item's current stock — it will not create a duplicate product.</div>
-                <button onclick="saveVpExistingStock()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
+                <div class="form-hint mb-2">This adds to the current stock of the selected warehouse — it will not create a duplicate product.</div>
+                <button onclick="saveVpExistingStock(this)" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12.5px] font-semibold px-4 py-2 rounded-lg transition">
                   ${iconSave()} Add Stock to Inventory
                 </button>
               </div>
@@ -1321,6 +1740,14 @@
         ${modalFooter('Proceed', 'onclick="proceedVendorPurchase()"')}
       `;
       openModal(modalContent, { width: 'max-w-lg' });
+
+      vpPicker = createProductPicker({
+        inputId: 'vpExistingSearch',
+        listId: 'vpExistingProductList',
+        mode: 'stock',
+        onSelect: onVpTargetSelected
+      });
+      if (vpPicker) modalPickers.push(vpPicker);
     }
 
     function toggleAddVendorForm() {
@@ -1332,9 +1759,6 @@
       var wrap = document.getElementById('addItemFormWrap');
       if (wrap) wrap.classList.toggle('hidden');
     }
-
-    // ---------- New vs Existing item mode ----------
-    var vpSelectedExistingItemId = null;
 
     function switchVpItemMode(mode) {
       var newPanel = document.getElementById('vpNewItemPanel');
@@ -1348,7 +1772,7 @@
         existingPanel.classList.remove('hidden');
         newBtn.classList.remove('active');
         existingBtn.classList.add('active');
-        renderVpExistingProductList();
+        if (vpPicker) vpPicker.activate();
       } else {
         newPanel.classList.remove('hidden');
         existingPanel.classList.add('hidden');
@@ -1357,193 +1781,197 @@
       }
     }
 
-    function renderVpExistingProductList() {
-      var wrap = document.getElementById('vpExistingProductList');
-      if (!wrap) return;
-      var q = (document.getElementById('vpExistingSearch') || {}).value || '';
-      q = q.trim().toLowerCase();
-      var matches = items.filter(function(it) {
-        return q.length === 0 ||
-          it.name.toLowerCase().indexOf(q) !== -1 ||
-          it.sku.toLowerCase().indexOf(q) !== -1;
-      });
-      if (matches.length === 0) {
-        wrap.innerHTML = '<div class="text-center py-4 text-gray-400 text-[12.5px]">No matching products</div>';
-        return;
-      }
-      wrap.innerHTML = matches.map(function(it) {
-        var isSel = it.id === vpSelectedExistingItemId;
-        return '<div onclick="selectVpExistingProduct(\'' + it.id + '\')" class="px-3 py-2 text-[12.5px] cursor-pointer flex items-center justify-between ' + (isSel ? 'bg-primary-soft' : 'hover:bg-gray-50') + '">' +
-          '<span class="font-semibold text-gray-700">' + it.name + '</span>' +
-          '<span class="text-gray-400 font-mono">' + it.sku + ' · stock: ' + it.stock + '</span></div>';
-      }).join('');
+    function onVpTargetSelected(sel) {
+      var isVariant = sel.kind === 'variant';
+      vpTarget = {
+        kind: sel.kind,
+        productStrId: sel.product.productStrId,
+        variantStrId: isVariant ? sel.variant.variantStrId : null,
+        label: isVariant
+          ? sel.product.productName + ' — ' + (sel.variant.variantName || 'Variant') + ' (' + sel.variant.variantStrId + ')'
+          : sel.product.productName + ' (' + sel.product.productStrId + ')',
+        unit: (isVariant && sel.variant.variantUnit) || sel.product.productUnit || '',
+        seq: ++vpTargetSeq
+      };
+      document.getElementById('vpExistingStockFormWrap').classList.remove('hidden');
+      document.getElementById('vpExistingProductName').textContent = vpTarget.label;
+      loadVpTargetStock();
     }
 
-    function selectVpExistingProduct(itemId) {
-      vpSelectedExistingItemId = itemId;
-      var it = items.find(function(x) { return x.id === itemId; });
-      renderVpExistingProductList();
-      var formWrap = document.getElementById('vpExistingStockFormWrap');
-      if (!it || !formWrap) return;
-      formWrap.classList.remove('hidden');
-      document.getElementById('vpExistingProductName').textContent = it.name + ' (' + it.sku + ') — current stock: ' + it.stock;
-      var whSel = document.getElementById('vpExistingWarehouse');
-      if (whSel) whSel.value = it.warehouse;
+    async function loadVpTargetStock() {
+      var info = document.getElementById('vpExistingStockInfo');
+      var target = vpTarget;
+      if (!info || !target) return;
+      info.textContent = 'Loading current stock…';
+      try {
+        var isVariant = target.kind === 'variant';
+        var path = (isVariant ? '/get-variant-stock/' : '/get-product-stock/') + encodeURIComponent(isVariant ? target.variantStrId : target.productStrId);
+        var s = await apiRequest('GET', EP.inventory + path);
+        if (!vpTarget || vpTarget.seq !== target.seq) return;
+        var parts = (s.warehouses || []).map(function(r) { return r.warehouseName + ': ' + r.productStock; });
+        info.textContent = 'Current total stock: ' + s.totalStock + ' ' + target.unit + (parts.length ? '  (' + parts.join(', ') + ')' : '');
+      } catch (e) {
+        if (!vpTarget || vpTarget.seq !== target.seq) return;
+        info.textContent = 'Could not load current stock: ' + errMsg(e);
+      }
     }
 
     function clearVpExistingSelection() {
-      vpSelectedExistingItemId = null;
+      vpTarget = null;
       var formWrap = document.getElementById('vpExistingStockFormWrap');
       if (formWrap) formWrap.classList.add('hidden');
-      renderVpExistingProductList();
+      if (vpPicker) vpPicker.clearSelection();
     }
 
-    function saveVpExistingStock() {
-      if (!vpSelectedExistingItemId) {
-        showToast('Please select a product first', 'error');
-        return;
-      }
-      var it = items.find(function(x) { return x.id === vpSelectedExistingItemId; });
-      if (!it) return;
+    async function saveVpExistingStock(btn) {
+      if (!vpTarget) { showToast('Please select a product or variant first', 'error'); return; }
 
-      var qtyRaw = (document.getElementById('vpExistingQty') || {}).value || '';
-      qtyRaw = qtyRaw.trim();
-      var qtyMissing = qtyRaw === '' || isNaN(parseInt(qtyRaw)) || parseInt(qtyRaw) <= 0;
-      setFieldError('vpExistingQty', qtyMissing);
-      if (qtyMissing) {
-        showToast('Please enter a valid quantity', 'error');
-        return;
-      }
+      var qty = numOrNull(val('vpExistingQty'));
+      var qtyBad = qty === null || Number.isNaN(qty) || qty <= 0;
+      setFieldError('vpExistingQty', qtyBad);
+      if (qtyBad) { showToast('Please enter a valid quantity', 'error'); return; }
 
-      var qty = parseInt(qtyRaw);
-      it.stock = (Number(it.stock) || 0) + qty;
-      it.status = stockStatus(it.stock);
-      var whSel = document.getElementById('vpExistingWarehouse');
-      if (whSel && whSel.value) it.warehouse = whSel.value;
+      var target = vpTarget;
+      var vendor = selectedVendor();
+      var body = {
+        changeQty: qty,
+        warehouseStrId: nz(val('vpExistingWarehouse')),
+        source: 'VENDOR_PURCHASE',
+        remarks: vendor ? 'Vendor purchase: ' + vendor.label : 'Vendor purchase'
+      };
+      var isVariant = target.kind === 'variant';
+      var path = isVariant
+        ? '/add-variant-stock/' + encodeURIComponent(target.variantStrId)
+        : '/add-stock/' + encodeURIComponent(target.productStrId);
 
-      renderItems(); // keeps the main inventory table/stats in sync immediately
-      showToast('Added ' + qty + ' stock to ' + it.name + ' (no duplicate created)', 'success');
-
-      // reset for the next entry
-      document.getElementById('vpExistingQty').value = '';
-      setFieldError('vpExistingQty', false);
-      clearVpExistingSelection();
-      var searchEl = document.getElementById('vpExistingSearch');
-      if (searchEl) searchEl.value = '';
+      await withBusy(btn, async function() {
+        try {
+          await apiRequest('PATCH', EP.inventory + path, body);
+          showToast('Added ' + qty + ' stock to ' + target.label, 'success');
+          var qtyEl = document.getElementById('vpExistingQty');
+          if (qtyEl) qtyEl.value = '';
+          setFieldError('vpExistingQty', false);
+          clearVpExistingSelection();
+          var searchEl = document.getElementById('vpExistingSearch');
+          if (searchEl) searchEl.value = '';
+          loadItems();   // refresh the main table in the background
+        } catch (e) {
+          showToast(errMsg(e), 'error');
+        }
+      });
     }
 
-    function saveVendorPurchaseItem() {
-      var name = (document.getElementById('vp_name') || {}).value || '';
-      name = name.trim();
-      var stockRaw = (document.getElementById('vp_stock') || {}).value || '';
-      stockRaw = stockRaw.trim();
-
+    async function saveVendorPurchaseItem(btn) {
+      var name = val('vp_name');
+      var stockRaw = val('vp_stock');
       var nameMissing = !name;
       var stockMissing = stockRaw === '';
       setFieldError('vp_name', nameMissing);
       setFieldError('vp_stock', stockMissing);
-      if (nameMissing || stockMissing) {
-        showToast('Please fill the required fields', 'error');
-        return;
-      }
+      if (nameMissing || stockMissing) { showToast('Please fill the required fields', 'error'); return; }
 
-      var get = function(id) {
-        var el = document.getElementById(id);
-        return el ? el.value.trim() : '';
-      };
-      var getNum = function(id) {
-        var el = document.getElementById(id);
-        return el ? (parseFloat(el.value) || 0) : 0;
-      };
+      var stock = numOrNull(stockRaw);
+      var selling = numOrNull(val('vp_selling'));
+      var mrp = numOrNull(val('vp_mrp'));
+      var bad = [stock, selling, mrp].some(function(x) { return Number.isNaN(x) || (x !== null && x < 0); });
+      if (bad) { showToast('Prices and stock must be valid non-negative numbers', 'error'); return; }
 
-      var stock = parseInt(stockRaw) || 0;
-
-      // Same shape as items added from the main "Add Item" form — keeps inventory in sync, no duplication.
-      var newItem = {
-        id: 'ITM-' + (nextItemNo++),
-        name: name,
-        sku: get('vp_sku'),
-        category: get('vp_category'),
-        subCategory: get('vp_subcategory'),
-        hsn: get('vp_hsn'),
-        unit: get('vp_unit'),
-        height: get('vp_height'),
-        width: get('vp_width'),
-        length: get('vp_length'),
-        materialType: get('vp_materialType'),
-        size: get('vp_size'),
-        productNumber: get('vp_productNumber'),
-        sellingPrice: getNum('vp_selling'),
-        mrpPrice: getNum('vp_mrp'),
-        gstRate: get('vp_gst'),
-        stock: stock,
-        warehouse: (document.getElementById('vp_warehouse') || {}).value || warehouses[0].id,
-        description: get('vp_description'),
-        variants: [],
-        status: stockStatus(stock)
+      var vendor = selectedVendor();
+      var payload = {
+        productName: name,
+        productSku: nz(val('vp_sku')),
+        productCategory: nz(val('vp_category')),
+        productSubCategory: nz(val('vp_subcategory')),
+        productHsnCode: nz(val('vp_hsn')),
+        productUnit: nz(val('vp_unit')),
+        productHeight: nz(val('vp_height')),
+        productWidth: nz(val('vp_width')),
+        productLength: nz(val('vp_length')),
+        productMaterialType: nz(val('vp_materialType')),
+        productSize: nz(val('vp_size')),
+        productNumber: nz(val('vp_productNumber')),
+        productDescription: nz(val('vp_description')),
+        productSellingPrice: selling,
+        productMrpPrice: mrp,
+        productGstRate: nz(val('vp_gst')),
+        productVendorName: vendor ? nz(vendor.vendorName) : null,
+        productVendorCompany: vendor ? nz(vendor.companyName) : null,
+        productStock: stock,
+        warehouseStrId: nz(val('vp_warehouse'))
       };
 
-      items.unshift(newItem);
-      renderItems(); // keeps the main inventory table/stats in sync immediately
+      await withBusy(btn, async function() {
+        try {
+          await apiRequest('POST', EP.products + '/create-product', payload);
+          showToast('Item added to inventory', 'success');
 
-      showToast('Item added to inventory', 'success');
-
-      // collapse and reset the inline form
-      document.getElementById('addItemFormWrap').classList.add('hidden');
-      ['vp_name','vp_sku','vp_category','vp_subcategory','vp_hsn','vp_unit','vp_height','vp_width','vp_length',
-       'vp_materialType','vp_size','vp_productNumber','vp_selling','vp_mrp','vp_gst','vp_stock','vp_description'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.value = '';
+          document.getElementById('addItemFormWrap').classList.add('hidden');
+          ['vp_name', 'vp_sku', 'vp_category', 'vp_subcategory', 'vp_hsn', 'vp_unit', 'vp_height', 'vp_width', 'vp_length',
+           'vp_materialType', 'vp_size', 'vp_productNumber', 'vp_selling', 'vp_mrp', 'vp_gst', 'vp_stock', 'vp_description'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+          setFieldError('vp_name', false);
+          setFieldError('vp_stock', false);
+          loadItems();   // refresh the main table in the background
+        } catch (e) {
+          showToast(errMsg(e), 'error');
+        }
       });
-      setFieldError('vp_name', false);
-      setFieldError('vp_stock', false);
     }
 
-    function saveNewVendor() {
-      var vendorName = (document.getElementById('nv_vendorName') || {}).value || '';
-      var companyName = (document.getElementById('nv_companyName') || {}).value || '';
-      var phone = (document.getElementById('nv_phone') || {}).value || '';
+    async function saveNewVendor(btn) {
+      var vendorName = val('nv_vendorName');
+      var companyName = val('nv_companyName');
+      var phone = val('nv_phone');
 
-      vendorName = vendorName.trim();
-      companyName = companyName.trim();
-      phone = phone.trim();
+      if (!vendorName) { showToast('Vendor name is required', 'error'); return; }
+      if (phone && !/^[0-9+\-\s]{7,15}$/.test(phone)) { showToast('Please enter a valid phone number', 'error'); return; }
 
-      // TODO: POST this to the vendors API once available; for now push into the local dummy list.
-      var newVendor = {
-        id: 'VEN-' + (100 + vendors.length + 1),
-        name: companyName ? (vendorName || companyName) + ' — ' + companyName : (vendorName || 'New Vendor'),
-        contactName: vendorName,
-        companyName: companyName,
-        phone: phone
-      };
-      vendors.push(newVendor);
+      await withBusy(btn, async function() {
+        try {
+          var data = await apiRequest('POST', EP.vendorQuickCreate, {
+            vendorName: vendorName,
+            companyName: companyName,
+            phone: phone
+          });
+          var v = normalizeVendor(data && typeof data === 'object' ? data : {});
+          if (!v.vendorName) v.vendorName = vendorName;
+          if (!v.companyName) v.companyName = companyName;
+          v.label = v.companyName ? v.vendorName + ' — ' + v.companyName : v.vendorName;
+          if (!v.id) v.id = 'new-' + Date.now();
 
-      showToast('Vendor added', 'success');
-      renderVendorPurchaseModal(vendors, newVendor.id);
+          vendors = vendors.filter(function(x) { return x.id !== v.id; });
+          vendors.push(v);
+
+          showToast('Vendor added', 'success');
+          renderVendorPurchaseModal(vendors, v.id);
+        } catch (e) {
+          showToast(errMsg(e), 'error');
+        }
+      });
     }
 
     function proceedVendorPurchase() {
-      var sel = document.getElementById('f_vendorPurchase');
-      var vendorId = sel ? sel.value : null;
-      var vendorName = sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : '';
-      if (!vendorId) {
+      var vendor = selectedVendor();
+      if (!vendor) {
         showToast('Please select a vendor', 'error');
         return;
       }
       closeModal();
-      showToast('Starting purchase for ' + vendorName, 'info');
+      showToast('Starting purchase for ' + vendor.label, 'info');
       // Hook up navigation to the Purchase Bill screen here once available.
     }
 
     // =============================================================
-    // SEARCH (debounced, min 2 characters)
+    // SEARCH (debounced, min 2 characters, client-side over the loaded list)
     // =============================================================
-
     var searchDebounceTimer = null;
 
     function onSearchInput() {
       clearTimeout(searchDebounceTimer);
       searchDebounceTimer = setTimeout(function() {
+        tableState.page = 1;
         renderItems();
       }, 300);
     }
@@ -1574,13 +2002,9 @@
     // =============================================================
     // INIT
     // =============================================================
-
     renderItems();
-
-    console.log('Items Module Loaded Successfully');
-    console.log('Total Items:', items.length);
-
-  </script>
+    Promise.all([loadWarehouses(), loadItems()]);
+</script>
 
 </body>
 </html>

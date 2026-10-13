@@ -8,7 +8,7 @@
 <link rel="manifest" href="/favicon_io/site.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<title>Invoices — Aquilon ERP</title>
+<title>Invoices — SIEC</title>
 
 <script>
   (function () {
@@ -108,7 +108,7 @@
   .stat-card {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     padding: 10px 14px !important;
-    border: 1px solid #6da84c;
+    border: 1px solid #6da84c !important;
   }
   .stat-card:hover {
     transform: translateY(-2px);
@@ -119,7 +119,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #474b53;
+    color: #6b7280;
   }
   .stat-card .stat-value {
     font-size: 17px;
@@ -142,7 +142,7 @@
     justify-content: center;
     color: #94a3b8;
     background: transparent;
-    border: 1px solid #6da84c;
+    border: none;
     cursor: pointer;
   }
   .btn-icon-action:hover {
@@ -419,13 +419,14 @@
   }
   .tab-btn:hover { color: #5c9140; }
   .tab-btn.active {
-    color: #33720e;
-    background: #faf9f9;
+    color: #5c9140;
+    background: #ffffff;
     border-color: #6da84c;
     box-shadow: 0 -2px 0 0 #6da84c inset;
   }
   .tab-bar {
     border-bottom: 1px solid #6da84c55;
+    
   }
 
   /* ---- TEMPLATE PICKER ---- */
@@ -471,7 +472,7 @@
             <div>
               <div class="page-breadcrumb">Sales</div>
               <h1 class="page-title text-gray-900">Invoices</h1>
-              <p class="page-subtitle mt-0.5">Tax invoices, proforma and recurring invoices.</p>
+              <p class="page-subtitle mt-0.5">Tax invoices, proforma and recurring invoices. Track payments and outstanding.</p>
             </div>
             <div class="flex gap-2 flex-wrap items-center">
 
@@ -492,7 +493,7 @@
                   Filter
                   <span id="filterBadge" class="hidden text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full">0</span>
                 </button>
-                <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-50">
+                <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-56 bg-white border border-gray-300 rounded-xl shadow-lg p-3 z-50">
                   <div class="mb-2">
                     <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Status</label>
                     <select id="filterStatus" onchange="filterInvoices()" class="form-input text-[10px]"></select>
@@ -567,1572 +568,907 @@
   <!-- ========================================================== -->
 
   <script src="/assets/js/nav-sidebar.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script>
-    // =============================================================
-    // NAV-SIDEBAR INIT
-    // =============================================================
-    NavSidebar.init({
-      basePath: "",
-      activePage: "invoices",
-      pageTitle: "Invoices",
-      user: {
-        name: "Admin",
-        role: "Super Admin",
-        avatarUrl: "",
-      },
-    });
+// ============================================================= CONFIG
+var API_BASE = 'http://localhost:9093';
+var PROJECT_API = '/api/projects/v1/get-project-list'; // GET ?search=  -> [{projectName, projectPrimeId, projectCode}]
+var PRODUCT_API = '/api/products/v1/get-product-list'; // GET ?page=&size=&search=
+var COMPANY_CONFIG = {
+  orgId: 'ORG-F79A7092',
+  name: 'Sustainable Integrated Environmental Consultant Private Limited',
+  address: 'Office-401, Sanskriti Arcade, Kaspate Wasti, Wakad, Pune Maharashtra 411057, India',
+  gstin: '27ABHCS8777R1Z0',
+  state: 'Maharashtra',
+  stateCode: '27',
+  bank: {
+    beneficiary: 'Sustainable Integrated Environmental Consultant Pvt Ltd',
+    name: 'ICICI Bank Ltd',
+    branch: 'ICICI Bank Ltd, Pimpri Chinchwad Wakad',
+    address: 'Survey 154, Near Hotel Sayaji, Mumbai Bangalore Highway, Shop No 118,119,120, Wakad, Dist Pune, Maharashtra - 411057',
+    account: '756505001476',
+    ifsc: 'ICIC0007565 / ICICINBBCTS'
+  }
+};
+var company = {
+  name: COMPANY_CONFIG.name, address: COMPANY_CONFIG.address, gstin: COMPANY_CONFIG.gstin, pan: '', phone: '', email: '',
+  state: COMPANY_CONFIG.state, stateCode: COMPANY_CONFIG.stateCode,
+  bankName: COMPANY_CONFIG.bank.name, bankAccount: COMPANY_CONFIG.bank.account, bankIfsc: COMPANY_CONFIG.bank.ifsc,
+  logoUrl: API_BASE + '/api/organization/' + COMPANY_CONFIG.orgId + '/logo'
+};
 
-    // =============================================================
-    // SVG ICONS
-    // =============================================================
-    function iconPlus() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>`;
-    }
-    function iconEdit() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
-    }
-    function iconTrash() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`;
-    }
-    function iconEye() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-    }
-    function iconX() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
-    }
-    function iconSave() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`;
-    }
-    function iconDocument() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>`;
-    }
-    function iconSearch() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
-    }
-    function iconSend() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>`;
-    }
-    function iconDownload() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>`;
-    }
+async function apiFetch(path, options) {
+  options = options || {};
+  var res;
+  try { res = await fetch(API_BASE + path, options); }
+  catch (e) { throw new Error('Could not reach the server at ' + API_BASE + '. Check your connection or CORS settings.'); }
+  var isJson = (res.headers.get('content-type') || '').indexOf('application/json') !== -1;
+  if (!res.ok) {
+    var message = 'Something went wrong (HTTP ' + res.status + ').';
+    if (isJson) { try { var b = await res.json(); message = b.message || b.error || message; } catch (e) {} }
+    throw new Error(message);
+  }
+  if (res.status === 204) return null;
+  return isJson ? res.json() : res;
+}
 
-    // =============================================================
-    // CURRENCY CONFIG
-    // =============================================================
-    var currencyMeta = {
-      INR: { symbol: '₹', label: 'India',  countries: ['India'], rate: 1 },
-      USD: { symbol: '$', label: 'America', countries: ['America', 'USA', 'United States'], rate: 83.5 },
-      AED: { symbol: 'د.إ', label: 'Dubai', countries: ['Dubai', 'UAE', 'United Arab Emirates'], rate: 22.7 },
-      EUR: { symbol: '€', label: 'Europe', countries: ['Europe', 'Germany', 'France'], rate: 90.2 },
-      OMR: { symbol: '﷼', label: 'Oman', countries: ['Oman'], rate: 217.5 },
-    };
+NavSidebar.init({ basePath: "", activePage: "invoices", pageTitle: "Invoices", user: { name: "Admin", role: "Super Admin", avatarUrl: "" } });
 
-    function getCurrencySymbol(currency) {
-      return (currencyMeta[currency] && currencyMeta[currency].symbol) || '₹';
-    }
-    function getCurrencyRate(currency) {
-      return (currencyMeta[currency] && currencyMeta[currency].rate) || 1;
-    }
-    function currencyForCountry(country) {
-      for (var code in currencyMeta) {
-        if (currencyMeta[code].countries.indexOf(country) !== -1) return code;
-      }
-      return 'INR';
-    }
+// ============================================================= ICONS
+function iconPlus() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>`; }
+function iconEdit() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`; }
+function iconTrash() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`; }
+function iconEye() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`; }
+function iconX() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`; }
+function iconSave() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`; }
+function iconDocument() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>`; }
+function iconSearch() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`; }
+function iconSend() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>`; }
+function iconDownload() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>`; }
+var SPINNER = '<svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M22 12a10 10 0 00-10-10"/></svg>';
 
-    // =============================================================
-    // TOAST
-    // =============================================================
-    function showToast(message, kind) {
-      kind = kind || 'success';
-      var wrap = document.getElementById('toastWrap');
-      var colors = {
-        success: 'bg-green-600',
-        info: 'bg-primary',
-        warning: 'bg-amber-600',
-        error: 'bg-red-600'
+// ============================================================= CURRENCY
+var currencyMeta = {
+  INR: { symbol: '₹', label: 'India', countries: ['India'], rate: 1 },
+  USD: { symbol: '$', label: 'America', countries: ['America', 'USA', 'United States'], rate: 83.5 },
+  AED: { symbol: 'د.إ', label: 'Dubai', countries: ['Dubai', 'UAE', 'United Arab Emirates'], rate: 22.7 },
+  EUR: { symbol: '€', label: 'Europe', countries: ['Europe', 'Germany', 'France'], rate: 90.2 },
+  OMR: { symbol: '﷼', label: 'Oman', countries: ['Oman'], rate: 217.5 },
+};
+function getCurrencySymbol(c) { return (currencyMeta[c] && currencyMeta[c].symbol) || '₹'; }
+function getCurrencyRate(c) { return (currencyMeta[c] && currencyMeta[c].rate) || 1; }
+function currencyForCountry(country) {
+  for (var code in currencyMeta) if (currencyMeta[code].countries.indexOf(country) !== -1) return code;
+  return 'INR';
+}
+
+// ============================================================= UI PRIMITIVES
+function showToast(message, kind) {
+  kind = kind || 'success';
+  var colors = { success: 'bg-green-600', info: 'bg-primary', warning: 'bg-amber-600', error: 'bg-red-600' };
+  var el = document.createElement('div');
+  el.className = 'toast ' + colors[kind] + ' text-white font-semibold px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
+  el.innerHTML = '<span>' + message + '</span>';
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(function () { el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(function () { el.remove(); }, 300); }, 2600);
+}
+function openModal(innerHtml, opts) {
+  opts = opts || {};
+  document.getElementById('modalRoot').innerHTML = `
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-3" id="modalOverlay">
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" id="modalBackdrop"></div>
+      <div class="relative bg-white rounded-xl shadow-2xl w-full ${opts.width || 'max-w-5xl'} max-h-[92vh] overflow-hidden animate-modal">${innerHtml}</div>
+    </div>`;
+  document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() { closePicker(); document.getElementById('modalRoot').innerHTML = ''; document.body.style.overflow = ''; }
+function modalHeader(title, subtitle) {
+  return `<div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">
+    <div><h3 class="modal-title text-gray-900">${title}</h3>${subtitle ? '<p class="modal-subtitle mt-0.5">' + subtitle + '</p>' : ''}</div>
+    <button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button></div>`;
+}
+function modalFooter(saveLabel, onSaveAttr, extraBtns) {
+  return `<div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
+    <div>${extraBtns || ''}</div>
+    <div class="flex gap-2">
+      <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+      <button id="modalSaveBtn" ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">${iconSave()} ${saveLabel}</button>
+    </div></div>`;
+}
+function fld(label, inputHtml, hint) {
+  return `<div class="mb-2"><label class="form-label">${label}</label>${inputHtml}${hint ? '<div class="form-hint">' + hint + '</div>' : ''}</div>`;
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('[data-dd-trigger]')) document.querySelectorAll('[data-dd-menu]').forEach(function (m) { m.classList.add('hidden'); });
+});
+function toggleFilterDD() {
+  var menu = document.getElementById('filterDD'), hidden = menu.classList.contains('hidden');
+  document.querySelectorAll('[data-dd-menu]').forEach(function (m) { m.classList.add('hidden'); });
+  if (hidden) menu.classList.remove('hidden');
+}
+
+// ============================================================= HELPERS
+function money(n, c) { return getCurrencySymbol(c || 'INR') + Number(n || 0).toLocaleString('en-IN'); }
+function formatCurrency(a, c) { return getCurrencySymbol(c) + Number(a || 0).toLocaleString('en-IN'); }
+function fm(n, c) {
+  var o = c === 'INR' ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : { maximumFractionDigits: 2 };
+  return getCurrencySymbol(c) + Number(n || 0).toLocaleString(c === 'INR' ? 'en-IN' : 'en-US', o);
+}
+function fd(s) { if (!s) return '—'; var p = String(s).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : s; }
+function escH(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+var W_ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+var W_TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+function w2(x) { return x < 20 ? W_ONES[x] : W_TENS[Math.floor(x / 10)] + (x % 10 ? '-' + W_ONES[x % 10] : ''); }
+function w3(x) { return (x >= 100 ? W_ONES[Math.floor(x / 100)] + ' Hundred' + (x % 100 ? ' ' : '') : '') + (x % 100 ? w2(x % 100) : ''); }
+function numWords(n, ind) {
+  if (n === 0) return 'Zero';
+  var out = '', U = ind ? [[1e7, 'Crore'], [1e5, 'Lakh'], [1e3, 'Thousand']] : [[1e9, 'Billion'], [1e6, 'Million'], [1e3, 'Thousand']];
+  U.forEach(function (u) { if (n >= u[0]) { out += numWords(Math.floor(n / u[0]), ind) + ' ' + u[1] + ' '; n = n % u[0]; } });
+  if (n > 0) out += w3(n);
+  return out.trim();
+}
+var CUR_NAMES = { INR: ['Indian Rupee', 'Paise'], USD: ['United States Dollar', 'Cents'], AED: ['UAE Dirham', 'Fils'], EUR: ['Euro', 'Cents'], OMR: ['Omani Rial', 'Baisa'] };
+function amountInWords(total, cur) {
+  var t = Math.round(Number(total || 0) * 100), major = Math.floor(t / 100), minor = t % 100, nm = CUR_NAMES[cur] || [cur, ''];
+  return nm[0] + ' ' + numWords(major, cur === 'INR') + (minor ? ' and ' + numWords(minor, false) + ' ' + nm[1] : '') + ' Only';
+}
+
+var statusOptions = {
+  invoice: [{ v: 'UNPAID', l: 'Unpaid' }, { v: 'PARTIAL', l: 'Partial Paid' }, { v: 'PAID', l: 'Paid' }, { v: 'OVERDUE', l: 'Overdue' }],
+  proforma: [{ v: 'OPEN', l: 'Open' }, { v: 'CONVERTED', l: 'Converted' }, { v: 'DECLINED', l: 'Declined' }]
+};
+var statusStyle = {
+  PAID: { badge: 'badge-green', dot: 'badge-dot-green' }, UNPAID: { badge: 'badge-amber', dot: 'badge-dot-amber' },
+  PARTIAL: { badge: 'badge-blue', dot: 'badge-dot-blue' }, OVERDUE: { badge: 'badge-red', dot: 'badge-dot-red' },
+  OPEN: { badge: 'badge-blue', dot: 'badge-dot-blue' }, CONVERTED: { badge: 'badge-green', dot: 'badge-dot-green' }, DECLINED: { badge: 'badge-red', dot: 'badge-dot-red' }
+};
+function statusLabel(s) { var f = statusOptions.invoice.concat(statusOptions.proforma).find(function (x) { return x.v === s; }); return f ? f.l : s; }
+function statusBadge(s) {
+  var st = statusStyle[s] || { badge: 'badge-gray', dot: 'badge-dot-gray' };
+  return '<span class="badge ' + st.badge + '"><span class="badge-dot ' + st.dot + '"></span>' + statusLabel(s) + '</span>';
+}
+function rowActionsHtml(editFn, delFn, viewFn, sendFn, downloadFn) {
+  var h = '<div class="flex gap-1">';
+  if (viewFn) h += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
+  if (sendFn) h += '<button onclick="' + sendFn + '" class="btn-icon-action primary" title="Send">' + iconSend() + '</button>';
+  if (downloadFn) h += '<button onclick="' + downloadFn + '" class="btn-icon-action primary" title="Download PDF">' + iconDownload() + '</button>';
+  h += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+  h += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button></div>';
+  return h;
+}
+function panelWrap(titleHtml, bodyHtml, extraHead) {
+  return `<div class="bg-white border border-[#6da84c] rounded-xl rounded-tl-none shadow-sm overflow-hidden">
+    <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+      <div class="font-semibold text-sm text-gray-800 flex items-center gap-2">${titleHtml}</div>${extraHead || ''}</div>
+    <div>${bodyHtml}</div></div>`;
+}
+function tableHtml(cols, rowsHtml) {
+  var th = cols.map(function (c) { return '<th class="text-left font-semibold whitespace-nowrap">' + c + '</th>'; }).join('');
+  return `<div class="overflow-x-auto"><table class="w-full"><thead><tr class="bg-gray-200 border border-[#6da84c]">${th}</tr></thead><tbody id="tbody-anchor">${rowsHtml}</tbody></table></div>`;
+}
+
+// ============================================================= DATA
+var activeTab = 'invoice', globalCurrency = 'INR', currentPage = 1, pageSize = 25;
+var savedTemplateId = null;
+var invoiceTemplates = [
+  { id: 'tpl-classic', name: 'Classic Green', description: 'Logo left, company right, clean line-item table. Matches current theme.' },
+  { id: 'tpl-modern', name: 'Modern Split', description: 'Teal professional layout with Bill To / Ship To, project code and bank table.' },
+];
+var customers = [], invoices = [], totalPages = 1, totalElements = 0;
+
+async function loadCustomers() {
+  try {
+    var data = await apiFetch('/api/clients/v1/client-list');
+    var content = Array.isArray(data.content) ? data.content : [];
+    customers = content.map(function (c) {
+      var gst = c.clientGstin || '';
+      var isIndia = (c.clientCountry || '') === 'India';
+      return {
+        id: c.clientPrimeId,
+        name: c.clientCompanyName || c.clientName,
+        contactName: c.clientName,
+        gst: gst,
+        country: c.clientCountry,
+        state: c.clientState || '',
+        stateCode: isIndia && /^\d{2}/.test(gst) ? gst.slice(0, 2) : '',
+        address: [c.clientShippingAddress, c.clientState, c.clientPincode].filter(Boolean).join(', '),
+        shipAddress: c.clientShippingAddress || '',
+        email: c.clientEmail,
+        phone: c.clientPhone
       };
-      var el = document.createElement('div');
-      el.className = 'toast ' + colors[kind] + ' text-white font-semibold px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
-      el.innerHTML = '<span>' + message + '</span>';
-      wrap.appendChild(el);
-      setTimeout(function() {
-        el.style.transition = 'opacity .3s';
-        el.style.opacity = '0';
-        setTimeout(function() { el.remove(); }, 300);
-      }, 2600);
-    }
-
-    // =============================================================
-    // MODAL
-    // =============================================================
-    function openModal(innerHtml, opts) {
-      opts = opts || {};
-      var root = document.getElementById('modalRoot');
-      root.innerHTML = `
-        <div class="fixed inset-0 z-[100] flex items-center justify-center p-3" id="modalOverlay">
-          <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" id="modalBackdrop"></div>
-          <div class="relative bg-white rounded-xl shadow-2xl w-full ${opts.width || 'max-w-5xl'} max-h-[92vh] overflow-hidden animate-modal">
-            ${innerHtml}
-          </div>
-        </div>`;
-      document.getElementById('modalBackdrop').addEventListener('click', closeModal);
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal() {
-      var root = document.getElementById('modalRoot');
-      root.innerHTML = '';
-      document.body.style.overflow = '';
-    }
-
-    function modalHeader(title, subtitle) {
-      return `
-        <div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <div>
-            <h3 class="modal-title text-gray-900">${title}</h3>
-            ${subtitle ? '<p class="modal-subtitle mt-0.5">' + subtitle + '</p>' : ''}
-          </div>
-          <button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
-        </div>`;
-    }
-
-    function modalFooter(saveLabel, onSaveAttr, extraBtns) {
-      return `
-        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
-          <div>${extraBtns || ''}</div>
-          <div class="flex gap-2">
-            <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
-            <button ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
-              ${iconSave()} ${saveLabel}
-            </button>
-          </div>
-        </div>`;
-    }
-
-    function fld(label, inputHtml, hint) {
-      return `
-        <div class="mb-2">
-          <label class="form-label">${label}</label>
-          ${inputHtml}
-          ${hint ? '<div class="form-hint">' + hint + '</div>' : ''}
-        </div>`;
-    }
-
-    // =============================================================
-    // DROPDOWN
-    // =============================================================
-    document.addEventListener('click', function(e) {
-      if (!e.target.closest('[data-dd-trigger]')) {
-        document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
-      }
     });
+  } catch (e) {
+    customers = [];
+    showToast(e.message || 'Could not load customers', 'error');
+  }
+}
 
-    function toggleFilterDD() {
-      var menu = document.getElementById('filterDD');
-      var isHidden = menu.classList.contains('hidden');
-      document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
-      if (isHidden) menu.classList.remove('hidden');
-    }
+function mapInvoiceDtoToRow(d) {
+  return {
+    id: d.invoicePrimeId, invoiceType: 'invoice', number: d.invoiceStrId, date: d.invoiceDate, dueDate: d.invoiceDueDate,
+    customerId: d.invoiceCustomerId, customerName: d.invoiceCustomerName, customerGST: d.invoiceCustomerGst, customerEmail: d.invoiceCustomerEmail,
+    customerState: d.invoiceCustomerState, customerStateCode: d.invoiceCustomerStateCode, customerAddress: d.invoiceCustomerAddress,
+    shipTo: d.invoiceShippingAddress, projectCode: d.invoiceProjectCode, refNo: d.invoiceReferenceNumber,
+    currency: d.invoiceCurrency, exchangeRate: d.invoiceExchangeRate,
+    items: (d.invoiceItems || []).map(function (i) {
+      return { itemId: i.invoiceItemProductId, variantId: i.invoiceItemVariantId, name: i.invoiceItemName, hsn: i.invoiceItemHsnCode, qty: i.invoiceItemQty, rate: i.invoiceItemRate, gst: i.invoiceItemGstPercent, unit: i.invoiceItemUnit, note: i.invoiceItemDescription };
+    }),
+    discount: d.invoiceDiscountPercent, tax: d.invoiceTaxPercent, shipping: d.invoiceShippingCharges, otherCharges: d.invoiceOtherCharges,
+    status: d.invoiceStatus, total: d.invoiceTotalAmount, totalINR: d.invoiceTotalAmountInr, paid: d.invoicePaidAmount,
+    placeOfSupply: d.invoicePlaceOfSupply, terms: d.invoiceTerms, pdfUrl: d.invoicePdfUrl, templateId: d.invoiceTemplateId
+  };
+}
+function mapProformaDtoToRow(d) {
+  return {
+    id: d.proformaPrimeId, invoiceType: 'proforma', number: d.proformaStrId, date: d.proformaDate, dueDate: d.proformaValidUntil, validUntil: d.proformaValidUntil,
+    customerId: d.proformaCustomerId, customerName: d.proformaCustomerName, customerGST: d.proformaCustomerGst, customerEmail: d.proformaCustomerEmail,
+    customerState: d.proformaCustomerState, customerStateCode: d.proformaCustomerStateCode, customerAddress: d.proformaCustomerAddress,
+    shipTo: d.proformaShippingAddress, projectCode: d.proformaProjectCode, refNo: d.proformaReferenceNumber,
+    currency: d.proformaCurrency, exchangeRate: d.proformaExchangeRate,
+    items: (d.proformaItems || []).map(function (i) {
+      return { itemId: i.proformaItemProductId, variantId: i.proformaItemVariantId, name: i.proformaItemName, hsn: i.proformaItemHsnCode, qty: i.proformaItemQty, rate: i.proformaItemRate, gst: i.proformaItemGstPercent, unit: i.proformaItemUnit, note: i.proformaItemDescription };
+    }),
+    discount: d.proformaDiscountPercent, tax: d.proformaTaxPercent, shipping: d.proformaShippingCharges, otherCharges: d.proformaOtherCharges,
+    status: d.proformaStatus, total: d.proformaTotalAmount, totalINR: d.proformaTotalAmountInr, paid: 0,
+    placeOfSupply: d.proformaPlaceOfSupply, terms: d.proformaTerms, pdfUrl: d.proformaPdfUrl, convertedToInvoiceId: d.proformaConvertedToInvoiceId
+  };
+}
 
-    // =============================================================
-    // HELPERS
-    // =============================================================
-    function money(n, currency) {
-      return getCurrencySymbol(currency || 'INR') + Number(n || 0).toLocaleString('en-IN');
-    }
-    function formatCurrency(amount, currency) {
-      return getCurrencySymbol(currency) + Number(amount || 0).toLocaleString('en-IN');
-    }
+// ============================================================= TABS / FILTERS / STATS
+function onGlobalCurrencyChange() {
+  globalCurrency = document.getElementById('currencySelector').value || 'INR';
+  showToast('New invoices will default to ' + currencyMeta[globalCurrency].label + ' (' + getCurrencySymbol(globalCurrency) + ')', 'info');
+}
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabBtn_invoice').classList.toggle('active', tab === 'invoice');
+  document.getElementById('tabBtn_proforma').classList.toggle('active', tab === 'proforma');
+  document.getElementById('newProformaBtn').classList.toggle('hidden', tab !== 'proforma');
+  document.getElementById('chooseTemplateBtn').classList.toggle('hidden', tab !== 'invoice');
+  buildStatusFilterOptions(); clearFilters(true); currentPage = 1; renderInvoices();
+}
+function buildStatusFilterOptions() {
+  document.getElementById('filterStatus').innerHTML = '<option value="all">All Status</option>' +
+    statusOptions[activeTab].map(function (o) { return '<option value="' + o.v + '">' + o.l + '</option>'; }).join('');
+}
+async function loadStats() {
+  var isPro = activeTab === 'proforma';
+  try {
+    var s = await apiFetch(isPro ? '/api/v1/proformas/stats' : '/api/v1/invoices/stats', { method: 'GET' });
+    document.getElementById('totalInvoices').textContent = s.totalCount;
+    document.getElementById('dueInvoices').textContent = isPro ? s.openCount : s.dueCount;
+    document.getElementById('overdueInvoices').textContent = isPro ? s.declinedCount : s.overdueCount;
+    document.getElementById('totalValue').textContent = money(s.totalValueInr || 0, 'INR');
+  } catch (err) { showToast(err.message || 'Could not load stats', 'error'); }
+  document.querySelector('#dueInvoices').previousElementSibling.textContent = isPro ? 'Open' : 'Due';
+  document.querySelector('#overdueInvoices').previousElementSibling.textContent = isPro ? 'Declined' : 'Overdue';
+  var fc = document.getElementById('filterCustomer'), cur = fc.value;
+  fc.innerHTML = '<option value="all">All Customers</option>' + customers.map(function (c) { return '<option value="' + c.id + '">' + escH(c.name) + '</option>'; }).join('');
+  fc.value = cur;
+}
+function changePageSize(v) { pageSize = parseInt(v, 10) || 25; currentPage = 1; renderInvoices(); }
+function goToPage(p) { currentPage = p; renderInvoices(); }
+var searchTimer;
+function filterInvoices() { currentPage = 1; clearTimeout(searchTimer); searchTimer = setTimeout(renderInvoices, 350); }
+function clearFilters(silent) {
+  buildStatusFilterOptions();
+  document.getElementById('filterCustomer').value = 'all';
+  var si = document.getElementById('searchInput'); if (si) si.value = '';
+  if (!silent) { currentPage = 1; renderInvoices(); toggleFilterDD(); }
+}
 
-    // status label/badge maps per invoiceType
-    var statusOptions = {
-      invoice: [
-        { v: 'paid', l: 'Paid' },
-        { v: 'unpaid', l: 'Unpaid' },
-        { v: 'partial', l: 'Partial Paid' },
-      ],
-      proforma: [
-        { v: 'open', l: 'Open' },
-        { v: 'converted', l: 'Converted' },
-        { v: 'declined', l: 'Declined' },
-      ]
-    };
+async function renderInvoices() {
+  var isPro = activeTab === 'proforma';
+  var si = document.getElementById('searchInput'), q = si ? si.value.trim() : '';
+  var status = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : 'all';
+  var cid = document.getElementById('filterCustomer') ? document.getElementById('filterCustomer').value : 'all';
+  var p = new URLSearchParams();
+  if (status && status !== 'all') p.set('status', status);
+  if (cid && cid !== 'all') p.set('customerId', cid);
+  if (q) p.set('search', q);
+  p.set('pageNumber', currentPage); p.set('pageSize', pageSize);
+  var path = (isPro ? '/api/v1/proformas/get-all-proforma?' : '/api/v1/invoices/get-all-invoices?') + p.toString();
+  var pageResult;
+  try { pageResult = await apiFetch(path, { method: 'GET' }); }
+  catch (err) {
+    showToast(err.message || 'Could not load the list', 'error');
+    document.getElementById('invoicesPanel').innerHTML = panelWrap(isPro ? 'All Proforma Invoices' : 'All Invoices', '<div class="text-center py-10 text-sm text-red-500">' + (err.message || 'Failed to load data') + '</div>');
+    return;
+  }
+  invoices = (pageResult.content || []).map(isPro ? mapProformaDtoToRow : mapInvoiceDtoToRow);
+  totalPages = pageResult.totalPages || 1; totalElements = pageResult.totalElements || 0;
+  if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
 
-    var statusStyle = {
-      paid:      { badge: 'badge-green',  dot: 'badge-dot-green' },
-      unpaid:    { badge: 'badge-amber',  dot: 'badge-dot-amber' },
-      partial:   { badge: 'badge-blue',   dot: 'badge-dot-blue' },
-      open:      { badge: 'badge-blue',   dot: 'badge-dot-blue' },
-      converted: { badge: 'badge-green',  dot: 'badge-dot-green' },
-      declined:  { badge: 'badge-red',    dot: 'badge-dot-red' },
-    };
-
-    function statusLabel(status) {
-      var all = statusOptions.invoice.concat(statusOptions.proforma);
-      var found = all.find(function(s) { return s.v === status; });
-      return found ? found.l : status;
-    }
-
-    function statusBadge(status) {
-      var style = statusStyle[status] || { badge: 'badge-gray', dot: 'badge-dot-gray' };
-      return '<span class="badge ' + style.badge + '"><span class="badge-dot ' + style.dot + '"></span>' + statusLabel(status) + '</span>';
-    }
-
-    function rowActionsHtml(editFn, delFn, viewFn, sendFn, downloadFn) {
-      var html = '<div class="flex gap-1">';
-      if (viewFn) {
-        html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
+  var rowsHtml;
+  if (!invoices.length) {
+    rowsHtml = `<tr><td colspan="7" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">${iconDocument()}</div>
+      No ${isPro ? 'proforma invoices' : 'invoices'} found. Try adjusting your filters or
+      <button onclick="${isPro ? 'openAddProforma()' : 'openAddInvoice()'}" class="text-primary font-semibold hover:underline">create a new ${isPro ? 'proforma invoice' : 'invoice'}</button>.</td></tr>`;
+  } else {
+    rowsHtml = invoices.map(function (inv) {
+      var canSend = isPro ? inv.status === 'OPEN' : (inv.status === 'UNPAID' || inv.status === 'PARTIAL' || inv.status === 'OVERDUE');
+      var extra = '';
+      if (isPro && inv.status === 'OPEN') {
+        extra = '<button onclick="convertProformaAction(\'' + inv.id + '\')" class="btn-icon-action primary" title="Convert to Invoice"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></button>' +
+          '<button onclick="declineProformaAction(\'' + inv.id + '\')" class="btn-icon-action danger" title="Decline"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></button>';
       }
-      if (sendFn) {
-        html += '<button onclick="' + sendFn + '" class="btn-icon-action primary" title="Send">' + iconSend() + '</button>';
-      }
-      if (downloadFn) {
-        html += '<button onclick="' + downloadFn + '" class="btn-icon-action primary" title="Download PDF">' + iconDownload() + '</button>';
-      }
-      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
-      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
-      html += '</div>';
-      return html;
-    }
+      return `<tr class="border-b border-gray-100 table-row-hover">
+        <td class="px-3 py-2.5"><div class="font-semibold text-gray-800 text-sm">${escH(inv.number)}</div><div class="text-[10px] text-gray-400 font-mono">#${inv.id}</div></td>
+        <td class="px-3 py-2.5 text-xs">${fd(inv.date)}</td>
+        <td class="px-3 py-2.5 text-sm text-gray-700">${escH(inv.customerName)}</td>
+        <td class="px-3 py-2.5 font-mono font-semibold text-sm">${fm(inv.total, inv.currency)}</td>
+        <td class="px-3 py-2.5 font-mono text-[11px] text-gray-500">${fd(inv.dueDate)}</td>
+        <td class="px-3 py-2.5">${statusBadge(inv.status)}</td>
+        <td class="px-3 py-2.5"><div class="flex gap-1">${extra}${rowActionsHtml(
+          (isPro ? "editProforma('" : "editInvoice('") + inv.id + "')", "delInvoice('" + inv.id + "')", "viewInvoice('" + inv.id + "')",
+          canSend ? "openSendOverlay('" + inv.id + "')" : null, "downloadInvoice('" + inv.id + "')")}</div></td></tr>`;
+    }).join('');
+  }
+  var sizeOptions = [10, 25, 50, 100].map(function (n) { return '<option value="' + n + '"' + (n === pageSize ? ' selected' : '') + '>' + n + '</option>'; }).join('');
+  var pagination = '';
+  if (invoices.length) {
+    var rs = (currentPage - 1) * pageSize + 1, re = Math.min(rs + invoices.length - 1, totalElements);
+    pagination = `<div class="flex items-center justify-between gap-2 px-4 py-2.5 border-t border-gray-100">
+      <span class="text-[10px] text-gray-400">Showing ${rs}–${re} of ${totalElements}</span>
+      <div class="flex items-center gap-1">
+        <button onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} class="btn-icon-action" style="width:24px;height:24px;${currentPage <= 1 ? 'opacity:.35;cursor:not-allowed;' : ''}" title="Previous"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <span class="text-[10px] text-gray-500 px-1">Page ${currentPage} of ${totalPages}</span>
+        <button onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} class="btn-icon-action" style="width:24px;height:24px;${currentPage >= totalPages ? 'opacity:.35;cursor:not-allowed;' : ''}" title="Next"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg></button>
+      </div></div>`;
+  }
+  document.getElementById('invoicesPanel').innerHTML = panelWrap(
+    (isPro ? 'All Proforma Invoices' : 'All Invoices') + ' <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + totalElements + '</span>',
+    tableHtml(['Invoice #', 'Date', 'Customer', 'Total', 'Due Date', 'Status', 'Actions'], rowsHtml) + pagination,
+    '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="changePageSize(this.value)" class="text-[10px] border border-gray-300 rounded-lg px-2 py-1 bg-white outline-none">' + sizeOptions + '</select></div>');
+  loadStats();
+}
 
-    function panelWrap(titleHtml, bodyHtml, extraHead) {
-      return `
-        <div class="bg-white border border-[#6da84c] rounded-xl rounded-tl-none shadow-sm overflow-hidden">
-          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
-            <div class="font-semibold text-sm text-gray-800 flex items-center gap-2">${titleHtml}</div>
-            ${extraHead || ''}
-          </div>
-          <div>${bodyHtml}</div>
-        </div>`;
-    }
+async function convertProformaAction(id) {
+  try {
+    var r = await apiFetch('/api/v1/proformas/' + id + '/convert-to-invoice', { method: 'POST' });
+    showToast('Converted to invoice ' + r.invoiceStrId, 'success'); renderInvoices();
+  } catch (err) { showToast(err.message || 'Could not convert this proforma', 'error'); }
+}
+async function declineProformaAction(id) {
+  try { await apiFetch('/api/v1/proformas/patch/' + id + '/decline', { method: 'PATCH' }); showToast('Proforma declined', 'warning'); renderInvoices(); }
+  catch (err) { showToast(err.message || 'Could not decline this proforma', 'error'); }
+}
 
-    function tableHtml(cols, rowsHtml) {
-      var colHeaders = cols.map(function(c) {
-        return '<th class="text-left font-semibold whitespace-nowrap">' + c + '</th>';
-      }).join('');
-      return `
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="bg-gray-200 border border-[#6da84c]">${colHeaders}</tr>
-            </thead>
-            <tbody id="tbody-anchor">${rowsHtml}</tbody>
-          </table>
-        </div>`;
-    }
+// ============================================================= DOCUMENT TEMPLATES
+function buildClassicDocumentInnerHtml(inv) {
+  var pro = inv.invoiceType === 'proforma', same = company.stateCode === inv.customerStateCode, gstType = same ? 'CGST + SGST' : 'IGST';
+  var sub = inv.items.reduce(function (s, i) { return s + i.qty * i.rate; }, 0), disc = sub * (inv.discount / 100), after = sub - disc, tax = after * (inv.tax / 100), half = tax / 2;
+  var itemsHtml = inv.items.map(function (i) {
+    return `<tr><td class="px-2 py-1.5 text-xs">${escH(i.name)}${i.note ? '<div style="color:#6b7280;font-size:10px">' + escH(i.note) + '</div>' : ''}</td>
+      <td class="px-2 py-1.5 text-xs text-center">${escH(i.hsn || '—')}</td><td class="px-2 py-1.5 text-xs text-center">${i.qty}</td>
+      <td class="px-2 py-1.5 text-xs text-center">${escH(i.unit || '')}</td>
+      <td class="px-2 py-1.5 text-xs font-mono text-right">${formatCurrency(i.rate, inv.currency)}</td>
+      <td class="px-2 py-1.5 text-xs font-mono text-right">${formatCurrency(i.qty * i.rate, inv.currency)}</td></tr>`;
+  }).join('');
+  var sym = getCurrencySymbol(inv.currency);
+  var logo = company.logoUrl ? '<img src="' + company.logoUrl + '" alt="Company Logo" crossorigin="anonymous" class="invoice-logo">' : '<div class="w-20 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs border border-gray-200">Logo</div>';
+  var contact = [company.pan ? 'PAN: ' + company.pan : '', company.phone ? 'Phone: ' + company.phone : '', company.email ? 'Email: ' + company.email : ''].filter(Boolean).join(' | ');
+  return `<div class="invoice-preview">
+    <div class="invoice-header"><div>${logo}</div><div class="invoice-company"><div class="invoice-company-name">${escH(company.name)}</div>
+      <div class="invoice-company-details">${escH(company.address)}<br>GSTIN: ${escH(company.gstin)}${contact ? '<br>' + escH(contact) : ''}</div></div></div>
+    <div class="text-center mb-3"><span class="invoice-title">${pro ? 'PROFORMA INVOICE' : 'TAX INVOICE'}</span></div>
+    <div class="invoice-meta">
+      <div><div class="meta-label">Bill To</div><div class="meta-value">${escH(inv.customerName)}</div>
+        <div class="text-xs text-gray-500">${escH(inv.customerAddress || '')}</div><div class="text-xs text-gray-500">GSTIN: ${escH(inv.customerGST || '—')}</div>
+        <div class="text-xs text-gray-500">State: ${escH(inv.customerState || '—')}${inv.customerStateCode ? ' (Code: ' + escH(inv.customerStateCode) + ')' : ''}</div>
+        ${inv.shipTo ? '<div class="meta-label" style="margin-top:6px">Ship To</div><div class="text-xs text-gray-500">' + escH(inv.shipTo) + '</div>' : ''}</div>
+      <div style="text-align:right;">
+        <div><span class="meta-label">${pro ? 'Proforma #' : 'Invoice #'}</span> <span class="meta-value">${escH(inv.number)}</span></div>
+        <div><span class="meta-label">Date</span> <span class="meta-value">${fd(inv.date)}</span></div>
+        <div><span class="meta-label">${pro ? 'Valid Until' : 'Due Date'}</span> <span class="meta-value">${fd(pro ? (inv.validUntil || inv.dueDate) : inv.dueDate)}</span></div>
+        <div><span class="meta-label">Place of Supply</span> <span class="meta-value">${escH(inv.placeOfSupply || inv.customerState || '')}</span></div>
+        ${inv.projectCode ? '<div><span class="meta-label">Project Code</span> <span class="meta-value">' + escH(inv.projectCode) + '</span></div>' : ''}
+        ${inv.refNo ? '<div><span class="meta-label">Reference No</span> <span class="meta-value">' + escH(inv.refNo) + '</span></div>' : ''}
+        <div><span class="meta-label">Currency</span> <span class="meta-value">${inv.currency} (${sym})</span></div></div></div>
+    <table class="invoice-table"><thead><tr><th>Description</th><th class="text-center">HSN/SAC</th><th class="text-center">Qty</th><th class="text-center">Unit</th><th class="text-right">Rate</th><th class="text-right">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table>
+    <div class="invoice-totals">
+      <div class="total-row"><span class="label">Subtotal</span><span class="value">${formatCurrency(sub, inv.currency)}</span></div>
+      ${inv.discount > 0 ? `<div class="total-row"><span class="label">Discount (${inv.discount}%)</span><span class="value" style="color:#dc2626;">-${formatCurrency(disc, inv.currency)}</span></div>` : ''}
+      ${inv.shipping > 0 ? `<div class="total-row"><span class="label">Shipping Charges</span><span class="value">${formatCurrency(inv.shipping, inv.currency)}</span></div>` : ''}
+      ${inv.otherCharges > 0 ? `<div class="total-row"><span class="label">Other Charges</span><span class="value">${formatCurrency(inv.otherCharges, inv.currency)}</span></div>` : ''}
+      <div class="total-row"><span class="label">Tax (${inv.tax}%) — ${gstType}</span><span class="value">${formatCurrency(tax, inv.currency)}</span></div>
+      <div class="invoice-gst-breakup">${same ? `<span>CGST (${inv.tax / 2}%): ${formatCurrency(half, inv.currency)}</span><span>SGST (${inv.tax / 2}%): ${formatCurrency(half, inv.currency)}</span>` : `<span>IGST (${inv.tax}%): ${formatCurrency(tax, inv.currency)}</span>`}</div>
+      <div class="grand-total total-row"><span class="label">Grand Total</span><span class="value">${formatCurrency(inv.total, inv.currency)}</span></div>
+      ${inv.currency !== 'INR' ? `<div class="text-[10px] text-gray-400 mt-1">INR Equivalent: ${money(inv.totalINR, 'INR')} (Rate: ${inv.exchangeRate})</div>` : ''}
+    </div>
+    ${inv.terms ? `<div class="invoice-terms"><strong>Terms & Conditions:</strong> ${escH(inv.terms)}</div>` : ''}
+    <div class="text-[10px] text-gray-500 mt-2 border-t border-gray-100 pt-2"><strong>Bank Details:</strong> ${escH(company.bankName)} | A/C: ${escH(company.bankAccount)} | IFSC: ${escH(company.bankIfsc)}</div>
+    <div class="invoice-footer"><p>This is a system generated ${pro ? 'proforma invoice' : 'invoice'}. | ${escH(company.name)}</p></div></div>`;
+}
 
-    // =============================================================
-    // DATA
-    // =============================================================
+// Reference layout: used for every proforma and for the invoice template "Modern Split"
+function buildRefDocumentInnerHtml(inv) {
+  var pro = inv.invoiceType === 'proforma', c = inv.currency, T = '#0d6e5b', B = COMPANY_CONFIG.bank, sub = 0;
+  inv.items.forEach(function (i) { sub += i.qty * i.rate; });
+  var disc = sub * (inv.discount || 0) / 100, tax = (sub - disc) * (inv.tax || 0) / 100;
+  var same = company.stateCode && company.stateCode === inv.customerStateCode, h = (inv.tax || 0) / 2;
+  function tr(l, v, neg) { return '<div style="display:flex;justify-content:flex-end;padding:7px 0;font-size:11px"><span style="width:170px;text-align:right">' + l + '</span><span style="width:130px;text-align:right">' + (neg ? '-' : '') + fm(v, c) + '</span></div>'; }
+  var th = 'background:' + T + ';color:#fff;padding:8px 6px;font-size:10px;font-weight:600;';
+  var sym = getCurrencySymbol(c);
+  var rows = inv.items.map(function (i, k) {
+    return '<tr style="border-bottom:1px solid #e5e7eb"><td style="padding:8px 6px;font-size:10px;vertical-align:top">' + (k + 1) + '</td>' +
+      '<td style="padding:8px 6px;font-size:10px;font-weight:600">' + escH(i.name) + (i.note ? '<div style="font-weight:400;color:#6b7280;font-size:9.5px">' + escH(i.note) + '</div>' : '') + '</td>' +
+      '<td style="padding:8px 6px;font-size:10px;text-align:center">' + escH(i.hsn || '') + '</td>' +
+      '<td style="padding:8px 6px;font-size:10px;text-align:center">' + Number(i.qty).toFixed(2) + '</td>' +
+      '<td style="padding:8px 6px;font-size:10px;text-align:right">' + fm(i.rate, c).replace(sym, '') + '</td>' +
+      '<td style="padding:8px 6px;font-size:10px;text-align:right">' + fm(i.qty * i.rate, c).replace(sym, '') + '</td></tr>';
+  }).join('');
+  var cells = [['Invoice Date', fd(inv.date)], ['Due Date', fd(pro ? (inv.validUntil || inv.dueDate) : inv.dueDate)]];
+  if (inv.refNo) cells.push(['Reference no', escH(inv.refNo)]);
+  if (inv.projectCode) cells.push(['Project Code', escH(inv.projectCode)]);
+  var band = '<table style="width:100%;border-collapse:collapse;margin:14px 0"><tr>' + cells.map(function (x) { return '<td style="' + th + '">' + x[0] + '</td>'; }).join('') + '</tr><tr>' +
+    cells.map(function (x) { return '<td style="padding:8px 6px;font-size:10.5px">' + x[1] + '</td>'; }).join('') + '</tr></table>';
+  var pos = inv.placeOfSupply || inv.customerState;
+  var bankRow = function (l, v) { return '<tr><td style="border:1px solid #000;padding:3px 5px;width:38%">' + l + '</td><td style="border:1px solid #000;padding:3px 5px">' + escH(v || '') + '</td></tr>'; };
+  return '<div style="font-family:Arial,Helvetica,sans-serif;color:#111;padding:28px 32px;background:#fff;width:100%;box-sizing:border-box">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start"><div>' +
+    (company.logoUrl ? '<img src="' + company.logoUrl + '" crossorigin="anonymous" style="max-height:70px;max-width:140px;object-fit:contain">' : '') + '</div>' +
+    '<div style="text-align:right"><div style="font-size:26px;color:' + T + ';letter-spacing:.02em">' + (pro ? 'PROFORMA INVOICE' : 'TAX INVOICE') + '</div><div style="font-size:10px;color:#6b7280;font-weight:600">Invoice# ' + escH(inv.number) + '</div></div></div>' +
+    '<div style="margin-top:10px;font-size:11px;font-weight:700;max-width:420px">' + escH(company.name) + '</div>' +
+    '<div style="font-size:10px;color:#6b7280;max-width:300px;line-height:1.5">' + escH(company.address) + '<br>GSTIN ' + escH(company.gstin) + '</div>' +
+    '<div style="display:flex;gap:40px;margin-top:22px;font-size:10.5px;line-height:1.45">' +
+    '<div style="flex:1"><div style="color:#6b7280">Bill To</div><div style="font-weight:700">' + escH(inv.customerName) + '</div><div>' + escH(inv.customerAddress || '') + '</div>' + (inv.customerGST ? '<div>GSTIN ' + escH(inv.customerGST) + '</div>' : '') + '</div>' +
+    '<div style="flex:1"><div style="color:#6b7280">Ship To</div><div>' + escH(inv.shipTo || inv.customerAddress || '') + '</div></div></div>' +
+    (pos && (!pro || inv.customerStateCode) ? '<div style="font-size:10.5px;margin-top:14px">Place Of Supply: ' + escH(pos) + (inv.customerStateCode ? ' (' + escH(inv.customerStateCode) + ')' : '') + '</div>' : '') +
+    band +
+    '<table style="width:100%;border-collapse:collapse"><thead><tr><th style="' + th + 'text-align:left">Sr.no</th><th style="' + th + 'text-align:left">Item &amp; Description</th><th style="' + th + 'text-align:center">HSN/SAC</th><th style="' + th + 'text-align:center">Quantity</th><th style="' + th + 'text-align:right">Unit Rate</th><th style="' + th + 'text-align:right">Amount</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div style="margin-top:14px">' + tr('Sub Total', sub) + (disc > 0 ? tr('Discount (' + inv.discount + '%)', disc, true) : '') +
+    (inv.shipping > 0 ? tr('Shipping Charges', inv.shipping) : '') + (inv.otherCharges > 0 ? tr('Other Charges', inv.otherCharges) : '') +
+    (same ? tr('CGST' + h + ' (' + h + '%)', tax / 2) + tr('SGST' + h + ' (' + h + '%)', tax / 2) : tr('IGST' + (inv.tax || 0) + ' (' + (inv.tax || 0) + '%)', tax)) +
+    '<div style="display:flex;justify-content:flex-end;background:#e6f4f1;padding:10px 0;margin-top:6px;font-weight:700;font-size:12px"><span style="width:170px;text-align:right">Total</span><span style="width:130px;text-align:right">' + fm(inv.total, c) + '</span></div></div>' +
+    '<div style="text-align:right;font-size:10px;margin-top:10px">Total In Words: <b><i>' + amountInWords(inv.total, c) + '</i></b></div>' +
+    '<div style="margin-top:18px;font-size:10px;color:#6b7280">Bank Details</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:9.5px;margin-top:3px">' + bankRow('Beneficiary Name', B.beneficiary) + bankRow('Bank Name', B.name) + bankRow('Branch Name', B.branch) +
+    bankRow('Bank Address', B.address) + bankRow('Account No', B.account) + bankRow('IFSC Code / Swift Code', B.ifsc) + bankRow('Payment Terms', inv.terms) + '</table></div>';
+}
 
-    var activeTab = 'invoice'; // 'invoice' | 'proforma'
-    var globalCurrency = 'INR'; // reflects the top currency dropdown selection
-    var currentPage = 1;
-    var pageSize = 25;
+function buildDocumentInnerHtml(inv, templateId) {
+  var pro = inv.invoiceType === 'proforma';
+  return (pro || templateId === 'tpl-modern') ? buildRefDocumentInnerHtml(inv) : buildClassicDocumentInnerHtml(inv);
+}
 
-    // ---- Saved Invoice Template (selected via Choose Template) ----
-    // Backend note: persist the chosen template id/name against the account/user
-    // so new-invoice creation defaults to it automatically.
-    var savedTemplateId = null;
+function viewInvoice(id) {
+  var inv = invoices.find(function (x) { return String(x.id) === String(id); });
+  if (!inv) return;
+  var pro = inv.invoiceType === 'proforma';
+  openModal(`${modalHeader(pro ? 'Proforma Invoice' : 'Invoice', escH(inv.number))}
+    <div class="px-5 py-4 modal-scroll">${buildDocumentInnerHtml(inv, inv.templateId)}</div>
+    ${modalFooter('Close', 'onclick="closeModal()"', `<button onclick="downloadInvoice('${inv.id}')" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1">${iconDownload()} Download PDF</button>`)}`, { width: 'max-w-4xl' });
+}
 
-    var invoiceTemplates = [
-      { id: 'tpl-classic', name: 'Classic Green', description: 'Logo left, company right, clean line-item table. Matches current theme.' },
-      { id: 'tpl-modern',  name: 'Modern Split',  description: 'Bold title band, two-column summary, minimal rules.' },
-    ];
+async function generateInvoicePdfBlob(inv, templateId) {
+  var w = document.createElement('div');
+  w.style.cssText = 'position:fixed;left:0;top:0;width:820px;background:#fff;z-index:-1;pointer-events:none;';
+  w.innerHTML = buildDocumentInnerHtml(inv, templateId);
+  document.body.appendChild(w);
+  try {
+    var imgs = [].slice.call(w.querySelectorAll('img'));
+    await Promise.all(imgs.map(function (im) {
+      return new Promise(function (res) {
+        if (im.complete && im.naturalWidth) return res();
+        im.onload = res; im.onerror = function () { im.remove(); res(); };
+      });
+    }));
+    return await html2pdf().from(w).set({
+      margin: 8,
+      html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+    }).outputPdf('blob');
+  } finally { w.remove(); }
+}
 
-    // ---- Company Details ----
-    var company = {
-      name: 'Kunash Media Pvt. Ltd.',
-      address: '401, Creative Hub, BKC, Bandra East, Mumbai - 400051',
-      gstin: '27AABCU1234D1ZP',
-      pan: 'AABCU1234D',
-      state: 'Maharashtra',
-      stateCode: '27',
-      phone: '+91-9876543210',
-      email: 'info@kunashmedia.com',
-      bankName: 'HDFC Bank',
-      bankAccount: '1234567890',
-      bankIfsc: 'HDFC0000123',
-      // logo now comes from a URL/path (set via backend/DB) instead of a manual file upload
-      logoUrl: '',
-    };
-
-    var customers = [
-      { id: 'CUS-001', name: 'XYZ Retail Store', gst: '07BXYXZ1234F1ZP', country: 'India', state: 'Delhi', stateCode: '07', address: 'A-12, Connaught Place, New Delhi', email: 'accounts@xyzretail.com', phone: '+91-9811122233' },
-      { id: 'CUS-002', name: 'ABC Enterprises', gst: '27ABCXY1234E1ZP', country: 'India', state: 'Maharashtra', stateCode: '27', address: '45, Industrial Estate, Pune', email: 'billing@abcenterprises.in', phone: '+91-9822233344' },
-      { id: 'CUS-003', name: 'Rahul Sharma', gst: '', country: 'India', state: 'Maharashtra', stateCode: '27', address: '12, Green Park, Mumbai', email: 'rahul.sharma@example.com', phone: '+91-9833344455' },
-      { id: 'CUS-004', name: 'Global Tech LLC', gst: '', country: 'America', state: '', stateCode: '', address: '221 Market St, San Francisco, CA', email: 'ap@globaltechllc.com', phone: '+1-4155551234' },
-      { id: 'CUS-005', name: 'Al Fahad Trading', gst: '', country: 'Dubai', state: '', stateCode: '', address: 'Sheikh Zayed Road, Dubai, UAE', email: 'finance@alfahadtrading.ae', phone: '+971-501234567' },
-      { id: 'CUS-006', name: 'Nordic Interiors GmbH', gst: '', country: 'Europe', state: '', stateCode: '', address: 'Friedrichstrasse 20, Berlin', email: 'buchhaltung@nordicinteriors.de', phone: '+49-3012345678' },
-      { id: 'CUS-007', name: 'Muscat Oilfield Services', gst: '', country: 'Oman', state: '', stateCode: '', address: 'Al Khuwair, Muscat', email: 'accounts@muscatoilfield.om', phone: '+968-91234567' },
-    ];
-
-    var items = [
-      { id: 'ITM-1001', name: 'Centrifugal Blower — 5HP', price: 42000, gst: 18, unit: 'Pcs', hsn: '9503' },
-      { id: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', price: 118000, gst: 18, unit: 'Pcs', hsn: '8421' },
-      { id: 'ITM-1003', name: 'Activated Carbon Media', price: 6500, gst: 18, unit: 'Kg', hsn: '2803' },
-      { id: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', price: 850, gst: 18, unit: 'Mtr', hsn: '3917' },
-      { id: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', price: 28000, gst: 18, unit: 'Pcs', hsn: '8413' },
-    ];
-
-    // invoiceType: 'invoice' | 'proforma' — this field is what the tabs filter on.
-    // Backend note: add `invoiceType` to the invoice payload/table so tab rendering
-    // stays a simple filter server-side once wired up.
-    var invoices = [
-      {
-        id: 'INV-001',
-        invoiceType: 'invoice',
-        number: 'INV/25-26/001',
-        date: '2026-01-10',
-        dueDate: '2026-01-25',
-        customerId: 'CUS-001',
-        customerName: 'XYZ Retail Store',
-        customerGST: '07BXYXZ1234F1ZP',
-        customerState: 'Delhi',
-        customerStateCode: '07',
-        customerAddress: 'A-12, Connaught Place, New Delhi',
-        currency: 'INR',
-        exchangeRate: 1,
-        items: [
-          { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', hsn: '9503', qty: 2, rate: 42000, gst: 18, unit: 'Pcs' },
-          { itemId: 'ITM-1003', name: 'Activated Carbon Media', hsn: '2803', qty: 10, rate: 6500, gst: 18, unit: 'Kg' }
-        ],
-        discount: 5,
-        tax: 18,
-        shipping: 0,
-        otherCharges: 0,
-        status: 'unpaid',
-        total: 0,
-        totalINR: 0,
-        paid: 0,
-        createdAt: '2026-01-10',
-        placeOfSupply: 'Delhi',
-        terms: 'Payment within 15 days of invoice date.',
-        pdfUrl: 'https://cdn.example.com/invoices/INV-001.pdf'
-      },
-      {
-        id: 'INV-002',
-        invoiceType: 'invoice',
-        number: 'INV/25-26/002',
-        date: '2026-02-02',
-        dueDate: '2026-02-16',
-        customerId: 'CUS-004',
-        customerName: 'Global Tech LLC',
-        customerGST: '',
-        customerState: '',
-        customerStateCode: '',
-        customerAddress: '221 Market St, San Francisco, CA',
-        currency: 'USD',
-        exchangeRate: 83.5,
-        items: [
-          { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', hsn: '8421', qty: 1, rate: 118000, gst: 0, unit: 'Pcs' }
-        ],
-        discount: 0,
-        tax: 0,
-        shipping: 0,
-        otherCharges: 0,
-        status: 'paid',
-        total: 0,
-        totalINR: 0,
-        paid: 0,
-        createdAt: '2026-02-02',
-        placeOfSupply: 'America',
-        terms: 'Net 15.',
-        pdfUrl: 'https://cdn.example.com/invoices/INV-002.pdf'
-      },
-      {
-        id: 'PRO-001',
-        invoiceType: 'proforma',
-        number: 'PI/25-26/001',
-        date: '2026-02-12',
-        dueDate: '2026-02-27',
-        validUntil: '2026-03-01',
-        customerId: 'CUS-002',
-        customerName: 'ABC Enterprises',
-        customerGST: '27ABCXY1234E1ZP',
-        customerState: 'Maharashtra',
-        customerStateCode: '27',
-        customerAddress: '45, Industrial Estate, Pune',
-        currency: 'INR',
-        exchangeRate: 1,
-        items: [
-          { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', hsn: '8413', qty: 3, rate: 28000, gst: 18, unit: 'Pcs' }
-        ],
-        discount: 0,
-        tax: 18,
-        shipping: 500,
-        otherCharges: 0,
-        status: 'open',
-        total: 0,
-        totalINR: 0,
-        paid: 0,
-        createdAt: '2026-02-12',
-        placeOfSupply: 'Maharashtra',
-        terms: 'Quotation valid for 15 days. Advance 50% required to confirm order.',
-        pdfUrl: 'https://cdn.example.com/proformas/PRO-001.pdf'
-      },
-      {
-        id: 'PRO-002',
-        invoiceType: 'proforma',
-        number: 'PI/25-26/002',
-        date: '2026-02-20',
-        dueDate: '2026-03-07',
-        validUntil: '2026-03-10',
-        customerId: 'CUS-005',
-        customerName: 'Al Fahad Trading',
-        customerGST: '',
-        customerState: '',
-        customerStateCode: '',
-        customerAddress: 'Sheikh Zayed Road, Dubai, UAE',
-        currency: 'AED',
-        exchangeRate: 22.7,
-        items: [
-          { itemId: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', hsn: '3917', qty: 200, rate: 850, gst: 0, unit: 'Mtr' }
-        ],
-        discount: 2,
-        tax: 0,
-        shipping: 0,
-        otherCharges: 0,
-        status: 'converted',
-        total: 0,
-        totalINR: 0,
-        paid: 0,
-        createdAt: '2026-02-20',
-        placeOfSupply: 'Dubai',
-        terms: 'Quotation valid for 15 days.',
-        pdfUrl: 'https://cdn.example.com/proformas/PRO-002.pdf'
-      }
-    ];
-
-    var nextInvNo = 3;
-    var nextProNo = 3;
-
-    // Calculate totals
-    function recalcAll() {
-      invoices.forEach(function(inv) {
-        var subtotal = inv.items.reduce(function(sum, item) { return sum + (item.qty * item.rate); }, 0);
-        var discountAmt = subtotal * (inv.discount / 100);
-        var afterDiscount = subtotal - discountAmt;
-        var taxAmt = afterDiscount * (inv.tax / 100);
-        inv.total = afterDiscount + taxAmt + inv.shipping + inv.otherCharges;
-        inv.totalINR = inv.total * inv.exchangeRate;
+// ============================================================= SEARCHABLE PICKER (debounce + scroll pagination)
+function closePicker() { var b = document.getElementById('pickerBox'); if (b) b.remove(); document.removeEventListener('mousedown', pickerOutside); }
+function pickerOutside(e) { var b = document.getElementById('pickerBox'); if (b && !b.contains(e.target)) closePicker(); }
+function openPicker(anchor, cfg) {
+  closePicker();
+  var r = anchor.getBoundingClientRect(), box = document.createElement('div');
+  box.id = 'pickerBox';
+  box.style.cssText = 'position:fixed;z-index:300;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);width:' + Math.max(r.width, 320) + 'px;left:' + r.left + 'px;top:' + (r.bottom + 4) + 'px;';
+  box.innerHTML = '<input class="form-input" placeholder="Type 2+ letters to search…" style="margin:6px;width:calc(100% - 12px)"><div style="max-height:220px;overflow-y:auto"></div>';
+  document.body.appendChild(box);
+  var inp = box.firstChild, list = box.lastChild, page = 0, more = true, busy = false, q = '', tok = 0, t;
+  async function load(reset) {
+    if (reset) { tok++; page = 0; more = true; busy = false; list.innerHTML = ''; }
+    if (busy || !more) return;
+    busy = true; var my = tok;
+    var ld = document.createElement('div'); ld.textContent = 'Loading…'; ld.style.cssText = 'padding:8px;font-size:11px;color:#9ca3af'; list.appendChild(ld);
+    try {
+      var res = await cfg.fetchPage(q, page);
+      if (my !== tok) return;
+      ld.remove(); more = !!res.hasNext; page = res.nextPage != null ? res.nextPage : page + 1;
+      res.items.forEach(function (it) {
+        var d = document.createElement('div');
+        d.style.cssText = 'padding:7px 10px;font-size:11px;cursor:pointer;border-top:1px solid #f3f4f6';
+        d.innerHTML = cfg.render(it);
+        d.onmouseenter = function () { d.style.background = '#f8fafc'; }; d.onmouseleave = function () { d.style.background = ''; };
+        d.onclick = function () { cfg.onPick(it); closePicker(); };
+        list.appendChild(d);
+      });
+      if (!list.children.length) list.innerHTML = '<div style="padding:8px;font-size:11px;color:#9ca3af">No results</div>';
+    } catch (e) { if (my === tok) { ld.remove(); more = false; showToast(e.message || 'Could not load', 'error'); } }
+    finally { if (my === tok) busy = false; }
+  }
+  list.onscroll = function () { if (list.scrollTop + list.clientHeight >= list.scrollHeight - 24) load(false); };
+  inp.oninput = function () {
+    clearTimeout(t);
+    t = setTimeout(function () { var v = inp.value.trim(); if (v.length === 1 || v === q) return; q = v; load(true); }, 400);
+  };
+  setTimeout(function () { document.addEventListener('mousedown', pickerOutside); }, 0);
+  inp.focus(); load(true);
+}
+async function fetchProductPage(q, page) {
+  var r = await apiFetch(PRODUCT_API + '?page=' + page + '&size=20' + (q ? '&search=' + encodeURIComponent(q) : ''), { method: 'GET' });
+  var d = r.data || r, out = [];
+  (d.content || []).forEach(function (p) {
+    var base = { hsn: p.productHsnCode || '', gst: p.productGstRate != null ? Number(p.productGstRate) : null, pid: p.productPrimeId };
+    if (!p.variants || !p.variants.length) {
+      out.push(Object.assign({}, base, { vid: null, name: p.productName, unit: p.productUnit, price: p.productSellingPrice, sub: p.productStrId }));
+    } else {
+      p.variants.forEach(function (v) {
+        out.push(Object.assign({}, base, { vid: v.variantPrimeId, name: p.productName + ' — ' + v.variantName, unit: v.variantUnit || p.productUnit,
+          price: v.variantSellingPrice != null ? v.variantSellingPrice : p.productSellingPrice, sub: v.variantSku || v.variantStrId }));
       });
     }
-    recalcAll();
-
-    // =============================================================
-    // GLOBAL CURRENCY DROPDOWN
-    // =============================================================
-    function onGlobalCurrencyChange() {
-      globalCurrency = document.getElementById('currencySelector').value || 'INR';
-      showToast('New invoices will default to ' + currencyMeta[globalCurrency].label + ' (' + getCurrencySymbol(globalCurrency) + ')', 'info');
-    }
-
-    // =============================================================
-    // TABS
-    // =============================================================
-    function switchTab(tab) {
-      activeTab = tab;
-      document.getElementById('tabBtn_invoice').classList.toggle('active', tab === 'invoice');
-      document.getElementById('tabBtn_proforma').classList.toggle('active', tab === 'proforma');
-      document.getElementById('newProformaBtn').classList.toggle('hidden', tab !== 'proforma');
-      document.getElementById('chooseTemplateBtn').classList.toggle('hidden', tab !== 'invoice');
-      buildStatusFilterOptions();
-      clearFilters(true);
-      currentPage = 1;
-      renderInvoices();
-    }
-
-    function buildStatusFilterOptions() {
-      var sel = document.getElementById('filterStatus');
-      var opts = statusOptions[activeTab];
-      sel.innerHTML = '<option value="all">All Status</option>' +
-        opts.map(function(o) { return '<option value="' + o.v + '">' + o.l + '</option>'; }).join('');
-    }
-
-    // =============================================================
-    // FUNCTIONS
-    // =============================================================
-
-    function getCustomerName(id) {
-      var c = customers.find(function(x) { return x.id === id; });
-      return c ? c.name : id;
-    }
-
-    function currentTabInvoices() {
-      return invoices.filter(function(i) { return i.invoiceType === activeTab; });
-    }
-
-    function renderStats() {
-      var list = currentTabInvoices();
-      var total = list.length;
-      var due, overdue;
-      if (activeTab === 'invoice') {
-        due = list.filter(function(i) { return i.status === 'unpaid' || i.status === 'partial'; }).length;
-        overdue = list.filter(function(i) { return i.status === 'unpaid' && new Date(i.dueDate) < new Date(); }).length;
-      } else {
-        due = list.filter(function(i) { return i.status === 'open'; }).length;
-        overdue = list.filter(function(i) { return i.status === 'declined'; }).length;
-      }
-      var totalVal = list.reduce(function(sum, i) { return sum + i.totalINR; }, 0);
-
-      document.getElementById('totalInvoices').textContent = total;
-      document.getElementById('dueInvoices').textContent = due;
-      document.getElementById('overdueInvoices').textContent = overdue;
-      document.getElementById('totalValue').textContent = money(totalVal, 'INR');
-
-      // relabel stat cards for proforma context
-      document.querySelector('#dueInvoices').previousElementSibling.textContent = activeTab === 'invoice' ? 'Due' : 'Open';
-      document.querySelector('#overdueInvoices').previousElementSibling.textContent = activeTab === 'invoice' ? 'Overdue' : 'Declined';
-
-      var filterCustomer = document.getElementById('filterCustomer');
-      var currentVal = filterCustomer.value;
-      filterCustomer.innerHTML = '<option value="all">All Customers</option>';
-      customers.forEach(function(c) {
-        filterCustomer.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>';
-      });
-      filterCustomer.value = currentVal;
-    }
-
-    function getFilteredInvoices() {
-      var searchInput = document.getElementById('searchInput');
-      var q = searchInput ? searchInput.value.toLowerCase() : '';
-      var status = document.getElementById('filterStatus') ? (document.getElementById('filterStatus').value || 'all') : 'all';
-      var customer = document.getElementById('filterCustomer') ? (document.getElementById('filterCustomer').value || 'all') : 'all';
-
-      return currentTabInvoices().filter(function(inv) {
-        var matchSearch = inv.number.toLowerCase().indexOf(q) !== -1 ||
-          inv.customerName.toLowerCase().indexOf(q) !== -1 ||
-          inv.id.toLowerCase().indexOf(q) !== -1;
-        var matchStatus = status === 'all' || inv.status === status;
-        var matchCustomer = customer === 'all' || inv.customerId === customer;
-        return matchSearch && matchStatus && matchCustomer;
-      });
-    }
-
-    function changePageSize(val) {
-      pageSize = parseInt(val, 10) || 25;
-      currentPage = 1;
-      renderInvoices();
-    }
-
-    function goToPage(p) {
-      currentPage = p;
-      renderInvoices();
-    }
-
-    function renderInvoices() {
-      var filtered = getFilteredInvoices();
-      var isProforma = activeTab === 'proforma';
-
-      var totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-      if (currentPage > totalPages) currentPage = totalPages;
-      if (currentPage < 1) currentPage = 1;
-      var pageStart = (currentPage - 1) * pageSize;
-      var pageItems = filtered.slice(pageStart, pageStart + pageSize);
-
-      var rowsHtml = '';
-      if (filtered.length === 0) {
-        rowsHtml = `
-          <tr>
-            <td colspan="7" class="text-center py-10 text-gray-400 text-sm">
-              <div class="flex justify-center mb-2 empty-icon-svg">${iconDocument()}</div>
-              No ${isProforma ? 'proforma invoices' : 'invoices'} found. Try adjusting your filters or
-              <button onclick="${isProforma ? 'openAddProforma()' : 'openAddInvoice()'}" class="text-primary font-semibold hover:underline">create a new ${isProforma ? 'proforma invoice' : 'invoice'}</button>.
-            </td>
-          </tr>`;
-      } else {
-        rowsHtml = pageItems.map(function(inv) {
-          var canSend = isProforma ? inv.status === 'open' : (inv.status === 'unpaid');
-          var currencySymbol = getCurrencySymbol(inv.currency);
-          return `
-            <tr class="border-b border-gray-400 table-row-hover">
-              <td class="px-3 py-2.5">
-                <div class="font-semibold text-gray-800 text-sm">${inv.number}</div>
-                <div class="text-[10px] text-gray-400 font-mono">${inv.id}</div>
-              </td>
-              <td class="px-3 py-2.5 text-xs">${inv.date}</td>
-              <td class="px-3 py-2.5 text-sm text-gray-700">${inv.customerName}</td>
-              <td class="px-3 py-2.5 font-mono font-semibold text-sm">${currencySymbol}${Number(inv.total).toLocaleString('en-IN')}</td>
-              <td class="px-3 py-2.5 font-mono text-[11px] text-gray-500">${inv.dueDate}</td>
-              <td class="px-3 py-2.5">${statusBadge(inv.status)}</td>
-              <td class="px-3 py-2.5">${rowActionsHtml(
-                (isProforma ? "editProforma('" : "editInvoice('")+inv.id+"')",
-                "delInvoice('"+inv.id+"')",
-                "viewInvoice('"+inv.id+"')",
-                canSend ? "openSendOverlay('"+inv.id+"')" : null,
-                "downloadInvoice('"+inv.id+"')"
-              )}</td>
-            </tr>`;
-        }).join('');
-      }
-
-      var sizeOptions = [10, 25, 50, 100].map(function(n) {
-        return '<option value="' + n + '"' + (n === pageSize ? ' selected' : '') + '>' + n + '</option>';
-      }).join('');
-
-      var paginationHtml = '';
-      if (filtered.length > 0) {
-        var rangeStart = pageStart + 1;
-        var rangeEnd = Math.min(pageStart + pageSize, filtered.length);
-        paginationHtml = `
-          <div class="flex items-center justify-between gap-2 px-4 py-2.5 border-t border-gray-100">
-            <span class="text-[10px] text-gray-400">Showing ${rangeStart}–${rangeEnd} of ${filtered.length}</span>
-            <div class="flex items-center gap-1">
-              <button onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} class="btn-icon-action" style="width:24px;height:24px;${currentPage <= 1 ? 'opacity:.35;cursor:not-allowed;' : ''}" title="Previous">
-                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
-              </button>
-              <span class="text-[10px] text-gray-500 px-1">Page ${currentPage} of ${totalPages}</span>
-              <button onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} class="btn-icon-action" style="width:24px;height:24px;${currentPage >= totalPages ? 'opacity:.35;cursor:not-allowed;' : ''}" title="Next">
-                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
-            </div>
-          </div>`;
-      }
-
-      var panelHtml = panelWrap(
-        (isProforma ? 'All Proforma Invoices' : 'All Invoices') + ' <span class="text-[9px] border border-[#6da84c] font-bold bg-primary-soft text-primary-dark px-2 py-0.3 rounded-full">' + filtered.length + '</span>',
-        tableHtml(['Invoice #', 'Date', 'Customer', 'Total', 'Due Date', 'Status', 'Actions'], rowsHtml) + paginationHtml,
-        '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="changePageSize(this.value)" class="text-[10px] border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none">' + sizeOptions + '</select></div>'
-      );
-
-      document.getElementById('invoicesPanel').innerHTML = panelHtml;
-      renderStats();
-    }
-
-    function filterInvoices() { currentPage = 1; renderInvoices(); }
-
-    function clearFilters(silent) {
-      buildStatusFilterOptions();
-      document.getElementById('filterCustomer').value = 'all';
-      var searchInput = document.getElementById('searchInput');
-      if (searchInput) searchInput.value = '';
-      if (!silent) {
-        renderInvoices();
-        toggleFilterDD();
-      }
-    }
-
-    // =============================================================
-    // VIEW INVOICE (Standard Format with Logo)
-    // =============================================================
-
-    function viewInvoice(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (!inv) return;
-
-      var isProforma = inv.invoiceType === 'proforma';
-
-      // Determine GST type (CGST+SGST or IGST)
-      var isSameState = company.stateCode === inv.customerStateCode;
-      var gstType = isSameState ? 'CGST + SGST' : 'IGST';
-
-      // Calculate line item totals
-      var subtotal = inv.items.reduce(function(sum, item) { return sum + (item.qty * item.rate); }, 0);
-      var discountAmt = subtotal * (inv.discount / 100);
-      var afterDiscount = subtotal - discountAmt;
-      var taxAmt = afterDiscount * (inv.tax / 100);
-      var gstHalf = taxAmt / 2;
-
-      var itemsHtml = inv.items.map(function(item) {
-        var amount = item.qty * item.rate;
-        return `
-          <tr>
-            <td class="px-2 py-1.5 text-xs">${item.name}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${item.hsn || '—'}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${item.qty}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${item.unit || 'Pcs'}</td>
-            <td class="px-2 py-1.5 text-xs font-mono text-right">${formatCurrency(item.rate, inv.currency)}</td>
-            <td class="px-2 py-1.5 text-xs font-mono text-right">${formatCurrency(amount, inv.currency)}</td>
-          </tr>`;
-      }).join('');
-
-      var currencySymbol = getCurrencySymbol(inv.currency);
-
-      // Logo now sourced purely from company.logoUrl (set from DB) — no manual upload.
-      var logoHtml = company.logoUrl ?
-        '<img src="' + company.logoUrl + '" alt="Company Logo" class="invoice-logo">' :
-        '<div class="w-20 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs border border-gray-200">Logo</div>';
-
-      var modalContent = `
-        ${modalHeader(isProforma ? 'Proforma Invoice' : 'Invoice', inv.number)}
-        <div class="px-5 py-4 modal-scroll">
-
-          <!-- ===== INVOICE PREVIEW (Standard Format) ===== -->
-          <div class="invoice-preview">
-
-            <!-- Header: Logo + Company + Invoice Title -->
-            <div class="invoice-header">
-              <div>
-                ${logoHtml}
-              </div>
-              <div class="invoice-company">
-                <div class="invoice-company-name">${company.name}</div>
-                <div class="invoice-company-details">
-                  ${company.address}<br>
-                  GSTIN: ${company.gstin} | PAN: ${company.pan}<br>
-                  Phone: ${company.phone} | Email: ${company.email}
-                </div>
-              </div>
-            </div>
-
-            <!-- Invoice Title -->
-            <div class="text-center mb-3">
-              <span class="invoice-title">${isProforma ? 'PROFORMA INVOICE' : 'TAX INVOICE'}</span>
-            </div>
-
-            <!-- Customer & Invoice Details -->
-            <div class="invoice-meta">
-              <div>
-                <div class="meta-label">Bill To</div>
-                <div class="meta-value">${inv.customerName}</div>
-                <div class="text-xs text-gray-500">${inv.customerAddress || ''}</div>
-                <div class="text-xs text-gray-500">GSTIN: ${inv.customerGST || '—'}</div>
-                <div class="text-xs text-gray-500">State: ${inv.customerState || '—'}${inv.customerStateCode ? ' (Code: ' + inv.customerStateCode + ')' : ''}</div>
-              </div>
-              <div style="text-align:right;">
-                <div><span class="meta-label">${isProforma ? 'Proforma #' : 'Invoice #'}</span> <span class="meta-value">${inv.number}</span></div>
-                <div><span class="meta-label">Date</span> <span class="meta-value">${inv.date}</span></div>
-                <div><span class="meta-label">${isProforma ? 'Valid Until' : 'Due Date'}</span> <span class="meta-value">${isProforma ? (inv.validUntil || inv.dueDate) : inv.dueDate}</span></div>
-                <div><span class="meta-label">Place of Supply</span> <span class="meta-value">${inv.placeOfSupply || inv.customerState}</span></div>
-                <div><span class="meta-label">Currency</span> <span class="meta-value">${inv.currency} (${currencySymbol})</span></div>
-              </div>
-            </div>
-
-            <!-- Line Items Table -->
-            <table class="invoice-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th class="text-center">HSN/SAC</th>
-                  <th class="text-center">Qty</th>
-                  <th class="text-center">Unit</th>
-                  <th class="text-right">Rate</th>
-                  <th class="text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${itemsHtml}
-              </tbody>
-            </table>
-
-            <!-- Totals -->
-            <div class="invoice-totals">
-              <div class="total-row">
-                <span class="label">Subtotal</span>
-                <span class="value">${formatCurrency(subtotal, inv.currency)}</span>
-              </div>
-              ${inv.discount > 0 ? `
-              <div class="total-row">
-                <span class="label">Discount (${inv.discount}%)</span>
-                <span class="value" style="color:#dc2626;">-${formatCurrency(discountAmt, inv.currency)}</span>
-              </div>` : ''}
-              ${inv.shipping > 0 ? `
-              <div class="total-row">
-                <span class="label">Shipping Charges</span>
-                <span class="value">${formatCurrency(inv.shipping, inv.currency)}</span>
-              </div>` : ''}
-              ${inv.otherCharges > 0 ? `
-              <div class="total-row">
-                <span class="label">Other Charges</span>
-                <span class="value">${formatCurrency(inv.otherCharges, inv.currency)}</span>
-              </div>` : ''}
-              <div class="total-row">
-                <span class="label">Tax (${inv.tax}%) — ${gstType}</span>
-                <span class="value">${formatCurrency(taxAmt, inv.currency)}</span>
-              </div>
-
-              <!-- GST Breakup -->
-              <div class="invoice-gst-breakup">
-                ${isSameState ? `
-                <span>CGST (${inv.tax/2}%): ${formatCurrency(gstHalf, inv.currency)}</span>
-                <span>SGST (${inv.tax/2}%): ${formatCurrency(gstHalf, inv.currency)}</span>
-                ` : `
-                <span>IGST (${inv.tax}%): ${formatCurrency(taxAmt, inv.currency)}</span>
-                `}
-              </div>
-
-              <div class="grand-total total-row">
-                <span class="label">Grand Total</span>
-                <span class="value">${formatCurrency(inv.total, inv.currency)}</span>
-              </div>
-
-              ${inv.currency !== 'INR' ? `
-              <div class="text-[10px] text-gray-400 mt-1">
-                INR Equivalent: ${money(inv.totalINR, 'INR')} (Rate: ${inv.exchangeRate})
-              </div>` : ''}
-            </div>
-
-            <!-- Terms -->
-            ${inv.terms ? `
-            <div class="invoice-terms">
-              <strong>Terms & Conditions:</strong> ${inv.terms}
-            </div>` : ''}
-
-            <!-- Bank Details -->
-            <div class="text-[10px] text-gray-500 mt-2 border-t border-gray-100 pt-2">
-              <strong>Bank Details:</strong> ${company.bankName} | A/C: ${company.bankAccount} | IFSC: ${company.bankIfsc}
-            </div>
-
-            <!-- Footer -->
-            <div class="invoice-footer">
-              <p>This is a system generated ${isProforma ? 'proforma invoice' : 'invoice'}. | ${company.name} | ${company.phone}</p>
-            </div>
-
-          </div>
-
-        </div>
-        ${modalFooter('Close', 'onclick="closeModal()"', `
-          <button onclick="downloadInvoice('${inv.id}')" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-            ${iconDownload()} Download PDF
-          </button>
-        `)}
-      `;
-
-      openModal(modalContent, { width: 'max-w-4xl' });
-    }
-
-    // =============================================================
-    // ADD / EDIT INVOICE  (invoiceType: 'invoice')
-    // =============================================================
-
-    function openAddInvoice() { openInvoiceModal(null, 'invoice'); }
-    function openAddProforma() { openInvoiceModal(null, 'proforma'); }
-
-    function editInvoice(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (inv) openInvoiceModal(inv, 'invoice');
-    }
-    function editProforma(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (inv) openInvoiceModal(inv, 'proforma');
-    }
-
-    function openInvoiceModal(existing, type) {
-      var isProforma = type === 'proforma';
-      var defaultCurrency = globalCurrency || 'INR';
-
-      var e = existing || {
-        invoiceType: type,
-        number: isProforma
-          ? 'PI/25-26/' + String(nextProNo).padStart(3, '0')
-          : 'INV/25-26/' + String(nextInvNo).padStart(3, '0'),
-        date: new Date().toISOString().split('T')[0],
-        dueDate: new Date(new Date().setDate(new Date().getDate() + 15)).toISOString().split('T')[0],
-        validUntil: new Date(new Date().setDate(new Date().getDate() + 15)).toISOString().split('T')[0],
-        customerId: customers[0].id,
-        currency: defaultCurrency,
-        exchangeRate: getCurrencyRate(defaultCurrency),
-        items: [],
-        discount: 0,
-        tax: 18,
-        shipping: 0,
-        otherCharges: 0,
-        status: isProforma ? 'open' : 'unpaid',
-        total: 0,
-        terms: isProforma ? 'Quotation valid for 15 days. Advance payment required to confirm order.' : ''
-      };
-      var isEdit = !!existing;
-
-      // Build line items HTML
-      var lineItemsHtml = '';
-      if (e.items && e.items.length > 0) {
-        lineItemsHtml = e.items.map(function(item, idx) {
-          return `
-            <tr class="border-b border-gray-100 line-item-row">
-              <td class="px-2 py-1">
-                <select class="form-input text-[10px] item-select" data-idx="${idx}">
-                  ${items.map(function(it) { return '<option ' + (it.id === item.itemId ? 'selected' : '') + ' value="' + it.id + '">' + it.name + '</option>'; }).join('')}
-                </select>
-              </td>
-              <td class="px-2 py-1">
-                <input type="number" class="form-input text-[10px] item-qty" value="${item.qty}" data-idx="${idx}" placeholder="Qty" onchange="calcInvoiceTotal()">
-              </td>
-              <td class="px-2 py-1">
-                <input type="number" class="form-input text-[10px] item-rate" value="${item.rate}" data-idx="${idx}" placeholder="Rate" onchange="calcInvoiceTotal()">
-              </td>
-              <td class="px-2 py-1 text-center">
-                <button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
-              </td>
-            </tr>`;
-        }).join('');
-      }
-
-      var currencyOptions = Object.keys(currencyMeta);
-      var statusOpts = statusOptions[type];
-
-      var modalContent = `
-        ${modalHeader(
-          isEdit ? (isProforma ? 'Edit Proforma Invoice' : 'Edit Invoice') : (isProforma ? 'Proforma Invoice' : 'New Invoice'),
-          isEdit ? e.number : (isProforma ? 'Create a proforma / quotation for customer' : 'Create a tax invoice for customer')
-        )}
-
-        <div class="px-5 py-4 modal-scroll">
-
-          ${!isProforma ? `
-          <div class="flex items-center justify-between mb-3 p-2.5 bg-gray-50 rounded-lg border border-gray-200 text-[10px] text-gray-500">
-            <span>Template: <span class="font-semibold text-gray-700">${savedTemplateId ? (invoiceTemplates.find(function(t){return t.id===savedTemplateId;}) || {}).name : 'Default (Classic Green)'}</span></span>
-            <button type="button" onclick="closeModal();openChooseTemplate();" class="text-primary font-semibold hover:underline">Change</button>
-          </div>` : ''}
-
-          <!-- Header Fields -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            ${fld((isProforma ? 'Proforma #' : 'Invoice #'), '<input type="text" class="form-input" id="f_number" value="' + e.number + '" disabled>')}
-            ${fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">')}
-            ${fld('Customer *', '<select id="f_customer" class="form-input" onchange="updateCustomerDetails()">' + customers.map(function(c) { return '<option ' + (c.id === e.customerId ? 'selected' : '') + ' value="' + c.id + '">' + c.name + ' (' + c.country + ')</option>'; }).join('') + '</select>')}
-            ${fld((isProforma ? 'Valid Until *' : 'Due Date *'), '<input type="date" class="form-input" id="f_dueDate" value="' + (isProforma ? (e.validUntil || e.dueDate) : e.dueDate) + '">')}
-          </div>
-
-          <!-- Multi-Currency -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-            ${fld('Currency', '<select id="f_currency" class="form-input" onchange="updateCurrency()">' + currencyOptions.map(function(c) { return '<option ' + (c === e.currency ? 'selected' : '') + ' value="' + c + '">' + currencyMeta[c].label + ' — ' + c + ' (' + currencyMeta[c].symbol + ')</option>'; }).join('') + '</select>', 'Auto-set from customer\'s country; override if needed')}
-            ${fld('Exchange Rate', '<input type="number" class="form-input" id="f_exchangeRate" value="' + e.exchangeRate + '" step="0.01" onchange="calcInvoiceTotal()">')}
-            ${fld('INR Equivalent', '<input type="text" class="form-input" id="f_inrEquivalent" value="' + (e.totalINR ? money(e.totalINR, 'INR') : '₹0') + '" disabled style="background:#f3f4f6;">')}
-            ${fld('Place of Supply', '<input type="text" class="form-input" id="f_placeSupply" value="' + (e.placeOfSupply || '') + '">')}
-          </div>
-
-          <!-- Line Items -->
-          <div class="mt-3">
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="form-label mb-0">Line Items</label>
-              <button onclick="addLineItem()" class="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1">
-                ${iconPlus()} Add Item
-              </button>
-            </div>
-            <div class="border border-gray-200 rounded-lg overflow-hidden">
-              <table class="w-full text-xs" id="lineItemsTable">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-2 py-1.5 text-left font-semibold text-gray-600">Item</th>
-                    <th class="px-2 py-1.5 text-center font-semibold text-gray-600">Qty</th>
-                    <th class="px-2 py-1.5 text-center font-semibold text-gray-600">Rate</th>
-                    <th class="px-2 py-1.5 text-center font-semibold text-gray-600" style="width:36px;">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="lineItemsBody">
-                  ${lineItemsHtml || '<tr><td colspan="4" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products/services.</td></tr>'}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Footer Fields -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-            ${fld('Discount (%)', '<input type="number" class="form-input" id="f_discount" value="' + e.discount + '" placeholder="0" onchange="calcInvoiceTotal()">')}
-            ${fld('Tax Rate (%)', '<select class="form-input" id="f_tax" onchange="calcInvoiceTotal()"><option ' + (e.tax == 0 ? 'selected' : '') + '>0</option><option ' + (e.tax == 5 ? 'selected' : '') + '>5</option><option ' + (e.tax == 12 ? 'selected' : '') + '>12</option><option ' + (e.tax == 18 ? 'selected' : '') + '>18</option><option ' + (e.tax == 28 ? 'selected' : '') + '>28</option></select>')}
-            ${fld('Shipping', '<input type="number" class="form-input" id="f_shipping" value="' + e.shipping + '" placeholder="0" onchange="calcInvoiceTotal()">')}
-            ${fld('Other Charges', '<input type="number" class="form-input" id="f_otherCharges" value="' + e.otherCharges + '" placeholder="0" onchange="calcInvoiceTotal()">')}
-          </div>
-
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            ${fld('Status', '<select class="form-input" id="f_status">' + statusOpts.map(function(s) { return '<option ' + (e.status === s.v ? 'selected' : '') + ' value="' + s.v + '">' + s.l + '</option>'; }).join('') + '</select>')}
-            ${fld('Total Amount', '<input type="text" class="form-input" id="f_total" value="' + (e.total ? formatCurrency(e.total, e.currency) : '0') + '" disabled style="font-weight:bold;color:#6da84c;">')}
-          </div>
-
-          ${fld('Terms & Conditions', '<textarea rows="2" class="form-input" id="f_terms" placeholder="Payment terms, delivery terms, etc.">' + (e.terms || '') + '</textarea>')}
-        </div>
-        ${modalFooter(isEdit ? ('Update ' + (isProforma ? 'Proforma' : 'Invoice')) : ('Save ' + (isProforma ? 'Proforma' : 'Invoice')), 'onclick="saveInvoice(\'' + (isEdit ? e.id : '') + '\', \'' + type + '\')"')}
-      `;
-
-      openModal(modalContent, { width: 'max-w-4xl' });
-      setTimeout(function() { calcInvoiceTotal(); }, 100);
-    }
-
-    // =============================================================
-    // LINE ITEM FUNCTIONS
-    // =============================================================
-
-    function addLineItem() {
-      var tbody = document.getElementById('lineItemsBody');
-      if (!tbody) return;
-      var emptyRow = tbody.querySelector('tr td[colspan]');
-      if (emptyRow) tbody.innerHTML = '';
-
-      var idx = tbody.children.length;
-      var row = document.createElement('tr');
-      row.className = 'border-b border-gray-100 line-item-row';
-      row.innerHTML = `
-        <td class="px-2 py-1">
-          <select class="form-input text-[10px] item-select" data-idx="${idx}">
-            ${items.map(function(it) { return '<option value="' + it.id + '">' + it.name + '</option>'; }).join('')}
-          </select>
-        </td>
-        <td class="px-2 py-1">
-          <input type="number" class="form-input text-[10px] item-qty" value="1" data-idx="${idx}" placeholder="Qty" onchange="calcInvoiceTotal()">
-        </td>
-        <td class="px-2 py-1">
-          <input type="number" class="form-input text-[10px] item-rate" value="0" data-idx="${idx}" placeholder="Rate" onchange="calcInvoiceTotal()">
-        </td>
-        <td class="px-2 py-1 text-center">
-          <button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
-        </td>
-      `;
-      tbody.appendChild(row);
-
-      var select = row.querySelector('.item-select');
-      select.addEventListener('change', function() {
-        var selectedItem = items.find(function(it) { return it.id === this.value; });
-        var rateInput = this.closest('tr').querySelector('.item-rate');
-        if (selectedItem && rateInput) {
-          rateInput.value = selectedItem.price;
-          calcInvoiceTotal();
-        }
-      });
-      select.dispatchEvent(new Event('change'));
-    }
-
-    function removeLineItem(btn) {
-      var row = btn.closest('tr');
-      if (row) row.remove();
-      var tbody = document.getElementById('lineItemsBody');
-      if (tbody && tbody.children.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products/services.</td></tr>';
-      }
+  });
+  return { items: out, hasNext: !!d.hasNext, nextPage: d.nextPage };
+}
+function pickProduct(btn) {
+  openPicker(btn, {
+    fetchPage: fetchProductPage,
+    render: function (o) { return '<div style="font-weight:600">' + escH(o.name) + '</div><div style="color:#9ca3af;font-size:10px">' + escH(o.sub || '') + ' · ' + Number(o.price || 0).toLocaleString('en-IN') + ' / ' + escH(o.unit || '') + '</div>'; },
+    onPick: function (o) {
+      var tr = btn.closest('tr');
+      tr.dataset.pid = o.pid || ''; tr.dataset.vid = o.vid || ''; tr.dataset.name = o.name; tr.dataset.unit = o.unit || '';
+      btn.textContent = o.name;
+      tr.querySelector('.item-rate').value = o.price != null ? o.price : 0;
+      tr.querySelector('.item-hsn').value = o.hsn;
+      tr.querySelector('.item-gst').value = o.gst != null ? o.gst : '';
+      var tax = document.getElementById('f_tax');
+      if (o.gst != null && tax && [].some.call(tax.options, function (op) { return op.value === String(o.gst); })) tax.value = String(o.gst);
       calcInvoiceTotal();
     }
+  });
+}
+function pickProject(btn) {
+  openPicker(btn, {
+    fetchPage: async function (q) {
+      var r = await apiFetch(PROJECT_API + (q ? '?search=' + encodeURIComponent(q) : ''), { method: 'GET' });
+      var arr = Array.isArray(r) ? r : ((r.data && r.data.content) || r.content || r.data || []);
+      return { items: arr, hasNext: false };
+    },
+    render: function (p) { return escH(p.projectName) + ' (' + escH(p.projectCode) + ')'; },
+    onPick: function (p) { btn.dataset.code = p.projectCode; btn.textContent = p.projectName + ' (' + p.projectCode + ')'; }
+  });
+}
 
-    function updateCustomerDetails() {
-      // Auto-set place of supply AND currency based on the customer's country
-      var customerId = document.getElementById('f_customer').value;
-      var customer = customers.find(function(c) { return c.id === customerId; });
-      if (customer) {
-        document.getElementById('f_placeSupply').value = customer.state || customer.country;
-        var autoCurrency = currencyForCountry(customer.country);
-        document.getElementById('f_currency').value = autoCurrency;
-        updateCurrency();
-      }
-    }
+// ============================================================= ADD / EDIT MODAL
+function openAddInvoice() { openInvoiceModal(null, 'invoice'); }
+function openAddProforma() { openInvoiceModal(null, 'proforma'); }
+function editInvoice(id) { var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (inv) openInvoiceModal(inv, 'invoice'); }
+function editProforma(id) { var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (inv) openInvoiceModal(inv, 'proforma'); }
 
-    function updateCurrency() {
-      var currency = document.getElementById('f_currency').value;
-      document.getElementById('f_exchangeRate').value = getCurrencyRate(currency);
-      calcInvoiceTotal();
-    }
+var EMPTY_ROW = '<tr><td colspan="6" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products/services.</td></tr>';
+function lineRowHtml(it) {
+  it = it || {};
+  return '<tr class="border-b border-gray-100 line-item-row" data-pid="' + (it.itemId || '') + '" data-vid="' + (it.variantId || '') + '" data-name="' + escH(it.name || '') + '" data-unit="' + escH(it.unit || '') + '">' +
+    '<td class="px-2 py-1" style="min-width:230px"><button type="button" class="form-input text-left item-pick" onclick="pickProduct(this)">' + (it.name ? escH(it.name) : 'Select item…') + '</button>' +
+    '<input class="form-input item-note mt-1" placeholder="Line note (optional)" value="' + escH(it.note || '') + '"></td>' +
+    '<td class="px-2 py-1"><input class="form-input text-[10px] item-hsn" style="width:80px" value="' + escH(it.hsn || '') + '"></td>' +
+    '<td class="px-2 py-1"><input type="number" class="form-input text-[10px] item-qty" style="width:64px" value="' + (it.qty != null ? it.qty : 1) + '" onchange="calcInvoiceTotal()"></td>' +
+    '<td class="px-2 py-1"><input type="number" class="form-input text-[10px] item-rate" style="width:96px" value="' + (it.rate != null ? it.rate : 0) + '" onchange="calcInvoiceTotal()"></td>' +
+    '<td class="px-2 py-1"><input type="number" class="form-input text-[10px] item-gst" style="width:56px" value="' + (it.gst != null ? it.gst : '') + '"></td>' +
+    '<td class="px-2 py-1 text-center"><button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">' + iconX() + '</button></td></tr>';
+}
+function addLineItem() {
+  var tb = document.getElementById('lineItemsBody'); if (!tb) return;
+  if (tb.querySelector('td[colspan]')) tb.innerHTML = '';
+  tb.insertAdjacentHTML('beforeend', lineRowHtml());
+  calcInvoiceTotal();
+}
+function removeLineItem(btn) {
+  var row = btn.closest('tr'); if (row) row.remove();
+  var tb = document.getElementById('lineItemsBody'); if (tb && !tb.children.length) tb.innerHTML = EMPTY_ROW;
+  calcInvoiceTotal();
+}
+function selCustomer() { var v = document.getElementById('f_customer').value; return customers.find(function (c) { return String(c.id) === String(v); }); }
 
-    function calcInvoiceTotal() {
-      var rows = document.querySelectorAll('#lineItemsBody .line-item-row');
-      var subtotal = 0;
-      rows.forEach(function(row) {
-        var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-        var rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-        subtotal += qty * rate;
-      });
+function openInvoiceModal(existing, type) {
+  var isPro = type === 'proforma', dc = globalCurrency || 'INR';
+  var plus15 = new Date(new Date().setDate(new Date().getDate() + 15)).toISOString().split('T')[0];
+  var e = existing || {
+    invoiceType: type, number: 'Auto-generated on save', date: new Date().toISOString().split('T')[0], dueDate: plus15, validUntil: plus15,
+    customerId: customers[0] ? customers[0].id : null, currency: dc, exchangeRate: getCurrencyRate(dc), items: [],
+    discount: 0, tax: 18, shipping: 0, otherCharges: 0, status: isPro ? 'OPEN' : 'UNPAID', total: 0, terms: ''
+  };
+  var isEdit = !!existing, firstCust = !isEdit && customers[0] ? customers[0] : null;
+  var tplName = savedTemplateId ? (invoiceTemplates.find(function (t) { return t.id === savedTemplateId; }) || {}).name : 'Default (Classic Green)';
+  var lineItemsHtml = e.items && e.items.length ? e.items.map(lineRowHtml).join('') : EMPTY_ROW;
 
-      var discount = parseFloat(document.getElementById('f_discount').value) || 0;
-      var tax = parseFloat(document.getElementById('f_tax').value) || 0;
-      var shipping = parseFloat(document.getElementById('f_shipping').value) || 0;
-      var otherCharges = parseFloat(document.getElementById('f_otherCharges').value) || 0;
-      var exchangeRate = parseFloat(document.getElementById('f_exchangeRate').value) || 1;
-      var currency = document.getElementById('f_currency').value;
-
-      var discountAmt = subtotal * (discount / 100);
-      var afterDiscount = subtotal - discountAmt;
-      var taxAmt = afterDiscount * (tax / 100);
-      var total = afterDiscount + taxAmt + shipping + otherCharges;
-
-      document.getElementById('f_total').value = formatCurrency(total, currency);
-
-      var totalINR = total * exchangeRate;
-      document.getElementById('f_inrEquivalent').value = money(totalINR, 'INR');
-
-      return total;
-    }
-
-    // =============================================================
-    // SAVE / DELETE INVOICE
-    // =============================================================
-
-    function saveInvoice(existingId, type) {
-      var isProforma = type === 'proforma';
-      var number = document.getElementById('f_number').value;
-      var date = document.getElementById('f_date').value;
-      var customerId = document.getElementById('f_customer').value;
-      var dueDate = document.getElementById('f_dueDate').value;
-      var currency = document.getElementById('f_currency').value;
-      var exchangeRate = parseFloat(document.getElementById('f_exchangeRate').value) || 1;
-      var discount = parseFloat(document.getElementById('f_discount').value) || 0;
-      var tax = parseFloat(document.getElementById('f_tax').value) || 0;
-      var shipping = parseFloat(document.getElementById('f_shipping').value) || 0;
-      var otherCharges = parseFloat(document.getElementById('f_otherCharges').value) || 0;
-      var status = document.getElementById('f_status').value;
-      var placeSupply = document.getElementById('f_placeSupply').value || '';
-      var terms = document.getElementById('f_terms').value || '';
-
-      if (!date || !customerId || !dueDate) {
-        showToast('Please fill all required fields (Date, Customer, ' + (isProforma ? 'Valid Until' : 'Due Date') + ')', 'error');
-        return;
-      }
-
-      var itemsData = [];
-      var rows = document.querySelectorAll('#lineItemsBody .line-item-row');
-      rows.forEach(function(row) {
-        var itemId = row.querySelector('.item-select').value;
-        var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-        var rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-        if (qty > 0 && rate > 0) {
-          var item = items.find(function(it) { return it.id === itemId; });
-          itemsData.push({
-            itemId: itemId,
-            name: item ? item.name : '',
-            hsn: item ? item.hsn : '',
-            qty: qty,
-            rate: rate,
-            gst: item ? item.gst : 18,
-            unit: item ? item.unit : 'Pcs'
-          });
-        }
-      });
-
-      if (itemsData.length === 0) {
-        showToast('Please add at least one item to the ' + (isProforma ? 'proforma invoice' : 'invoice'), 'error');
-        return;
-      }
-
-      var subtotal = itemsData.reduce(function(sum, item) { return sum + (item.qty * item.rate); }, 0);
-      var discountAmt = subtotal * (discount / 100);
-      var afterDiscount = subtotal - discountAmt;
-      var taxAmt = afterDiscount * (tax / 100);
-      var total = afterDiscount + taxAmt + shipping + otherCharges;
-      var totalINR = total * exchangeRate;
-
-      var customer = customers.find(function(c) { return c.id === customerId; });
-      var customerName = customer ? customer.name : '';
-
-      if (existingId) {
-        var inv = invoices.find(function(x) { return x.id === existingId; });
-        if (inv) {
-          inv.number = number;
-          inv.date = date;
-          if (isProforma) { inv.validUntil = dueDate; inv.dueDate = dueDate; } else { inv.dueDate = dueDate; }
-          inv.customerId = customerId;
-          inv.customerName = customerName;
-          inv.customerGST = customer ? customer.gst : '';
-          inv.customerState = customer ? customer.state : '';
-          inv.customerStateCode = customer ? customer.stateCode : '';
-          inv.customerAddress = customer ? customer.address : '';
-          inv.currency = currency;
-          inv.exchangeRate = exchangeRate;
-          inv.items = itemsData;
-          inv.discount = discount;
-          inv.tax = tax;
-          inv.shipping = shipping;
-          inv.otherCharges = otherCharges;
-          inv.status = status;
-          inv.total = total;
-          inv.totalINR = totalINR;
-          inv.placeOfSupply = placeSupply || (customer ? customer.state : '');
-          inv.terms = terms;
-          showToast((isProforma ? 'Proforma invoice' : 'Invoice') + ' updated successfully', 'success');
-        }
-      } else {
-        var newInvoice = {
-          id: (isProforma ? 'PRO-' : 'INV-') + String(isProforma ? nextProNo++ : nextInvNo++).padStart(3, '0'),
-          invoiceType: type,
-          number: number || (isProforma ? ('PI/25-26/' + String(invoices.length + 1).padStart(3, '0')) : ('INV/25-26/' + String(invoices.length + 1).padStart(3, '0'))),
-          date: date,
-          dueDate: dueDate,
-          validUntil: isProforma ? dueDate : undefined,
-          customerId: customerId,
-          customerName: customerName,
-          customerGST: customer ? customer.gst : '',
-          customerState: customer ? customer.state : '',
-          customerStateCode: customer ? customer.stateCode : '',
-          customerAddress: customer ? customer.address : '',
-          currency: currency,
-          exchangeRate: exchangeRate,
-          items: itemsData,
-          discount: discount,
-          tax: tax,
-          shipping: shipping,
-          otherCharges: otherCharges,
-          status: status,
-          total: total,
-          totalINR: totalINR,
-          paid: 0,
-          createdAt: date,
-          placeOfSupply: placeSupply || (customer ? customer.state : ''),
-          terms: terms,
-          // Backend note: populate once the PDF is generated/stored server-side.
-          pdfUrl: null
-        };
-        invoices.unshift(newInvoice);
-        showToast((isProforma ? 'Proforma invoice' : 'Invoice') + ' created successfully', 'success');
-      }
-
-      closeModal();
-      renderInvoices();
-    }
-
-    function delInvoice(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (!inv) return;
-      var isProforma = inv.invoiceType === 'proforma';
-
-      var modalContent = `
-        ${modalHeader('Delete ' + (isProforma ? 'Proforma Invoice' : 'Invoice'), inv.number)}
-        <div class="px-5 py-4 text-sm text-gray-600">
-          <p>Are you sure you want to permanently delete <b class="text-gray-800">${inv.number}</b>?</p>
-          <p class="text-gray-400 text-[11px] mt-1">This action cannot be undone. All associated data will be removed.</p>
-          <p class="text-amber-600 text-[11px] mt-2">Total Value: ${formatCurrency(inv.total, inv.currency)}</p>
-        </div>
-        ${modalFooter('Delete', 'onclick="confirmDeleteInvoice(\'' + id + '\')"', '')}
-      `;
-      openModal(modalContent, { width: 'max-w-md' });
-    }
-
-    function confirmDeleteInvoice(id) {
-      invoices = invoices.filter(function(x) { return x.id !== id; });
-      closeModal();
-      renderInvoices();
-      showToast('Deleted successfully', 'warning');
-    }
-
-    // =============================================================
-    // ACTIONS
-    // =============================================================
-
-    // ---- SEND OVERLAY: choose Email or WhatsApp ----
-    function openSendOverlay(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (!inv) return;
-      var isProforma = inv.invoiceType === 'proforma';
-
-      var modalContent = `
-        ${modalHeader('Send ' + (isProforma ? 'Proforma Invoice' : 'Invoice'), inv.number)}
-        <div class="px-5 py-5">
-          <p class="text-xs text-gray-500 mb-4">Choose how you'd like to send this ${isProforma ? 'proforma invoice' : 'invoice'} to <b class="text-gray-700">${inv.customerName}</b>.</p>
-          <div class="grid grid-cols-2 gap-3">
-            <button onclick="openSendEmail('${id}')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary-soft transition">
-              <svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-              <span class="text-xs font-semibold text-gray-700">Email</span>
-            </button>
-            <button onclick="sendViaWhatsapp('${id}')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary-soft transition">
-              <svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.02c-.25.68-1.44 1.31-1.98 1.35-.5.05-1.14.07-1.84-.12-.42-.11-.96-.31-1.66-.6-2.92-1.26-4.82-4.2-4.97-4.4-.15-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.65.5.24.58.83 2 .9 2.15.07.15.12.32.02.52-.1.2-.15.32-.29.49-.15.17-.31.38-.44.51-.15.15-.3.31-.13.61.17.3.75 1.24 1.61 2 1.11.99 2.04 1.3 2.34 1.45.3.15.48.12.65-.07.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.35.07.13.07.75-.18 1.43z"/></svg>
-              <span class="text-xs font-semibold text-gray-700">WhatsApp</span>
-            </button>
-          </div>
-        </div>
-      `;
-      openModal(modalContent, { width: 'max-w-sm' });
-    }
-
-    function isValidEmail(email) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-
-    function openSendEmail(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (!inv) return;
-      var customer = customers.find(function(c) { return c.id === inv.customerId; });
-      var prefillEmail = (customer && customer.email) || '';
-      var isProforma = inv.invoiceType === 'proforma';
-
-      var modalContent = `
-        ${modalHeader('Send via Email', inv.number)}
-        <div class="px-5 py-4">
-          ${fld('Recipient Email *', '<input type="email" class="form-input" id="f_sendEmail" value="' + prefillEmail + '" placeholder="customer@example.com">', 'Pre-filled from the customer record — edit if needed')}
-          <div class="mt-2 text-[10px] text-gray-400 p-2.5 bg-gray-50 rounded-lg border border-gray-100">
-            Subject: ${(isProforma ? 'Proforma Invoice' : 'Invoice')} ${inv.number} from ${company.name}<br>
-            Attachment: ${inv.number}.pdf
-          </div>
-          <div id="emailSendError" class="hidden text-[10px] text-red-600 mt-1.5"></div>
-        </div>
-        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
-          <button onclick="openSendOverlay('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Back</button>
-          <button id="emailSendBtn" onclick="sendViaEmail('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
-            ${iconSend()} Send Email
-          </button>
-        </div>
-      `;
-      openModal(modalContent, { width: 'max-w-sm' });
-    }
-
-    function sendViaEmail(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (!inv) return;
-      var emailInput = document.getElementById('f_sendEmail');
-      var errBox = document.getElementById('emailSendError');
-      var email = (emailInput.value || '').trim();
-
-      if (!isValidEmail(email)) {
-        errBox.textContent = 'Please enter a valid email address.';
-        errBox.classList.remove('hidden');
-        emailInput.classList.add('border-red-400');
-        return;
-      }
-      errBox.classList.add('hidden');
-      emailInput.classList.remove('border-red-400');
-
-      var btn = document.getElementById('emailSendBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M22 12a10 10 0 00-10-10"/></svg> Sending…';
-
-      // Backend note: replace this simulated call with the real email-send API
-      // (POST { invoiceId, to: email, pdfUrl }) once available.
-      setTimeout(function() {
-        closeModal();
-        showToast((inv.invoiceType === 'proforma' ? 'Proforma' : 'Invoice') + ' ' + inv.number + ' emailed to ' + email, 'success');
-      }, 1400);
-    }
-
-    function sendViaWhatsapp(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (!inv) return;
-      var customer = customers.find(function(c) { return c.id === inv.customerId; });
-      var isProforma = inv.invoiceType === 'proforma';
-      var docLabel = isProforma ? 'Proforma Invoice' : 'Invoice';
-
-      // Backend note: inv.pdfUrl should be the stored, publicly-downloadable PDF link
-      // returned once the invoice is created/saved on the server.
-      var pdfUrl = inv.pdfUrl || (window.location.origin + '/invoices/' + inv.id + '.pdf');
-
-      var message = docLabel + ' ' + inv.number + ' from ' + company.name + '\n' +
-        'Customer: ' + inv.customerName + '\n' +
-        'Amount: ' + formatCurrency(inv.total, inv.currency) + '\n' +
-        (isProforma ? ('Valid Until: ' + (inv.validUntil || inv.dueDate)) : ('Due Date: ' + inv.dueDate)) + '\n' +
-        'View / Download: ' + pdfUrl;
-
-      var phone = customer && customer.phone ? customer.phone.replace(/[^0-9]/g, '') : '';
-      var waUrl = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(message);
-
-      window.open(waUrl, '_blank');
-      closeModal();
-      showToast('Opening WhatsApp to send ' + inv.number + '…', 'info');
-    }
-
-    function downloadInvoice(id) {
-      var inv = invoices.find(function(x) { return x.id === id; });
-      if (!inv) return;
-
-      // Backend note: once inv.pdfUrl points to a real stored PDF, just do
-      // window.open(inv.pdfUrl, '_blank') instead of this placeholder file.
-      if (inv.pdfUrl) {
-        showToast('Downloading ' + inv.number + '…', 'info');
-        var a = document.createElement('a');
-        a.href = inv.pdfUrl;
-        a.target = '_blank';
-        a.rel = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        return;
-      }
-
-      showToast('Downloading ' + inv.number + '…', 'info');
-      var summary = buildPlainTextSummary(inv);
-      var blob = new Blob([summary], { type: 'text/plain' });
-      var url = URL.createObjectURL(blob);
-      var link = document.createElement('a');
-      link.href = url;
-      link.download = inv.number.replace(/\//g, '-') + '.txt';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
-      setTimeout(function() { showToast(inv.number + ' downloaded (placeholder file — will be a real PDF once the API is wired)', 'success'); }, 400);
-    }
-
-    function buildPlainTextSummary(inv) {
-      var isProforma = inv.invoiceType === 'proforma';
-      var lines = [
-        (isProforma ? 'PROFORMA INVOICE' : 'TAX INVOICE') + ' — ' + inv.number,
-        company.name,
-        company.address,
-        '',
-        'Bill To: ' + inv.customerName,
-        inv.customerAddress || '',
-        '',
-        'Date: ' + inv.date,
-        (isProforma ? 'Valid Until: ' + (inv.validUntil || inv.dueDate) : 'Due Date: ' + inv.dueDate),
-        '',
-        'Items:'
-      ];
-      inv.items.forEach(function(it) {
-        lines.push('  - ' + it.name + '  x' + it.qty + '  @ ' + formatCurrency(it.rate, inv.currency) + '  = ' + formatCurrency(it.qty * it.rate, inv.currency));
-      });
-      lines.push('');
-      lines.push('Grand Total: ' + formatCurrency(inv.total, inv.currency));
-      return lines.join('\n');
-    }
-
-    // =============================================================
-    // CHOOSE TEMPLATE (Invoices only)
-    // =============================================================
-
-    function openChooseTemplate() {
-      var selected = savedTemplateId || invoiceTemplates[0].id;
-      renderChooseTemplate(selected);
-    }
-
-    function renderChooseTemplate(selectedId) {
-      var cardsHtml = invoiceTemplates.map(function(t) {
-        return `
-          <div class="template-card ${t.id === selectedId ? 'selected' : ''}" onclick="renderChooseTemplate('${t.id}')">
-            <div class="template-thumb mb-2">
-              ${templateThumbSvg(t.id)}
-            </div>
-            <div class="text-xs font-semibold text-gray-800">${t.name}</div>
-            <div class="text-[10px] text-gray-500 mt-0.5">${t.description}</div>
-          </div>`;
-      }).join('');
-
-      var previewHtml = templatePreviewHtml(selectedId);
-
-      var modalContent = `
-        <div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <div>
-            <h3 class="modal-title text-gray-900">Choose Invoice Template</h3>
-            <p class="modal-subtitle mt-0.5">Pick a layout, preview it with placeholder data, then save it as your default.</p>
-          </div>
-          <button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-0">
-          <div class="p-4 border-r border-gray-100 space-y-3 modal-scroll" style="max-height:60vh;">
-            ${cardsHtml}
-          </div>
-          <div class="p-4 modal-scroll" style="max-height:60vh;">
-            ${previewHtml}
-          </div>
-        </div>
-        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
-          <div class="text-[10px] text-gray-400">Saved template is used automatically whenever you create a new invoice.</div>
-          <div class="flex gap-2">
-            <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
-            <button onclick="saveTemplateChoice('${selectedId}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
-              ${iconSave()} Save Template
-            </button>
-          </div>
-        </div>
-      `;
-      openModal(modalContent, { width: 'max-w-4xl' });
-    }
-
-    function templateThumbSvg(id) {
-      if (id === 'tpl-modern') {
-        return `<div style="height:70px;" class="flex flex-col gap-1">
-          <div style="height:14px;background:#6da84c;border-radius:3px;"></div>
-          <div style="height:6px;width:60%;background:#e5e7eb;border-radius:2px;"></div>
-          <div style="height:6px;width:80%;background:#e5e7eb;border-radius:2px;"></div>
-          <div style="height:6px;width:40%;background:#e5e7eb;border-radius:2px;"></div>
-        </div>`;
-      }
-      return `<div style="height:70px;" class="flex flex-col gap-1">
-        <div class="flex justify-between"><div style="height:10px;width:30%;background:#d1d5db;border-radius:2px;"></div><div style="height:10px;width:35%;background:#6da84c;border-radius:2px;"></div></div>
-        <div style="height:6px;width:100%;background:#e5e7eb;border-radius:2px;margin-top:6px;"></div>
-        <div style="height:6px;width:90%;background:#e5e7eb;border-radius:2px;"></div>
-        <div style="height:6px;width:70%;background:#e5e7eb;border-radius:2px;"></div>
-      </div>`;
-    }
-
-    function templatePreviewHtml(id) {
-      // Dummy placeholder data for preview purposes only
-      var dummy = {
-        company: 'Kunash Media Pvt. Ltd.',
-        number: 'INV/25-26/00X',
-        date: '2026-01-01',
-        due: '2026-01-15',
-        customer: 'Sample Customer Pvt. Ltd.',
-        items: [
-          { name: 'Sample Product / Service', qty: 2, rate: 10000, amount: 20000 },
-          { name: 'Sample Add-on Service', qty: 1, rate: 5000, amount: 5000 },
-        ],
-        total: 29500
-      };
-
-      if (id === 'tpl-modern') {
-        return `
-          <div class="border border-gray-200 rounded-lg overflow-hidden" style="max-width:480px;margin:0 auto;">
-            <div style="background:#6da84c;" class="text-white px-4 py-3">
-              <div class="text-[10px] uppercase tracking-wide opacity-80">Invoice</div>
-              <div class="text-sm font-bold">${dummy.number}</div>
-            </div>
-            <div class="p-3 text-[11px] text-gray-600">
-              <div class="flex justify-between mb-2">
-                <div><div class="font-semibold text-gray-800">${dummy.company}</div><div>${dummy.date}</div></div>
-                <div class="text-right"><div class="font-semibold text-gray-800">${dummy.customer}</div><div>Due ${dummy.due}</div></div>
-              </div>
-              <table class="w-full text-[10px] mt-2">
-                <thead><tr class="text-gray-400"><th class="text-left py-1">Item</th><th class="text-center">Qty</th><th class="text-right">Amount</th></tr></thead>
-                <tbody>
-                  ${dummy.items.map(function(it){ return '<tr><td class="py-1">'+it.name+'</td><td class="text-center">'+it.qty+'</td><td class="text-right">₹'+it.amount.toLocaleString('en-IN')+'</td></tr>'; }).join('')}
-                </tbody>
-              </table>
-              <div class="text-right font-bold text-primary mt-2 text-xs">Total: ₹${dummy.total.toLocaleString('en-IN')}</div>
-            </div>
-          </div>
-          <p class="text-[10px] text-gray-400 text-center mt-2">Placeholder preview — actual values populate once wired to real data.</p>
-        `;
-      }
-
-      return `
-        <div class="invoice-preview" style="max-width:480px;padding:16px 18px;">
-          <div class="invoice-header" style="padding-bottom:10px;margin-bottom:10px;">
-            <div class="w-16 h-12 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[9px] border border-gray-200">Logo</div>
-            <div class="invoice-company">
-              <div class="invoice-company-name" style="font-size:13px;">${dummy.company}</div>
-              <div class="invoice-company-details" style="font-size:9px;">Sample Address, City</div>
-            </div>
-          </div>
-          <div class="text-center mb-2"><span class="invoice-title" style="font-size:14px;">TAX INVOICE</span></div>
-          <div class="invoice-meta" style="font-size:9px;gap:6px;margin-bottom:8px;">
-            <div><div class="meta-label" style="font-size:8px;">Bill To</div><div class="meta-value">${dummy.customer}</div></div>
-            <div style="text-align:right;"><div>Invoice # ${dummy.number}</div><div>Date ${dummy.date}</div></div>
-          </div>
-          <table class="invoice-table" style="font-size:9px;">
-            <thead><tr><th>Item</th><th class="text-center">Qty</th><th class="text-right">Amount</th></tr></thead>
-            <tbody>
-              ${dummy.items.map(function(it){ return '<tr><td>'+it.name+'</td><td class="text-center">'+it.qty+'</td><td class="text-right">₹'+it.amount.toLocaleString('en-IN')+'</td></tr>'; }).join('')}
-            </tbody>
+  openModal(`
+    ${modalHeader(isEdit ? (isPro ? 'Edit Proforma Invoice' : 'Edit Invoice') : (isPro ? 'Proforma Invoice' : 'New Invoice'), isEdit ? escH(e.number) : (isPro ? 'Create a proforma / quotation for customer' : 'Create a tax invoice for customer'))}
+    <div class="px-5 py-4 modal-scroll">
+      ${!isPro ? `<div class="flex items-center justify-between mb-3 p-2.5 bg-gray-50 rounded-lg border border-gray-300 text-[10px] text-gray-500">
+        <span>Template: <span class="font-semibold text-gray-700">${tplName}</span></span>
+        <button type="button" onclick="closeModal();openChooseTemplate();" class="text-primary font-semibold hover:underline">Change</button></div>` : ''}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        ${fld(isPro ? 'Proforma #' : 'Invoice #', '<input type="text" class="form-input" id="f_number" value="' + escH(e.number) + '" disabled>')}
+        ${fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">')}
+        ${fld('Customer *', '<select id="f_customer" class="form-input" onchange="updateCustomerDetails()">' + customers.map(function (c) { return '<option ' + (String(c.id) === String(e.customerId) ? 'selected' : '') + ' value="' + c.id + '">' + escH(c.name) + ' (' + escH(c.country) + ')</option>'; }).join('') + '</select>')}
+        ${fld(isPro ? 'Valid Until *' : 'Due Date *', '<input type="date" class="form-input" id="f_dueDate" value="' + (isPro ? (e.validUntil || e.dueDate) : e.dueDate) + '">')}
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+        ${fld('Currency', '<select id="f_currency" class="form-input" onchange="updateCurrency()">' + Object.keys(currencyMeta).map(function (c) { return '<option ' + (c === e.currency ? 'selected' : '') + ' value="' + c + '">' + currencyMeta[c].label + ' — ' + c + ' (' + currencyMeta[c].symbol + ')</option>'; }).join('') + '</select>', "Auto-set from customer's country; override if needed")}
+        ${fld('Exchange Rate', '<input type="number" class="form-input" id="f_exchangeRate" value="' + e.exchangeRate + '" step="0.01" onchange="calcInvoiceTotal()">')}
+        ${fld('INR Equivalent', '<input type="text" class="form-input" id="f_inrEquivalent" value="' + (e.totalINR ? money(e.totalINR, 'INR') : '₹0') + '" disabled style="background:#f3f4f6;">')}
+        ${fld('Place of Supply', '<input type="text" class="form-input" id="f_placeSupply" value="' + escH(e.placeOfSupply || (firstCust ? (firstCust.state || firstCust.country || '') : '')) + '">')}
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+        ${fld('Project Code', '<button type="button" id="f_projectBtn" class="form-input text-left" data-code="' + escH(e.projectCode || '') + '" onclick="pickProject(this)">' + (e.projectCode ? escH(e.projectCode) : 'Select project…') + '</button>')}
+        ${fld('Reference No', '<input class="form-input" id="f_refNo" value="' + escH(e.refNo || '') + '">')}
+        <div class="col-span-2">${fld('Ship To', '<textarea rows="2" class="form-input" id="f_shipTo">' + escH(e.shipTo || (firstCust ? firstCust.shipAddress : '')) + '</textarea>')}</div>
+      </div>
+      <div class="mt-3">
+        <div class="flex items-center justify-between mb-1.5"><label class="form-label mb-0">Line Items</label>
+          <button onclick="addLineItem()" class="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1">${iconPlus()} Add Item</button></div>
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <table class="w-full text-xs" id="lineItemsTable">
+            <thead class="bg-gray-50"><tr>
+              <th class="px-2 py-1.5 text-left font-semibold text-gray-600">Item</th><th class="px-2 py-1.5 text-left font-semibold text-gray-600">HSN</th>
+              <th class="px-2 py-1.5 text-center font-semibold text-gray-600">Qty</th><th class="px-2 py-1.5 text-center font-semibold text-gray-600">Rate</th>
+              <th class="px-2 py-1.5 text-center font-semibold text-gray-600">GST %</th><th class="px-2 py-1.5" style="width:36px;"></th></tr></thead>
+            <tbody id="lineItemsBody">${lineItemsHtml}</tbody>
           </table>
-          <div class="invoice-totals" style="font-size:10px;margin-top:6px;padding-top:6px;">
-            <div class="grand-total total-row" style="font-size:12px;"><span class="label">Total</span><span class="value">₹${dummy.total.toLocaleString('en-IN')}</span></div>
-          </div>
         </div>
-        <p class="text-[10px] text-gray-400 text-center mt-2">Placeholder preview — actual values populate once wired to real data.</p>
-      `;
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+        ${fld('Discount (%)', '<input type="number" class="form-input" id="f_discount" value="' + (e.discount || 0) + '" placeholder="0" onchange="calcInvoiceTotal()">')}
+        ${fld('Tax Rate (%)', '<select class="form-input" id="f_tax" onchange="calcInvoiceTotal()">' + [0, 5, 12, 18, 28].map(function (n) { return '<option ' + (e.tax == n ? 'selected' : '') + '>' + n + '</option>'; }).join('') + '</select>')}
+        ${fld('Shipping', '<input type="number" class="form-input" id="f_shipping" value="' + (e.shipping || 0) + '" placeholder="0" onchange="calcInvoiceTotal()">')}
+        ${fld('Other Charges', '<input type="number" class="form-input" id="f_otherCharges" value="' + (e.otherCharges || 0) + '" placeholder="0" onchange="calcInvoiceTotal()">')}
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        ${fld('Status', '<select class="form-input" id="f_status">' + statusOptions[type].map(function (s) { return '<option ' + (e.status === s.v ? 'selected' : '') + ' value="' + s.v + '">' + s.l + '</option>'; }).join('') + '</select>')}
+        ${fld('Total Amount', '<input type="text" class="form-input" id="f_total" value="' + (e.total ? formatCurrency(e.total, e.currency) : '0') + '" disabled style="font-weight:bold;color:#6da84c;">')}
+      </div>
+      ${fld('Terms & Conditions / Payment Terms', '<textarea rows="2" class="form-input" id="f_terms" placeholder="e.g. 50% upon first submission">' + escH(e.terms || '') + '</textarea>')}
+    </div>
+    ${modalFooter(isEdit ? 'Update ' + (isPro ? 'Proforma' : 'Invoice') : 'Save ' + (isPro ? 'Proforma' : 'Invoice'), 'onclick="saveInvoice(\'' + (isEdit ? e.id : '') + '\', \'' + type + '\')"')}
+  `, { width: 'max-w-4xl' });
+  setTimeout(calcInvoiceTotal, 100);
+}
+
+function updateCustomerDetails() {
+  var c = selCustomer(); if (!c) return;
+  document.getElementById('f_placeSupply').value = c.state || c.country || '';
+  document.getElementById('f_shipTo').value = c.shipAddress || '';
+  document.getElementById('f_currency').value = currencyForCountry(c.country);
+  updateCurrency();
+}
+function updateCurrency() {
+  document.getElementById('f_exchangeRate').value = getCurrencyRate(document.getElementById('f_currency').value);
+  calcInvoiceTotal();
+}
+function calcInvoiceTotal() {
+  var sub = 0;
+  document.querySelectorAll('#lineItemsBody .line-item-row').forEach(function (r) {
+    sub += (parseFloat(r.querySelector('.item-qty').value) || 0) * (parseFloat(r.querySelector('.item-rate').value) || 0);
+  });
+  var g = function (i) { return parseFloat(document.getElementById(i).value) || 0; };
+  var after = sub - sub * (g('f_discount') / 100);
+  var total = after + after * (g('f_tax') / 100) + g('f_shipping') + g('f_otherCharges');
+  var cur = document.getElementById('f_currency').value;
+  document.getElementById('f_total').value = formatCurrency(total, cur);
+  document.getElementById('f_inrEquivalent').value = money(total * (g('f_exchangeRate') || 1), 'INR');
+  return total;
+}
+
+// ============================================================= SAVE (create -> real number -> PDF -> upload)
+async function uploadPdf(isPro, id, row, tpl) {
+  var blob = await generateInvoicePdfBlob(row, tpl), f = new FormData();
+  f.append('file', blob, 'document.pdf');
+  await apiFetch((isPro ? '/api/v1/proformas/' : '/api/v1/invoices/') + id + '/upload-pdf', { method: 'POST', body: f });
+}
+async function saveInvoice(existingId, type) {
+  var isPro = type === 'proforma', P = isPro ? 'proforma' : 'invoice', g = function (i) { return document.getElementById(i).value; };
+  var date = g('f_date'), due = g('f_dueDate'), cust = selCustomer(), cur = g('f_currency'), rate = parseFloat(g('f_exchangeRate')) || 1;
+  var disc = parseFloat(g('f_discount')) || 0, tax = parseFloat(g('f_tax')) || 0, ship = parseFloat(g('f_shipping')) || 0, oth = parseFloat(g('f_otherCharges')) || 0;
+  if (!date || !due || !cust) { showToast('Please fill Date, Customer and ' + (isPro ? 'Valid Until' : 'Due Date'), 'error'); return; }
+  var its = [];
+  document.querySelectorAll('#lineItemsBody .line-item-row').forEach(function (r) {
+    var q = parseFloat(r.querySelector('.item-qty').value) || 0, rt = parseFloat(r.querySelector('.item-rate').value) || 0;
+    if (q > 0 && rt > 0 && r.dataset.name) its.push({
+      itemId: r.dataset.pid ? Number(r.dataset.pid) : null, variantId: r.dataset.vid ? Number(r.dataset.vid) : null, name: r.dataset.name,
+      hsn: r.querySelector('.item-hsn').value, qty: q, rate: rt, gst: parseFloat(r.querySelector('.item-gst').value) || 0,
+      unit: r.dataset.unit, note: r.querySelector('.item-note').value.trim()
+    });
+  });
+  if (!its.length) { showToast('Please add at least one item', 'error'); return; }
+  var sub = its.reduce(function (s, i) { return s + i.qty * i.rate; }, 0), after = sub - sub * disc / 100;
+  var total = after + after * tax / 100 + ship + oth, totalINR = total * rate;
+  var proj = document.getElementById('f_projectBtn').dataset.code || '', ref = g('f_refNo'), shipTo = g('f_shipTo'), pos = g('f_placeSupply') || cust.state || '', terms = g('f_terms');
+  var tpl = isPro ? null : (savedTemplateId || 'tpl-classic');
+
+  var f = { Date: date, CustomerId: isNaN(Number(cust.id)) ? cust.id : Number(cust.id), CustomerName: cust.name, CustomerGst: cust.gst, CustomerEmail: cust.email,
+    CustomerState: cust.state, CustomerStateCode: cust.stateCode, CustomerAddress: cust.address, ShippingAddress: shipTo, Currency: cur, ExchangeRate: rate,
+    DiscountPercent: disc, TaxPercent: tax, ShippingCharges: ship, OtherCharges: oth, Status: g('f_status'), PlaceOfSupply: pos, Terms: terms,
+    ReferenceNumber: ref, ProjectCode: proj };
+  f[isPro ? 'ValidUntil' : 'DueDate'] = due;
+  var dto = {}; Object.keys(f).forEach(function (k) { dto[P + k] = f[k]; });
+  dto[P + 'Items'] = its.map(function (i) {
+    var o = {}; o[P + 'ItemProductId'] = i.itemId; o[P + 'ItemVariantId'] = i.variantId; o[P + 'ItemName'] = i.name; o[P + 'ItemHsnCode'] = i.hsn;
+    o[P + 'ItemQty'] = i.qty; o[P + 'ItemRate'] = i.rate; o[P + 'ItemGstPercent'] = i.gst; o[P + 'ItemUnit'] = i.unit; o[P + 'ItemDescription'] = i.note; return o;
+  });
+  if (!isPro) dto.invoiceTemplateId = tpl;
+
+  var btn = document.getElementById('modalSaveBtn'), orig = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = SPINNER + ' Saving…'; }
+  try {
+    var id = existingId, number;
+    if (existingId) {
+      var ex = invoices.find(function (x) { return String(x.id) === String(existingId); });
+      number = ex ? ex.number : '';
+      await apiFetch(isPro ? '/api/v1/proformas/update/' + existingId : '/api/v1/invoices/update/' + existingId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dto) });
+    } else {
+      var fd2 = new FormData();
+      fd2.append(isPro ? 'proforma' : 'invoice', new Blob([JSON.stringify(dto)], { type: 'application/json' }));
+      var res = await apiFetch(isPro ? '/api/v1/proformas' : '/api/v1/invoices/create', { method: 'POST', body: fd2 });
+      id = isPro ? res.proformaPrimeId : res.invoicePrimeId; number = isPro ? res.proformaStrId : res.invoiceStrId;
     }
+    var row = { invoiceType: type, number: number, date: date, dueDate: due, validUntil: due, customerName: cust.name, customerGST: cust.gst, customerState: cust.state,
+      customerStateCode: cust.stateCode, customerAddress: cust.address, shipTo: shipTo, projectCode: proj, refNo: ref, currency: cur, exchangeRate: rate, items: its,
+      discount: disc, tax: tax, shipping: ship, otherCharges: oth, total: total, totalINR: totalINR, placeOfSupply: pos, terms: terms };
+    try { await uploadPdf(isPro, id, row, tpl); showToast((isPro ? 'Proforma' : 'Invoice') + ' saved', 'success'); }
+    catch (e) { showToast('Saved, but PDF upload failed: ' + (e.message || ''), 'warning'); }
+    closeModal(); currentPage = 1; renderInvoices();
+  } catch (err) {
+    showToast(err.message || 'Could not save — please try again', 'error');
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+  }
+}
 
-    function saveTemplateChoice(id) {
-      savedTemplateId = id;
-      closeModal();
-      var t = invoiceTemplates.find(function(x) { return x.id === id; });
-      showToast('"' + (t ? t.name : id) + '" saved as your default invoice template', 'success');
-    }
+function delInvoice(id) {
+  var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (!inv) return;
+  var pro = inv.invoiceType === 'proforma';
+  openModal(`${modalHeader('Delete ' + (pro ? 'Proforma Invoice' : 'Invoice'), escH(inv.number))}
+    <div class="px-5 py-4 text-sm text-gray-600">
+      <p>Are you sure you want to permanently delete <b class="text-gray-800">${escH(inv.number)}</b>?</p>
+      <p class="text-gray-400 text-[11px] mt-1">This action cannot be undone. All associated data will be removed.</p>
+      <p class="text-amber-600 text-[11px] mt-2">Total Value: ${fm(inv.total, inv.currency)}</p></div>
+    ${modalFooter('Delete', 'onclick="confirmDeleteInvoice(\'' + id + '\')"', '')}`, { width: 'max-w-md' });
+}
+async function confirmDeleteInvoice(id) {
+  var inv = invoices.find(function (x) { return String(x.id) === String(id); }), pro = inv && inv.invoiceType === 'proforma';
+  try {
+    await apiFetch(pro ? '/api/v1/proformas/delete/' + id : '/api/v1/invoices/delete/' + id, { method: 'DELETE' });
+    closeModal(); renderInvoices(); showToast('Deleted successfully', 'warning');
+  } catch (err) { showToast(err.message || 'Could not delete this record', 'error'); }
+}
 
-    // =============================================================
-    // SEARCH
-    // =============================================================
+// ============================================================= SEND / DOWNLOAD
+function openSendOverlay(id) {
+  var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (!inv) return;
+  var pro = inv.invoiceType === 'proforma';
+  openModal(`${modalHeader('Send ' + (pro ? 'Proforma Invoice' : 'Invoice'), escH(inv.number))}
+    <div class="px-5 py-5"><p class="text-xs text-gray-500 mb-4">Choose how you'd like to send this ${pro ? 'proforma invoice' : 'invoice'} to <b class="text-gray-700">${escH(inv.customerName)}</b>.</p>
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="openSendEmail('${id}')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary-soft transition">
+          <svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span class="text-xs font-semibold text-gray-700">Email</span></button>
+        <button onclick="sendViaWhatsapp('${id}')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary-soft transition">
+          <svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.02c-.25.68-1.44 1.31-1.98 1.35-.5.05-1.14.07-1.84-.12-.42-.11-.96-.31-1.66-.6-2.92-1.26-4.82-4.2-4.97-4.4-.15-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.65.5.24.58.83 2 .9 2.15.07.15.12.32.02.52-.1.2-.15.32-.29.49-.15.17-.31.38-.44.51-.15.15-.3.31-.13.61.17.3.75 1.24 1.61 2 1.11.99 2.04 1.3 2.34 1.45.3.15.48.12.65-.07.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.35.07.13.07.75-.18 1.43z"/></svg><span class="text-xs font-semibold text-gray-700">WhatsApp</span></button>
+      </div></div>`, { width: 'max-w-sm' });
+}
+function isValidEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+function openSendEmail(id) {
+  var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (!inv) return;
+  var cu = customers.find(function (c) { return String(c.id) === String(inv.customerId); });
+  var pre = inv.customerEmail || (cu && cu.email) || '', pro = inv.invoiceType === 'proforma';
+  openModal(`${modalHeader('Send via Email', escH(inv.number))}
+    <div class="px-5 py-4">
+      ${fld('Recipient Email *', '<input type="email" class="form-input" id="f_sendEmail" value="' + escH(pre) + '" placeholder="customer@example.com">', 'Pre-filled from the customer record — edit if needed')}
+      <div class="mt-2 text-[10px] text-gray-400 p-2.5 bg-gray-50 rounded-lg border border-gray-100">Subject: ${pro ? 'Proforma Invoice' : 'Invoice'} ${escH(inv.number)} from ${escH(company.name)}<br>Attachment: stored PDF link</div>
+      <div id="emailSendError" class="hidden text-[10px] text-red-600 mt-1.5"></div></div>
+    <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+      <button onclick="openSendOverlay('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Back</button>
+      <button id="emailSendBtn" onclick="sendViaEmail('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">${iconSend()} Send Email</button></div>`, { width: 'max-w-sm' });
+}
+// Shadow email API: POST { toEmail, clientPrimeId, pdfUrl }
+async function sendViaEmail(id) {
+  var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (!inv) return;
+  var pro = inv.invoiceType === 'proforma', inp = document.getElementById('f_sendEmail'), err = document.getElementById('emailSendError'), email = (inp.value || '').trim();
+  if (!isValidEmail(email)) { err.textContent = 'Please enter a valid email address.'; err.classList.remove('hidden'); inp.classList.add('border-red-400'); return; }
+  if (!inv.pdfUrl) { showToast('No PDF stored for this document yet.', 'error'); return; }
+  err.classList.add('hidden'); inp.classList.remove('border-red-400');
+  var btn = document.getElementById('emailSendBtn'); btn.disabled = true; btn.innerHTML = SPINNER + ' Sending…';
+  try {
+    await apiFetch(pro ? '/api/v1/emails/send-proforma' : '/api/v1/emails/send-invoice', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toEmail: email, clientPrimeId: Number(inv.customerId), pdfUrl: API_BASE + inv.pdfUrl })
+    });
+    if (!pro) { try { await apiFetch('/api/v1/invoices/patch/' + inv.id + '/mark-sent', { method: 'PATCH' }); } catch (e) { console.warn('mark-sent failed', e); } }
+    closeModal(); showToast((pro ? 'Proforma' : 'Invoice') + ' ' + inv.number + ' emailed to ' + email, 'success'); renderInvoices();
+  } catch (e) { btn.disabled = false; btn.innerHTML = iconSend() + ' Send Email'; showToast(e.message || 'Could not send the email', 'error'); }
+}
+function sendViaWhatsapp(id) {
+  var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (!inv) return;
+  var pro = inv.invoiceType === 'proforma', label = pro ? 'Proforma Invoice' : 'Invoice';
+  if (!inv.pdfUrl) { showToast('No PDF has been generated for this ' + (pro ? 'proforma' : 'invoice') + ' yet.', 'error'); return; }
+  var msg = label + ' ' + inv.number + ' from ' + company.name + '\nCustomer: ' + inv.customerName + '\nAmount: ' + fm(inv.total, inv.currency) + '\n' +
+    (pro ? 'Valid Until: ' + fd(inv.validUntil || inv.dueDate) : 'Due Date: ' + fd(inv.dueDate)) + '\nView / Download: ' + API_BASE + inv.pdfUrl;
+  var cu = customers.find(function (c) { return String(c.id) === String(inv.customerId); });
+  var phone = cu && cu.phone ? String(cu.phone).replace(/[^0-9]/g, '') : '';
+  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+  closeModal(); showToast('Opening WhatsApp to send ' + inv.number + '…', 'info');
+}
+function downloadInvoice(id) {
+  var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (!inv) return;
+  if (!inv.pdfUrl) { showToast('No PDF has been generated for ' + inv.number + ' yet.', 'error'); return; }
+  showToast('Opening ' + inv.number + '…', 'info');
+  window.open(API_BASE + inv.pdfUrl, '_blank');
+}
 
-    (function addSearchToTopbar() {
-      var searchContainer = document.querySelector('.app-main header');
-      if (searchContainer) {
-        var searchHtml = `
-          <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
-            <input type="text" id="searchInput" placeholder="Search invoices by number, customer…"
-              onkeyup="filterInvoices()"
-              class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
-          </div>
-        `;
-        var headerContent = searchContainer.innerHTML;
-        var hamburgerIndex = headerContent.indexOf('lg:hidden');
-        if (hamburgerIndex !== -1) {
-          var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
-          var before = headerContent.substring(0, firstDivEnd);
-          var after = headerContent.substring(firstDivEnd);
-          searchContainer.innerHTML = before + searchHtml + after;
-        }
-      }
-    })();
+// ============================================================= CHOOSE TEMPLATE
+function openChooseTemplate() { renderChooseTemplate(savedTemplateId || invoiceTemplates[0].id); }
+function renderChooseTemplate(selectedId) {
+  var cards = invoiceTemplates.map(function (t) {
+    return `<div class="template-card ${t.id === selectedId ? 'selected' : ''}" onclick="renderChooseTemplate('${t.id}')">
+      <div class="template-thumb mb-2">${templateThumbSvg(t.id)}</div>
+      <div class="text-xs font-semibold text-gray-800">${t.name}</div><div class="text-[10px] text-gray-500 mt-0.5">${t.description}</div></div>`;
+  }).join('');
+  openModal(`<div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">
+      <div><h3 class="modal-title text-gray-900">Choose Invoice Template</h3><p class="modal-subtitle mt-0.5">Pick a layout, preview it, then save it as your default.</p></div>
+      <button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button></div>
+    <div class="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-0">
+      <div class="p-4 border-r border-gray-100 space-y-3 modal-scroll" style="max-height:60vh;">${cards}</div>
+      <div class="p-4 modal-scroll" style="max-height:60vh;">${templatePreviewHtml(selectedId)}</div></div>
+    <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
+      <div class="text-[10px] text-gray-400">Saved template is used automatically whenever you create a new invoice.</div>
+      <div class="flex gap-2"><button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+      <button onclick="saveTemplateChoice('${selectedId}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">${iconSave()} Save Template</button></div></div>`, { width: 'max-w-4xl' });
+}
+function templateThumbSvg(id) {
+  if (id === 'tpl-modern') return `<div style="height:70px;" class="flex flex-col gap-1"><div style="height:14px;background:#0d6e5b;border-radius:3px;"></div><div style="height:6px;width:60%;background:#e5e7eb;border-radius:2px;"></div><div style="height:6px;width:80%;background:#e5e7eb;border-radius:2px;"></div><div style="height:6px;width:40%;background:#e6f4f1;border-radius:2px;"></div></div>`;
+  return `<div style="height:70px;" class="flex flex-col gap-1"><div class="flex justify-between"><div style="height:10px;width:30%;background:#d1d5db;border-radius:2px;"></div><div style="height:10px;width:35%;background:#6da84c;border-radius:2px;"></div></div><div style="height:6px;width:100%;background:#e5e7eb;border-radius:2px;margin-top:6px;"></div><div style="height:6px;width:90%;background:#e5e7eb;border-radius:2px;"></div><div style="height:6px;width:70%;background:#e5e7eb;border-radius:2px;"></div></div>`;
+}
+function templatePreviewHtml(id) {
+  var sample = { company: company.name, number: 'INV/XX', date: new Date().toISOString().split('T')[0], customer: 'Sample Customer',
+    items: [{ name: 'Sample Product / Service', qty: 2, rate: 10000 }, { name: 'Sample Add-on Service', qty: 1, rate: 5000 }] };
+  var inv = { invoiceType: 'invoice', number: sample.number, date: sample.date, dueDate: sample.date, customerName: sample.customer, customerAddress: 'Sample address', customerGST: '', customerState: company.state,
+    customerStateCode: company.stateCode, currency: 'INR', exchangeRate: 1, items: sample.items.map(function (i) { return { name: i.name, qty: i.qty, rate: i.rate, hsn: '0000', unit: 'Pcs' }; }),
+    discount: 0, tax: 18, shipping: 0, otherCharges: 0, total: 29500, totalINR: 29500, terms: 'Payment terms sample' };
+  return '<div style="transform:scale(.62);transform-origin:top left;width:820px;">' + buildDocumentInnerHtml(inv, id) + '</div>' +
+    '<p class="text-[10px] text-gray-400 text-center mt-2" style="margin-top:-250px">Preview uses sample data.</p>';
+}
+function saveTemplateChoice(id) {
+  savedTemplateId = id; closeModal();
+  var t = invoiceTemplates.find(function (x) { return x.id === id; });
+  showToast('"' + (t ? t.name : id) + '" saved as your default invoice template', 'success');
+}
 
-    // =============================================================
-    // INIT
-    // =============================================================
+// ============================================================= SEARCH (topbar) + INIT
+(function addSearchToTopbar() {
+  var header = document.querySelector('.app-main header');
+  if (!header) return;
+  var searchHtml = `<div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
+    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+    <input type="text" id="searchInput" placeholder="Search invoices by number, customer…" onkeyup="filterInvoices()"
+      class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400"></div>`;
+  var html = header.innerHTML, i = html.indexOf('lg:hidden');
+  if (i !== -1) { var end = html.indexOf('</div>', i) + 6; header.innerHTML = html.substring(0, end) + searchHtml + html.substring(end); }
+})();
 
-    buildStatusFilterOptions();
-    renderInvoices();
-
+(async function init() {
+  buildStatusFilterOptions();
+  await loadCustomers();
+  renderInvoices();
+})();
   </script>
 
 </body>

@@ -1,383 +1,505 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
-<link rel="manifest" href="/favicon_io/site.webmanifest">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<title>Vendors / Suppliers — Aquilon ERP</title>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+  <link rel="manifest" href="/favicon_io/site.webmanifest">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <title>Vendors / Suppliers — Aquilon ERP</title>
 
-<!-- ANTI-FLICKER SCRIPT -->
-<script>
-  (function () {
-    try {
-      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
-      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
-    } catch (e) {
-      document.documentElement.classList.add("sidebar-expanded");
-    }
-  })();
-</script>
+  <!-- ANTI-FLICKER SCRIPT -->
+  <script>
+    (function () {
+      try {
+        var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+        document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+      } catch (e) {
+        document.documentElement.classList.add("sidebar-expanded");
+      }
+    })();
+  </script>
 
-<!-- Tailwind -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
-          secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
+            secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+          },
         },
       },
-    },
-  };
-</script>
+    };
+  </script>
 
-<!-- Shell styling -->
-<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+  <!-- Shell styling -->
+  <link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
 
-<!-- Page-specific styles -->
-<style>
-  /* Form styles */
-  .form-input {
-    width: 100%;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    background: #fafafa;
-    color: #1a1a2e;
-  }
-  .form-input:focus {
-    border-color: #6da84c;
-    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.15);
-    background: #ffffff;
-  }
-  .form-input:disabled {
-    background: #f3f4f6;
-    cursor: not-allowed;
-  }
-  .form-label {
-    font-size: 11.5px;
-    font-weight: 600;
-    color: #374151;
-    display: block;
-    margin-bottom: 4px;
-  }
-  .form-label .required { color: #ef4444; margin-left: 2px; }
-  .form-hint { font-size: 10.5px; color: #9ca3af; margin-top: 3px; }
+  <!-- Page-specific styles -->
+  <style>
+    /* Form styles */
+    .form-input {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fafafa;
+      color: #1a1a2e;
+    }
 
-  /* Badge */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-  }
-  .badge-green { background: #dcfce7; color: #166534; }
-  .badge-amber { background: #fef3c7; color: #92400e; }
-  .badge-red { background: #fee2e2; color: #991b1b; }
-  .badge-gray { background: #f1f5f9; color: #475569; }
-  .badge-blue { background: #dbeafe; color: #1e40af; }
-  .badge-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-  .badge-dot-green { background: #22c55e; }
-  .badge-dot-amber { background: #f59e0b; }
-  .badge-dot-red { background: #ef4444; }
-  .badge-dot-gray { background: #94a3b8; }
-  .badge-dot-blue { background: #3b82f6; }
+    .form-input:focus {
+      border-color: #6da84c;
+      box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.15);
+      background: #ffffff;
+    }
 
-  /* Stats card */
-   /* Stats card */
-  .stat-card {
-    border-color: #6da84c !important;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  }
+    .form-input:disabled {
+      background: #f3f4f6;
+      cursor: not-allowed;
+    }
 
-  /* Tables — bordered per design update */
-  .overflow-x-auto table {
-    border-radius: 8px;
-  }
-  .overflow-x-auto table thead tr {
-    border-bottom: 1px solid #6da84c;
-  }
+    .form-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #374151;
+      display: block;
+      margin-bottom: 4px;
+    }
 
-  /* Table row hover */
-  .table-row-hover:hover {
-    background: #f8fafc;
-  }
+    .form-label .required {
+      color: #ef4444;
+      margin-left: 2px;
+    }
 
-  /* Modal tabs */
-   .modal-tab-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-    padding: 8px 14px;
-    font-size: 12px;
-    font-weight: 500;
-    border-bottom: 2px solid transparent;
-    color: #6b7280;
-    cursor: pointer;
-    background: transparent;
-  }
+    .form-hint {
+      font-size: 10.5px;
+      color: #9ca3af;
+      margin-top: 3px;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .badge-green {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-amber {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-red {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-gray {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .badge-blue {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .badge-dot-green {
+      background: #22c55e;
+    }
+
+    .badge-dot-amber {
+      background: #f59e0b;
+    }
+
+    .badge-dot-red {
+      background: #ef4444;
+    }
+
+    .badge-dot-gray {
+      background: #94a3b8;
+    }
+
+    .badge-dot-blue {
+      background: #3b82f6;
+    }
+
+    /* Stats card */
+    /* Stats card */
+    .stat-card {
+      border: 1px solid #7dc057;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      height: 70px;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .stat-icon-wrap {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #6da84c;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    /* Table row hover */
+    .table-row-hover:hover {
+      background: #f8fafc;
+    }
+
+    /* Modal tabs */
+    .modal-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      border-bottom: 2px solid transparent;
+      color: #6b7280;
+      cursor: pointer;
+      background: transparent;
+    }
 
 
-  .modal-tab-btn.active {
-    color: #6da84c;
-    border-bottom-color: #6da84c;
-  }
-  .modal-tab-btn:hover:not(.active) {
-    color: #1f2937;
-    border-bottom-color: #d1d5db;
-  }
-  .modal-tab-panel { display: none; }
-  .modal-tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
+    .modal-tab-btn.active {
+      color: #6da84c;
+      border-bottom-color: #6da84c;
+    }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.96) translateY(6px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-  }
-  .animate-modal { animation: modalIn 0.18s ease; }
+    .modal-tab-btn:hover:not(.active) {
+      color: #1f2937;
+      border-bottom-color: #d1d5db;
+    }
 
-  /* Action buttons */
-  .btn-icon-action {
-    transition: all 0.15s ease;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #94a3b8;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-  }
-  .btn-icon-action:hover {
-    background: #f1f5f9;
-    color: #6da84c;
-  }
-  .btn-icon-action.danger:hover {
-    background: #fee2e2;
-    color: #ef4444;
-  }
+    .modal-tab-panel {
+      display: none;
+    }
 
-  /* Toast */
-  .toast {
-    animation: fadeIn 0.2s ease;
-  }
-  .toast-success { background: #16a34a; }
-  .toast-error { background: #dc2626; }
-  .toast-warning { background: #f59e0b; }
-  .toast-info { background: #6da84c; }
+    .modal-tab-panel.active {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
 
-  /* Scrollbar for modal */
-  .modal-scroll {
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-  .modal-scroll::-webkit-scrollbar {
-    width: 4px;
-  }
-  .modal-scroll::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 4px;
-  }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
 
-  /* Empty state */
-  .empty-icon-svg {
-    opacity: 0.2;
-    width: 48px;
-    height: 48px;
-    color: #94a3b8;
-  }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-  /* Vendor logo placeholder */
-  .vendor-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 14px;
-    color: #fff;
-    flex-shrink: 0;
-  }
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.96) translateY(6px);
+      }
 
-  /* ---------------- MANAGE VENDOR CATEGORIES OVERLAY (new) ---------------- */
-  .cat-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border: 1px solid #f1f5f9;
-    border-radius: 10px;
-    margin-bottom: 8px;
-    transition: background .15s ease;
-  }
-  .cat-row:hover { background: #fafbfc; }
-  .cat-color-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 5px;
-    flex-shrink: 0;
-    border: 1px solid rgba(0,0,0,0.08);
-  }
-  .cat-swatch {
-    width: 24px;
-    height: 24px;
-    border-radius: 7px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    display: inline-flex;
-    transition: all .15s ease;
-  }
-  .cat-swatch.selected {
-    border-color: #1a1a2e;
-    transform: scale(1.1);
-  }
-  .cat-add-form {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height .25s ease;
-  }
-  .cat-add-form.open { max-height: 420px; }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
 
-  /* ---------------- BREADCRUMB-STYLE STEP TABS (Basic/Tax/Banking/Payment) ---------------- */
-  .step-tabs-wrap {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-bottom: 16px;
-  }
-  .step-tab {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 12px;
-    border-radius: 8px;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: #9ca3af;
-    background: #f8fafc;
-    cursor: pointer;
-    transition: all .18s ease;
-    white-space: nowrap;
-  }
-  .step-tab .step-num {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #e5e7eb;
-    color: #6b7280;
-    font-size: 10px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .step-tab.active {
-    background: #eef5e8;
-    color: #1a1a2e;
-  }
-  .step-tab.active .step-num {
-    background: #6da84c;
-    color: #fff;
-  }
-  .step-tab.done .step-num {
-    background: #6da84c;
-    color: #fff;
-  }
-  .step-tab.done { color: #5c9140; }
-  .step-chevron {
-    color: #d1d5db;
-    margin: 0 2px;
-    flex-shrink: 0;
-  }
+    .animate-modal {
+      animation: modalIn 0.18s ease;
+    }
 
-  /* ---------------- SECONDARY CONTACT BLOCK ---------------- */
-  .secondary-contact-block {
-    border: 1px dashed #e5e7eb;
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 10px;
-    background: #fafbfc;
-    position: relative;
-  }
-  .secondary-contact-remove {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-  }
+    /* Action buttons */
+    .btn-icon-action {
+      transition: all 0.15s ease;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      background: transparent;
+      border: 1px solid gray;
+      cursor: pointer;
+    }
 
-  /* ---------------- DOCUMENTS LIST ---------------- */
-  .doc-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border: 1px solid #b4b9bd;
-    border-radius: 10px;
-    margin-bottom: 8px;
-  }
-  .doc-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    background: #eef5e8;
-    color: #5c9140;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
+    .btn-icon-action:hover {
+      background: #f1f5f9;
+      color: #6da84c;
+    }
 
-  /* ---------------- PURCHASE SUMMARY MINI CARDS ---------------- */
-  .report-mini-card {
-    border: 1px solid #6da84c;
-    border-radius: 10px;
-    padding: 12px 14px;
-    background: #fafbfc;
-  }
-  .report-mini-label {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    color: #575b64;
-  }
-  .report-mini-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1a1a2e;
-    margin-top: 3px;
-  }
-</style>
+    .btn-icon-action.danger:hover {
+      background: #fee2e2;
+      color: #ef4444;
+    }
+
+    /* Toast */
+    .toast {
+      animation: fadeIn 0.2s ease;
+    }
+
+    .toast-success {
+      background: #16a34a;
+    }
+
+    .toast-error {
+      background: #dc2626;
+    }
+
+    .toast-warning {
+      background: #f59e0b;
+    }
+
+    .toast-info {
+      background: #6da84c;
+    }
+
+    /* Scrollbar for modal */
+    .modal-scroll {
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .modal-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .modal-scroll::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 4px;
+    }
+
+    /* Empty state */
+    .empty-icon-svg {
+      opacity: 0.2;
+      width: 48px;
+      height: 48px;
+      color: #94a3b8;
+    }
+
+    /* Vendor logo placeholder */
+    .vendor-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* ---------------- MANAGE VENDOR CATEGORIES OVERLAY (new) ---------------- */
+    .cat-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #f1f5f9;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      transition: background .15s ease;
+    }
+
+    .cat-row:hover {
+      background: #fafbfc;
+    }
+
+    .cat-color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 5px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .cat-swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      display: inline-flex;
+      transition: all .15s ease;
+    }
+
+    .cat-swatch.selected {
+      border-color: #1a1a2e;
+      transform: scale(1.1);
+    }
+
+    .cat-add-form {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .25s ease;
+    }
+
+    .cat-add-form.open {
+      max-height: 420px;
+    }
+
+    /* ---------------- BREADCRUMB-STYLE STEP TABS (Basic/Tax/Banking/Payment) ---------------- */
+    .step-tabs-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 16px;
+    }
+
+    .step-tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #9ca3af;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: all .18s ease;
+      white-space: nowrap;
+    }
+
+    .step-tab .step-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: #6b7280;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-tab.active {
+      background: #eef5e8;
+      color: #1a1a2e;
+    }
+
+    .step-tab.active .step-num {
+      background: #6da84c;
+      color: #fff;
+    }
+
+    .step-tab.done .step-num {
+      background: #6da84c;
+      color: #fff;
+    }
+
+    .step-tab.done {
+      color: #5c9140;
+    }
+
+    .step-chevron {
+      color: #d1d5db;
+      margin: 0 2px;
+      flex-shrink: 0;
+    }
+
+    /* ---------------- SECONDARY CONTACT BLOCK ---------------- */
+    .secondary-contact-block {
+      border: 1px dashed #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fafbfc;
+      position: relative;
+    }
+
+    .secondary-contact-remove {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+    }
+
+    /* ---------------- DOCUMENTS LIST ---------------- */
+    .doc-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .doc-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #eef5e8;
+      color: #5c9140;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ---------------- PURCHASE SUMMARY MINI CARDS ---------------- */
+    .report-mini-card {
+      border: 1px solid #7dc057;
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #fafbfc;
+    }
+
+    .report-mini-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: #575b64;
+    }
+
+    .report-mini-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-top: 3px;
+    }
+  </style>
 </head>
 
 <body class="bg-gray-50 text-gray-800 antialiased">
@@ -408,19 +530,23 @@
             <div>
               <div class="text-[11px] font-semibold tracking-wide uppercase text-primary">Masters</div>
               <h1 class="text-[24px] sm:text-[28px] font-bold tracking-tight text-gray-900">Vendors / Suppliers</h1>
-              <p class="text-[13px] text-gray-500 mt-1">Supplier master with GST details, payment terms, bank details and transaction history.</p>
+              <p class="text-[13px] text-gray-500 mt-1">Supplier master with GST details, payment terms, bank details
+                and transaction history.</p>
             </div>
             <div class="flex gap-2.5 flex-wrap">
               <!-- Filter Button -->
               <div class="relative inline-block" data-dd-trigger>
-                <button onclick="toggleFilterDD()" class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[13px] font-semibold px-4 py-2.5 rounded-lg transition">
+                <button onclick="toggleFilterDD()"
+                  class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-4 py-2.5 rounded-lg transition whitespace-nowrap">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18M7 12h10M11 18h2"/>
+                    <path d="M3 6h18M7 12h10M11 18h2" />
                   </svg>
                   Filter
-                  <span id="filterBadge" class="hidden text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full">0</span>
+                  <span id="filterBadge"
+                    class="hidden text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full">0</span>
                 </button>
-                <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-50">
+                <div id="filterDD" data-dd-menu
+                  class="hidden absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-50">
                   <div class="mb-3">
                     <label class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Status</label>
                     <select id="filterStatus" onchange="filterVendors()" class="form-input text-[12px]">
@@ -430,7 +556,8 @@
                     </select>
                   </div>
                   <div class="mb-3">
-                    <label class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">GST Registered</label>
+                    <label class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">GST
+                      Registered</label>
                     <select id="filterGST" onchange="filterVendors()" class="form-input text-[12px]">
                       <option value="all">All</option>
                       <option value="yes">Registered</option>
@@ -443,20 +570,27 @@
                       <option value="all">All Types</option>
                     </select>
                   </div>
-                  <button onclick="clearFilters()" class="text-[12px] text-primary font-semibold hover:underline">Clear Filters</button>
+                  <button onclick="clearFilters()" class="text-[12px] text-primary font-semibold hover:underline">Clear
+                    Filters</button>
                 </div>
               </div>
 
-              <!-- Manage Vendor Categories Button (new — same pattern as Customer module) -->
-              <button onclick="openVendorCategoryManageOverlay()" class="inline-flex items-center gap-2 bg-white border border-gray-200 hover:border-primary hover:text-primary text-gray-700 text-[13px] font-semibold px-4 py-2.5 rounded-lg transition">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41L11 3.83A2 2 0 009.59 3.24L3 3v6.59a2 2 0 00.59 1.41l9.58 9.58a2 2 0 002.83 0l4.59-4.59a2 2 0 000-2.83z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/></svg>
-                Manage Vendor Categories
+              <!-- Manage Vendor Categories Button (matched to Items page's "Vendor Purchase" button styling/length) -->
+              <button onclick="openVendorCategoryManageOverlay()"
+                class="inline-flex items-center gap-2 bg-white border border-[#6da84c] hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-4 py-1.5 rounded-lg transition shadow-sm whitespace-nowrap">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M20.59 13.41L11 3.83A2 2 0 009.59 3.24L3 3v6.59a2 2 0 00.59 1.41l9.58 9.58a2 2 0 002.83 0l4.59-4.59a2 2 0 000-2.83z" />
+                  <circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none" />
+                </svg>
+                Categories
               </button>
 
               <!-- Add Vendor Button -->
-              <button onclick="openAddVendor()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[13px] font-semibold px-4 py-2.5 rounded-lg transition shadow-sm">
+              <button onclick="openAddVendor()"
+                class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[12px] font-semibold px-4 py-1.5 rounded-lg transition shadow-sm whitespace-nowrap">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M12 5v14M5 12h14"/>
+                  <path d="M12 5v14M5 12h14" />
                 </svg>
                 Add Vendor
               </button>
@@ -465,21 +599,33 @@
 
           <!-- Stats Cards -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 stat-card">
+            <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+              <div class="stat-icon-wrap bg-primary-soft text-primary"><i class="fa-solid fa-building"></i></div>
+              <div>
               <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Total Vendors</div>
-              <div class="text-[22px] font-bold text-gray-900" id="totalVendors">0</div>
+              <div class="text-[16px] font-bold text-gray-900" id="totalVendors">0</div>
+              </div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 stat-card">
+            <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+              <div class="stat-icon-wrap bg-green-50 text-green-600"><i class="fa-solid fa-circle-check"></i></div>
+              <div>
               <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Active</div>
-              <div class="text-[22px] font-bold text-green-600" id="activeVendors">0</div>
+              <div class="text-[16px] font-bold text-green-600" id="activeVendors">0</div>
+              </div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 stat-card">
+            <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+              <div class="stat-icon-wrap bg-secondary-soft text-secondary"><i class="fa-solid fa-file-invoice"></i></div>
+              <div>
               <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">GST Registered</div>
-              <div class="text-[22px] font-bold text-blue-600" id="gstVendors">0</div>
+              <div class="text-[16px] font-bold text-blue-600" id="gstVendors">0</div>
+              </div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 stat-card">
+            <div class="bg-white rounded-xl shadow-sm p-4 stat-card flex items-center gap-3">
+              <div class="stat-icon-wrap bg-amber-50 text-amber-600"><i class="fa-solid fa-sack-dollar"></i></div>
+              <div>
               <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Total Payable</div>
-              <div class="text-[22px] font-bold text-amber-600" id="totalPayable">₹0</div>
+              <div class="text-[16px] font-bold text-amber-600" id="totalPayable">₹0</div>
+              </div>
             </div>
           </div>
 
@@ -521,7 +667,7 @@
     // VENDORS MODULE — Complete Logic (No Emojis, Only SVG Icons)
     // =============================================================
 
-        function iconPlus() { return `<i class="fa-solid fa-plus"></i>`; }
+    function iconPlus() { return `<i class="fa-solid fa-plus"></i>`; }
     function iconEdit() { return `<i class="fa-solid fa-pen"></i>`; }
     function iconTrash() { return `<i class="fa-solid fa-trash"></i>`; }
     function iconEye() { return `<i class="fa-solid fa-eye"></i>`; }
@@ -559,10 +705,10 @@
       el.className = 'toast ' + colors[kind] + ' text-white text-sm font-semibold px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
       el.innerHTML = '<span>' + message + '</span>';
       wrap.appendChild(el);
-      setTimeout(function() {
+      setTimeout(function () {
         el.style.transition = 'opacity .3s';
         el.style.opacity = '0';
-        setTimeout(function() { el.remove(); }, 300);
+        setTimeout(function () { el.remove(); }, 300);
       }, 2600);
     }
 
@@ -598,18 +744,20 @@
         </div>`;
     }
 
-    function modalFooter(saveLabel, onSaveAttr, extraBtns) {
-      return `
-        <div class="flex items-center justify-between gap-2 px-6 py-2 border-t border-gray-100 bg-gray-50 rounded-b-2xl sticky bottom-0">
-          <div>${extraBtns || ''}</div>
-          <div class="flex gap-2">
-            <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
-            <button ${onSaveAttr} class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
-              ${iconSave()} ${saveLabel}
-            </button>
-          </div>
-        </div>`;
-    }
+   function modalFooter(saveLabel, onSaveAttr, extraBtns, danger) {
+  var saveBtnCls = danger ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary-dark';
+  var saveBtnIcon = danger ? iconTrash() : iconSave();
+  return `
+    <div class="flex items-center justify-between gap-2 px-6 py-2 border-t border-gray-100 bg-gray-50 rounded-b-2xl sticky bottom-0">
+      <div>${extraBtns || ''}</div>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+        <button ${onSaveAttr} class="px-4 py-2 rounded-lg text-sm font-semibold text-white ${saveBtnCls} transition shadow-sm flex items-center gap-1.5">
+          ${saveBtnIcon} ${saveLabel}
+        </button>
+      </div>
+    </div>`;
+}
 
     function fld(label, inputHtml, hint) {
       return `
@@ -623,16 +771,16 @@
     function inputBase() { return "form-input"; }
 
     // ---------- Dropdown ----------
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
       if (!e.target.closest('[data-dd-trigger]')) {
-        document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+        document.querySelectorAll('[data-dd-menu]').forEach(function (m) { m.classList.add('hidden'); });
       }
     });
 
     function toggleFilterDD() {
       var menu = document.getElementById('filterDD');
       var isHidden = menu.classList.contains('hidden');
-      document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+      document.querySelectorAll('[data-dd-menu]').forEach(function (m) { m.classList.add('hidden'); });
       if (isHidden) menu.classList.remove('hidden');
     }
 
@@ -659,7 +807,7 @@
     function panelWrap(titleHtml, bodyHtml, extraHead) {
       return `
         <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
-          <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-[#6da84c]">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-gray-100">
             <div class="font-bold text-[14.5px] text-gray-800 flex items-center gap-2">${titleHtml}</div>
             ${extraHead || ''}
           </div>
@@ -668,14 +816,14 @@
     }
 
     function tableHtml(cols, rowsHtml) {
-      var colHeaders = cols.map(function(c) {
+      var colHeaders = cols.map(function (c) {
         return '<th class="text-left text-[11px] font-bold uppercase tracking-wide text-gray-500 px-4 py-3 whitespace-nowrap">' + c + '</th>';
       }).join('');
       return `
-        <div class="overflow-x-auto">
+        <div class="overflow-auto h-[370px]">
           <table class="w-full text-[13px]">
-            <thead>
-              <tr class="bg-gray-50 border-b border-gray-300">${colHeaders}</tr>
+            <thead class="sticky top-0">
+              <tr class="bg-gray-200 border border-[#6da84c]">${colHeaders}</tr>
             </thead>
             <tbody id="tbody-anchor">${rowsHtml}</tbody>
           </table>
@@ -692,11 +840,11 @@
     var vendorCategoryPalette = ['#6da84c', '#1985bf', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#4f46e5', '#e11d48'];
 
     var defaultVendorCategories = [
-      { id: 'vt-manufacturer', name: 'Manufacturer',      color: '#6da84c', description: 'Produces goods directly' },
-      { id: 'vt-distributor',  name: 'Distributor',       color: '#1985bf', description: 'Regional distribution partner' },
-      { id: 'vt-wholesaler',   name: 'Wholesaler',        color: '#d97706', description: 'Bulk supply at wholesale rates' },
-      { id: 'vt-importer',     name: 'Importer',          color: '#7c3aed', description: 'Imports goods from overseas' },
-      { id: 'vt-service',      name: 'Service Provider',  color: '#dc2626', description: 'Provides services rather than goods' }
+      { id: 'vt-manufacturer', name: 'Manufacturer', color: '#6da84c', description: 'Produces goods directly' },
+      { id: 'vt-distributor', name: 'Distributor', color: '#1985bf', description: 'Regional distribution partner' },
+      { id: 'vt-wholesaler', name: 'Wholesaler', color: '#d97706', description: 'Bulk supply at wholesale rates' },
+      { id: 'vt-importer', name: 'Importer', color: '#7c3aed', description: 'Imports goods from overseas' },
+      { id: 'vt-service', name: 'Service Provider', color: '#dc2626', description: 'Provides services rather than goods' }
     ];
 
     var vendorCategories = [];
@@ -724,7 +872,7 @@
     }
 
     function getVendorCategoryById(id) {
-      return vendorCategories.find(function(cat) { return cat.id === id; }) || null;
+      return vendorCategories.find(function (cat) { return cat.id === id; }) || null;
     }
 
     function vendorCategoryBadge(catId) {
@@ -734,11 +882,11 @@
     }
 
     function vendorCategoryCount(catId) {
-      return vendors.filter(function(v) { return v.vendorType === catId; }).length;
+      return vendors.filter(function (v) { return v.vendorType === catId; }).length;
     }
 
     function vendorCategoryOptionsHtml(selectedId) {
-      return vendorCategories.map(function(cat) {
+      return vendorCategories.map(function (cat) {
         return '<option value="' + cat.id + '" ' + (cat.id === selectedId ? 'selected' : '') + '>' + cat.name + '</option>';
       }).join('');
     }
@@ -747,7 +895,7 @@
       var sel = document.getElementById('filterVendorType');
       if (!sel) return;
       var current = sel.value || 'all';
-      sel.innerHTML = '<option value="all">All Types</option>' + vendorCategories.map(function(cat) {
+      sel.innerHTML = '<option value="all">All Types</option>' + vendorCategories.map(function (cat) {
         return '<option value="' + cat.id + '">' + cat.name + '</option>';
       }).join('');
       sel.value = current;
@@ -762,9 +910,9 @@
 
     function vendorCategoryOverlayHtml() {
       var rows = vendorCategories.length
-        ? vendorCategories.map(function(cat) {
-            var count = vendorCategoryCount(cat.id);
-            return `
+        ? vendorCategories.map(function (cat) {
+          var count = vendorCategoryCount(cat.id);
+          return `
               <div class="cat-row">
                 <span class="cat-color-dot" style="background:${cat.color}"></span>
                 <div class="min-w-0 flex-1">
@@ -774,7 +922,7 @@
                 <button onclick="editVendorCategoryInline('${cat.id}')" class="btn-icon-action" title="Edit">${iconEdit()}</button>
                 <button onclick="deleteVendorCategory('${cat.id}')" class="btn-icon-action danger" title="Delete">${iconTrash()}</button>
               </div>`;
-          }).join('')
+        }).join('')
         : `<div class="text-center py-6 text-gray-400 text-[12px]">No vendor categories yet. Add your first one below.</div>`;
 
       return `
@@ -811,7 +959,7 @@
     function renderVendorColorSwatches(selectedColor) {
       var wrap = document.getElementById('vcat_color_swatches');
       if (!wrap) return;
-      wrap.innerHTML = vendorCategoryPalette.map(function(c) {
+      wrap.innerHTML = vendorCategoryPalette.map(function (c) {
         return '<span class="cat-swatch ' + (c === selectedColor ? 'selected' : '') + '" style="background:' + c + '" onclick="pickVendorCategoryColor(\'' + c + '\')"></span>';
       }).join('');
     }
@@ -889,7 +1037,7 @@
         ? 'This category is used by ' + count + ' vendor(s). Delete anyway? Their type will show as Uncategorized.'
         : 'Delete this vendor category?';
       if (!window.confirm(msg)) return;
-      vendorCategories = vendorCategories.filter(function(c) { return c.id !== id; });
+      vendorCategories = vendorCategories.filter(function (c) { return c.id !== id; });
       saveVendorCategories();
       refreshVendorCategoryOverlay();
       populateVendorTypeFilter();
@@ -905,133 +1053,317 @@
     }
 
     // =============================================================
-    // DATA
+    // DATA / BACKEND INTEGRATION
     // =============================================================
 
     var vendorColors = ['#6da84c', '#1985bf', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#4f46e5'];
 
-    var vendors = [{
-      id: 'VEN-001',
-      name: 'Global Imports Inc.',
-      companyName: 'Global Imports Corporation',
-      vendorType: 'vt-importer',
-      gstin: '27AABCU1234D1ZP',
-      pan: 'AABCU1234D',
-      email: 'info@globalimports.com',
-      phone: '+91-9876543210',
-      address: '101, Trade Tower, BKC, Mumbai',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      stateCode: '27',
-      pincode: '400051',
-      paymentTerms: 'Net 15 days',
-      bankName: 'HDFC Bank',
-      bankAccount: '1234567890',
-      bankIfsc: 'HDFC0000123',
-      gstRegistered: true,
-      status: 'active',
-      outstanding: 125000,
-      createdAt: '2025-01-15',
-      color: vendorColors[0],
-      secondaryContacts: [
-        { name: 'Rohit Verma', designation: 'Accounts Manager', mobile: '+91-9911223344', email: 'rohit.verma@globalimports.com' }
-      ]
-    }, {
-      id: 'VEN-002',
-      name: 'Local Supplier Co.',
-      companyName: 'Local Supplier Private Limited',
-      vendorType: 'vt-wholesaler',
-      gstin: '',
-      pan: 'XYZPL1234F',
-      email: 'info@localsupplier.com',
-      phone: '+91-9876543211',
-      address: '45, Industrial Area, Pune',
-      city: 'Pune',
-      state: 'Maharashtra',
-      stateCode: '27',
-      pincode: '411001',
-      paymentTerms: 'Net 30 days',
-      bankName: 'ICICI Bank',
-      bankAccount: '9876543210',
-      bankIfsc: 'ICIC0000456',
-      gstRegistered: false,
-      status: 'active',
-      outstanding: 45000,
-      createdAt: '2025-02-01',
-      color: vendorColors[1],
-      secondaryContacts: []
-    }, {
-      id: 'VEN-003',
-      name: 'ABC Distributors',
-      companyName: 'ABC Distributors LLP',
-      vendorType: 'vt-distributor',
-      gstin: '24XYZBC1234E1ZP',
-      pan: 'XYZBC1234E',
-      email: 'info@abcdistributors.com',
-      phone: '+91-9876543212',
-      address: '12, Distribution Hub, Delhi',
-      city: 'New Delhi',
-      state: 'Delhi',
-      stateCode: '07',
-      pincode: '110001',
-      paymentTerms: 'Net 7 days',
-      bankName: 'SBI',
-      bankAccount: '5678901234',
-      bankIfsc: 'SBIN0001234',
-      gstRegistered: true,
-      status: 'active',
-      outstanding: 78000,
-      createdAt: '2025-03-10',
-      color: vendorColors[2],
-      secondaryContacts: []
-    },];
+    var VENDOR_API_BASE = 'http://localhost:9093/api/vendor';
 
-    var nextVendorNo = 7;
+    var vendors = [];
 
-    // ---------- Purchase history (local dummy — feeds Purchase Summary) ----------
-    var purchaseOrders = [
-      { id: 'PO-1001', vendorId: 'VEN-001', date: '2026-01-10', amount: 68000, status: 'closed' },
-      { id: 'PO-1002', vendorId: 'VEN-001', date: '2026-02-04', amount: 57000, status: 'open' },
-      { id: 'PO-1003', vendorId: 'VEN-003', date: '2026-01-22', amount: 39500, status: 'closed' },
-      { id: 'PO-1004', vendorId: 'VEN-006', date: '2026-02-15', amount: 95000, status: 'open' }
-    ];
+    // ---------- Purchase history — no backend module for this yet, kept empty ----------
+    // (Purchase Summary tab renders gracefully with zero orders until a Purchase Orders
+    //  API exists; getVendorPurchaseOrders is the single place to wire that up later.)
+    var purchaseOrders = [];
 
     function getVendorPurchaseOrders(vendorId) {
-      return purchaseOrders.filter(function(po) { return po.vendorId === vendorId; });
+      return purchaseOrders.filter(function (po) { return po.vendorId === vendorId; });
     }
 
-    // ---------- Documents (local dummy — feeds Documents tab, UI only) ----------
-    var vendorDocuments = {
-      'VEN-001': [
-        { type: 'GST Certificate', fileName: 'gst_certificate.pdf', uploadDate: '2025-01-20' },
-        { type: 'Bank Proof', fileName: 'bank_proof.pdf', uploadDate: '2025-01-22' }
-      ]
-    };
-    
-    var documentTypeOptions = ['GST Certificate', 'PAN Card', 'Bank Proof', 'Agreement'];
+    var documentTypeOptions = ['GST Certificate', 'PAN Card', 'Bank Proof', 'Agreement', 'Other'];
 
-    function viewVendorDocument(vendorId, idx) {
-      var doc = (vendorDocuments[vendorId] || [])[idx];
-      if (!doc) return;
-      if (doc.fileUrl) {
-        window.open(doc.fileUrl, '_blank');
-      } else {
-        showToast('No stored file to preview for "' + doc.fileName + '" (demo record — connect a file store to enable this)', 'info');
+    // ---------- API <-> local model mapping ----------
+
+    function colorForVendorId(id) {
+      var str = String(id || '');
+      var hash = 0;
+      for (var i = 0; i < str.length; i++) {
+        hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+      }
+      return vendorColors[hash % vendorColors.length];
+    }
+
+    function mapDtoToVendor(dto) {
+      return {
+        id: dto.vendorId,
+        name: dto.vendorName || '',
+        companyName: dto.companyName || '',
+        vendorType: dto.vendorType || '',
+        email: dto.email || '',
+        phone: dto.phone || '',
+        address: dto.address || '',
+        city: dto.city || '',
+        state: dto.state || 'Maharashtra',
+        stateCode: dto.stateCode || '27',
+        pincode: dto.pincode || '',
+        gstin: dto.gstin || '',
+        pan: dto.pan || '',
+        gstRegistered: !!dto.gstRegistered,
+        bankName: dto.bankName || '',
+        bankAccount: dto.bankAccount || '',
+        bankIfsc: dto.bankIfsc || '',
+        paymentTerms: dto.paymentTerms || 'Net 15 days',
+        status: dto.status || 'active',
+        outstanding: dto.outstanding || 0,
+        createdAt: dto.createdAt || '',
+        color: colorForVendorId(dto.vendorId),
+        secondaryContacts: dto.secondaryContacts || [],
+        documents: normalizeVendorDocuments(dto)
+      };
+    }
+
+    function normalizeVendorDocuments(dto) {
+      var raw = Array.isArray(dto && dto.documents) ? dto.documents : [];
+      var docs = raw.map(function (d) {
+        return {
+          id: d.documentId || d.id || null,
+          documentType: d.documentType || d.type || 'Other',
+          fileUrl: d.documentUrl || d.fileUrl || d.url || '',
+          fileName: d.fileName || 'Document'
+        };
+      }).filter(function (d) { return d.fileUrl; });
+
+      return docs;
+    }
+
+    function normalizeDocType(type) {
+      var value = String(type || '').trim().toUpperCase();
+      if (value.indexOf('GST') >= 0) return 'GST';
+      if (value.indexOf('PAN') >= 0) return 'PAN';
+      if (value.indexOf('BANK') >= 0) return 'BANK';
+      if (value.indexOf('AGREEMENT') >= 0) return 'AGREEMENT';
+      if (value === 'OTHER') return 'OTHER';
+      return value;
+    }
+
+    function vendorToRequestPayload(v) {
+      return {
+        vendorName: v.name,
+        companyName: v.companyName,
+        vendorType: v.vendorType,
+        email: v.email,
+        phone: v.phone,
+        address: v.address,
+        city: v.city,
+        state: v.state,
+        stateCode: v.stateCode,
+        pincode: v.pincode,
+        gstin: v.gstin,
+        pan: v.pan,
+        gstRegistered: v.gstRegistered,
+        bankName: v.bankName,
+        bankAccount: v.bankAccount,
+        bankIfsc: v.bankIfsc,
+        paymentTerms: v.paymentTerms,
+        status: v.status,
+        secondaryContacts: v.secondaryContacts
+      };
+    }
+
+    async function readErrorMessage(res, fallback) {
+      try {
+        var text = await res.text();
+        return text || fallback;
+      } catch (e) {
+        return fallback;
       }
     }
 
-    function downloadVendorDocument(vendorId, idx) {
-      var doc = (vendorDocuments[vendorId] || [])[idx];
+    // Backend caps page size at 100, so a full listing is paged through here
+    // and flattened for the client-side search/filter UX the page already has.
+    async function fetchAllVendorsFromApi() {
+      var all = [];
+      var page = 0;
+      var isLast = false;
+      while (!isLast) {
+        var res = await fetch(VENDOR_API_BASE + '/get-all-vendor?page=' + page + '&size=100&sortBy=createdAt&sortDir=desc');
+        if (!res.ok) {
+          throw new Error(await readErrorMessage(res, 'Failed to load vendors'));
+        }
+        var data = await res.json();
+        if (typeof data === 'string') break; // "No vendors found."
+        (data.content || []).forEach(function (dto) { all.push(mapDtoToVendor(dto)); });
+        isLast = !!data.last;
+        page++;
+      }
+      return all;
+    }
+
+    async function loadVendorsFromApi() {
+      try {
+        vendors = await fetchAllVendorsFromApi();
+      } catch (err) {
+        console.error(err);
+        showToast('Could not load vendors from the server', 'error');
+        vendors = [];
+      }
+    }
+
+    async function getVendorByIdApi(vendorId) {
+      var res = await fetch(VENDOR_API_BASE + '/get-vendor-by-vendorId/' + encodeURIComponent(vendorId), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to load vendor'));
+      return mapDtoToVendor(await res.json());
+    }
+
+    // Vendor API contract: multipart/form-data with JSON in `vendor` and files in `documents`.
+    function buildVendorFormData(payload, documents) {
+      var formData = new FormData();
+      var vendorJson = JSON.stringify(payload || {});
+      formData.append(
+        'vendor',
+        new Blob([vendorJson], { type: 'application/json' }),
+        'vendor.json'
+      );
+
+      (documents || []).filter(function (doc) { return doc && doc.file; }).forEach(function (doc) {
+        formData.append('documents', doc.file, doc.file.name);
+        formData.append('documentTypes', doc.type || doc.documentType || 'Other');
+      });
+
+      return formData;
+    }
+
+    async function createVendorApi(payload, documents) {
+      var res = await fetch(VENDOR_API_BASE + '/create-vendor', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: buildVendorFormData(payload, documents)
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to create vendor'));
+      return mapDtoToVendor(await res.json());
+    }
+
+    async function updateVendorApi(vendorId, payload, documents) {
+      var res = await fetch(VENDOR_API_BASE + '/update-vendor-by-vendorId/' + encodeURIComponent(vendorId), {
+        method: 'PUT',
+        headers: { 'Accept': 'application/json' },
+        body: buildVendorFormData(payload, documents)
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to update vendor'));
+      return mapDtoToVendor(await res.json());
+    }
+
+    async function patchVendorApi(vendorId, payload, documents) {
+      var res = await fetch(VENDOR_API_BASE + '/patch-vendor-by-vendorId/' + encodeURIComponent(vendorId), {
+        method: 'PATCH',
+        headers: { 'Accept': 'application/json' },
+        body: buildVendorFormData(payload, documents)
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to patch vendor'));
+      return mapDtoToVendor(await res.json());
+    }
+
+    async function deleteVendorDocumentApi(vendorId, documentId) {
+      var res = await fetch(
+        VENDOR_API_BASE + '/document/' + encodeURIComponent(vendorId) + '/' + encodeURIComponent(documentId),
+        {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json' }
+        }
+      );
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to remove document'));
+    }
+
+    async function deleteVendorApi(vendorId) {
+      var res = await fetch(VENDOR_API_BASE + '/delete-vendor-by-vendorId/' + encodeURIComponent(vendorId), {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to delete vendor'));
+    }
+
+    // ---------- Documents tab (view-only detail modal) ----------
+
+    // Server-stored documents come back as base64 "data:" URLs. Browsers
+    // increasingly block window.open() on a data: URL as a top-level
+    // navigation, so this converts it to a blob: URL first, which works
+    // reliably for both viewing and downloading. Locally-staged documents
+    // (not yet uploaded) already use a blob: URL and pass through untouched.
+    function resolveViewableUrl(fileUrl) {
+      if (!fileUrl) return fileUrl;
+
+      // Backend stores document URLs as relative paths, e.g.
+      // /api/vendor/uploads/vendor/VND-003/pan-2d60d504.pdf
+      // Resolve them against the Vendor backend instead of the frontend
+      // server (127.0.0.1:5503).
+      if (fileUrl.indexOf('data:') !== 0 && fileUrl.indexOf('blob:') !== 0) {
+        try {
+          return new URL(fileUrl, VENDOR_API_BASE).href;
+        } catch (e) {
+          console.error('Failed to resolve vendor document URL', e);
+          return fileUrl;
+        }
+      }
+
+      if (fileUrl.indexOf('data:') !== 0) {
+        return fileUrl;
+      }
+      try {
+        var commaIdx = fileUrl.indexOf(',');
+        var meta = fileUrl.substring(5, commaIdx); // "<mime>;base64"
+        var mime = meta.split(';')[0] || 'application/octet-stream';
+        var binary = atob(fileUrl.substring(commaIdx + 1));
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        var blob = new Blob([bytes], { type: mime });
+        return URL.createObjectURL(blob);
+      } catch (e) {
+        console.error('Failed to convert data URL to blob URL', e);
+        return fileUrl;
+      }
+    }
+
+    function viewVendorDocument(vendorId, idx) {
+      var v = vendors.find(function (x) { return x.id === vendorId; });
+      var doc = v && v.documents ? v.documents[idx] : null;
       if (!doc) return;
       if (doc.fileUrl) {
+        window.open(resolveViewableUrl(doc.fileUrl), '_blank');
+      } else {
+        showToast('No stored file to preview for "' + doc.fileName + '"', 'info');
+      }
+    }
+
+    async function downloadVendorDocument(vendorId, idx) {
+      var v = vendors.find(function (x) { return x.id === vendorId; });
+      var doc = v && v.documents ? v.documents[idx] : null;
+      if (!doc) return;
+
+      if (!doc.fileUrl) {
+        showToast('No stored file to download for "' + doc.fileName + '"', 'info');
+        return;
+      }
+
+      var fileUrl = resolveViewableUrl(doc.fileUrl);
+
+      try {
+        // Fetch the file from the Vendor backend and create a local blob URL.
+        // This forces a real download even when the source is cross-origin.
+        var response = await fetch(fileUrl);
+
+        if (!response.ok) {
+          throw new Error('Failed to download document');
+        }
+
+        var blob = await response.blob();
+        var blobUrl = URL.createObjectURL(blob);
+
         var a = document.createElement('a');
-        a.href = doc.fileUrl;
-        a.download = doc.fileName;
+        a.href = blobUrl;
+        a.download = doc.fileName || 'document';
         document.body.appendChild(a);
         a.click();
         a.remove();
-      } else {
-        showToast('No stored file to download for "' + doc.fileName + '" (demo record — connect a file store to enable this)', 'info');
+
+        setTimeout(function () {
+          URL.revokeObjectURL(blobUrl);
+        }, 1000);
+      } catch (error) {
+        console.error('Document download failed:', error);
+        showToast('Failed to download document', 'error');
       }
     }
 
@@ -1048,11 +1380,11 @@
 
     function renderStats() {
       document.getElementById('totalVendors').textContent = vendors.length;
-      var active = vendors.filter(function(v) { return v.status === 'active'; });
+      var active = vendors.filter(function (v) { return v.status === 'active'; });
       document.getElementById('activeVendors').textContent = active.length;
-      var gst = vendors.filter(function(v) { return v.gstRegistered; });
+      var gst = vendors.filter(function (v) { return v.gstRegistered; });
       document.getElementById('gstVendors').textContent = gst.length;
-      var total = vendors.reduce(function(sum, v) { return sum + v.outstanding; }, 0);
+      var total = vendors.reduce(function (sum, v) { return sum + v.outstanding; }, 0);
       document.getElementById('totalPayable').textContent = money(total);
     }
 
@@ -1063,7 +1395,7 @@
       var gst = document.getElementById('filterGST') ? document.getElementById('filterGST').value : 'all';
       var vtype = document.getElementById('filterVendorType') ? document.getElementById('filterVendorType').value : 'all';
 
-      return vendors.filter(function(v) {
+      return vendors.filter(function (v) {
         var matchSearch = v.name.toLowerCase().indexOf(q) !== -1 ||
           v.companyName.toLowerCase().indexOf(q) !== -1 ||
           v.id.toLowerCase().indexOf(q) !== -1 ||
@@ -1076,8 +1408,53 @@
       });
     }
 
+    var currentVendorPage = 1;
+    var currentVendorPageSize = 25;
+
+    function setVendorPageSize(value) {
+      var size = parseInt(value, 10);
+      currentVendorPageSize = [10, 25, 50, 100].indexOf(size) !== -1 ? size : 25;
+      currentVendorPage = 1;
+      renderVendors();
+    }
+
+    function changeVendorPage(page) {
+      var filtered = getFilteredVendors();
+      var totalPages = Math.max(1, Math.ceil(filtered.length / currentVendorPageSize));
+      currentVendorPage = Math.min(Math.max(1, page), totalPages);
+      renderVendors();
+    }
+
+    function vendorPaginationHtml(totalItems) {
+      var totalPages = Math.max(1, Math.ceil(totalItems / currentVendorPageSize));
+      if (currentVendorPage > totalPages) currentVendorPage = totalPages;
+
+      var start = totalItems === 0 ? 0 : ((currentVendorPage - 1) * currentVendorPageSize) + 1;
+      var end = Math.min(currentVendorPage * currentVendorPageSize, totalItems);
+
+      var html = '<div class=\"flex items-center justify-between gap-3 flex-wrap px-5 py-3 border-t border-gray-200\">';
+      html += '<div class=\"text-[11px] text-gray-500\">Showing ' + start + '–' + end + ' of ' + totalItems + '</div>';
+      html += '<div class=\"flex items-center gap-1\">';
+      html += '<button type=\"button\" onclick=\"changeVendorPage(' + (currentVendorPage - 1) + ')\" ' + (currentVendorPage === 1 ? 'disabled' : '') + ' class=\"px-2.5 py-1 text-[11px] border rounded-lg ' + (currentVendorPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-50') + '\">Previous</button>';
+
+      var from = Math.max(1, currentVendorPage - 2);
+      var to = Math.min(totalPages, from + 4);
+      from = Math.max(1, to - 4);
+      for (var i = from; i <= to; i++) {
+        html += '<button type=\"button\" onclick=\"changeVendorPage(' + i + ')\" class=\"px-2.5 py-1 text-[11px] border rounded-lg ' + (i === currentVendorPage ? 'bg-primary text-white border-primary' : 'text-gray-600 hover:bg-gray-50') + '\">' + i + '</button>';
+      }
+
+      html += '<button type=\"button\" onclick=\"changeVendorPage(' + (currentVendorPage + 1) + ')\" ' + (currentVendorPage === totalPages ? 'disabled' : '') + ' class=\"px-2.5 py-1 text-[11px] border rounded-lg ' + (currentVendorPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-50') + '\">Next</button>';
+      html += '</div></div>';
+      return html;
+    }
+
     function renderVendors() {
       var filtered = getFilteredVendors();
+      var totalPages = Math.max(1, Math.ceil(filtered.length / currentVendorPageSize));
+      if (currentVendorPage > totalPages) currentVendorPage = totalPages;
+      var pageStart = (currentVendorPage - 1) * currentVendorPageSize;
+      var pagedVendors = filtered.slice(pageStart, pageStart + currentVendorPageSize);
 
       var rowsHtml = '';
       if (filtered.length === 0) {
@@ -1090,11 +1467,11 @@
             </td>
           </tr>`;
       } else {
-        rowsHtml = filtered.map(function(v) {
+        rowsHtml = pagedVendors.map(function (v) {
           var statusBadge = v.status === 'active' ? badge('Active', 'green') : badge('Inactive', 'gray');
           var gstBadge = v.gstRegistered ? badge('GST Registered', 'blue') : badge('Unregistered', 'amber');
           return `
-            <tr class="border-b border-gray-100 table-row-hover">
+            <tr class="border-b border-gray-400 table-row-hover">
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
                   <div class="vendor-avatar" style="background:${v.color}">${getInitials(v.name)}</div>
@@ -1111,25 +1488,28 @@
               <td class="px-4 py-3 font-mono font-semibold text-amber-600">${money(v.outstanding)}</td>
               <td class="px-4 py-3">${statusBadge}</td>
               <td class="px-4 py-3">${rowActionsHtml(
-                "editVendor('"+v.id+"')",
-                "delVendor('"+v.id+"')",
-                "viewVendor('"+v.id+"')"
-              )}</td>
+            "editVendor('" + v.id + "')",
+            "delVendor('" + v.id + "')",
+            "viewVendor('" + v.id + "')"
+          )}</td>
             </tr>`;
         }).join('');
       }
 
       var panelHtml = panelWrap(
         'All Vendors <span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
-        tableHtml(['Vendor', 'Type', 'Company', 'GSTIN', 'GST Status', 'Outstanding', 'Status', 'Actions'], rowsHtml),
-        '<div class="flex items-center gap-2"><span class="text-[11px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderVendors()" class="text-[12px] border border-[#6da84c] rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
+        tableHtml(['Vendor', 'Type', 'Company', 'GSTIN', 'GST Status', 'Outstanding', 'Status', 'Actions'], rowsHtml) + vendorPaginationHtml(filtered.length),
+        '<div class="flex items-center gap-2"><span class="text-[11px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="setVendorPageSize(this.value)" class="text-[12px] border border-[#6da84c] rounded-lg px-2 py-1 bg-white outline-none"><option value="10" ' + (currentVendorPageSize === 10 ? 'selected' : '') + '>10</option><option value="25" ' + (currentVendorPageSize === 25 ? 'selected' : '') + '>25</option><option value="50" ' + (currentVendorPageSize === 50 ? 'selected' : '') + '>50</option><option value="100" ' + (currentVendorPageSize === 100 ? 'selected' : '') + '>100</option></select></div>'
       );
 
       document.getElementById('vendorsPanel').innerHTML = panelHtml;
       renderStats();
     }
 
-    function filterVendors() { renderVendors(); }
+    function filterVendors() {
+      currentVendorPage = 1;
+      renderVendors();
+    }
 
     function clearFilters() {
       document.getElementById('filterStatus').value = 'all';
@@ -1137,6 +1517,7 @@
       if (document.getElementById('filterVendorType')) document.getElementById('filterVendorType').value = 'all';
       var searchInput = document.getElementById('searchInput');
       if (searchInput) searchInput.value = '';
+      currentVendorPage = 1;
       renderVendors();
       toggleFilterDD();
     }
@@ -1147,9 +1528,16 @@
 
     function openAddVendor() { openVendorModal(null); }
 
-    function editVendor(id) {
-      var v = vendors.find(function(x) { return x.id === id; });
-      if (v) openVendorModal(v);
+    async function editVendor(id) {
+      try {
+        var v = await getVendorByIdApi(id);
+        var localIndex = vendors.findIndex(function (x) { return x.id === id; });
+        if (localIndex >= 0) vendors[localIndex] = v;
+        openVendorModal(v);
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || 'Failed to load vendor', 'error');
+      }
     }
 
     // ---------- Secondary Contact Person (new, Basic Info tab) ----------
@@ -1188,7 +1576,7 @@
     function collectSecondaryContacts() {
       var blocks = document.querySelectorAll('.secondary-contact-block');
       var contacts = [];
-      blocks.forEach(function(block) {
+      blocks.forEach(function (block) {
         var name = block.querySelector('.sc_name').value.trim();
         var designation = block.querySelector('.sc_designation').value.trim();
         var mobile = block.querySelector('.sc_mobile').value.trim();
@@ -1202,87 +1590,94 @@
 
     // ---------- Documents tab (new) ----------
     function documentsTabHtml(v) {
-      var docs = vendorDocuments[v.id] || [];
-           var rows = docs.length
-        ? docs.map(function(d, idx) {
-            return `
-              <div class="doc-row">
-                <div class="doc-icon">${iconDoc()}</div>
-                <div class="min-w-0 flex-1">
-                  <div class="text-[13px] font-semibold text-gray-800">${d.type}</div>
-                  <div class="text-[11px] text-gray-400">${d.fileName} · Uploaded ${d.uploadDate}</div>
-                </div>
-                <div class="flex gap-1">
-                  <button onclick="viewVendorDocument('${v.id}', ${idx})" class="btn-icon-action" title="View">${iconEye()}</button>
-                  <button onclick="downloadVendorDocument('${v.id}', ${idx})" class="btn-icon-action" title="Download">${iconDownload()}</button>
-                </div>
-              </div>`;
-          }).join('')
-        : `<div class="text-center py-8 text-gray-400 text-[12px]">
-             <div class="flex justify-center mb-2 empty-icon-svg">${iconDoc()}</div>
-             No documents uploaded yet for this vendor.
-           </div>`;
+      var docs = v.documents || [];
+
+      var rows = docs.length
+        ? docs.map(function (d, idx) {
+          return `
+          <div class="doc-row">
+            
+            <div class="doc-icon">
+              ${iconDoc()}
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <div class="text-[13px] font-semibold text-gray-800">
+                ${d.documentType}
+              </div>
+
+              <div class="text-[11px] text-gray-400">
+                ${d.fileName || ((d.documentType || d.type || 'Document') + ' Document')}
+              </div>
+            </div>
+
+            <div class="flex gap-1">
+
+              <!-- VIEW -->
+              <button
+                onclick="viewVendorDocument('${v.id}', ${idx})"
+                class="btn-icon-action"
+                title="View">
+                ${iconEye()}
+              </button>
+
+              <!-- DOWNLOAD -->
+              <button
+                onclick="downloadVendorDocument('${v.id}', ${idx})"
+                class="btn-icon-action"
+                title="Download">
+                ${iconDownload()}
+              </button>
+
+            </div>
+
+          </div>
+        `;
+        }).join('')
+        : `
+      <div class="text-center py-8 text-gray-400 text-[12px]">
+        <div class="flex justify-center mb-2 empty-icon-svg">
+          ${iconDoc()}
+        </div>
+
+        No documents uploaded yet for this vendor.
+      </div>
+    `;
 
       return `
-        <div class="flex items-center justify-between mb-3">
-          <div class="text-[12px] font-bold text-gray-700">Documents (${docs.length})</div>
-          <button onclick="openUploadDocumentOverlay('${v.id}')" class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-white bg-primary hover:bg-primary-dark px-3 py-1.5 rounded-lg transition">
-            ${iconUpload()} Upload Document
-          </button>
-        </div>
-        <div id="vendorDocsListWrap">${rows}</div>`;
+    <div class="flex items-center justify-between mb-3">
+
+      <div class="text-[12px] font-bold text-gray-700">
+        Documents (${docs.length})
+      </div>
+
+    </div>
+
+    <div id="vendorDocsListWrap">
+      ${rows}
+    </div>
+  `;
     }
 
-    function openUploadDocumentOverlay(vendorId) {
-      var v = vendors.find(function(x) { return x.id === vendorId; });
-      if (!v) return;
-      var todayIso = new Date().toISOString().split('T')[0];
 
-      var modalContent = `
-        ${modalHeader('Upload Document', v.name + ' · ' + v.id)}
-        <div class="px-6 py-4">
-          ${fld('Document Type <span class="required">*</span>', '<select id="doc_type" class="' + inputBase() + '">' + documentTypeOptions.map(function(t) { return '<option>' + t + '</option>'; }).join('') + '</select>')}
-          ${fld('File', '<input id="doc_file" type="file" class="' + inputBase() + '">', 'UI only — no actual file upload/storage in this preview')}
-          ${fld('Upload Date', '<input id="doc_date" type="date" value="' + todayIso + '" class="' + inputBase() + '">')}
-        </div>
-        <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-          <button onclick="viewVendor('${vendorId}', 'tab-documents')" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
-          <button onclick="saveUploadedDocument('${vendorId}')" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">${iconSave()} Save Document</button>
-        </div>`;
-
-      openModal(modalContent, { width: 'max-w-md' });
-    }
-
-    function saveUploadedDocument(vendorId) {
-      var type = document.getElementById('doc_type').value;
-      var fileInput = document.getElementById('doc_file');
-      var fileName = (fileInput && fileInput.files && fileInput.files[0]) ? fileInput.files[0].name : 'untitled_file';
-      var uploadDate = document.getElementById('doc_date').value || new Date().toISOString().split('T')[0];
-
-      if (!vendorDocuments[vendorId]) vendorDocuments[vendorId] = [];
-      vendorDocuments[vendorId].push({ type: type, fileName: fileName, uploadDate: uploadDate });
-
-      showToast('Document added (UI only — no file actually stored)', 'success');
-      viewVendor(vendorId, 'tab-documents');
-    }
 
     // ---------- Purchase Summary tab (new) ----------
     function purchaseSummaryHtml(v) {
       var orders = getVendorPurchaseOrders(v.id);
-      var totalValue = orders.reduce(function(sum, po) { return sum + po.amount; }, 0);
+      var totalValue = orders.reduce(function (sum, po) { return sum + po.amount; }, 0);
       var avgValue = orders.length ? Math.round(totalValue / orders.length) : 0;
-      var openCount = orders.filter(function(po) { return po.status === 'open'; }).length;
+      var openCount = orders.filter(function (po) { return po.status === 'open'; }).length;
 
       var rows = orders.length
-        ? orders.map(function(po) {
-            return `
+        ? orders.map(function (po) {
+          return `
               <tr class="border-b border-gray-100">
                 <td class="px-3 py-2 font-mono text-[12px]">${po.id}</td>
                 <td class="px-3 py-2">${po.date}</td>
                 <td class="px-3 py-2 font-mono font-semibold">${money(po.amount)}</td>
                 <td class="px-3 py-2">${badge(po.status === 'closed' ? 'Closed' : 'Open', po.status === 'closed' ? 'green' : 'amber')}</td>
               </tr>`;
-          }).join('')
+        }).join('')
         : '<tr><td colspan="4" class="text-center py-6 text-gray-400 text-[12px]">No purchase orders recorded yet.</td></tr>';
 
       return `
@@ -1316,17 +1711,17 @@
 
     // ---------- Detail (view) modal — now tabbed: Overview / Purchase Summary / Documents ----------
     function viewVendor(id, initialTab) {
-      var v = vendors.find(function(x) { return x.id === id; });
+      var v = vendors.find(function (x) { return x.id === id; });
       if (!v) return;
       initialTab = initialTab || 'tab-overview';
 
       var contactsHtml = (v.secondaryContacts && v.secondaryContacts.length)
-        ? v.secondaryContacts.map(function(c) {
-            return `<div class="text-[12.5px] text-gray-700 border border-gray-400 rounded-lg px-3 py-2 mb-2">
+        ? v.secondaryContacts.map(function (c) {
+          return `<div class="text-[12.5px] text-gray-700 border border-gray-200 rounded-lg px-3 py-2 mb-2">
                       <span class="font-semibold">${c.name || '—'}</span>${c.designation ? ' · ' + c.designation : ''}<br>
                       <span class="text-gray-500">${c.mobile || '—'} · ${c.email || '—'}</span>
                     </div>`;
-          }).join('')
+        }).join('')
         : '<div class="text-[12px] text-gray-400">No secondary contacts added.</div>';
 
       var modalContent = `
@@ -1349,7 +1744,7 @@
               </div>
             </div>
 
-            <div class="border border-[#6da84c] rounded-xl p-4 mt-4">
+            <div class="border border-gray-200 rounded-xl p-4 mt-4">
               <h4 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-3">Vendor Info</h4>
               <div class="grid grid-cols-2 gap-4 text-sm">
                 <div><span class="text-gray-500">Vendor ID</span><br><span class="font-mono font-semibold">${v.id}</span></div>
@@ -1364,7 +1759,7 @@
               </div>
             </div>
 
-            <div class="border border-[#6da84c] rounded-xl p-4 mt-3">
+            <div class="border border-gray-200 rounded-xl p-4 mt-3">
               <h4 class="text-[13px] font-semibold text-gray-800 mb-3 flex items-center gap-2">${iconBank()} Bank Details</h4>
               <div class="grid grid-cols-3 gap-3 text-sm">
                 <div><span class="text-gray-500">Bank</span><br><span class="font-semibold">${v.bankName}</span></div>
@@ -1373,7 +1768,7 @@
               </div>
             </div>
 
-            <div class="border border-[#6da84c] rounded-xl p-4 mt-3">
+            <div class="border border-gray-200 rounded-xl p-4 mt-3">
               <h4 class="text-[13px] font-semibold text-gray-800 mb-3 flex items-center gap-2">${iconUser()} Secondary Contacts</h4>
               ${contactsHtml}
             </div>
@@ -1396,13 +1791,13 @@
 
       openModal(modalContent, { width: 'max-w-2xl' });
 
-      setTimeout(function() {
+      setTimeout(function () {
         var tabs = document.querySelectorAll('#viewVendorTabs .modal-tab-btn');
-        tabs.forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            tabs.forEach(function(b) { b.classList.remove('active'); });
+        tabs.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            tabs.forEach(function (b) { b.classList.remove('active'); });
             this.classList.add('active');
-            document.querySelectorAll('#tab-overview, #tab-purchase, #tab-documents').forEach(function(p) { p.classList.remove('active'); });
+            document.querySelectorAll('#tab-overview, #tab-purchase, #tab-documents').forEach(function (p) { p.classList.remove('active'); });
             document.getElementById(this.dataset.tab).classList.add('active');
           });
         });
@@ -1419,28 +1814,31 @@
     // saveVendor() keeps working exactly as before.
     // =============================================================
     var VENDOR_STEP_TABS = [
-      { id: 'tab-basic',   n: 1, label: 'Basic Info' },
-      { id: 'tab-tax',     n: 2, label: 'Tax & GST' },
-      { id: 'tab-banking', n: 3, label: 'Banking' },
-      { id: 'tab-payment', n: 4, label: 'Payment Terms' }
+      { id: 'tab-basic', n: 1, label: 'Basic Info' },
+      { id: 'tab-documents', n: 2, label: 'Documents' },
+      { id: 'tab-tax', n: 3, label: 'Tax & GST' },
+      { id: 'tab-banking', n: 4, label: 'Banking' },
+      { id: 'tab-payment', n: 5, label: 'Payment Terms' }
+      
     ];
+
     var vendorVisitedSteps = {};
 
     function vendorStepTabsHtml(activeId) {
       return `
         <div class="step-tabs-wrap" id="vendorStepTabsWrap">
-          ${VENDOR_STEP_TABS.map(function(t, idx) {
-            var isActive = t.id === activeId;
-            var isDone = !!vendorVisitedSteps[t.id] && !isActive;
-            var circle = isDone ? iconCheck() : t.n;
-            return `
+          ${VENDOR_STEP_TABS.map(function (t, idx) {
+        var isActive = t.id === activeId;
+        var isDone = !!vendorVisitedSteps[t.id] && !isActive;
+        var circle = isDone ? iconCheck() : t.n;
+        return `
               <div class="step-tab ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}" data-tab="${t.id}" onclick="switchVendorStepTab('${t.id}')">
                 <span class="step-num">${circle}</span>
                 <span>${t.label}</span>
               </div>
               ${idx < VENDOR_STEP_TABS.length - 1 ? iconChevronRightSmall() : ''}
             `;
-          }).join('')}
+      }).join('')}
         </div>`;
     }
 
@@ -1451,7 +1849,7 @@
         var currentActive = wrap.querySelector('.step-tab.active');
         if (currentActive) vendorVisitedSteps[currentActive.dataset.tab] = true;
       }
-      document.querySelectorAll('.modal-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      document.querySelectorAll('.modal-tab-panel').forEach(function (p) { p.classList.remove('active'); });
       var panel = document.getElementById(tabId);
       if (panel) panel.classList.add('active');
 
@@ -1482,6 +1880,22 @@
         secondaryContacts: []
       };
       var isEdit = !!existing;
+      // Existing documents come from GET /get-vendor-by-vendorId as documents[].
+      // Keep them in the edit form so the user can immediately see every saved document.
+      window.vendorFormDocuments = existing
+        ? (existing.documents || []).map(function (doc) {
+          return {
+            id: doc.id || doc.documentId || null,
+            type: doc.documentType || doc.type || 'Other',
+            fileName: doc.fileName || ((doc.documentType || doc.type || 'Document') + ' Document'),
+            fileUrl: doc.fileUrl || doc.url || '',
+            file: null,
+            persisted: true
+          };
+        })
+        : [];
+      window.currentVendorIdForDocs = isEdit ? existing.id : null;
+
       vendorVisitedSteps = {};
       secondaryContactCounter = 0;
 
@@ -1510,7 +1924,7 @@
             </div>
             <div class="grid grid-cols-3 gap-3">
               ${fld('City', '<input id="f_city" value="' + (e.city || '') + '" placeholder="City" class="' + inputBase() + '">')}
-              ${fld('State', '<select id="f_state" class="' + inputBase() + '" onchange="updateStateCode()">' + stateOptions.map(function(s) { return '<option ' + (s === e.state ? 'selected' : '') + '>' + s + '</option>'; }).join('') + '</select>')}
+              ${fld('State', '<select id="f_state" class="' + inputBase() + '" onchange="updateStateCode()">' + stateOptions.map(function (s) { return '<option ' + (s === e.state ? 'selected' : '') + '>' + s + '</option>'; }).join('') + '</select>')}
               ${fld('State Code', '<input id="f_stateCode" value="' + (e.stateCode || '27') + '" class="' + inputBase() + '" disabled>')}
             </div>
             ${fld('Pincode', '<input id="f_pincode" value="' + (e.pincode || '') + '" placeholder="6-digit PIN" class="' + inputBase() + '">')}
@@ -1544,14 +1958,82 @@
             ${fld('Payment Terms *', '<select id="f_paymentTerms" class="' + inputBase() + '"><option ' + (e.paymentTerms === 'Net 7 days' ? 'selected' : '') + '>Net 7 days</option><option ' + (e.paymentTerms === 'Net 15 days' ? 'selected' : '') + '>Net 15 days</option><option ' + (e.paymentTerms === 'Net 30 days' ? 'selected' : '') + '>Net 30 days</option><option ' + (e.paymentTerms === 'Net 45 days' ? 'selected' : '') + '>Net 45 days</option><option ' + (e.paymentTerms === 'Net 60 days' ? 'selected' : '') + '>Net 60 days</option><option ' + (e.paymentTerms === 'Advance Payment' ? 'selected' : '') + '>Advance Payment</option><option ' + (e.paymentTerms === 'Cash on Delivery' ? 'selected' : '') + '>Cash on Delivery</option></select>')}
             ${fld('Status', '<div class="flex items-center gap-4 mt-1"><label class="flex items-center gap-2 text-[13px]"><input type="radio" name="vendorStatus" value="active" ' + (e.status === 'active' ? 'checked' : '') + '> <span class="font-medium">Active</span></label><label class="flex items-center gap-2 text-[13px]"><input type="radio" name="vendorStatus" value="inactive" ' + (e.status === 'inactive' ? 'checked' : '') + '> <span class="font-medium">Inactive</span></label></div>')}
           </div>
+          <div id="tab-documents" class="modal-tab-panel">
+
+  <div class="mb-4">
+    <div class="text-sm font-bold text-gray-800 mb-1">
+      Vendor Documents
+    </div>
+
+    <div class="text-[11px] text-gray-500">
+      Upload vendor-related documents such as GST Certificate,
+      PAN Card, Bank Proof or Agreement.
+    </div>
+  </div>
+
+  <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
+
+    ${fld(
+        'Document Type',
+        '<select id="vendor_document_type" class="' + inputBase() + '">' +
+        documentTypeOptions.map(function (t) {
+          return '<option value="' + t + '">' + t + '</option>';
+        }).join('') +
+        '</select>'
+      )}
+
+    ${fld(
+        'Document File',
+        '<input id="vendor_document_file" type="file" class="' +
+        inputBase() +
+        '">'
+      )}
+
+    <div class="flex justify-end mt-3">
+
+      <button
+        type="button"
+        onclick="addVendorDocumentFromForm()"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition">
+
+        ${iconUpload()}
+
+        Add Document
+
+      </button>
+
+    </div>
+
+  </div>
+
+  <div class="mt-4">
+
+    <div class="text-[12px] font-bold text-gray-700 mb-2">
+      Uploaded Documents
+    </div>
+
+    <div id="vendorFormDocumentsList"
+         class="space-y-2">
+
+      <div class="text-[11px] text-gray-400">
+        No documents added yet.
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
         </div>
         ${modalFooter(isEdit ? 'Update Vendor' : 'Save Vendor', 'onclick="saveVendor(\'' + (isEdit ? e.id : '') + '\')"')}
       `;
 
       openModal(modalContent, { width: 'max-w-2xl' });
+      // The modal DOM now exists, so render the saved document list here.
+      renderVendorFormDocuments();
 
       // seed existing secondary contacts (edit mode)
-      (e.secondaryContacts || []).forEach(function(c) { addSecondaryContactBlock(c); });
+      (e.secondaryContacts || []).forEach(function (c) { addSecondaryContactBlock(c); });
     }
 
     // State code updater
@@ -1582,12 +2064,112 @@
       };
       document.getElementById('f_stateCode').value = stateCodeMap[state] || '';
     }
+    // AddVendorDocument
+    function renderVendorFormDocuments() {
+      var container = document.getElementById('vendorFormDocumentsList');
+      if (!container) return;
+
+      var docs = window.vendorFormDocuments || [];
+      if (!docs.length) {
+        container.innerHTML = '<div class="text-[11px] text-gray-400">No documents uploaded yet.</div>';
+        return;
+      }
+
+      container.innerHTML = docs.map(function (doc, index) {
+        var typeLabel = doc.type || doc.documentType || 'Other';
+        var fileName = doc.fileName || (typeLabel + ' Document');
+        return `
+          <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg">
+            <div class="doc-icon">${iconDoc()}</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-[12px] font-semibold text-gray-800">${typeLabel}</div>
+              <div class="text-[11px] text-gray-400 truncate">${fileName}</div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" onclick="viewVendorFormDocument(${index})" class="btn-icon-action" title="View">${iconEye()}</button>
+              <button type="button" onclick="removeVendorFormDocument(${index})" class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 transition" title="Remove">${iconX()}</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function viewVendorFormDocument(index) {
+      var docs = window.vendorFormDocuments || [];
+      var doc = docs[index];
+      if (!doc || !doc.fileUrl) {
+        showToast('Document URL is not available', 'info');
+        return;
+      }
+      window.open(resolveViewableUrl(doc.fileUrl), '_blank');
+    }
+
+    async function removeVendorFormDocument(index) {
+      var docs = window.vendorFormDocuments || [];
+      var doc = docs[index];
+      if (!doc) return;
+
+      if (doc.persisted && doc.id && window.currentVendorIdForDocs) {
+        try {
+          await deleteVendorDocumentApi(window.currentVendorIdForDocs, doc.id);
+        } catch (err) {
+          console.error(err);
+          showToast(err.message || 'Failed to remove document', 'error');
+          return;
+        }
+      }
+
+      if (doc.fileUrl && doc.fileUrl.indexOf('blob:') === 0) {
+        try { URL.revokeObjectURL(doc.fileUrl); } catch (e) {}
+      }
+      docs.splice(index, 1);
+      window.vendorFormDocuments = docs;
+      renderVendorFormDocuments();
+
+      if (window.currentVendorIdForDocs) {
+        var refreshed = await getVendorByIdApi(window.currentVendorIdForDocs);
+        var idx = vendors.findIndex(function (x) { return x.id === refreshed.id; });
+        if (idx >= 0) vendors[idx] = refreshed;
+      }
+      showToast('Document removed', 'success');
+    }
+
+    function addVendorDocumentFromForm() {
+      var typeInput = document.getElementById('vendor_document_type');
+      var fileInput = document.getElementById('vendor_document_file');
+      var type = typeInput ? typeInput.value : '';
+      var file = fileInput && fileInput.files ? fileInput.files[0] : null;
+
+      if (!file) {
+        showToast('Please choose a file to upload', 'error');
+        return;
+      }
+
+      var normalized = normalizeDocType(type);
+      if (!normalized) {
+        showToast('Please choose a valid document type', 'error');
+        return;
+      }
+
+      window.vendorFormDocuments = window.vendorFormDocuments || [];
+      window.vendorFormDocuments.push({
+        id: null,
+        type: type,
+        fileName: file.name,
+        fileUrl: URL.createObjectURL(file),
+        file: file,
+        persisted: false
+      });
+
+      if (fileInput) fileInput.value = '';
+      renderVendorFormDocuments();
+      showToast('Document added. Click Save/Update Vendor to upload it.', 'info');
+    }
 
     // =============================================================
     // SAVE / DELETE VENDOR
     // =============================================================
 
-    function saveVendor(existingId) {
+    async function saveVendor(existingId) {
       var name = document.getElementById('f_name') ? document.getElementById('f_name').value.trim() : '';
       var companyName = document.getElementById('f_company') ? document.getElementById('f_company').value.trim() : '';
       var vendorType = document.getElementById('f_vendorType') ? document.getElementById('f_vendorType').value : '';
@@ -1615,68 +2197,50 @@
         return;
       }
 
-      var color = vendorColors[Math.floor(Math.random() * vendorColors.length)];
+      var payload = {
+        vendorName: name,
+        companyName: companyName,
+        vendorType: vendorType,
+        email: email,
+        phone: phone,
+        address: address,
+        city: city,
+        state: state,
+        stateCode: stateCode,
+        pincode: pincode,
+        gstin: gstin,
+        pan: pan,
+        gstRegistered: gstRegistered,
+        bankName: bankName,
+        bankAccount: bankAccount,
+        bankIfsc: bankIfsc,
+        paymentTerms: paymentTerms,
+        status: status,
+        secondaryContacts: secondaryContacts
+      };
 
-      if (existingId) {
-        var v = vendors.find(function(x) { return x.id === existingId; });
-        if (v) {
-          v.name = name;
-          v.companyName = companyName;
-          v.vendorType = vendorType;
-          v.email = email;
-          v.phone = phone;
-          v.address = address;
-          v.city = city;
-          v.state = state;
-          v.stateCode = stateCode;
-          v.pincode = pincode;
-          v.gstin = gstin;
-          v.pan = pan;
-          v.bankName = bankName;
-          v.bankAccount = bankAccount;
-          v.bankIfsc = bankIfsc;
-          v.paymentTerms = paymentTerms;
-          v.gstRegistered = gstRegistered;
-          v.status = status;
-          v.secondaryContacts = secondaryContacts;
-          showToast('Vendor updated successfully', 'success');
+      try {
+
+        var pending = (window.vendorFormDocuments || []).filter(function (d) { return d && d.file; });
+        var savedVendor;
+        if (existingId) {
+          savedVendor = await updateVendorApi(existingId, payload, pending);
+        } else {
+          savedVendor = await createVendorApi(payload, pending);
         }
-      } else {
-        var newVendor = {
-          id: 'VEN-' + String(nextVendorNo++).padStart(3, '0'),
-          name: name,
-          companyName: companyName,
-          vendorType: vendorType,
-          email: email,
-          phone: phone,
-          address: address,
-          city: city,
-          state: state,
-          stateCode: stateCode,
-          pincode: pincode,
-          gstin: gstin,
-          pan: pan,
-          bankName: bankName,
-          bankAccount: bankAccount,
-          bankIfsc: bankIfsc,
-          paymentTerms: paymentTerms,
-          gstRegistered: gstRegistered,
-          status: status,
-          outstanding: 0,
-          createdAt: new Date().toISOString().split('T')[0],
-          color: color,
-          secondaryContacts: secondaryContacts
-        };
-        vendors.unshift(newVendor);
-        showToast('Vendor added successfully', 'success');
-      }
 
-      closeModal();
-      renderVendors();
+        showToast(existingId ? 'Vendor updated successfully' : 'Vendor added successfully', 'success');
+        closeModal();
+        await loadVendorsFromApi();
+        renderVendors();
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || 'Failed to save vendor', 'error');
+      }
     }
 
     function delVendor(id) {
-      var v = vendors.find(function(x) { return x.id === id; });
+      var v = vendors.find(function (x) { return x.id === id; });
       if (!v) return;
 
       var modalContent = `
@@ -1686,16 +2250,22 @@
           <p class="text-gray-400 text-[12px] mt-1">This action cannot be undone. All associated transactions will be affected.</p>
           ${v.outstanding > 0 ? '<p class="text-amber-600 text-[12px] mt-2">This vendor has outstanding balance of ' + money(v.outstanding) + '</p>' : ''}
         </div>
-        ${modalFooter('Delete', 'onclick="confirmDeleteVendor(\'' + id + '\')"', '')}
+        ${modalFooter('Delete', 'onclick="confirmDeleteVendor(\'' + id + '\')"', '', true)}
       `;
       openModal(modalContent, { width: 'max-w-md' });
     }
 
-    function confirmDeleteVendor(id) {
-      vendors = vendors.filter(function(x) { return x.id !== id; });
-      closeModal();
-      renderVendors();
-      showToast('Vendor deleted successfully', 'warning');
+    async function confirmDeleteVendor(id) {
+      try {
+        await deleteVendorApi(id);
+        closeModal();
+        await loadVendorsFromApi();
+        renderVendors();
+        showToast('Vendor deleted successfully', 'warning');
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || 'Failed to delete vendor', 'error');
+      }
     }
 
     // =============================================================
@@ -1728,17 +2298,23 @@
     // INIT
     // =============================================================
 
-    loadVendorCategories();
-    renderVendors();
-    populateVendorTypeFilter();
+    async function initVendorsPage() {
+      loadVendorCategories();
+      await loadVendorsFromApi();
+      renderVendors();
+      populateVendorTypeFilter();
 
-    console.log('🏢 Vendors Module Loaded Successfully');
-    console.log('📊 Total Vendors:', vendors.length);
-    console.log('✅ Active Vendors:', vendors.filter(function(v) { return v.status === 'active'; }).length);
-    console.log('💰 Total Payable:', vendors.reduce(function(sum, v) { return sum + v.outstanding; }, 0));
-    console.log('🏷️ Vendor Categories:', vendorCategories.length);
+      console.log('🏢 Vendors Module Loaded Successfully');
+      console.log('📊 Total Vendors:', vendors.length);
+      console.log('✅ Active Vendors:', vendors.filter(function (v) { return v.status === 'active'; }).length);
+      console.log('💰 Total Payable:', vendors.reduce(function (sum, v) { return sum + v.outstanding; }, 0));
+      console.log('🏷️ Vendor Categories:', vendorCategories.length);
+    }
+
+    initVendorsPage();
 
   </script>
 
 </body>
+
 </html>

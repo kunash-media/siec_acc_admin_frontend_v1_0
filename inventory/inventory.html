@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+<link rel="manifest" href="/favicon_io/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Inventory — Aquilon ERP</title>
+
+<script>
+  (function () {
+    try {
+      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+    } catch (e) {
+      document.documentElement.classList.add("sidebar-expanded");
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
+          secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<style>
+  body {
+    font-size: 12px;
+    background: #f3f4f6;
+  }
+
+  .form-input {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    color: #1a1a2e;
+  }
+  .form-input:focus {
+    border-color: #6da84c;
+    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.12);
+    background: #ffffff;
+  }
+  .form-input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+
+  .form-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #374151;
+    display: block;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .form-label .required { color: #ef4444; margin-left: 2px; }
+  .form-hint { font-size: 9.5px; color: #9ca3af; margin-top: 2px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .badge-dot-green { background: #22c55e; }
+  .badge-dot-amber { background: #f59e0b; }
+  .badge-dot-red { background: #ef4444; }
+  .badge-dot-gray { background: #94a3b8; }
+  .badge-dot-blue { background: #3b82f6; }
+  .badge-dot-purple { background: #8b5cf6; }
+
+  .stat-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 10px 14px !important;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+  .stat-card .stat-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+  }
+  .stat-card .stat-value {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-top: 2px;
+  }
+
+  .table-row-hover:hover {
+    background: #f8fafc;
+  }
+
+  .btn-icon-action {
+    transition: all 0.15s ease;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-icon-action:hover {
+    background: #f1f5f9;
+    color: #6da84c;
+  }
+  .btn-icon-action.danger:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+  .btn-icon-action.primary:hover {
+    background: #eef5e8;
+    color: #6da84c;
+  }
+
+  .toast {
+    animation: fadeIn 0.2s ease;
+    font-size: 12px;
+  }
+  .toast-success { background: #16a34a; }
+  .toast-error { background: #dc2626; }
+  .toast-warning { background: #f59e0b; }
+  .toast-info { background: #6da84c; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-modal { animation: modalIn 0.18s ease; }
+
+  .modal-scroll {
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+  .modal-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .modal-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
+  .empty-icon-svg {
+    opacity: 0.2;
+    width: 40px;
+    height: 40px;
+    color: #94a3b8;
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .page-subtitle {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .page-breadcrumb {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6da84c;
+  }
+
+  table th {
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    padding: 8px 12px;
+  }
+  table td {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  table td .font-mono {
+    font-size: 11px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .modal-subtitle {
+    font-size: 11px;
+    color: #6b7280;
+  }
+
+  .filter-btn {
+    font-size: 11px;
+    padding: 5px 12px;
+  }
+  .filter-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Stock level indicator */
+  .stock-level {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e5e7eb;
+    overflow: hidden;
+    margin-top: 3px;
+  }
+  .stock-level .fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+  .stock-level .fill-green { background: #22c55e; }
+  .stock-level .fill-amber { background: #f59e0b; }
+  .stock-level .fill-red { background: #ef4444; }
+</style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased text-sm">
+
+  <div class="flex min-h-screen">
+    <div id="sidebar-root"></div>
+
+    <div class="app-main flex-1 flex flex-col min-w-0">
+      <div id="topbar-root"></div>
+
+      <main class="p-3 sm:p-4 lg:p-5">
+
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+          <!-- ===== PAGE HEADER ===== -->
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <div class="page-breadcrumb">Operations</div>
+              <h1 class="page-title text-gray-900">Inventory Management</h1>
+              <p class="page-subtitle mt-0.5">Track stock across warehouses, manage transfers, adjustments, and low-stock alerts.</p>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <div class="relative inline-block" data-dd-trigger>
+                <button onclick="toggleFilterDD()" class="filter-btn inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M7 12h10M11 18h2"/>
+                  </svg>
+                  Filter
+                  <span id="filterBadge" class="hidden text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+                <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-50">
+                  <div class="mb-2">
+                    <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Stock Status</label>
+                    <select id="filterStatus" onchange="filterInventory()" class="form-input text-[10px]">
+                      <option value="all">All Items</option>
+                      <option value="green">In Stock</option>
+                      <option value="amber">Low Stock</option>
+                      <option value="red">Critical</option>
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Warehouse</label>
+                    <select id="filterWarehouse" onchange="filterInventory()" class="form-input text-[10px]">
+                      <option value="all">All Warehouses</option>
+                    </select>
+                  </div>
+                  <button onclick="clearFilters()" class="text-[10px] text-primary font-semibold hover:underline">Clear Filters</button>
+                </div>
+              </div>
+
+              <button onclick="openAddStock()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Add Stock
+              </button>
+             
+              <button onclick="openAdjustStock()" class="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Adjust
+              </button>
+            </div>
+          </div>
+
+          <!-- ===== STATS CARDS ===== -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5 mb-4">
+            <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Total Items</div>
+              <div class="stat-value" id="totalItems">0</div>
+            </div>
+            <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card">
+              <div class="stat-label">In Stock</div>
+              <div class="stat-value text-green-600" id="inStockItems">0</div>
+            </div>
+            <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Low Stock</div>
+              <div class="stat-value text-amber-600" id="lowStockItems">0</div>
+            </div>
+            <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card">
+             <div class="stat-label">Critical</div>
+              <div class="stat-value text-red-600" id="outStockItems">0</div>
+            </div>
+            <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Total Value</div>
+              <div class="stat-value text-primary" id="totalValue">₹0</div>
+            </div>
+          </div>
+
+          <!-- ===== INVENTORY TABLE ===== -->
+          <div id="inventoryPanel"></div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- SCRIPTS -->
+  <!-- ========================================================== -->
+
+  <script src="/assets/js/nav-sidebar.js"></script>
+  <script>
+    // =============================================================
+    // NAV-SIDEBAR INIT
+    // =============================================================
+    NavSidebar.init({
+      basePath: "",
+      activePage: "inventory",
+      pageTitle: "Inventory",
+      user: {
+        name: "Admin",
+        role: "Super Admin",
+        avatarUrl: "",
+      },
+    });
+
+    // =============================================================
+    // SVG ICONS
+    // =============================================================
+    function iconPlus() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>`;
+    }
+    function iconEdit() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+    }
+    function iconTrash() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`;
+    }
+    function iconEye() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    }
+    function iconX() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+    }
+    function iconFilter() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
+    }
+    function iconSave() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`;
+    }
+    function iconInfo() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>`;
+    }
+    function iconDocument() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>`;
+    }
+    function iconSearch() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
+    }
+    function iconBox() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`;
+    }
+    // function iconTransfer() {
+    //   return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16l-4-4 4-4"/><path d="M21 12h-12"/></svg>`;
+    // }
+
+    // =============================================================
+    // TOAST
+    // =============================================================
+    function showToast(message, kind) {
+      kind = kind || 'success';
+      var wrap = document.getElementById('toastWrap');
+      var colors = {
+        success: 'bg-green-600',
+        info: 'bg-primary',
+        warning: 'bg-amber-600',
+        error: 'bg-red-600'
+      };
+      var el = document.createElement('div');
+      el.className = 'toast ' + colors[kind] + ' text-white font-semibold px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
+      el.innerHTML = '<span>' + message + '</span>';
+      wrap.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = 'opacity .3s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 300);
+      }, 2600);
+    }
+
+    // =============================================================
+    // MODAL
+    // =============================================================
+    function openModal(innerHtml, opts) {
+      opts = opts || {};
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = `
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-3" id="modalOverlay">
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" id="modalBackdrop"></div>
+          <div class="relative bg-white rounded-xl shadow-2xl w-full ${opts.width || 'max-w-4xl'} max-h-[92vh] overflow-hidden animate-modal">
+            ${innerHtml}
+          </div>
+        </div>`;
+      document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = '';
+      document.body.style.overflow = '';
+    }
+
+    function modalHeader(title, subtitle) {
+      return `
+        <div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div>
+            <h3 class="modal-title text-gray-900">${title}</h3>
+            ${subtitle ? '<p class="modal-subtitle mt-0.5">' + subtitle + '</p>' : ''}
+          </div>
+          <button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
+        </div>`;
+    }
+
+    function modalFooter(saveLabel, onSaveAttr, extraBtns) {
+      return `
+        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
+          <div>${extraBtns || ''}</div>
+          <div class="flex gap-2">
+            <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+            <button ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
+              ${iconSave()} ${saveLabel}
+            </button>
+          </div>
+        </div>`;
+    }
+
+    function fld(label, inputHtml, hint) {
+      return `
+        <div class="mb-2">
+          <label class="form-label">${label}</label>
+          ${inputHtml}
+          ${hint ? '<div class="form-hint">' + hint + '</div>' : ''}
+        </div>`;
+    }
+
+    function inputBase() { return "form-input"; }
+
+    // =============================================================
+    // DROPDOWN
+    // =============================================================
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('[data-dd-trigger]')) {
+        document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+      }
+    });
+
+    function toggleFilterDD() {
+      var menu = document.getElementById('filterDD');
+      var isHidden = menu.classList.contains('hidden');
+      document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+      if (isHidden) menu.classList.remove('hidden');
+    }
+
+    // =============================================================
+    // HELPERS
+    // =============================================================
+    function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+
+    function stockBadge(status) {
+      var map = {
+        green: 'badge-green',
+        amber: 'badge-amber',
+        red: 'badge-red'
+      };
+      var dot = {
+        green: 'badge-dot-green',
+        amber: 'badge-dot-amber',
+        red: 'badge-dot-red'
+      };
+      var label = status === 'green' ? 'In Stock' : status === 'amber' ? 'Low Stock' : 'Critical';
+      return '<span class="badge ' + map[status] + '"><span class="badge-dot ' + dot[status] + '"></span>' + label + '</span>';
+    }
+
+    function stockLevelClass(status) {
+      return status === 'green' ? 'fill-green' : status === 'amber' ? 'fill-amber' : 'fill-red';
+    }
+
+    function rowActionsHtml(editFn, delFn, viewFn) {
+      var html = '<div class="flex gap-1">';
+      if (viewFn) {
+        html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
+      }
+      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      html += '</div>';
+      return html;
+    }
+
+    function panelWrap(titleHtml, bodyHtml, extraHead) {
+      return `
+        <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800 flex items-center gap-2">${titleHtml}</div>
+            ${extraHead || ''}
+          </div>
+          <div>${bodyHtml}</div>
+        </div>`;
+    }
+
+    function tableHtml(cols, rowsHtml) {
+      var colHeaders = cols.map(function(c) {
+        return '<th class="text-left font-semibold whitespace-nowrap">' + c + '</th>';
+      }).join('');
+      return `
+        <div class="overflow-auto max-h-[350px]">
+          <table class="w-full">
+            <thead class="sticky top-0 bg-gray-200 border border-[#6da84c]">
+              <tr class="">${colHeaders}</tr>
+            </thead>
+            <tbody id="tbody-anchor">${rowsHtml}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // =============================================================
+    // DATA
+    // =============================================================
+
+  var API_BASE = 'http://localhost:9093';
+  var warehouses = [];
+  var products = [];
+  var inventoryItems = [];
+
+  function apiFetch(path, method, body) {
+    var opts = { method: method || 'GET', credentials: 'include', headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(API_BASE + path, opts).then(function(res) {
+      return res.json().catch(function() { return {}; }).then(function(json) {
+        if (!res.ok || json.status === 'ERROR') throw new Error(json.message || ('Request failed (' + res.status + ')'));
+        return json.data;
+      });
+    });
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function mapInventoryRow(r) {
+    var isVar = !!r.variantStrId;
+    return {
+      id: (isVar ? r.variantStrId : r.productStrId) + '|' + r.warehouseStrId,
+      itemId: isVar ? r.variantStrId : r.productStrId,
+      isVariant: isVar,
+      name: isVar ? (r.productName + ' — ' + (r.variantName || r.variantStrId)) : r.productName,
+      sku: r.productSku || '-',
+      category: r.productCategory || '-',
+      unit: r.productUnit || '',
+      price: Number(r.productSellingPrice || 0),
+      stock: Number(r.productStock || 0),
+      warehouse: r.warehouseStrId,
+      status: r.status || 'red',
+      lastUpdated: r.inventoryUpdatedAt ? String(r.inventoryUpdatedAt).split('T')[0] : '-'
+    };
+  }
+
+  function refreshInventory() {
+    return apiFetch('/api/inventory/v1/get-all-inventory').then(function(rows) {
+      inventoryItems = (rows || []).map(mapInventoryRow);
+      renderInventory();
+    });
+  }
+
+  function loadAll() {
+    return Promise.all([
+      apiFetch('/api/warehouses/v1/get-all-warehouses'),
+      apiFetch('/api/products/v1/get-all-products'),
+      apiFetch('/api/inventory/v1/get-all-inventory')
+    ]).then(function(r) {
+      warehouses = (r[0] || []).map(function(w) {
+        return { id: w.warehouseStrId, name: w.warehouseName, isDefault: !!w.warehouseIsDefault, active: w.warehouseStatus === 'ACTIVE' };
+      });
+      products = r[1] || [];
+      inventoryItems = (r[2] || []).map(mapInventoryRow);
+    });
+  }
+
+ var pickerTimers = {};
+
+function itemPicker(prefix) {
+  return '<input type="hidden" id="' + prefix + '_item" value="">' +
+    '<div class="relative">' +
+      '<input type="text" class="form-input" id="' + prefix + '_item_q" autocomplete="off" placeholder="Type 2+ letters: name, SKU, ID…" oninput="onPickerInput(\'' + prefix + '\')">' +
+      '<div id="' + prefix + '_item_res" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto"></div>' +
+    '</div>';
+}
+
+// swap this one function for a server call when you have a search endpoint
+function searchItems(q) {
+  q = q.toLowerCase();
+  var out = [];
+  products.forEach(function(p) {
+    var hay = (p.productName + ' ' + (p.productSku || '') + ' ' + p.productStrId).toLowerCase();
+    if (hay.indexOf(q) !== -1) out.push({ value: 'P:' + p.productStrId, label: p.productName + ' (' + (p.productSku || '-') + ')' });
+  });
+  var seen = {};
+  inventoryItems.forEach(function(i) {
+    if (!i.isVariant || seen[i.itemId]) return;
+    seen[i.itemId] = 1;
+    var hay = (i.name + ' ' + i.sku + ' ' + i.itemId).toLowerCase();
+    if (hay.indexOf(q) !== -1) out.push({ value: 'V:' + i.itemId, label: i.name + ' (' + i.sku + ')' });
+  });
+  return Promise.resolve(out.slice(0, 30));
+}
+
+function onPickerInput(prefix) {
+  var input = document.getElementById(prefix + '_item_q');
+  var hidden = document.getElementById(prefix + '_item');
+  var box = document.getElementById(prefix + '_item_res');
+  hidden.value = '';
+  clearTimeout(pickerTimers[prefix]);
+  var q = input.value.trim();
+  if (q.length < 2) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  pickerTimers[prefix] = setTimeout(function() {
+    searchItems(q).then(function(list) {
+      if (input.value.trim() !== q) return;
+      box.innerHTML = list.length ? list.map(function(o) {
+        return '<div class="px-3 py-1.5 text-xs cursor-pointer hover:bg-gray-100" data-v="' + esc(o.value) + '" data-l="' + esc(o.label) + '" onclick="pickItem(\'' + prefix + '\', this)">' + esc(o.label) + '</div>';
+      }).join('') : '<div class="px-3 py-2 text-xs text-gray-400">No match</div>';
+      box.classList.remove('hidden');
+    });
+  }, 300);
+}
+
+function pickItem(prefix, el) {
+  document.getElementById(prefix + '_item').value = el.getAttribute('data-v');
+  document.getElementById(prefix + '_item_q').value = el.getAttribute('data-l');
+  document.getElementById(prefix + '_item_res').classList.add('hidden');
+}
+
+  function splitItem(v) {
+    return { isVariant: v.charAt(0) === 'V', id: v.substring(2) };
+  }
+
+  function warehouseOptions() {
+    return warehouses.filter(function(w) { return w.active; }).map(function(w) {
+      return '<option value="' + esc(w.id) + '"' + (w.isDefault ? ' selected' : '') + '>' + esc(w.name) + '</option>';
+    }).join('');
+  }
+
+  function historyTypeLabel(t) {
+    if (t === 'CREATE') return 'Opening';
+    if (t === 'STOCK_ADD') return 'Stock In';
+    if (t === 'VENDOR_PURCHASE_ADD') return 'Purchase';
+    if (t === 'STOCK_REDUCE') return 'Stock Out';
+    if (t === 'MANUAL_UPDATE' || t === 'ADJUSTMENT') return 'Adjustment';
+    return t || '-';
+  }
+
+    // =============================================================
+    // FUNCTIONS
+    // =============================================================
+
+    function getWarehouseName(id) {
+      var w = warehouses.find(function(x) { return x.id === id; });
+      return w ? w.name : id;
+    }
+
+    function getStockStatus(stock, reorder) {
+      if (stock === 0) return 'red';
+      if (stock <= reorder) return 'amber';
+      return 'green';
+    }
+
+    function renderStats() {
+      var total = inventoryItems.length;
+      var inStock = inventoryItems.filter(function(i) { return i.status === 'green'; }).length;
+      var lowStock = inventoryItems.filter(function(i) { return i.status === 'amber'; }).length;
+      var outStock = inventoryItems.filter(function(i) { return i.status === 'red'; }).length;
+      var totalVal = inventoryItems.reduce(function(sum, i) { return sum + (i.stock * i.price); }, 0);
+
+      document.getElementById('totalItems').textContent = total;
+      document.getElementById('inStockItems').textContent = inStock;
+      document.getElementById('lowStockItems').textContent = lowStock;
+      document.getElementById('outStockItems').textContent = outStock;
+      document.getElementById('totalValue').textContent = money(totalVal);
+
+      var filterWarehouse = document.getElementById('filterWarehouse');
+      var currentVal = filterWarehouse.value;
+      filterWarehouse.innerHTML = '<option value="all">All Warehouses</option>';
+      warehouses.forEach(function(w) {
+        filterWarehouse.innerHTML += '<option value="' + w.id + '">' + w.name + '</option>';
+      });
+      filterWarehouse.value = currentVal;
+    }
+
+    function getFilteredInventory() {
+      var searchInput = document.getElementById('searchInput');
+      var q = searchInput ? searchInput.value.toLowerCase() : '';
+      var status = document.getElementById('filterStatus').value || 'all';
+      var warehouse = document.getElementById('filterWarehouse').value || 'all';
+
+      return inventoryItems.filter(function(item) {
+        var matchSearch = item.name.toLowerCase().indexOf(q) !== -1 ||
+          item.sku.toLowerCase().indexOf(q) !== -1 ||
+          item.id.toLowerCase().indexOf(q) !== -1 ||
+          item.category.toLowerCase().indexOf(q) !== -1;
+        var matchStatus = status === 'all' || item.status === status;
+        var matchWarehouse = warehouse === 'all' || item.warehouse === warehouse;
+        return matchSearch && matchStatus && matchWarehouse;
+      });
+    }
+
+    function renderInventory() {
+      var filtered = getFilteredInventory();
+
+      var rowsHtml = '';
+      if (filtered.length === 0) {
+        rowsHtml = `
+          <tr>
+            <td colspan="8" class="text-center py-10 text-gray-400 text-sm">
+              <div class="flex justify-center mb-2 empty-icon-svg">${iconBox()}</div>
+              No inventory items found. Try adjusting your filters or
+              <button onclick="openAddStock()" class="text-primary font-semibold hover:underline">add stock</button>.
+            </td>
+          </tr>`;
+      } else {
+        rowsHtml = filtered.map(function(item) {
+        var stockPercent = Math.min((item.stock / 40) * 100, 100);
+
+          return `
+            <tr class="border-b border-gray-100 table-row-hover">
+              <td class="px-3 py-2.5">
+                <div class="font-semibold text-gray-800 text-sm">${item.name}</div>
+                <div class="text-[10px] text-gray-400 font-mono">${item.sku}</div>
+              </td>
+              <td class="px-3 py-2.5 text-gray-600 text-xs">${item.category}</td>
+              <td class="px-3 py-2.5 text-center font-mono font-semibold text-sm">${item.stock}</td>
+              <td class="px-3 py-2.5 text-xs">${getWarehouseName(item.warehouse)}</td>
+              <td class="px-3 py-2.5">
+                <div class="text-xs font-semibold">${money(item.price)} / ${item.unit}</div>
+              </td>
+              <td class="px-3 py-2.5" style="min-width:100px;">
+                ${stockBadge(item.status)}
+                <div class="stock-level">
+                  <div class="fill ${stockLevelClass(item.status)}" style="width:${stockPercent}%;"></div>
+                </div>
+              </td>
+              <td class="px-3 py-2.5 text-[10px] text-gray-400">${item.lastUpdated}</td>
+              <td class="px-3 py-2.5"><div class="flex gap-1"><button onclick="viewInventory('${item.id}')" class="btn-icon-action" title="View">${iconEye()}</button></div></td>
+            </tr>`;
+        }).join('');
+      }
+
+      var panelHtml = panelWrap(
+        'Inventory <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
+        tableHtml(['Item', 'Category', 'Stock', 'Warehouse', 'Price', 'Status', 'Last Updated', 'Actions'], rowsHtml),
+        '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderInventory()" class="text-[10px] border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
+      );
+
+      document.getElementById('inventoryPanel').innerHTML = panelHtml;
+      renderStats();
+    }
+
+    function filterInventory() { renderInventory(); }
+
+    function clearFilters() {
+      document.getElementById('filterStatus').value = 'all';
+      document.getElementById('filterWarehouse').value = 'all';
+      var searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = '';
+      renderInventory();
+      toggleFilterDD();
+    }
+
+    // =============================================================
+    // VIEW INVENTORY ITEM
+    // =============================================================
+
+    function viewInventory(id) {
+     var item = inventoryItems.find(function(x) { return x.id === id; });
+      if (!item) return;
+
+      var modalContent = `
+        ${modalHeader('Inventory Details — ' + esc(item.name), esc(item.itemId) + ' · ' + esc(item.sku))}
+        <div class="px-5 py-4 modal-scroll">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div><span class="text-gray-500">Category</span><br><span class="font-semibold">${esc(item.category)}</span></div>
+            <div><span class="text-gray-500">Unit</span><br><span class="font-semibold">${esc(item.unit)}</span></div>
+            <div><span class="text-gray-500">Warehouse</span><br><span class="font-semibold">${esc(getWarehouseName(item.warehouse))}</span></div>
+            <div><span class="text-gray-500">Status</span><br>${stockBadge(item.status)}</div>
+            <div><span class="text-gray-500">Current Stock</span><br><span class="font-semibold text-lg">${item.stock} ${esc(item.unit)}</span></div>
+            <div><span class="text-gray-500">Unit Price</span><br><span class="font-semibold">${money(item.price)}</span></div>
+            <div><span class="text-gray-500">Total Value</span><br><span class="font-semibold text-primary">${money(item.stock * item.price)}</span></div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-100">
+            <h4 class="text-[11px] font-semibold text-gray-700 mb-2">Stock History (all warehouses)</h4>
+            <div id="histBox" class="bg-gray-50 border border-gray-300 rounded-lg p-2 max-h-40 overflow-auto"><div class="text-gray-400 text-xs py-2">Loading…</div></div>
+          </div>
+        </div>
+        ${modalFooter('Close', 'onclick="closeModal()"')}
+      `;
+      openModal(modalContent, { width: 'max-w-2xl' });
+
+        apiFetch('/api/inventory/v1/' + (item.isVariant ? 'get-variant-history/' : 'get-history/') + encodeURIComponent(item.itemId)).then(function(rows) {
+        var box = document.getElementById('histBox');
+        if (!box) return;
+        if (!rows || !rows.length) {
+          box.innerHTML = '<div class="text-gray-400 text-xs py-2">No transaction history</div>';
+          return;
+        }
+        box.innerHTML = rows.map(function(h) {
+          var label = historyTypeLabel(h.historyChangeType);
+          var qty = Number(h.historyChangeQty || 0);
+          var color = label === 'Adjustment' ? 'text-blue-600' : (qty < 0 ? 'text-red-600' : 'text-green-600');
+          return `
+            <div class="flex justify-between gap-2 text-xs py-1.5 border-b border-gray-300">
+              <span>${esc(String(h.historyCreatedAt || '').split('T')[0])}</span>
+              <span class="font-semibold ${color}">${esc(label)}</span>
+              <span class="font-mono">${qty > 0 ? '+' : ''}${qty}</span>
+              <span class="font-mono text-gray-500">${esc(h.historyPreviousStock)} → ${esc(h.historyNewStock)}</span>
+              <span class="text-gray-400">${h.warehouseStrId ? esc(getWarehouseName(h.warehouseStrId)) : '—'}${h.historyRemarks ? ' · ' + esc(h.historyRemarks) : ''}</span>
+            </div>`;
+        }).join('');
+      }).catch(function(e) {
+        var box = document.getElementById('histBox');
+        if (box) box.innerHTML = '<div class="text-red-500 text-xs py-2">' + esc(e.message) + '</div>';
+      });
+    }
+
+    // =============================================================
+    // ADD STOCK (Stock In)
+    // =============================================================
+
+    function openAddStock() {
+  var modalContent = `
+    ${modalHeader('Add Stock', 'Record new stock entry')}
+    <div class="px-5 py-4">
+      <div class="grid grid-cols-2 gap-3">
+        ${fld('Item *', itemPicker('s'))}
+        ${fld('Warehouse *', '<select class="form-input" id="s_warehouse">' + warehouseOptions() + '</select>')}
+        ${fld('Quantity *', '<input type="number" class="form-input" id="s_qty" value="1" placeholder="Quantity" min="0.01" step="0.01">')}
+      </div>
+      ${fld('Notes', '<textarea rows="2" class="form-input" id="s_notes" placeholder="Purchase reference, supplier details, etc."></textarea>')}
+    </div>
+    ${modalFooter('Add Stock', 'onclick="saveAddStock()"')}
+  `;
+  openModal(modalContent, { width: 'max-w-lg' });
+}
+
+function saveAddStock() {
+
+   var sel = splitItem(document.getElementById('s_item').value);
+  var productStrId = sel.id;
+
+  var warehouse = document.getElementById('s_warehouse').value;
+  var qty = parseFloat(document.getElementById('s_qty').value) || 0;
+  var notes = document.getElementById('s_notes').value || '';
+
+  if (!productStrId || !warehouse || qty <= 0) {
+    showToast('Select item, warehouse and a valid quantity', 'error');
+    return;
+  }
+
+    apiFetch('/api/inventory/v1/' + (sel.isVariant ? 'add-variant-stock/' : 'add-stock/') + encodeURIComponent(productStrId), 'PATCH',
+    { changeQty: qty, warehouseStrId: warehouse, remarks: notes || null })
+    .then(function() {
+      closeModal();
+      showToast('Stock added successfully!', 'success');
+      return refreshInventory();
+    })
+    .catch(function(e) { showToast(e.message, 'error'); });
+}
+
+
+    // =============================================================
+    // ADJUST STOCK
+    // =============================================================
+
+    function openAdjustStock() {
+    var modalContent = `
+      ${modalHeader('Adjust Stock', 'Adjust stock for damaged, expired, or counted items')}
+      <div class="px-5 py-4">
+        <div class="grid grid-cols-2 gap-3">
+          ${fld('Item *', itemPicker('a'))}
+          ${fld('Warehouse *', '<select class="form-input" id="a_warehouse">' + warehouseOptions() + '</select>')}
+          ${fld('Adjustment Quantity *', '<input type="number" class="form-input" id="a_qty" value="1" step="0.01" placeholder="Positive = Add, Negative = Remove">', 'Use positive number to add stock, negative to remove')}
+          ${fld('Reason', '<select class="form-input" id="a_reason"><option>Damaged</option><option>Expired</option><option>Lost</option><option>Found</option><option>Physical Count</option><option>Other</option></select>')}
+        </div>
+        ${fld('Notes', '<textarea rows="2" class="form-input" id="a_notes" placeholder="Additional details"></textarea>')}
+      </div>
+      ${modalFooter('Adjust Stock', 'onclick="saveAdjustStock()"')}
+    `;
+    openModal(modalContent, { width: 'max-w-lg' });
+  }
+
+function saveAdjustStock() {
+
+  var sel = splitItem(document.getElementById('a_item').value);
+  var productStrId = sel.id;
+
+  var warehouse = document.getElementById('a_warehouse').value;
+  var qty = parseFloat(document.getElementById('a_qty').value) || 0;
+  var reason = document.getElementById('a_reason').value;
+  var notes = document.getElementById('a_notes').value || '';
+
+  if (!productStrId || !warehouse || qty === 0) {
+    showToast('Select item, warehouse and a non-zero adjustment', 'error');
+    return;
+  }
+
+  apiFetch('/api/inventory/v1/' + (sel.isVariant ? 'adjust-variant-stock/' : 'adjust-stock/') + encodeURIComponent(productStrId), 'PATCH',    { changeQty: qty, warehouseStrId: warehouse, reason: reason, remarks: notes || null })
+    .then(function() {
+      closeModal();
+      showToast('Stock adjusted successfully!', 'success');
+      return refreshInventory();
+    })
+    .catch(function(e) { showToast(e.message, 'error'); });
+}
+
+    // =============================================================
+    // EDIT / DELETE INVENTORY ITEM
+    // =============================================================
+
+    function editInventory(id) {
+      var item = inventoryItems.find(function(x) { return x.id === id; });
+      if (!item) return;
+
+      var modalContent = `
+        ${modalHeader('Edit Inventory Item', item.name)}
+        <div class="px-5 py-4">
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Item Name', '<input type="text" class="form-input" id="e_name" value="' + item.name + '" disabled>')}
+            ${fld('SKU', '<input type="text" class="form-input" id="e_sku" value="' + item.sku + '" disabled>')}
+            ${fld('Category', '<input type="text" class="form-input" id="e_category" value="' + item.category + '" disabled>')}
+            ${fld('Unit', '<input type="text" class="form-input" id="e_unit" value="' + item.unit + '" disabled>')}
+            ${fld('Current Stock', '<input type="number" class="form-input" id="e_stock" value="' + item.stock + '" placeholder="Stock quantity">')}
+            ${fld('Reorder Level', '<input type="number" class="form-input" id="e_reorder" value="' + item.reorderLevel + '" placeholder="Reorder level">')}
+            ${fld('Price (₹)', '<input type="number" class="form-input" id="e_price" value="' + item.price + '" placeholder="Unit price" step="0.01">')}
+            ${fld('Warehouse', '<select class="form-input" id="e_warehouse">' + warehouses.map(function(w) { return '<option ' + (w.id === item.warehouse ? 'selected' : '') + ' value="' + w.id + '">' + w.name + '</option>'; }).join('') + '</select>')}
+          </div>
+        </div>
+        ${modalFooter('Update Inventory', 'onclick="saveEditInventory(\'' + id + '\')"')}
+      `;
+
+      openModal(modalContent, { width: 'max-w-lg' });
+    }
+
+    function saveEditInventory(id) {
+      var item = inventoryItems.find(function(x) { return x.id === id; });
+      if (!item) return;
+
+      var stock = parseInt(document.getElementById('e_stock').value) || 0;
+      var reorderLevel = parseInt(document.getElementById('e_reorder').value) || 0;
+      var price = parseFloat(document.getElementById('e_price').value) || 0;
+      var warehouse = document.getElementById('e_warehouse').value;
+
+      item.stock = stock;
+      item.reorderLevel = reorderLevel;
+      item.price = price;
+      item.warehouse = warehouse;
+      item.status = getStockStatus(stock, reorderLevel);
+      item.lastUpdated = new Date().toISOString().split('T')[0];
+
+      closeModal();
+      renderInventory();
+      showToast('Inventory updated successfully!', 'success');
+    }
+
+    function delInventory(id) {
+      var item = inventoryItems.find(function(x) { return x.id === id; });
+      if (!item) return;
+
+      var modalContent = `
+        ${modalHeader('Delete Inventory Item', item.name)}
+        <div class="px-5 py-4 text-sm text-gray-600">
+          <p>Are you sure you want to delete <b class="text-gray-800">${item.name}</b> from inventory?</p>
+          <p class="text-gray-400 text-[11px] mt-1">This will not delete the item master, only the inventory record.</p>
+          <p class="text-amber-600 text-[11px] mt-2">Current Stock: ${item.stock} ${item.unit}</p>
+        </div>
+        ${modalFooter('Delete', 'onclick="confirmDeleteInventory(\'' + id + '\')"', '')}
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
+
+    function confirmDeleteInventory(id) {
+      inventoryItems = inventoryItems.filter(function(x) { return x.id !== id; });
+      closeModal();
+      renderInventory();
+      showToast('Inventory item deleted successfully', 'warning');
+    }
+
+    // =============================================================
+    // SEARCH
+    // =============================================================
+
+    (function addSearchToTopbar() {
+      var searchContainer = document.querySelector('.app-main header');
+      if (searchContainer) {
+        var searchHtml = `
+          <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+            <input type="text" id="searchInput" placeholder="Search inventory by name, SKU, category…"
+              onkeyup="filterInventory()"
+              class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+          </div>
+        `;
+        var headerContent = searchContainer.innerHTML;
+        var hamburgerIndex = headerContent.indexOf('lg:hidden');
+        if (hamburgerIndex !== -1) {
+          var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
+          var before = headerContent.substring(0, firstDivEnd);
+          var after = headerContent.substring(firstDivEnd);
+          searchContainer.innerHTML = before + searchHtml + after;
+        }
+      }
+    })();
+
+    // =============================================================
+    // INIT
+    // =============================================================
+
+    renderInventory();
+
+    loadAll()
+    .then(renderInventory)
+    .catch(function(e) { renderInventory(); showToast(e.message, 'error'); });
+  </script>
+
+  <!-- <script src="/assets/js/nav-sidebar.js"></script> -->
+
+</body>
+</html>

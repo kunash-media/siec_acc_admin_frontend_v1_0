@@ -7,14 +7,9 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
 <link rel="manifest" href="/favicon_io/site.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Settings</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Organization Setup — Aquilon ERP</title>
 
-<!--
-  ANTI-FLICKER SCRIPT — must be the first thing in <head>, before any
-  stylesheet. It reads the saved collapse state synchronously and sets
-  it on <html> so the sidebar is the correct width on the very first
-  paint. Copy this exact block, unchanged, to the top of every admin page.
--->
 <script>
   (function () {
     try {
@@ -26,9 +21,6 @@
   })();
 </script>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-<!-- Tailwind (utility classes for page content) -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -43,48 +35,2082 @@
   };
 </script>
 
-<!-- Shell styling (sidebar / topbar / overlays) — source of truth, loads after Tailwind -->
 <link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<style>
+ 
+  .form-input {
+    width: 100%;
+    border: 1px solid #e1e7ee;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    color: #1a1a2e;
+  }
+  .form-input:focus {
+    border-color: #6da84c;
+    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.15);
+    background: #ffffff;
+  }
+  .form-input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+  .form-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #374151;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .form-label .required { color: #ef4444; margin-left: 2px; }
+  .form-hint { font-size: 10.5px; color: #9ca3af; margin-top: 3px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .badge-dot-green { background: #22c55e; }
+  .badge-dot-amber { background: #f59e0b; }
+  .badge-dot-red { background: #ef4444; }
+  .badge-dot-gray { background: #94a3b8; }
+  .badge-dot-blue { background: #3b82f6; }
+
+  .table-row-hover:hover {
+    background: #f8fafc;
+  }
+
+  .modal-tab-btn {
+    transition: all 0.2s ease;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    color: #6b7280;
+    cursor: pointer;
+    background: transparent;
+    display: flex;
+    gap: 6px;
+  }
+  .modal-tab-btn.active {
+    color: #6da84c;
+    border-bottom-color: #6da84c;
+  }
+  .modal-tab-btn:hover:not(.active) {
+    color: #1f2937;
+    border-bottom-color: #d1d5db;
+  }
+  .modal-tab-panel { display: none; }
+  .modal-tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
+
+  .page-tab-btn {
+    transition: all 0.2s ease;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    color: #6b7280;
+    cursor: pointer;
+    background: transparent;
+  }
+  .page-tab-btn.active {
+    color: #6da84c;
+    border-bottom-color: #6da84c;
+    font-weight: 600;
+  }
+  .page-tab-btn:hover:not(.active) {
+    color: #1f2937;
+    border-bottom-color: #d1d5db;
+  }
+  .page-tab-panel { display: none; }
+  .page-tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+   .animate-modal { animation: modalIn 0.18s ease; }
+
+  .btn-icon-action {
+    transition: all 0.15s ease;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-icon-action:hover {
+    background: #f1f5f9;
+    color: #6da84c;
+  }
+  .btn-icon-action.danger:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  .toast {
+    animation: fadeIn 0.2s ease;
+  }
+  .toast-success { background: #16a34a; }
+  .toast-error { background: #dc2626; }
+  .toast-warning { background: #f59e0b; }
+  .toast-info { background: #6da84c; }
+
+  .modal-scroll {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .modal-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .modal-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
+  .empty-icon-svg {
+    opacity: 0.2;
+    width: 48px;
+    height: 48px;
+    color: #94a3b8;
+  }
+
+  .logo-upload-area {
+    border: 2px dashed #6da84c;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+  }
+  .logo-upload-area:hover {
+    border-color: #6da84c;
+    background: #f8fafc;
+  }
+  .logo-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    object-fit: cover;
+    margin: 0 auto;
+    display: block;
+    background: #f1f5f9;
+  }
+
+  .inline-form-card {
+    border: 1px solid #6da84c;
+    border-radius: 12px;
+    background: #f8fdf5;
+    padding: 16px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.25s ease;
+  }
+
+  .organization-page { background:#fff; border:1px solid #6da84c; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.05); overflow:hidden; min-height:206px; }
+  .organization-page-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid #e1e7ee; }
+  .organization-table-wrap { overflow:auto; }
+  .organization-table { width:100%; border-collapse:collapse; }
+  .organization-table th { padding:12px; font-size:11px; text-align:left; text-transform:uppercase; letter-spacing:.04em; color:#6b7280; background:#f9fafb; border-bottom:1px solid #e1e7ee; white-space:nowrap; }
+  .organization-table td { padding:12px; font-size:12px; color:#374151; border-bottom:1px solid #e1e7ee; vertical-align:middle; }
+  .organization-actions { display:flex; align-items:center; gap:10px; }
+  .organization-action { width:34px; height:34px; border:1px solid #e1e7ee; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; color:#64748b; background:#fff; cursor:pointer; transition:all .2s ease; }
+  .organization-action:hover { background:#f3f8ef; color:#6da84c; border-color:#6da84c; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .organization-action.delete { color:#c05a5a; border-color:#e6b7b7; }
+  .organization-action.delete:hover { color:#a33a3a; background:#fff1f1; border-color:#a33a3a; }
+
+
+  .bank-section { margin-top: 24px; padding-top: 24px; border-top: 1px solid #e1e7ee; }
+  .documents-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
+  .documents-notes { margin-top:12px; padding:14px 18px; border:1px solid #6da84c; border-radius:10px; background:#f8fafc; width:100%; max-width:760px; }
+  .documents-notes-title { font-size:12.5px; font-weight:700; color:#374151; margin-bottom:5px; display:flex; align-items:center; gap:7px; }
+  .documents-notes ul { margin:0; padding-left:18px; color:#58708f; font-size:11.5px; line-height:1.7; }
+  .documents-empty { border:1px dashed #6da84c; border-radius:12px; background:#f8fafc; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:28px 20px; }
+  .documents-empty-illustration { width:70px; height:70px; border-radius:18px; background:#eef5e8; color:#6da84c; display:flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:12px; }
+  .document-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; width:100%; }
+  .organization-document-card { background:#fff; border:1px solid #6da84c; border-radius:10px; padding:14px; min-height:158px; width:100%; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; gap:10px; transition:all .2s ease; }
+  .organization-document-card:hover { box-shadow:0 4px 14px rgba(15,23,42,.06); border-color:#6da84c; }
+  .document-file-icon { width:42px; height:42px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:19px; background:#fff; border:1px solid #e1e7ee; color:#6da84c; }
+  .document-file-icon.pdf,.document-file-icon.image { color:#6da84c; background:#fff; }
+  .document-status { display:inline-flex; align-items:center; width:max-content; padding:3px 8px; border-radius:999px; background:#f1f5f9; color:#64748b; font-size:10px; font-weight:600; margin-top:3px; }
+  .document-card-description { color:#64748b; font-size:10.5px; line-height:1.5; min-height:0; margin-top:8px !important; }
+  .document-card-actions { display:flex; align-items:center; gap:6px; margin-top:7px; }
+  .document-card-view,.document-card-download,.document-card-delete { display:inline-flex; align-items:center; justify-content:center; border:1px solid #e1e7ee; background:#fff; color:#526277; border-radius:7px; padding:7px 10px; font-size:10.5px; font-weight:600; cursor:pointer; }
+  .document-card-view:hover,.document-card-download:hover { background:#f3f8ef; border-color:#6da84c; color:#5c9140; }
+  .document-card-delete { color:#c05a5a; border-color:#e6b7b7; }
+  .document-card-delete:hover { background:#fff1f1; border-color:#a33a3a; color:#a33a3a; }
+  .unit-action-btn { width:34px; height:34px; border:1px solid #e1e7ee; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; color:#64748b; background:#fff; cursor:pointer; transition:all .2s ease; }
+  .unit-action-btn:hover { background:#f3f8ef; color:#6da84c; border-color:#6da84c; }
+  .unit-action-btn.delete { color:#c05a5a; border-color:#e6b7b7; }
+  .unit-action-btn.delete:hover { color:#a33a3a; background:#fff1f1; border-color:#a33a3a; }
+  .document-upload-area { border:1.5px dashed #6da84c; border-radius:12px; background:#f8fafc; padding:30px 18px; text-align:center; cursor:pointer; transition:all .2s ease; }
+  .document-upload-area:hover,.document-upload-area.dragover { border-color:#6da84c; background:#eef5e8; }
+  .document-preview-image { max-height:280px; max-width:100%; object-fit:contain; border-radius:10px; margin:auto; }
+  .documents-overlay-body { padding:16px 20px; max-height:68vh; overflow-y:auto; background:#f8fafc; }
+  .document-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+  .document-detail-section { background:#fff; border:1px solid #6da84c; border-radius:10px; overflow:hidden; padding:14px; display:flex; flex-direction:column; justify-content:space-between; min-height:145px; }
+  .document-detail-section-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; padding:0 0 10px; border-bottom:1px solid #e1e7ee; }
+  .document-detail-number { font-size:9px; font-weight:700; color:#6da84c; text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px; }
+  .document-detail-section-head h4 { margin:0; font-size:13px; font-weight:700; color:#1f2937; overflow-wrap:anywhere; }
+  .document-detail-field { padding:7px 0 0; }
+  .document-detail-field span { display:block; font-size:9.5px; color:#94a3b8; margin-bottom:2px; }
+  .document-detail-field strong { display:block; font-size:11px; color:#334155; font-weight:600; overflow-wrap:anywhere; }
+  .document-detail-actions { display:flex; align-items:center; gap:6px; padding-top:10px; margin-top:auto; }
+  .document-detail-view,.document-detail-download,.document-detail-delete { display:inline-flex; align-items:center; justify-content:center; border:1px solid #e1e7ee; background:#fff; color:#526277; border-radius:7px; padding:6px 9px; font-size:10px; font-weight:600; cursor:pointer; }
+  .document-detail-view:hover,.document-detail-download:hover { border-color:#6da84c; color:#5c9140; background:#f3f8ef; }
+  .document-detail-delete { color:#c05a5a; border-color:#e6b7b7; }
+  .document-detail-delete:hover { background:#fff1f1; border-color:#a33a3a; color:#a33a3a; }
+  .documents-overlay-footer { display:flex; justify-content:flex-end; padding:12px 20px; border-top:1px solid #e1e7ee; background:#fff; }
+  .documents-overlay-empty { padding:35px 24px; text-align:center; background:#fff; }
+  .documents-overlay-empty h4 { margin-top:14px; font-size:15px; font-weight:700; color:#374151; }
+  .documents-overlay-empty p { margin-top:5px; font-size:12px; color:#94a3b8; }
+
+  .organization-view-header { padding:20px 24px 16px; border-bottom:1px solid #e1e7ee; background:#fff; }
+  .organization-view-title { font-size:21px; line-height:1.2; font-weight:750; color:#172033; }
+  .organization-view-subtitle { margin-top:5px; font-size:12px; color:#8a96a8; }
+  .organization-view-scroll { max-height:72vh; overflow-y:auto; padding:20px 24px 24px; background:#f8fafc; }
+  .organization-view-scroll::-webkit-scrollbar { width:5px; }
+  .organization-view-scroll::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:5px; }
+  .organization-view-hero { display:flex; align-items:center; gap:20px; padding:20px 22px; margin-bottom:18px; border:1px solid #6da84c; border-radius:16px; background:#fff; box-shadow:0 2px 8px rgba(15,23,42,.03); }
+  .organization-view-brand { flex-shrink:0; }
+  .organization-view-logo-wrap { width:88px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .organization-view-logo { width:78px; height:78px; object-fit:contain; border-radius:14px; border:1px solid #6da84c; background:#fff; padding:8px; }
+  .organization-view-logo-empty { width:68px; height:68px; border-radius:12px; background:#f1f5f9; color:#94a3b8; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:10px; text-align:center; }
+  .organization-view-logo-empty i { font-size:20px; }
+  .organization-view-company { min-width:0; }
+  .organization-view-company-name { font-size:21px; font-weight:750; color:#172033; overflow-wrap:anywhere; }
+  .organization-view-legal { margin-top:3px; font-size:13px; color:#718096; overflow-wrap:anywhere; }
+  .organization-view-badges { display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; }
+  .organization-view-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; font-size:11px; font-weight:650; }
+  .organization-view-badge span { width:6px; height:6px; border-radius:50%; display:inline-block; }
+  .organization-view-badge.active { background:#dcfce7; color:#166534; }
+  .organization-view-badge.active span { background:#22c55e; }
+  .organization-view-badge.gst { background:#dbeafe; color:#1e40af; }
+  .organization-view-badge.gst span { background:#3b82f6; }
+  .organization-view-section { margin-top:16px; border:1px solid #6da84c; border-radius:14px; background:#fff; overflow:hidden; }
+  .organization-view-section-head { padding:14px 17px; border-bottom:1px solid #e1e7ee; background:#fbfcfd; }
+  .organization-view-section-title { display:flex; align-items:center; gap:9px; font-size:13px; font-weight:750; color:#344054; letter-spacing:.01em; }
+  .organization-view-section-icon { width:28px; height:28px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; background:#eef7e9; color:#6da84c; font-size:12px; }
+  .organization-view-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .organization-view-grid.single { grid-template-columns:1fr; }
+  .organization-view-field { padding:13px 17px; border-bottom:1px solid #e1e7ee; }
+  .organization-view-field:nth-child(odd):not(.wide) { border-right:1px solid #e1e7ee; }
+  .organization-view-field.wide { grid-column:1/-1; }
+  .organization-view-field span { display:block; font-size:10px; font-weight:650; color:#8a96a8; text-transform:uppercase; letter-spacing:.045em; }
+  .organization-view-field strong { display:block; margin-top:4px; font-size:13px; line-height:1.45; font-weight:600; color:#273449; overflow-wrap:anywhere; }
+  .organization-view-footer { display:flex; justify-content:flex-end; padding:13px 24px; border-top:1px solid #e1e7ee; background:#fff; }
+  .organization-view-modal { max-height:88vh; }
+  .organization-view-modal .organization-view-scroll { max-height:calc(88vh - 132px); }
+  .organization-view-modal .organization-view-footer { flex-shrink:0; }
+  .documents-table-wrap { overflow:auto; border:1px solid #e1e7ee; border-radius:10px; background:#fff; }
+  .documents-table { width:100%; border-collapse:collapse; min-width:650px; }
+  .documents-table th { padding:10px 12px; font-size:10px; text-align:left; text-transform:uppercase; letter-spacing:.04em; color:#6b7280; background:#f9fafb; border-bottom:1px solid #e1e7ee; white-space:nowrap; }
+  .documents-table td { padding:10px 12px; font-size:11.5px; color:#374151; border-bottom:1px solid #e1e7ee; vertical-align:middle; }
+  .documents-table tr:last-child td { border-bottom:0; }
+  .documents-table-actions { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .documents-table-action { display:inline-flex; align-items:center; justify-content:center; border:1px solid #e1e7ee; background:#fff; color:#526277; border-radius:7px; padding:6px 9px; font-size:10px; font-weight:600; cursor:pointer; }
+  .documents-table-action:hover { background:#f3f8ef; color:#5c9140; border-color:#6da84c; }
+  .documents-table-action.delete { color:#c05a5a; border-color:#e6b7b7; }
+  .documents-table-action.delete:hover { background:#fff1f1; color:#a33a3a; border-color:#a33a3a; }
+  .organization-view-close { border:1px solid #e1e7ee; background:#fff; color:#475569; border-radius:9px; padding:9px 18px; font-size:12px; font-weight:650; cursor:pointer; }
+  .organization-view-close:hover { background:#f3f8ef; color:#5c9140; border-color:#6da84c; }
+  @media (max-width: 1024px) { .document-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .document-detail-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .document-detail-field:nth-child(odd) { border-right:0; } .document-detail-field:nth-last-child(-n+2) { border-bottom:1px solid #e1e7ee; } .document-detail-field:last-child { border-bottom:0; } }
+  @media (max-width: 640px) { .document-grid,.document-detail-grid { grid-template-columns:1fr; } }
+
+</style>
 </head>
 
 <body class="bg-gray-50 text-gray-800 antialiased">
 
   <div class="flex min-h-screen">
-    <!-- Sidebar gets injected here by nav-sidebar.js -->
+    
     <div id="sidebar-root"></div>
 
     <div class="app-main flex-1 flex flex-col min-w-0">
-      <!-- Top bar gets injected here -->
+      
       <div id="topbar-root"></div>
 
-      <!-- ============= PAGE CONTENT STARTS HERE ============= -->
-      <main class="p-4 sm:p-6 lg:p-8">
-        <div class="max-w-6xl mx-auto">
-          <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 class="text-base font-semibold text-gray-800 mb-1">Settings</h2>
-            <p class="text-sm text-gray-500">
-              Placeholder page template
-            </p>
+       <main class="p-4 sm:p-6 lg:p-8">
+
+        
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+         
+          <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+            <div>
+              <div class="text-[11px] font-semibold tracking-wide uppercase text-primary">System</div>
+              <h1 class="text-[24px] sm:text-[28px] font-bold tracking-tight text-gray-900">Organization Setup</h1>
+              <p class="text-[13px] text-gray-500 mt-1">Configure your company profile, GST and units.</p>
+            </div>
           </div>
+
+           <div id="organizationTablePage" class="organization-page hidden mb-6">
+            <div class="organization-page-head">
+              <div>
+                <h2 class="text-[15px] font-semibold text-gray-800">Organizations</h2>
+                <p class="text-[12px] text-gray-500 mt-0.5">Saved organization information</p>
+              </div>
+              <button onclick="backToOrganizationForm()" class="inline-flex items-center gap-2 border border-[#e1e7ee] text-gray-700 text-[12.5px] font-semibold px-4 py-2 rounded-lg hover:bg-[#f3f8ef] hover:text-[#5c9140] hover:border-[#6da84c] transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back
+              </button>
+            </div>
+            <div class="organization-table-wrap">
+              <table class="organization-table">
+                <thead>
+                  <tr>
+                    <th>Organization</th>
+                    <th>Business Type</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>GST Number</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="organizationTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+<div id="organizationFormPage" class="hidden bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
+
+            
+            <div class="flex overflow-x-auto border-b border-[#e1e7ee] px-4 pt-2 gap-1" id="pageTabs">
+              <button class="page-tab-btn active" data-tab="tab-general">
+                <i class="fa-solid fa-user-tie mr-1.5"></i>
+                General
+              </button>
+              <button class="page-tab-btn" data-tab="tab-tax">
+                <i class="fa-solid fa-shield-halved mr-1.5"></i>
+                Tax &amp; GST
+              </button>
+              <button class="page-tab-btn" data-tab="tab-units">
+                <i class="fa-solid fa-layer-group mr-1.5"></i>
+                Units
+                <span class="ml-1.5 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full" id="unitsCountBadge">3</span>
+              </button>
+              <button class="page-tab-btn" data-tab="tab-documents">
+                <i class="fa-solid fa-folder-open mr-1.5"></i>
+                Documents
+                <span class="ml-1.5 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full" id="documentsCountBadge">0</span>
+              </button>
+            </div>
+
+            <div class="p-5">
+
+              <div id="tab-general" class="page-tab-panel active">
+
+                <div class="grid md:grid-cols-3 gap-6">
+
+                  
+                  <div class="md:col-span-1">
+                    <label class="form-label">Company Logo</label>
+                    <div class="logo-upload-area" onclick="document.getElementById('logoInput').click()">
+                      <div class="w-28 h-28 mx-auto rounded-lg bg-gray-100 flex items-center justify-center text-4xl font-bold text-primary/40" id="logoPreview">
+                        KM
+                      </div>
+                      <input type="file" id="logoInput" accept="image/*" class="hidden" onchange="previewLogo(event)">
+                      <p class="text-[11px] text-gray-400 mt-2">PNG, JPG or SVG • Max 2MB</p>
+                      <button type="button" class="mt-2 text-[12px] font-semibold text-primary hover:underline">Choose File</button>
+                    </div>
+                  </div>
+
+                  
+                  <div class="md:col-span-2 space-y-4">
+                    <div class="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="form-label">Legal Company Name <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="compLegalName" value="Kunash Media Pvt. Ltd." placeholder="Enter legal name">
+                        <div id="err_compLegalName" class="hidden text-[10.5px] text-red-500 mt-1">This field is required</div>
+                      </div>
+                      <div>
+                        <label class="form-label">Display Name <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="compDisplayName" value="Kunash Media" placeholder="Display name">
+                      </div>
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="form-label">Company Type</label>
+                        <select class="form-input" id="compType">
+                          <option>Proprietorship</option>
+                          <option>Partnership</option>
+                          <option selected>Pvt Ltd</option>
+                          <option>LLP</option>
+                          <option>Public Ltd</option>
+                          <option>NGO / Trust</option>
+                          <option>Freelancer</option>
+                          <option>Others</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="form-label">Registration Number (CIN/LLPIN)</label>
+                        <input type="text" class="form-input" id="compRegNo" value="U72200MH2020PTC123456" placeholder="e.g., U12345MH2020PTC123456">
+                      </div>
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="form-label">Company Email <span class="required">*</span></label>
+                        <input type="email" class="form-input" id="compEmail" value="info@kunashmedia.com" placeholder="company@domain.com">
+                      </div>
+                      <div>
+                        <label class="form-label">Contact Number <span class="required">*</span></label>
+                        <input type="tel" class="form-input" id="compPhone" value="+91-9876543210" placeholder="+91-XXXXXXXXXX">
+                      </div>
+                    </div>
+                    <div>
+                      <label class="form-label">Website</label>
+                      <input type="url" class="form-input" id="compWebsite" value="https://www.kunashmedia.com" placeholder="https://example.com">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bank-section">
+                  <h4 class="text-[14px] font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-building-columns text-primary"></i>
+                    Bank Details
+                  </h4>
+                  <div class="grid sm:grid-cols-3 gap-4">
+                    <div>
+                      <label class="form-label">Bank Name</label>
+                      <input type="text" class="form-input" id="bankName" placeholder="Enter bank name">
+                    </div>
+                    <div>
+                      <label class="form-label">Account Number</label>
+                      <input type="text" inputmode="numeric" class="form-input" id="bankAccountNumber" placeholder="Enter account number">
+                    </div>
+                    <div>
+                      <label class="form-label">IFSC Code</label>
+                      <input type="text" class="form-input uppercase" id="bankIfscCode" maxlength="11" placeholder="e.g. SBIN0001234">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-[#6da84c]">
+                  <h4 class="text-[14px] font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot text-primary"></i>
+                    Registered Address
+                  </h4>
+                  <div class="grid sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                      <label class="form-label">Address Line 1 <span class="required">*</span></label>
+                      <input type="text" class="form-input" id="compAddr1" value="401, Creative Hub, BKC" placeholder="Building, Street">
+                    </div>
+                    <div>
+                      <label class="form-label">Address Line 2</label>
+                      <input type="text" class="form-input" id="compAddr2" value="Bandra East" placeholder="Locality, Area">
+                    </div>
+                    <div>
+                      <label class="form-label">City <span class="required">*</span></label>
+                      <input type="text" class="form-input" id="compCity" value="Mumbai" placeholder="City name">
+                    </div>
+                    <div>
+                      <label class="form-label">State <span class="required">*</span></label>
+                      <select class="form-input" id="compState" onchange="updateStateCode()">
+                        <option value="Maharashtra" selected>Maharashtra</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="Gujarat">Gujarat</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Kerala">Kerala</option>
+                        <option value="Telangana">Telangana</option>
+                        <option value="West Bengal">West Bengal</option>
+                        <option value="Andhra Pradesh">Andhra Pradesh</option>
+                        <option value="Bihar">Bihar</option>
+                        <option value="Chhattisgarh">Chhattisgarh</option>
+                        <option value="Goa">Goa</option>
+                        <option value="Haryana">Haryana</option>
+                        <option value="Himachal Pradesh">Himachal Pradesh</option>
+                        <option value="Jharkhand">Jharkhand</option>
+                        <option value="Madhya Pradesh">Madhya Pradesh</option>
+                        <option value="Odisha">Odisha</option>
+                        <option value="Punjab">Punjab</option>
+                        <option value="Uttarakhand">Uttarakhand</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="form-label">State Code <span class="required">*</span></label>
+                      <input type="text" class="form-input" id="compStateCode" value="27" disabled>
+                      <div class="form-hint">Auto-filled from state selection</div>
+                    </div>
+                    <div>
+                      <label class="form-label">Pincode <span class="required">*</span></label>
+                      <input type="number" class="form-input" id="compPincode" value="400051" placeholder="6-digit PIN">
+                    </div>
+                    <div>
+                      <label class="form-label">Country</label>
+                      <select class="form-input" id="compCountry">
+                        <option selected>India</option>
+                        <option>United States</option>
+                        <option>United Kingdom</option>
+                        <option>UAE</option>
+                        <option>Singapore</option>
+                        <option>Australia</option>
+                        <option>Canada</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-4 grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="form-label">Date of Incorporation</label>
+                    <input type="date" class="form-input" id="compIncDate" value="2020-08-15">
+                  </div>
+                  <div>
+                    <label class="form-label">Time Zone</label>
+                    <select class="form-input" id="compTimezone">
+                      <option selected>IST (GMT+5:30)</option>
+                      <option>UTC (GMT+0:00)</option>
+                      <option>EST (GMT-5:00)</option>
+                      <option>PST (GMT-8:00)</option>
+                      <option>GMT (GMT+0:00)</option>
+                      <option>CST (GMT-6:00)</option>
+                    </select>
+                  </div>
+                </div>
+
+              </div>
+
+              <div id="tab-tax" class="page-tab-panel">
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="form-label">GSTIN (GST Number)</label>
+                    <input type="text" class="form-input" id="gstGstin" value="27AABCU1234D1ZP" placeholder="15-digit GSTIN">
+                    <div class="form-hint">Format: 2-digit state code + 10-digit PAN + 3-digit entity code</div>
+                  </div>
+                  <div>
+                    <label class="form-label">PAN Number <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="gstPan" value="AABCU1234D" placeholder="10-digit PAN">
+                  </div>
+                  <div>
+                    <label class="form-label">GST Registration Type</label>
+                    <select class="form-input" id="gstRegType">
+                      <option selected>Regular</option>
+                      <option>Composition</option>
+                      <option>Unregistered</option>
+                      <option>Export-Oriented</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label">Tax Payment Method</label>
+                    <select class="form-input" id="gstPayMethod">
+                      <option selected>Both (Cash & Credit)</option>
+                      <option>Cash Only</option>
+                      <option>Credit Only</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label">Default Place of Supply</label>
+                    <select class="form-input" id="gstPlaceSupply">
+                      <option selected>Maharashtra</option>
+                      <option>Delhi</option>
+                      <option>Karnataka</option>
+                      <option>Tamil Nadu</option>
+                      <option>Gujarat</option>
+                      <option>Uttar Pradesh</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label">Tax Calculation Method</label>
+                    <select class="form-input" id="gstCalcMethod">
+                      <option selected>Exclusive (Tax added to price)</option>
+                      <option>Inclusive (Tax included in price)</option>
+                    </select>
+                  </div>
+                </div>
+
+                
+                <div class="mt-6 pt-6 border-t border-[#6da84c]">
+                  <h4 class="text-[14px] font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-percent text-primary"></i>
+                    Tax Rate Configuration
+                  </h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label class="form-label">GST Rate 1 (%)</label>
+                      <input type="number" class="form-input" id="gstRate1" value="5" placeholder="e.g. 5" min="0" max="100" step="0.01">
+                    </div>
+                    <div>
+                      <label class="form-label">GST Rate 2 (%)</label>
+                      <input type="number" class="form-input" id="gstRate2" value="12" placeholder="e.g. 12" min="0" max="100" step="0.01">
+                    </div>
+                    <div>
+                      <label class="form-label">GST Rate 3 (%)</label>
+                      <input type="number" class="form-input" id="gstRate3" value="18" placeholder="e.g. 18" min="0" max="100" step="0.01">
+                    </div>
+                    <div>
+                      <label class="form-label">GST Rate 4 (%)</label>
+                      <input type="number" class="form-input" id="gstRate4" value="28" placeholder="e.g. 28" min="0" max="100" step="0.01">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+                <div id="tab-units" class="page-tab-panel">
+
+                
+                <div id="unitFormWrap" class="hidden inline-form-card">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-[13.5px] font-semibold text-gray-800 flex items-center gap-2">
+                      <i class="fa-solid fa-layer-group text-primary"></i>
+                      <span id="unitFormTitle">Add New Unit</span>
+                    </h4>
+                    <button onclick="cancelUnitForm()" class="w-7 h-7 rounded-lg hover:bg-white flex items-center justify-center text-gray-400 hover:text-gray-700 transition">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label">Unit Name <span class="required">*</span></label>
+                      <input type="text" id="u_name" class="form-input" placeholder="e.g. Kilogram">
+                      <div id="err_u_name" class="hidden text-[10.5px] text-red-500 mt-1">This field is required</div>
+                    </div>
+                    <div>
+                      <label class="form-label">Unit Code (GST UQC) <span class="required">*</span></label>
+                      <select id="u_code" class="form-input">
+                        <option value="NOS">NOS — Numbers</option>
+                        <option value="KGS">KGS — Kilograms</option>
+                        <option value="LTR">LTR — Litre</option>
+                        <option value="MTR">MTR — Meter</option>
+                        <option value="MLT">MLT — Millilitre</option>
+                        <option value="GRM">GRM — Gram</option>
+                        <option value="TON">TON — Tonne</option>
+                        <option value="BOX">BOX — Box</option>
+                        <option value="BAG">BAG — Bag</option>
+                        <option value="SET">SET — Set</option>
+                        <option value="PCS">PCS — Pieces</option>
+                        <option value="DRM">DRM — Drum</option>
+                        <option value="ROL">ROL — Roll</option>
+                        <option value="PAC">PAC — Package</option>
+                        <option value="SQM">SQM — Square Meter</option>
+                        <option value="CBM">CBM — Cubic Meter</option>
+                        <option value="HRS">HRS — Hours</option>
+                        <option value="DAY">DAY — Day</option>
+                        <option value="OTH">OTH — Others</option>
+                      </select>
+                      <div id="err_u_code" class="hidden text-[10.5px] text-red-500 mt-1">Please select a unit code</div>
+                    </div>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2 gap-3 mt-1">
+                    <div>
+                      <label class="form-label">Decimal Places Allowed</label>
+                      <select id="u_decimals" class="form-input">
+                        <option value="0" selected>0 (e.g. 48 Nos)</option>
+                        <option value="1">1 (e.g. 4.5 Kgs)</option>
+                        <option value="2">2 (e.g. 4.55 Ltr)</option>
+                        <option value="3">3 (e.g. 4.550 Mtr)</option>
+                      </select>
+                      <div class="form-hint">Controls how the quantity is rounded on invoices & stock</div>
+                    </div>
+                    <div>
+                      <label class="form-label">Applicable Item Category</label>
+                      <input type="text" id="u_category" class="form-input" placeholder="e.g. Chemicals, Equipment">
+                    </div>
+                  </div>
+
+                  <div class="mt-3">
+                    <label class="form-label">Description / Usage Note</label>
+                    <textarea id="u_description" rows="2" class="form-input" placeholder="Where this unit is typically used"></textarea>
+                  </div>
+
+                  <div class="flex justify-end gap-2 mt-4">
+                    <button onclick="cancelUnitForm()" class="px-4 py-2 rounded-lg text-[12.5px] font-semibold text-gray-600 border border-[#e1e7ee] hover:bg-[#f3f8ef] hover:text-[#5c9140] hover:border-[#6da84c] transition">Cancel</button>
+                    <button onclick="saveUnit()" class="px-4 py-2 rounded-lg text-[12.5px] font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
+                      <i class="fa-solid fa-floppy-disk"></i>
+                      <span id="unitSaveLabel">Save Unit</span>
+                    </button>
+                  </div>
+                </div>
+
+                
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                  <div>
+                    <h4 class="text-[14px] font-semibold text-gray-800">Units of Measurement</h4>
+                    <p class="text-[12px] text-gray-500">These units appear as options when creating an Item, and print on invoices as per GST UQC rules</p>
+                  </div>
+                  <button onclick="openUnitForm()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12px] font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    Add New Unit
+                  </button>
+                </div>
+
+                
+                <div id="unitsPanel"></div>
+
+              </div>
+
+              <div id="tab-documents" class="page-tab-panel">
+                <div class="documents-head">
+                  <div>
+                    <h4 class="text-[15px] font-semibold text-gray-800 flex items-center gap-2">
+                      <i class="fa-solid fa-folder-open text-primary"></i>
+                      Organization Documents
+                    </h4>
+                    <p class="text-[12px] text-gray-500 mt-1">Upload and securely manage important organization documents in one place.</p>
+                    <div class="documents-notes">
+                      <div class="documents-notes-title"><i class="fa-solid fa-circle-info text-primary"></i> Upload Notes</div>
+                      <ul>
+                        <li>Click <strong>Add Document</strong> to add a new organization document.</li>
+                        <li>Enter a clear document name so you can identify the file easily later.</li>
+                        <li>You can upload PDF, JPG, JPEG, PNG or WEBP documents.</li>
+                        <li>Each document must be within the maximum file size of <strong>5 MB</strong>.</li>
+                        <li>After upload, you can view the document online or download it whenever required.</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <button onclick="openAddDocumentModal()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12px] font-semibold px-4 py-2.5 rounded-lg transition shadow-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    Add Document
+                  </button>
+                </div>
+                <div id="documentsPanel"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <div id="organizationFormActions" class="flex flex-wrap items-center justify-between gap-3 mt-6">
+    
+            <div class="flex gap-3">
+              <button onclick="cancelOrganizationEdit()" class="px-6 py-2.5 rounded-lg border border-[#e1e7ee] text-gray-700 hover:bg-[#f3f8ef] hover:text-[#5c9140] hover:border-[#6da84c] text-[13px] font-semibold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-xmark"></i>
+                Cancel
+              </button>
+              <button onclick="saveCompany()" class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-dark text-white text-[13px] font-semibold transition shadow-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Save All Changes
+              </button>
+            </div>
+          </div>
+
         </div>
       </main>
-      <!-- ============= PAGE CONTENT ENDS HERE ============= -->
-    </div>
+       </div>
   </div>
 
+ 
+  
   <script src="/assets/js/nav-sidebar.js"></script>
+
+  
   <script>
-    NavSidebar.init({
+     NavSidebar.init({
       basePath: "",
       activePage: "settings",
-      pageTitle: "Settings",
+      pageTitle: "Organization Setup",
       user: {
         name: "Admin",
         role: "Super Admin",
-        avatarUrl: "", // leave empty to show initials fallback
+        avatarUrl: "",
       },
     });
 
+    function iconEdit() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+    }
+    function iconTrash() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`;
+    }
+    function iconEye() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    }
+    function iconX() {
+      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+    }
+    function iconSave() {
+      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`;
+    }
+    function iconBox() {
+      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`;
+    }
+    function iconBuilding() {
+      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>`;
+    }
+    function iconSearch() {
+      return `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
+    }
+
+    function showToast(message, kind) {
+      kind = kind || 'success';
+      var wrap = document.getElementById('toastWrap');
+      var colors = {
+        success: 'bg-green-600',
+        info: 'bg-primary',
+        warning: 'bg-amber-600',
+        error: 'bg-red-600'
+      };
+      var el = document.createElement('div');
+      el.className = 'toast ' + colors[kind] + ' text-white text-sm font-semibold px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
+      el.innerHTML = '<span>' + message + '</span>';
+      wrap.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = 'opacity .3s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 300);
+      }, 2600);
+    }
+
+    function openModal(innerHtml, opts) {
+      opts = opts || {};
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = `
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4" id="modalOverlay">
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" id="modalBackdrop"></div>
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full ${opts.width || 'max-w-3xl'} ${opts.modalClass || ''} max-h-[92vh] overflow-hidden animate-modal border border-[#6da84c]">
+            ${innerHtml}
+          </div>
+        </div>`;
+      document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = '';
+      document.body.style.overflow = '';
+    }
+
+    function modalHeader(title, subtitle) {
+      return `
+        <div class="flex items-start justify-between px-6 py-5 border-b border-[#e1e7ee] sticky top-0 bg-white z-10">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">${title}</h3>
+            ${subtitle ? '<p class="text-xs text-gray-500 mt-0.5">' + subtitle + '</p>' : ''}
+          </div>
+          <button onclick="closeModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
+        </div>`;
+    }
+
+    function modalFooter(saveLabel, onSaveAttr, extraBtns) {
+      return `
+        <div class="flex items-center justify-between gap-2 px-6 py-4 border-t border-[#e1e7ee] bg-gray-50 rounded-b-2xl sticky bottom-0">
+          <div>${extraBtns || ''}</div>
+          <div class="flex gap-2">
+            <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-[#e1e7ee] hover:bg-[#f3f8ef] hover:text-[#5c9140] hover:border-[#6da84c] transition">Cancel</button>
+           <button ${onSaveAttr} class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition shadow-sm flex items-center gap-1.5">
+               ${iconSave()} ${saveLabel}
+            </button>
+          </div>
+        </div>`;
+    }
+
+    function fld(label, inputHtml, hint) {
+      return `
+        <div class="mb-3">
+          <label class="form-label">${label}</label>
+          ${inputHtml}
+          ${hint ? '<div class="form-hint">' + hint + '</div>' : ''}
+        </div>`;
+    }
+
+    function inputBase() { return "form-input"; }
+
+    
+    function money(n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); }
+
+    function badge(text, color) {////
+      var map = { green: 'badge-green', amber: 'badge-amber', red: 'badge-red', gray: 'badge-gray', blue: 'badge-blue' };
+      var dot = { green: 'badge-dot-green', amber: 'badge-dot-amber', red: 'badge-dot-red', gray: 'badge-dot-gray', blue: 'badge-dot-blue' };
+      return '<span class="badge ' + map[color] + '"><span class="badge-dot ' + dot[color] + '"></span>' + text + '</span>';
+    }
+
+    function rowActionsHtml(editFn, delFn, viewFn) {
+      var html = '<div class="flex gap-1 justify-end">';
+      if (viewFn) {
+        html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
+      }
+      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      html += '</div>';
+      return html;
+    }
+
+    function panelWrap(titleHtml, bodyHtml, extraHead) {
+      return `
+        <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-[#6da84c]">
+            <div class="font-bold text-[14.5px] text-gray-800 flex items-center gap-2">${titleHtml}</div>
+            ${extraHead || ''}
+          </div>
+          <div>${bodyHtml}</div>
+        </div>`;
+    }
+
+    function tableHtml(cols, rowsHtml) {
+      var colHeaders = cols.map(function(c) {
+        return '<th class="text-left text-[11px] font-bold uppercase tracking-wide text-gray-500 px-4 py-3 whitespace-nowrap">' + c + '</th>';
+      }).join('');
+      return `
+        <div class="overflow-auto h-[370px]">
+          <table class="w-full text-[13px]">
+            <thead class="sticky top-0">
+              <tr class="bg-gray-50 border-b border-[#e1e7ee]">${colHeaders}</tr>
+            </thead>
+            <tbody id="tbody-anchor">${rowsHtml}</tbody>
+          </table>
+        </div>`;
+    }
+
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      var tabs = document.querySelectorAll('.page-tab-btn');
+      tabs.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          tabs.forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          var panels = document.querySelectorAll('.page-tab-panel');
+          panels.forEach(function(p) { p.classList.remove('active'); });
+          var target = document.getElementById(this.dataset.tab);
+          if (target) target.classList.add('active');
+        });
+      });
+      renderUnits();
+      refreshDocumentsWhenTabOpens();
+      renderDocuments();
+    });
+
+
+    function updateStateCode() {
+      var state = document.getElementById('compState').value;
+      var stateCodeMap = {
+        'Maharashtra': '27', 'Delhi': '07', 'Karnataka': '29', 'Tamil Nadu': '33',
+        'Gujarat': '24', 'Uttar Pradesh': '09', 'Rajasthan': '08', 'Kerala': '32',
+        'Telangana': '36', 'West Bengal': '19', 'Andhra Pradesh': '28', 'Bihar': '10',
+        'Chhattisgarh': '22', 'Goa': '30', 'Haryana': '06', 'Himachal Pradesh': '02',
+        'Jharkhand': '20', 'Madhya Pradesh': '23', 'Odisha': '21', 'Punjab': '03',
+        'Uttarakhand': '05'
+      };
+      document.getElementById('compStateCode').value = stateCodeMap[state] || '';
+    }
+
+
+
+    function previewLogo(event) {
+      var file = event.target.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var preview = document.getElementById('logoPreview');
+          preview.innerHTML = '<img src="' + e.target.result + '" class="logo-preview" alt="Logo">';
+        };
+        reader.readAsDataURL(file);
+        showToast('Logo uploaded successfully', 'success');
+      }
+    }
+
+
+    var unitsData = [
+      { id: 'unit-001', name: 'Numbers', code: 'NOS', decimals: 0, category: 'Equipment', description: 'Countable items — blowers, pumps, valves' },
+      { id: 'unit-002', name: 'Kilogram', code: 'KGS', decimals: 3, category: 'Chemicals', description: 'Weight-based items — chemicals, media' },
+      { id: 'unit-003', name: 'Litre', code: 'LTR', decimals: 2, category: 'Chemicals', description: 'Liquid chemicals — coagulant, flocculant' }
+    ];
+
+    var editingUnitId = null;
+
+  
+  
+    function renderUnits() {
+      var badgeEl = document.getElementById('unitsCountBadge');
+      if (badgeEl) badgeEl.textContent = unitsData.length;
+
+      var rowsHtml = '';
+      if (unitsData.length === 0) {
+        rowsHtml = `
+          <tr>
+            <td colspan="6" class="text-center py-10 text-gray-400 text-sm">
+              <div class="flex justify-center mb-2 empty-icon-svg">${iconBox()}</div>
+              No units found. Click
+              <button onclick="openUnitForm()" class="text-primary font-semibold hover:underline mx-1">add a new unit</button>
+              to get started.
+            </td>
+          </tr>`;
+      } else {
+        rowsHtml = unitsData.map(function(u) {
+          return `
+            <tr class="border-b border-[#e1e7ee] table-row-hover">
+              <td class="px-4 py-3">
+                <div class="font-semibold text-gray-800">${u.name}</div>
+                ${u.description ? '<div class="text-[11.5px] text-gray-400 mt-0.5">' + u.description + '</div>' : ''}
+              </td>
+              <td class="px-4 py-3">${badge(u.code || '—', 'blue')}</td>
+              <td class="px-4 py-3 text-gray-600">${u.decimals != null ? u.decimals : '0'} decimal(s)</td>
+              <td class="px-4 py-3 text-gray-600">${u.category || '—'}</td>
+              <td class="px-4 py-3">
+                <span class="text-[11px] text-gray-400 font-mono">${u.id}</span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex gap-2 justify-end">
+                  <button onclick="editUnit('${u.id}')" class="unit-action-btn" title="Edit">${iconEdit()}</button>
+                  <button onclick="delUnit('${u.id}')" class="unit-action-btn delete" title="Delete">${iconTrash()}</button>
+                </div>
+              </td>
+            </tr>`;
+        }).join('');
+      }
+
+      var panelHtml = panelWrap(
+        'All Units <span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + unitsData.length + '</span>',
+        tableHtml(['Unit Name', 'Code', 'Decimals', 'Category', 'ID', 'Actions'], rowsHtml)
+      );
+
+      document.getElementById('unitsPanel').innerHTML = panelHtml;
+    }
+
+    function openUnitForm() {
+      editingUnitId = null;
+      document.getElementById('unitFormTitle').textContent = 'Add New Unit';
+      document.getElementById('unitSaveLabel').textContent = 'Save Unit';
+      document.getElementById('u_name').value = '';
+      document.getElementById('u_code').value = 'NOS';
+      document.getElementById('u_decimals').value = '0';
+      document.getElementById('u_category').value = '';
+      document.getElementById('u_description').value = '';
+      setUnitFieldError('u_name', false);
+      setUnitFieldError('u_code', false);
+      document.getElementById('unitFormWrap').classList.remove('hidden');
+      document.getElementById('u_name').focus();
+    }
+
+    function editUnit(id) {
+      var unit = unitsData.find(function(u) { return u.id === id; });
+      if (!unit) return;
+      editingUnitId = id;
+      document.getElementById('unitFormTitle').textContent = 'Edit Unit';
+      document.getElementById('unitSaveLabel').textContent = 'Update Unit';
+      document.getElementById('u_name').value = unit.name || '';
+      document.getElementById('u_code').value = unit.code || 'NOS';
+      document.getElementById('u_decimals').value = String(unit.decimals != null ? unit.decimals : 0);
+      document.getElementById('u_category').value = unit.category || '';
+      document.getElementById('u_description').value = unit.description || '';
+      setUnitFieldError('u_name', false);
+      setUnitFieldError('u_code', false);
+      document.getElementById('unitFormWrap').classList.remove('hidden');
+      document.getElementById('unitFormWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('u_name').focus();
+    }
+
+    function cancelUnitForm() {
+      editingUnitId = null;
+      document.getElementById('unitFormWrap').classList.add('hidden');
+      setUnitFieldError('u_name', false);
+      setUnitFieldError('u_code', false);
+    }
+
+    function saveUnit() {
+      var name = (document.getElementById('u_name').value || '').trim();
+      var code = document.getElementById('u_code').value || '';
+      var decimals = parseInt(document.getElementById('u_decimals').value, 10) || 0;
+      var category = (document.getElementById('u_category').value || '').trim();
+      var description = (document.getElementById('u_description').value || '').trim();
+
+      
+      var nameMissing = !name;
+      setUnitFieldError('u_name', nameMissing);
+      if (nameMissing) {
+        showToast('Please enter Unit Name', 'error');
+        document.getElementById('u_name').focus();
+        return;
+      }
+
+      var codeMissing = !code;
+      setUnitFieldError('u_code', codeMissing);
+      if (codeMissing) {
+        showToast('Please select a Unit Code', 'error');
+        return;
+      }
+
+      
+      var duplicate = unitsData.some(function(u) {
+        return u.code === code && u.id !== editingUnitId;
+      });
+      if (duplicate) {
+        setUnitFieldError('u_code', true);
+        showToast('A unit with code "' + code + '" already exists', 'error');
+        return;
+      }
+      setUnitFieldError('u_code', false);
+
+      if (editingUnitId) {
+        var existing = unitsData.find(function(u) { return u.id === editingUnitId; });
+        if (existing) {
+          existing.name = name;
+          existing.code = code;
+          existing.decimals = decimals;
+          existing.category = category;
+          existing.description = description;
+          showToast('Unit updated successfully', 'success');
+        }
+      } else {
+        unitsData.push({
+          id: 'unit-' + String(Date.now()),
+          name: name,
+          code: code,
+          decimals: decimals,
+          category: category,
+          description: description
+        });
+        showToast('Unit added successfully', 'success');
+      }
+
+      cancelUnitForm();
+      renderUnits();
+    }
+
+    function delUnit(id) {
+      var unit = unitsData.find(function(u) { return u.id === id; });
+      if (!unit) return;
+
+      
+      var modalContent = `
+        ${modalHeader('Delete Unit', unit.name + ' (' + unit.code + ')')}
+        <div class="px-6 py-4 text-sm text-gray-600">
+          <p>Are you sure you want to permanently delete <b class="text-gray-800">${unit.name}</b>?</p>
+          <p class="text-gray-400 text-[12px] mt-1">Items already using this unit will keep their existing value, but it will no longer appear as an option for new items.</p>
+        </div>
+        ${modalFooter('Delete', 'onclick="confirmDelUnit(\'' + id + '\')"', '')}
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
+
+    function confirmDelUnit(id) {
+      unitsData = unitsData.filter(function(u) { return u.id !== id; });
+      closeModal();
+      renderUnits();
+      showToast('Unit deleted successfully', 'warning');
+    }
+
+    
+    function setUnitFieldError(id, hasError) {
+      var el = document.getElementById(id);
+      var err = document.getElementById('err_' + id);
+      if (el) el.classList.toggle('border-red-500', !!hasError);
+      if (err) err.classList.toggle('hidden', !hasError);
+    }
+
+    var ORGANIZATION_API = 'http://localhost:9093/api/organization';
+    var currentOrganization = null;
+    var ORGANIZATION_ID_KEY = 'siec_organization_id';
+
+    function organizationValue(id) {
+      var el = document.getElementById(id);
+      return el ? (el.value || '').trim() : '';
+
+    }
+
+    function setOrganizationValue(id, value) {
+      var el = document.getElementById(id);
+      if (el && value !== undefined && value !== null) el.value = value;
+    }
+
+    function getOrganizationLogoUrl(logoUrl) {
+      if (!logoUrl) return '';
+      if (/^https?:\/\//i.test(logoUrl)) return logoUrl;
+      var baseUrl = ORGANIZATION_API.replace(/\/api\/organization$/, '');
+      return baseUrl + (logoUrl.charAt(0) === '/' ? logoUrl : '/' + logoUrl);
+    }
+
+    function getSelectedLogoData() {
+      var input = document.getElementById('logoInput');
+      var preview = document.getElementById('logoPreview');
+      var image = preview ? preview.querySelector('img') : null;
+      if (input && input.files && input.files.length > 0 && image && image.src && image.src.indexOf('data:image/') === 0) {
+        return image.src;
+      }
+      return currentOrganization && currentOrganization.logoUrl ? currentOrganization.logoUrl : '';
+    }
+
+    function applyOrganizationLogoToForm(org) {
+      var preview = document.getElementById('logoPreview');
+      if (!preview) return;
+
+      var logoUrl = getOrganizationLogoUrl(org && org.logoUrl ? org.logoUrl : '');
+      if (logoUrl) {
+        preview.innerHTML = '<img src="' + logoUrl + '?t=' + Date.now() + '" class="logo-preview" alt="Company Logo">';
+      } else {
+        preview.textContent = 'KM';
+      }
+    }
+
+    function organizationPayload() {
+      var address1 = organizationValue('compAddr1');
+      var address2 = organizationValue('compAddr2');
+      return {
+        companyName: organizationValue('compDisplayName'),
+        legalName: organizationValue('compLegalName'),
+        businessType: organizationValue('compType'),
+        address: [address1, address2].filter(Boolean).join(', '),
+        city: organizationValue('compCity'),
+        state: organizationValue('compState'),
+        country: organizationValue('compCountry'),
+        pincode: organizationValue('compPincode'),
+        phone: organizationValue('compPhone'),
+        email: organizationValue('compEmail'),
+        website: organizationValue('compWebsite'),
+        bankName: organizationValue('bankName'),
+        bankAccountNumber: organizationValue('bankAccountNumber'),
+        bankIfscCode: organizationValue('bankIfscCode'),
+        logoUrl: getSelectedLogoData(),
+        gstRegistered: !!organizationValue('gstGstin'),
+        gstNumber: organizationValue('gstGstin'),
+        taxRegistrationType: organizationValue('gstRegType'),
+        taxState: organizationValue('gstPlaceSupply'),
+        defaultTaxRate: organizationValue('gstRate1'),
+        taxInclusive: organizationValue('gstCalcMethod').toLowerCase().indexOf('inclusive') !== -1,
+        defaultUnit: unitsData.length ? unitsData[0].code : '',
+        unitSystem: 'Metric',
+        decimalPrecision: parseInt(organizationValue('u_decimals') || '2', 10),
+        financialYearStart: 'April',
+        timezone: organizationValue('compTimezone'),
+        organizationStatus: 'Active'
+      };
+    }
+
+    function applyOrganizationToForm(org) {
+      if (!org) return;
+      setOrganizationValue('compDisplayName', org.companyName);
+      setOrganizationValue('compLegalName', org.legalName);
+      setOrganizationValue('compType', org.businessType);
+      setOrganizationValue('compCity', org.city);
+      setOrganizationValue('compState', org.state);
+      setOrganizationValue('compCountry', org.country);
+      setOrganizationValue('compPincode', org.pincode);
+      setOrganizationValue('compPhone', org.phone);
+      setOrganizationValue('compEmail', org.email);
+      setOrganizationValue('compWebsite', org.website);
+      setOrganizationValue('bankName', org.bankName);
+      setOrganizationValue('bankAccountNumber', org.bankAccountNumber);
+      setOrganizationValue('bankIfscCode', org.bankIfscCode);
+      setOrganizationValue('gstGstin', org.gstNumber);
+      setOrganizationValue('gstRegType', org.taxRegistrationType);
+      setOrganizationValue('gstPlaceSupply', org.taxState);
+      setOrganizationValue('gstRate1', org.defaultTaxRate);
+      setOrganizationValue('compTimezone', org.timezone);
+      var addressParts = (org.address || '').split(',');
+      setOrganizationValue('compAddr1', (addressParts.shift() || '').trim());
+      setOrganizationValue('compAddr2', addressParts.join(',').trim());
+      if (typeof updateStateCode === 'function') updateStateCode();
+      applyOrganizationLogoToForm(org);
+    }
+
+    function escapeOrganizationHtml(value) {
+      return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function renderOrganizationTable(org) {
+      var body = document.getElementById('organizationTableBody');
+      if (!body) return;
+      if (!org) {
+        body.innerHTML = '<tr><td colspan="7" class="organization-empty">No organization information saved yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = '<tr>' +
+        '<td><div class="font-semibold text-gray-900">' + escapeOrganizationHtml(org.companyName || org.legalName) + '</div><div class="text-[10px] text-gray-400">' + escapeOrganizationHtml(org.legalName || '') + '</div></td>' +
+        '<td>' + escapeOrganizationHtml(org.businessType || '-') + '</td>' +
+        '<td>' + escapeOrganizationHtml(org.email || '-') + '</td>' +
+        '<td>' + escapeOrganizationHtml(org.phone || '-') + '</td>' +
+        '<td>' + escapeOrganizationHtml(org.gstNumber || '-') + '</td>' +
+        '<td><span class="badge badge-green"><span class="badge-dot badge-dot-green"></span>' + escapeOrganizationHtml(org.organizationStatus || 'Active') + '</span></td>' +
+        '<td><div class="organization-actions">' +
+          '<button class="organization-action" title="View" onclick="viewOrganization()">' + iconEye() + '</button>' +
+          '<button class="organization-action" title="Edit" onclick="editOrganization()">' + iconEdit() + '</button>' +
+          '<button class="organization-action delete" title="Delete" onclick="deleteOrganization()">' + iconTrash() + '</button>' +
+          '<button class="organization-action" title="Documents" onclick="openOrganizationDocumentsOverlay()"><i class="fa-regular fa-folder-open"></i></button>' +
+        '</div></td>' +
+      '</tr>';
+    }
+
+
+    async function loadOrganization() {
+      try {
+        var organizationId = localStorage.getItem(ORGANIZATION_ID_KEY);
+        var response;
+
+        if (organizationId) {
+          response = await fetch(
+            ORGANIZATION_API + '/' + encodeURIComponent(organizationId),
+            {
+              method: 'GET',
+              headers: { 'Accept': 'application/json' }
+            }
+          );
+
+          if (response.status === 404) {
+            localStorage.removeItem(ORGANIZATION_ID_KEY);
+            organizationId = null;
+          } else if (!response.ok) {
+            throw new Error('Unable to load organization');
+          }
+        }
+
+        if (!organizationId) {
+          response = await fetch(ORGANIZATION_API, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          });
+
+          if (!response.ok) {
+            throw new Error('Unable to load organizations');
+          }
+
+          var organizations = await response.json();
+          var savedOrganization = Array.isArray(organizations)
+            ? organizations[0]
+            : organizations;
+
+          if (!savedOrganization || !savedOrganization.organizationId) {
+            currentOrganization = null;
+            renderOrganizationTable(null);
+            showEmptyOrganizationForm();
+            return;
+          }
+
+          currentOrganization = savedOrganization;
+        } else {
+          currentOrganization = await response.json();
+        }
+
+        if (currentOrganization && currentOrganization.organizationId) {
+          localStorage.setItem(
+            ORGANIZATION_ID_KEY,
+            currentOrganization.organizationId
+          );
+          renderOrganizationTable(currentOrganization);
+          showOrganizationTablePage();
+          loadDocuments();
+        } else {
+          currentOrganization = null;
+          renderOrganizationTable(null);
+          showEmptyOrganizationForm();
+        }
+      } catch (error) {
+        console.error('Organization load error:', error);
+        currentOrganization = null;
+        renderOrganizationTable(null);
+        showEmptyOrganizationForm();
+        showToast('Unable to load organization information', 'error');
+      }
+    }
+
+    function showOrganizationTablePage() {
+      var tablePage = document.getElementById('organizationTablePage');
+      var formPage = document.getElementById('organizationFormPage');
+      var formActions = document.getElementById('organizationFormActions');
+      if (tablePage) tablePage.classList.remove('hidden');
+      if (formPage) formPage.classList.add('hidden');
+      if (formActions) formActions.classList.add('hidden');
+      renderOrganizationTable(currentOrganization);
+      window.scrollTo({ top: document.querySelector('.max-w-7xl').offsetTop, behavior: 'smooth' });
+    }
+
+    function backToOrganizationForm() {
+      var tablePage = document.getElementById('organizationTablePage');
+      var formPage = document.getElementById('organizationFormPage');
+      var formActions = document.getElementById('organizationFormActions');
+      if (tablePage) tablePage.classList.add('hidden');
+      if (formPage) formPage.classList.remove('hidden');
+      if (formActions) formActions.classList.remove('hidden');
+      if (currentOrganization) applyOrganizationToForm(currentOrganization);
+      window.scrollTo({ top: document.querySelector('.max-w-7xl').offsetTop, behavior: 'smooth' });
+    }
+
+    function clearOrganizationForm() {
+      var ids = [
+        'compDisplayName','compLegalName','compType','compAddr1','compAddr2',
+        'compCity','compState','compCountry','compPincode','compPhone',
+        'compEmail','compWebsite','bankName','bankAccountNumber','bankIfscCode','gstGstin','gstRegType','gstPlaceSupply',
+        'gstRate1','compTimezone','gstCalcMethod'
+      ];
+      ids.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (el.tagName === 'SELECT') {
+          el.selectedIndex = 0;
+        } else {
+          el.value = '';
+        }
+      });
+      var logo = document.getElementById('logoPreview');
+      if (logo) logo.textContent = 'KM';
+      var logoInput = document.getElementById('logoInput');
+      if (logoInput) logoInput.value = '';
+      if (typeof updateStateCode === 'function') updateStateCode();
+      document.querySelectorAll('.border-red-500').forEach(function(el) {
+        el.classList.remove('border-red-500');
+      });
+    }
+
+    function showOrganizationFormPage() {
+      var tablePage = document.getElementById('organizationTablePage');
+      var formPage = document.getElementById('organizationFormPage');
+      var formActions = document.getElementById('organizationFormActions');
+      if (tablePage) tablePage.classList.add('hidden');
+      if (formPage) formPage.classList.remove('hidden');
+      if (formActions) formActions.classList.remove('hidden');
+      if (currentOrganization) applyOrganizationToForm(currentOrganization);
+      window.scrollTo({ top: document.querySelector('.max-w-7xl').offsetTop, behavior: 'smooth' });
+    }
+
+    function showEmptyOrganizationForm() {
+      var tablePage = document.getElementById('organizationTablePage');
+      var formPage = document.getElementById('organizationFormPage');
+      var formActions = document.getElementById('organizationFormActions');
+      if (tablePage) tablePage.classList.add('hidden');
+      if (formPage) formPage.classList.remove('hidden');
+      if (formActions) formActions.classList.remove('hidden');
+      clearOrganizationForm();
+      var generalTab = document.querySelector('[data-tab="tab-general"]');
+      if (generalTab) generalTab.click();
+      window.scrollTo({ top: document.querySelector('.max-w-7xl').offsetTop, behavior: 'smooth' });
+    }
+
+
+    function cancelOrganizationEdit() {
+      if (currentOrganization && currentOrganization.organizationId) {
+        applyOrganizationToForm(currentOrganization);
+        renderOrganizationTable(currentOrganization);
+        showOrganizationTablePage();
+        showToast('Unsaved changes discarded', 'info');
+        return;
+      }
+
+      showEmptyOrganizationForm();
+      showToast('Changes discarded', 'info');
+    }
+
+
+    async function saveCompany() {
+      var name = organizationValue('compLegalName');
+
+      if (!name) {
+        setUnitFieldError('compLegalName', true);
+        showToast('Please enter company name', 'error');
+        return;
+      }
+
+      setUnitFieldError('compLegalName', false);
+
+      var payload = organizationPayload();
+
+      try {
+        var isUpdate = !!(currentOrganization && currentOrganization.organizationId);
+        var url = isUpdate
+          ? ORGANIZATION_API + '/' + encodeURIComponent(currentOrganization.organizationId)
+          : ORGANIZATION_API;
+        var method = isUpdate ? 'PUT' : 'POST';
+
+        var response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          var errorText = await response.text();
+          throw new Error(errorText || 'Unable to save organization');
+        }
+
+        currentOrganization = await response.json();
+
+        if (currentOrganization && currentOrganization.organizationId) {
+          localStorage.setItem(ORGANIZATION_ID_KEY, currentOrganization.organizationId);
+        }
+
+        if (pendingOrganizationDocuments.length && currentOrganization && currentOrganization.organizationId) {
+          await uploadPendingOrganizationDocuments();
+        }
+
+        applyOrganizationToForm(currentOrganization);
+        renderOrganizationTable(currentOrganization);
+
+        var lastUpdated = document.getElementById('lastUpdated');
+        if (lastUpdated) {
+          lastUpdated.textContent = new Date().toLocaleString();
+        }
+
+        showToast(
+          method === 'PUT'
+            ? 'Organization changes saved successfully'
+            : 'Organization saved successfully',
+          'success'
+        );
+
+        showOrganizationTablePage();
+      } catch (error) {
+        console.error('Organization save error:', error);
+        showToast(
+          error && error.message
+            ? error.message
+            : 'Unable to save organization information',
+          'error'
+        );
+      }
+    }
+
+    function viewOrganization() {
+      if (!currentOrganization) return;
+      var org = currentOrganization;
+      var logoUrl = org.logoUrl ? getOrganizationLogoUrl(org.logoUrl) : '';
+      var companyName = org.companyName || org.legalName || 'Organization';
+      var legalName = org.legalName || '';
+      var status = org.organizationStatus || 'Active';
+
+      function display(value) {
+        return value === null || value === undefined || value === '' ? '-' : escapeOrganizationHtml(value);
+      }
+
+      function detail(label, value, extraClass) {
+        return '<div class="organization-view-field ' + (extraClass || '') + '">' +
+          '<span>' + escapeOrganizationHtml(label) + '</span>' +
+          '<strong>' + display(value) + '</strong>' +
+        '</div>';
+      }
+
+      function section(icon, title, fields, wide) {
+        return '<section class="organization-view-section">' +
+          '<div class="organization-view-section-head">' +
+            '<div class="organization-view-section-title"><span class="organization-view-section-icon"><i class="' + icon + '"></i></span><span>' + escapeOrganizationHtml(title) + '</span></div>' +
+          '</div>' +
+          '<div class="organization-view-grid ' + (wide ? 'single' : '') + '">' + fields.join('') + '</div>' +
+        '</section>';
+      }
+
+      var identity = [
+        detail('Organization ID', org.organizationId),
+        detail('Business Type', org.businessType),
+        detail('Legal Company Name', org.legalName),
+        detail('Display Name', org.companyName)
+      ];
+
+      var contact = [
+        detail('Email', org.email),
+        detail('Phone', org.phone),
+        detail('Website', org.website)
+      ];
+
+      var address = [
+        detail('Registered Address', org.address, 'wide'),
+        detail('City', org.city),
+        detail('State', org.state),
+        detail('Country', org.country),
+        detail('Pincode', org.pincode)
+      ];
+
+      var bank = [
+        detail('Bank Name', org.bankName),
+        detail('Account Number', org.bankAccountNumber),
+        detail('IFSC Code', org.bankIfscCode)
+      ];
+
+      var tax = [
+        detail('GST Registered', org.gstRegistered === true ? 'Yes' : 'No'),
+        detail('GST Number', org.gstNumber),
+        detail('Tax Registration Type', org.taxRegistrationType),
+        detail('Tax State', org.taxState),
+        detail('Default Tax Rate', org.defaultTaxRate),
+        detail('Tax Inclusive', org.taxInclusive === true ? 'Yes' : 'No')
+      ];
+
+      var units = [
+        detail('Default Unit', org.defaultUnit),
+        detail('Unit System', org.unitSystem),
+        detail('Decimal Precision', org.decimalPrecision),
+        detail('Currency', org.currency),
+        detail('Currency Symbol', org.currencySymbol),
+        detail('Financial Year Start', org.financialYearStart),
+        detail('Timezone', org.timezone)
+      ];
+
+      var meta = [
+        detail('Organization Status', status),
+        detail('Created At', org.createdAt ? new Date(org.createdAt).toLocaleString() : '-'),
+        detail('Updated At', org.updatedAt ? new Date(org.updatedAt).toLocaleString() : '-')
+      ];
+
+      var logoBlock = logoUrl
+        ? '<div class="organization-view-logo-wrap">' +
+            '<img src="' + escapeOrganizationHtml(logoUrl) + '?t=' + Date.now() + '" class="organization-view-logo" alt="Company Logo">' +
+          '</div>'
+        : '<div class="organization-view-logo-empty"><i class="fa-regular fa-image"></i><span>No logo uploaded</span></div>';
+
+      var content =
+        '<div class="organization-view-scroll">' +
+          '<div class="organization-view-hero">' +
+            '<div class="organization-view-brand">' + logoBlock + '</div>' +
+            '<div class="organization-view-company">' +
+              '<div class="organization-view-company-name">' + escapeOrganizationHtml(companyName) + '</div>' +
+              '<div class="organization-view-legal">' + escapeOrganizationHtml(legalName || 'Organization details') + '</div>' +
+              '<div class="organization-view-badges"><span class="organization-view-badge active"><span></span>' + escapeOrganizationHtml(status) + '</span>' +
+                (org.gstRegistered === true ? '<span class="organization-view-badge gst"><span></span>GST Registered</span>' : '') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          section('fa-regular fa-building', 'Organization Details', identity) +
+          section('fa-regular fa-envelope', 'Contact Information', contact) +
+          section('fa-solid fa-location-dot', 'Registered Address', address, true) +
+          section('fa-solid fa-building-columns', 'Bank Details', bank) +
+          section('fa-solid fa-file-invoice-dollar', 'Tax & GST', tax) +
+          section('fa-solid fa-ruler-combined', 'Units & Preferences', units) +
+          section('fa-regular fa-clock', 'Record Information', meta) +
+        '</div>' +
+        '<div class="organization-view-footer"><button onclick="closeModal()" class="organization-view-close">Close</button></div>';
+
+      openModal(
+        '<div class="organization-view-header"><div><div class="organization-view-title">Organization Details</div><div class="organization-view-subtitle">' + escapeOrganizationHtml(org.organizationId || '') + '</div></div></div>' + content,
+        { width: 'max-w-5xl', modalClass: 'organization-view-modal' }
+      );
+    }
+
+    function editOrganization() {
+      if (!currentOrganization) return;
+      backToOrganizationForm();
+      var generalTab = document.querySelector('[data-tab="tab-general"]');
+      if (generalTab) generalTab.click();
+      showToast('Organization loaded for editing', 'info');
+    }
+
+    function deleteOrganization() {
+      if (!currentOrganization || !currentOrganization.organizationId) return;
+      var org = currentOrganization;
+      var content = '<div class="px-6 py-4 text-sm text-gray-600"><p>Are you sure you want to delete <b class="text-gray-800">' + escapeOrganizationHtml(org.companyName || org.legalName) + '</b>?</p></div>' + modalFooter('Delete', 'onclick="confirmDeleteOrganization()"', '');
+      openModal(modalHeader('Delete Organization', 'This action cannot be undone') + content, { width: 'max-w-md' });
+    }
+
+    async function confirmDeleteOrganization() {
+      try {
+        var response = await fetch(ORGANIZATION_API + '/' + encodeURIComponent(currentOrganization.organizationId), { method: 'DELETE' });
+        if (!response.ok) throw new Error('Delete failed');
+        closeModal();
+        currentOrganization = null;
+        localStorage.removeItem(ORGANIZATION_ID_KEY);
+        renderOrganizationTable(null);
+        showEmptyOrganizationForm();
+        showToast('Organization deleted successfully', 'success');
+      } catch (error) {
+        showToast('Unable to delete organization', 'error');
+      }
+    }
+
+    
+    
+    var DOCUMENT_API = ORGANIZATION_API;
+    var organizationDocuments = [];
+    var pendingOrganizationDocuments = [];
+
+    function formatDocumentSize(bytes) {
+      var size = Number(bytes || 0);
+      if (size < 1024) return size + ' B';
+      if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+      return (size / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function documentTypeClass(contentType) {
+      return contentType === 'application/pdf' ? 'pdf' : 'image';
+    }
+
+    function documentTypeLabel(contentType) {
+      if (contentType === 'application/pdf') return 'PDF';
+      if (contentType === 'image/jpeg') return 'JPG';
+      if (contentType === 'image/png') return 'PNG';
+      if (contentType === 'image/webp') return 'WEBP';
+      return 'FILE';
+    }
+
+    function documentIcon(contentType) {
+      return contentType === 'application/pdf'
+        ? '<i class="fa-solid fa-file-pdf"></i>'
+        : '<i class="fa-solid fa-file-image"></i>';
+    }
+
+    function getDocumentUrl(documentUrl) {
+      if (!documentUrl) return '';
+      if (/^https?:\/\//i.test(documentUrl)) return documentUrl;
+      var baseUrl = DOCUMENT_API.replace(/\/api\/organization$/, '');
+      return baseUrl + (documentUrl.charAt(0) === '/' ? documentUrl : '/' + documentUrl);
+    }
+
+    function escapeDocumentHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function renderDocuments() {
+      var panel = document.getElementById('documentsPanel');
+      var badgeEl = document.getElementById('documentsCountBadge');
+      if (badgeEl) badgeEl.textContent = organizationDocuments.length;
+      if (!panel) return;
+
+      if (!organizationDocuments.length) {
+        panel.innerHTML = `
+          <div class="documents-empty">
+            <div class="documents-empty-illustration"><i class="fa-solid fa-file-circle-plus"></i></div>
+            <h4 class="text-[15px] font-semibold text-gray-800">No documents uploaded</h4>
+            <p class="text-[11.5px] text-gray-500 mt-1 max-w-md">Upload organization documents to keep important records secure and easy to access.</p>
+          </div>`;
+        return;
+      }
+
+      panel.innerHTML = '<div class="document-grid">' + organizationDocuments.map(function(doc) {
+        var type = documentTypeLabel(doc.contentType);
+        var fileDescription = type + (doc.fileSize ? ' · ' + formatDocumentSize(doc.fileSize) : '');
+        return `
+          <div class="organization-document-card">
+            <div>
+              <div class="flex items-start gap-3">
+                <div class="document-file-icon ${documentTypeClass(doc.contentType)}">${documentIcon(doc.contentType)}</div>
+                <div class="min-w-0 flex-1">
+                  <div class="font-semibold text-[13px] text-gray-900 break-words leading-5">${escapeDocumentHtml(doc.documentName)}</div>
+                  <div class="document-status">${type}</div>
+                </div>
+              </div>
+              <div class="document-card-description">${escapeDocumentHtml(fileDescription)} · Uploaded for secure organization record keeping and future reference.</div>
+            </div>
+            <div class="document-card-actions">
+              <button onclick="viewDocument('${escapeDocumentHtml(doc.documentId)}')" class="document-card-view"><i class="fa-regular fa-eye mr-1"></i>View</button>
+              <button onclick="downloadDocument('${escapeDocumentHtml(doc.documentId)}', '${escapeDocumentHtml(doc.originalFileName || doc.documentName)}')" class="document-card-download"><i class="fa-solid fa-download mr-1"></i>Download</button>
+              <button onclick="deleteDocument('${escapeDocumentHtml(doc.documentId)}')" class="document-card-delete" title="Delete document"><i class="fa-regular fa-trash-can"></i></button>
+            </div>
+          </div>`;
+      }).join('') + '</div>';
+    }
+
+    async function loadDocuments() {
+      if (!currentOrganization || !currentOrganization.organizationId) {
+        organizationDocuments = [];
+        renderDocuments();
+        return;
+      }
+      try {
+        var response = await fetch(DOCUMENT_API + '/' + encodeURIComponent(currentOrganization.organizationId) + '/documents', {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!response.ok) throw new Error('Unable to load documents');
+        organizationDocuments = await response.json();
+        renderDocuments();
+      } catch (error) {
+        console.error('Document load error:', error);
+        organizationDocuments = [];
+        renderDocuments();
+        showToast('Unable to load organization documents', 'error');
+      }
+    }
+
+    async function openOrganizationDocumentsOverlay() {
+      if (!currentOrganization || !currentOrganization.organizationId) {
+        showToast('No organization information available', 'info');
+        return;
+      }
+
+      await loadDocuments();
+      var documents = organizationDocuments || [];
+      var content = modalHeader('Organization Documents', 'Manage important organization documents');
+      content += '<div class="documents-overlay-body">';
+
+      if (!documents.length) {
+        content += '<div class="documents-overlay-empty"><div class="documents-empty-illustration"><i class="fa-solid fa-file-circle-plus"></i></div><h4>No documents uploaded</h4><p>Add important organization documents from the Documents tab.</p></div>';
+      } else {
+        content += '<div class="documents-table-wrap"><table class="documents-table"><thead><tr><th>Document</th><th>File Name</th><th>Type</th><th>Uploaded</th><th>Actions</th></tr></thead><tbody>';
+        content += documents.map(function(doc, index) {
+          var type = documentTypeLabel(doc.contentType);
+          return '<tr>' +
+            '<td><div class="font-semibold text-gray-800">' + escapeDocumentHtml(doc.documentName) + '</div><div class="text-[9.5px] text-gray-400 mt-0.5">Document ' + (index + 1) + '</div></td>' +
+            '<td>' + escapeDocumentHtml(doc.originalFileName || '-') + '</td>' +
+            '<td><span class="document-status">' + type + '</span></td>' +
+            '<td>' + escapeDocumentHtml(formatDocumentDate(doc.createdAt)) + '</td>' +
+            '<td><div class="documents-table-actions">' +
+              '<button onclick="viewDocument(\'' + escapeDocumentHtml(doc.documentId) + '\')" class="documents-table-action"><i class="fa-regular fa-eye mr-1"></i>View</button>' +
+              '<button onclick="downloadDocument(\'' + escapeDocumentHtml(doc.documentId) + '\', \'' + escapeDocumentHtml(doc.originalFileName || doc.documentName) + '\')" class="documents-table-action"><i class="fa-solid fa-download mr-1"></i>Download</button>' +
+              '<button onclick="deleteDocument(\'' + escapeDocumentHtml(doc.documentId) + '\')" class="documents-table-action delete"><i class="fa-regular fa-trash-can"></i></button>' +
+            '</div></td>' +
+          '</tr>';
+        }).join('');
+        content += '</tbody></table></div>';
+      }
+      content += '</div>';
+      content += '<div class="documents-overlay-footer"><button onclick="closeModal()" class="px-4 py-2 rounded-lg text-[12px] font-semibold text-gray-600 border border-[#e1e7ee] hover:bg-[#f3f8ef] hover:text-[#5c9140] hover:border-[#6da84c] transition">Close</button></div>';
+      openModal(content, { width:'max-w-5xl' });
+    }
+
+    function formatDocumentDate(value) {
+      if (!value) return '-';
+      var date = new Date(value);
+      return isNaN(date.getTime()) ? value : date.toLocaleString();
+    }
+
+    function openAddDocumentModal() {
+      var content = `
+        ${modalHeader('Add Document')}
+        <div class="px-6 py-5 modal-scroll max-h-[68vh] overflow-y-auto">
+          <div class="mb-4">
+            <label class="form-label">Document Name <span class="required">*</span></label>
+            <input type="text" id="documentNameInput" class="form-input" placeholder="Enter document name" maxlength="150">
+            <div id="documentNameError" class="hidden text-[10.5px] text-red-500 mt-1">Please enter a document name</div>
+          </div>
+          <div>
+            <label class="form-label">Upload Document <span class="required">*</span></label>
+            <input type="file" id="documentFileInput" class="hidden" accept="application/pdf,image/jpeg,image/png,image/webp" onchange="handleDocumentSelection(event)">
+            <div id="documentUploadArea" class="document-upload-area" onclick="document.getElementById('documentFileInput').click()">
+              <div id="documentUploadContent">
+                <div class="text-3xl text-primary mb-2"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                <div class="text-[13px] font-semibold text-gray-700">Drag & drop your document here</div>
+                <div class="text-[11px] text-gray-500 mt-1">or <span class="text-primary font-semibold">Browse files</span></div>
+                
+              </div>
+            </div>
+            <div id="documentFileError" class="hidden text-[10.5px] text-red-500 mt-2"></div>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 px-6 py-4 border-t border-[#e1e7ee] bg-gray-50 rounded-b-2xl sticky bottom-0">
+          <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-[#e1e7ee] hover:bg-[#f3f8ef] hover:text-[#5c9140] hover:border-[#6da84c] transition">Cancel</button>
+          <button onclick="uploadOrganizationDocument()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Document</button>
+        </div>`;
+      openModal(content, { width: 'max-w-2xl' });
+      setTimeout(function() {
+        var area = document.getElementById('documentUploadArea');
+        if (!area) return;
+        ['dragenter','dragover'].forEach(function(eventName) {
+          area.addEventListener(eventName, function(e) { e.preventDefault(); area.classList.add('dragover'); });
+        });
+        ['dragleave','drop'].forEach(function(eventName) {
+          area.addEventListener(eventName, function(e) { e.preventDefault(); area.classList.remove('dragover'); });
+        });
+        area.addEventListener('drop', function(e) {
+          var files = e.dataTransfer.files;
+          if (files && files.length) {
+            var input = document.getElementById('documentFileInput');
+            var dataTransfer = new DataTransfer();
+            dataTransfer.items.add(files[0]);
+            input.files = dataTransfer.files;
+            handleDocumentSelection({ target: input });
+          }
+        });
+      }, 0);
+    }
+
+    function handleDocumentSelection(event) {
+      var file = event.target.files && event.target.files[0];
+      var error = document.getElementById('documentFileError');
+      var area = document.getElementById('documentUploadArea');
+      if (!file) return;
+      var allowed = ['application/pdf','image/jpeg','image/png','image/webp'];
+      if (!allowed.includes((file.type || '').toLowerCase())) {
+        error.textContent = 'Only PDF, JPG, JPEG, PNG or WEBP files are allowed.';
+        error.classList.remove('hidden');
+        event.target.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        error.textContent = 'File size must not exceed 5 MB.';
+        error.classList.remove('hidden');
+        event.target.value = '';
+        return;
+      }
+      error.classList.add('hidden');
+      area.innerHTML = `
+        <div class="flex items-center justify-center gap-3">
+          <div class="document-file-icon ${file.type === 'application/pdf' ? 'pdf' : 'image'}">${file.type === 'application/pdf' ? '<i class="fa-solid fa-file-pdf"></i>' : '<i class="fa-solid fa-file-image"></i>'}</div>
+          <div class="text-left min-w-0"><div class="text-[12.5px] font-semibold text-gray-800 break-all">${escapeDocumentHtml(file.name)}</div><div class="text-[10.5px] text-gray-500 mt-1">${formatDocumentSize(file.size)} · Ready to upload</div></div>
+        </div>`;
+    }
+
+    async function uploadOrganizationDocument() {
+      var nameInput = document.getElementById('documentNameInput');
+      var fileInput = document.getElementById('documentFileInput');
+      var nameError = document.getElementById('documentNameError');
+      var fileError = document.getElementById('documentFileError');
+      var name = nameInput ? nameInput.value.trim() : '';
+      var file = fileInput && fileInput.files ? fileInput.files[0] : null;
+      nameError.classList.toggle('hidden', !!name);
+      if (!name) { nameInput.focus(); return; }
+      if (!file) {
+        fileError.textContent = 'Please select a document to upload.';
+        fileError.classList.remove('hidden');
+        return;
+      }
+      var allowed = ['application/pdf','image/jpeg','image/png','image/webp'];
+      if (!allowed.includes((file.type || '').toLowerCase())) {
+        fileError.textContent = 'Only PDF, JPG, JPEG, PNG or WEBP files are allowed.';
+        fileError.classList.remove('hidden');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        fileError.textContent = 'File size must not exceed 5 MB.';
+        fileError.classList.remove('hidden');
+        return;
+      }
+
+      if (!currentOrganization || !currentOrganization.organizationId) {
+        pendingOrganizationDocuments.push({ documentName: name, file: file });
+        closeModal();
+        showToast('Document added. It will be uploaded when the organization is saved.', 'info');
+        return;
+      }
+
+      await uploadOrganizationDocumentFile(name, file, true);
+    }
+
+    async function uploadOrganizationDocumentFile(name, file, closeAfterUpload) {
+      var formData = new FormData();
+      formData.append('documentName', name);
+      formData.append('file', file);
+      try {
+        var response = await fetch(DOCUMENT_API + '/' + encodeURIComponent(currentOrganization.organizationId) + '/documents', {
+          method:'POST',
+          body:formData,
+          headers:{'Accept':'application/json'}
+        });
+        if (!response.ok) {
+          var errorText = await response.text();
+          throw new Error(errorText || 'Unable to upload document');
+        }
+        var savedOrganization = await response.json();
+        if (savedOrganization && savedOrganization.organizationId) {
+          currentOrganization = savedOrganization;
+          localStorage.setItem(ORGANIZATION_ID_KEY, currentOrganization.organizationId);
+        }
+        if (closeAfterUpload) closeModal();
+        await loadDocuments();
+        renderOrganizationTable(currentOrganization);
+        return true;
+      } catch (error) {
+        console.error('Document upload error:', error);
+        if (closeAfterUpload) showToast('Unable to upload document', 'error');
+        return false;
+      }
+    }
+
+    async function uploadPendingOrganizationDocuments() {
+      var pending = pendingOrganizationDocuments.slice();
+      pendingOrganizationDocuments = [];
+      for (var i = 0; i < pending.length; i++) {
+        var uploaded = await uploadOrganizationDocumentFile(pending[i].documentName, pending[i].file, false);
+        if (!uploaded) {
+          pendingOrganizationDocuments.push(pending[i]);
+        }
+      }
+      await loadDocuments();
+    }
+
+    function viewDocument(documentId) {
+      var doc = organizationDocuments.find(function(item) { return item.documentId === documentId; });
+      if (!doc) return;
+      var url = getDocumentUrl(doc.documentUrl || ('/api/organization/' + encodeURIComponent(currentOrganization.organizationId) + '/documents/' + encodeURIComponent(doc.documentId) + '/content'));
+      if (doc.contentType && doc.contentType.indexOf('image/') === 0) {
+        openModal(
+          modalHeader(doc.documentName, doc.originalFileName) +
+          '<div class="p-6 flex items-center justify-center bg-gray-50"><img src="' + escapeDocumentHtml(url) + '" class="document-preview-image" alt="' + escapeDocumentHtml(doc.documentName) + '"></div>' +
+          '<div class="flex justify-end gap-2 px-6 py-4 border-t border-[#e1e7ee]"><a href="' + escapeDocumentHtml(url) + '" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-lg text-sm font-semibold text-primary border border-[#e1e7ee] hover:bg-primary hover:text-white hover:border-[#6da84c] transition">Open in Browser</a><button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-[#6da84c]">Close</button></div>',
+          { width:'max-w-4xl' }
+        );
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    }
+
+    async function downloadDocument(documentId, fileName) {
+      try {
+        var url = getDocumentUrl('/api/organization/' + encodeURIComponent(currentOrganization.organizationId) + '/documents/' + encodeURIComponent(documentId) + '/content');
+        var response = await fetch(url);
+        if (!response.ok) throw new Error('Download failed');
+        var blob = await response.blob();
+        var blobUrl = URL.createObjectURL(blob);
+        var anchor = document.createElement('a');
+        anchor.href = blobUrl;
+        anchor.download = fileName || 'document';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+      } catch (error) {
+        console.error('Document download error:', error);
+        showToast('Unable to download document', 'error');
+      }
+    }
+
+    function deleteDocument(documentId) {
+      var doc = organizationDocuments.find(function(item) { return item.documentId === documentId; });
+      if (!doc) return;
+      var content = '<div class="px-6 py-4 text-sm text-gray-600"><p>Are you sure you want to delete <b class="text-gray-800">' + escapeDocumentHtml(doc.documentName) + '</b>?</p><p class="text-gray-400 text-[11px] mt-1">The stored document will be permanently removed from the database.</p></div>' + modalFooter('Delete', 'onclick="confirmDeleteDocument(\'' + escapeDocumentHtml(documentId) + '\')"', '');
+      openModal(modalHeader('Delete Document', 'This action cannot be undone') + content, { width:'max-w-md' });
+    }
+
+    async function confirmDeleteDocument(documentId) {
+      try {
+        var response = await fetch(DOCUMENT_API + '/' + encodeURIComponent(currentOrganization.organizationId) + '/documents/' + encodeURIComponent(documentId), { method:'DELETE' });
+        if (!response.ok) throw new Error('Delete failed');
+        closeModal();
+        await loadDocuments();
+        showToast('Document deleted successfully', 'success');
+      } catch (error) {
+        showToast('Unable to delete document', 'error');
+      }
+    }
+
+    function refreshDocumentsWhenTabOpens() {
+      var tab = document.querySelector('[data-tab="tab-documents"]');
+      if (tab) tab.addEventListener('click', loadDocuments);
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveCompany();
+      }
+      if (e.key === 'Escape') {
+        cancelUnitForm();
+        closeModal();
+      }
+    });
+
+    loadOrganization();
+
+
+    console.log('Organization Setup Module Loaded Successfully');
+    console.log('Company: Kunash Media Pvt. Ltd.');
+    console.log('Location: Mumbai, Maharashtra (State Code: 27)');
+    console.log('GSTIN: 27AABCU1234D1ZP');
+    console.log('Units of Measurement:', unitsData.length, '(Inline CRUD — no modal for add/edit)');
+
   </script>
+
 </body>
 </html>

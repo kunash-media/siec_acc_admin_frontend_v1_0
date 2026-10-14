@@ -574,34 +574,54 @@
 var API_BASE = 'http://localhost:9093';
 var PROJECT_API = '/api/projects/v1/get-project-list'; // GET ?search=  -> [{projectName, projectPrimeId, projectCode}]
 var PRODUCT_API = '/api/products/v1/get-product-list'; // GET ?page=&size=&search=
-var COMPANY_CONFIG = {
-  orgId: 'ORG-F79A7092',
-  name: 'Sustainable Integrated Environmental Consultant Private Limited',
-  address: 'Office-401, Sanskriti Arcade, Kaspate Wasti, Wakad, Pune Maharashtra 411057, India',
-  gstin: '27ABHCS8777R1Z0',
-  state: 'Maharashtra',
-  stateCode: '27',
-  bank: {
-    beneficiary: 'Sustainable Integrated Environmental Consultant Pvt Ltd',
-    name: 'ICICI Bank Ltd',
-    branch: 'ICICI Bank Ltd, Pimpri Chinchwad Wakad',
-    address: 'Survey 154, Near Hotel Sayaji, Mumbai Bangalore Highway, Shop No 118,119,120, Wakad, Dist Pune, Maharashtra - 411057',
-    account: '756505001476',
-    ifsc: 'ICIC0007565 / ICICINBBCTS'
-  }
-};
-var company = {
-  name: COMPANY_CONFIG.name, address: COMPANY_CONFIG.address, gstin: COMPANY_CONFIG.gstin, pan: '', phone: '', email: '',
-  state: COMPANY_CONFIG.state, stateCode: COMPANY_CONFIG.stateCode,
-  bankName: COMPANY_CONFIG.bank.name, bankAccount: COMPANY_CONFIG.bank.account, bankIfsc: COMPANY_CONFIG.bank.ifsc,
-  logoUrl: API_BASE + '/api/organization/' + COMPANY_CONFIG.orgId + '/logo'
-};
+var DEFAULT_TEMPLATE = 'tpl-modern';
+var ORG_STORAGE_KEY = 'siec_organization_id';
+var company = { name: '', address: '', gstin: '', pan: '', phone: '', email: '', state: '', stateCode: '', bankName: '', bankAccount: '', bankIfsc: '', logoUrl: '', logoData: '',
+  bank: { beneficiary: '', name: '', branch: '', address: '', account: '', ifsc: '' } };
+var STATE_CODES = { 'jammu and kashmir': '01', 'himachal pradesh': '02', 'punjab': '03', 'chandigarh': '04', 'uttarakhand': '05', 'haryana': '06', 'delhi': '07', 'rajasthan': '08',
+  'uttar pradesh': '09', 'bihar': '10', 'sikkim': '11', 'arunachal pradesh': '12', 'nagaland': '13', 'manipur': '14', 'mizoram': '15', 'tripura': '16', 'meghalaya': '17', 'assam': '18',
+  'west bengal': '19', 'jharkhand': '20', 'odisha': '21', 'chhattisgarh': '22', 'madhya pradesh': '23', 'gujarat': '24', 'dadra and nagar haveli and daman and diu': '26',
+  'maharashtra': '27', 'karnataka': '29', 'goa': '30', 'lakshadweep': '31', 'kerala': '32', 'tamil nadu': '33', 'puducherry': '34', 'andaman and nicobar islands': '35',
+  'telangana': '36', 'andhra pradesh': '37', 'ladakh': '38' };
+function stateCodeFor(state, gstin) {
+  if (/^\d{2}/.test(gstin || '')) return gstin.slice(0, 2);
+  return STATE_CODES[String(state || '').trim().toLowerCase()] || '';
+}
+async function fetchLogoDataUrl(url) {
+  try {
+    var res = await fetch(url); if (!res.ok) return '';
+    var obj = URL.createObjectURL(await res.blob());
+    var img = await new Promise(function (ok, no) { var i = new Image(); i.onload = function () { ok(i); }; i.onerror = no; i.src = obj; });
+    var w = Math.min(320, img.naturalWidth), h = Math.round(img.naturalHeight * w / img.naturalWidth);
+    var cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(obj);
+    return cv.toDataURL('image/png');
+  } catch (e) { return ''; }
+}
+async function loadOrganization() {
+  var orgId = null;
+  try { orgId = localStorage.getItem(ORG_STORAGE_KEY); } catch (e) {}
+  if (!orgId) { showToast('Organization id not found (localStorage key: ' + ORG_STORAGE_KEY + ')', 'error'); return; }
+  try {
+    var o = await apiFetch('/api/organization/' + encodeURIComponent(orgId), { method: 'GET' });
+    var name = o.legalName || o.companyName || '', st = o.state || o.taxState || '';
+    company = {
+      name: name, address: [o.address, o.city, st, o.pincode].filter(Boolean).join(', '),
+      gstin: o.gstNumber || '', pan: '', phone: o.phone || '', email: o.email || '',
+      state: st, stateCode: stateCodeFor(st, o.gstNumber),
+      bankName: o.bankName || '', bankAccount: o.bankAccountNumber || '', bankIfsc: o.bankIfscCode || '',
+      logoUrl: o.logoUrl ? API_BASE + o.logoUrl : '', logoData: '',
+      bank: { beneficiary: name, name: o.bankName || '', branch: '', address: '', account: o.bankAccountNumber || '', ifsc: o.bankIfscCode || '' }
+    };
+    if (company.logoUrl) company.logoData = await fetchLogoDataUrl(company.logoUrl);
+  } catch (e) { showToast(e.message || 'Could not load organization details', 'error'); }
+}
 
 async function apiFetch(path, options) {
   options = options || {};
   var res;
   try { res = await fetch(API_BASE + path, options); }
-  catch (e) { throw new Error('Could not reach the server at ' + API_BASE + '. Check your connection or CORS settings.'); }
+  catch (e) { throw new Error('Somthing Went Wrong!, Check Your Connection.'); }
   var isJson = (res.headers.get('content-type') || '').indexOf('application/json') !== -1;
   if (!res.ok) {
     var message = 'Something went wrong (HTTP ' + res.status + ').';
@@ -751,7 +771,7 @@ function tableHtml(cols, rowsHtml) {
 
 // ============================================================= DATA
 var activeTab = 'invoice', globalCurrency = 'INR', currentPage = 1, pageSize = 25;
-var savedTemplateId = null;
+var savedTemplateId = DEFAULT_TEMPLATE;
 var invoiceTemplates = [
   { id: 'tpl-classic', name: 'Classic Green', description: 'Logo left, company right, clean line-item table. Matches current theme.' },
   { id: 'tpl-modern', name: 'Modern Split', description: 'Teal professional layout with Bill To / Ship To, project code and bank table.' },
@@ -772,7 +792,7 @@ async function loadCustomers() {
         gst: gst,
         country: c.clientCountry,
         state: c.clientState || '',
-        stateCode: isIndia && /^\d{2}/.test(gst) ? gst.slice(0, 2) : '',
+        stateCode: isIndia ? stateCodeFor(c.clientState, gst) : '',
         address: [c.clientShippingAddress, c.clientState, c.clientPincode].filter(Boolean).join(', '),
         shipAddress: c.clientShippingAddress || '',
         email: c.clientEmail,
@@ -891,8 +911,8 @@ async function renderInvoices() {
       var canSend = isPro ? inv.status === 'OPEN' : (inv.status === 'UNPAID' || inv.status === 'PARTIAL' || inv.status === 'OVERDUE');
       var extra = '';
       if (isPro && inv.status === 'OPEN') {
-        extra = '<button onclick="convertProformaAction(\'' + inv.id + '\')" class="btn-icon-action primary" title="Convert to Invoice"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></button>' +
-          '<button onclick="declineProformaAction(\'' + inv.id + '\')" class="btn-icon-action danger" title="Decline"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></button>';
+        extra = '<button onclick="askProformaAction(\'convert\', \'' + inv.id + '\')" class="btn-icon-action primary" title="Convert to Invoice"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></button>' +
+          '<button onclick="askProformaAction(\'decline\', \'' + inv.id + '\')" class="btn-icon-action danger" title="Decline"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></button>';
       }
       return `<tr class="border-b border-gray-100 table-row-hover">
         <td class="px-3 py-2.5"><div class="font-semibold text-gray-800 text-sm">${escH(inv.number)}</div><div class="text-[10px] text-gray-400 font-mono">#${inv.id}</div></td>
@@ -925,15 +945,31 @@ async function renderInvoices() {
   loadStats();
 }
 
+function askProformaAction(kind, id) {
+  var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (!inv) return;
+  var conv = kind === 'convert';
+  openModal(`${modalHeader(conv ? 'Convert to Invoice' : 'Decline Proforma', escH(inv.number))}
+    <div class="px-5 py-4 text-sm text-gray-600"><p>${conv ? 'Convert' : 'Decline'} proforma <b class="text-gray-800">${escH(inv.number)}</b>${conv ? ' into a tax invoice?' : '?'}</p>
+      <p class="text-gray-400 text-[11px] mt-1">${conv ? 'A new invoice will be created from this proforma.' : 'The proforma will be marked as declined.'}</p></div>
+    <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+      <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">No</button>
+      <button id="confirmActionBtn" onclick="${conv ? 'convertProformaAction' : 'declineProformaAction'}('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white ${conv ? 'bg-primary hover:bg-primary-dark' : 'bg-red-600 hover:bg-red-700'} transition shadow-sm">Yes</button></div>`, { width: 'max-w-sm' });
+}
 async function convertProformaAction(id) {
+  var btn = document.getElementById('confirmActionBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = SPINNER + ' Converting…'; }
   try {
     var r = await apiFetch('/api/v1/proformas/' + id + '/convert-to-invoice', { method: 'POST' });
-    showToast('Converted to invoice ' + r.invoiceStrId, 'success'); renderInvoices();
-  } catch (err) { showToast(err.message || 'Could not convert this proforma', 'error'); }
+    try { await uploadPdf(false, r.invoicePrimeId, mapInvoiceDtoToRow(r), r.invoiceTemplateId || DEFAULT_TEMPLATE); }
+    catch (e) { showToast('Converted, but PDF upload failed: ' + (e.message || ''), 'warning'); }
+    closeModal(); showToast('Converted to invoice ' + r.invoiceStrId, 'success'); renderInvoices();
+  } catch (err) { closeModal(); showToast(err.message || 'Could not convert this proforma', 'error'); }
 }
 async function declineProformaAction(id) {
-  try { await apiFetch('/api/v1/proformas/patch/' + id + '/decline', { method: 'PATCH' }); showToast('Proforma declined', 'warning'); renderInvoices(); }
-  catch (err) { showToast(err.message || 'Could not decline this proforma', 'error'); }
+  var btn = document.getElementById('confirmActionBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = SPINNER + ' Declining…'; }
+  try { await apiFetch('/api/v1/proformas/patch/' + id + '/decline', { method: 'PATCH' }); closeModal(); showToast('Proforma declined', 'warning'); renderInvoices(); }
+  catch (err) { closeModal(); showToast(err.message || 'Could not decline this proforma', 'error'); }
 }
 
 // ============================================================= DOCUMENT TEMPLATES
@@ -948,11 +984,11 @@ function buildClassicDocumentInnerHtml(inv) {
       <td class="px-2 py-1.5 text-xs font-mono text-right">${formatCurrency(i.qty * i.rate, inv.currency)}</td></tr>`;
   }).join('');
   var sym = getCurrencySymbol(inv.currency);
-  var logo = company.logoUrl ? '<img src="' + company.logoUrl + '" alt="Company Logo" crossorigin="anonymous" class="invoice-logo">' : '<div class="w-20 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs border border-gray-200">Logo</div>';
+  var logo = (company.logoData || company.logoUrl) ? '<img src="' + (company.logoData || company.logoUrl) + '" alt="Company Logo" crossorigin="anonymous" class="invoice-logo">' : '<div class="w-20 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs border border-gray-200">Logo</div>';
   var contact = [company.pan ? 'PAN: ' + company.pan : '', company.phone ? 'Phone: ' + company.phone : '', company.email ? 'Email: ' + company.email : ''].filter(Boolean).join(' | ');
   return `<div class="invoice-preview">
     <div class="invoice-header"><div>${logo}</div><div class="invoice-company"><div class="invoice-company-name">${escH(company.name)}</div>
-      <div class="invoice-company-details">${escH(company.address)}<br>GSTIN: ${escH(company.gstin)}${contact ? '<br>' + escH(contact) : ''}</div></div></div>
+      <div class="invoice-company-details">${escH(company.address)}${company.gstin ? '<br>GSTIN: ' + escH(company.gstin) : ''}${contact ? '<br>' + escH(contact) : ''}</div></div></div>
     <div class="text-center mb-3"><span class="invoice-title">${pro ? 'PROFORMA INVOICE' : 'TAX INVOICE'}</span></div>
     <div class="invoice-meta">
       <div><div class="meta-label">Bill To</div><div class="meta-value">${escH(inv.customerName)}</div>
@@ -985,7 +1021,7 @@ function buildClassicDocumentInnerHtml(inv) {
 
 // Reference layout: used for every proforma and for the invoice template "Modern Split"
 function buildRefDocumentInnerHtml(inv) {
-  var pro = inv.invoiceType === 'proforma', c = inv.currency, T = '#0d6e5b', B = COMPANY_CONFIG.bank, sub = 0;
+  var pro = inv.invoiceType === 'proforma', c = inv.currency, T = '#0d6e5b', B = company.bank, sub = 0;
   inv.items.forEach(function (i) { sub += i.qty * i.rate; });
   var disc = sub * (inv.discount || 0) / 100, tax = (sub - disc) * (inv.tax || 0) / 100;
   var same = company.stateCode && company.stateCode === inv.customerStateCode, h = (inv.tax || 0) / 2;
@@ -1006,13 +1042,13 @@ function buildRefDocumentInnerHtml(inv) {
   var band = '<table style="width:100%;border-collapse:collapse;margin:14px 0"><tr>' + cells.map(function (x) { return '<td style="' + th + '">' + x[0] + '</td>'; }).join('') + '</tr><tr>' +
     cells.map(function (x) { return '<td style="padding:8px 6px;font-size:10.5px">' + x[1] + '</td>'; }).join('') + '</tr></table>';
   var pos = inv.placeOfSupply || inv.customerState;
-  var bankRow = function (l, v) { return '<tr><td style="border:1px solid #000;padding:3px 5px;width:38%">' + l + '</td><td style="border:1px solid #000;padding:3px 5px">' + escH(v || '') + '</td></tr>'; };
+  var bankRow = function (l, v) { if (!v && l !== 'Payment Terms') return ''; return '<tr><td style="border:1px solid #000;padding:3px 5px;width:38%">' + l + '</td><td style="border:1px solid #000;padding:3px 5px">' + escH(v || '') + '</td></tr>'; };
   return '<div style="font-family:Arial,Helvetica,sans-serif;color:#111;padding:28px 32px;background:#fff;width:100%;box-sizing:border-box">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start"><div>' +
-    (company.logoUrl ? '<img src="' + company.logoUrl + '" crossorigin="anonymous" style="max-height:70px;max-width:140px;object-fit:contain">' : '') + '</div>' +
+    ((company.logoData || company.logoUrl) ? '<img src="' + (company.logoData || company.logoUrl) + '" crossorigin="anonymous" style="max-height:70px;max-width:140px;object-fit:contain">' : '') + '</div>' +
     '<div style="text-align:right"><div style="font-size:26px;color:' + T + ';letter-spacing:.02em">' + (pro ? 'PROFORMA INVOICE' : 'TAX INVOICE') + '</div><div style="font-size:10px;color:#6b7280;font-weight:600">Invoice# ' + escH(inv.number) + '</div></div></div>' +
     '<div style="margin-top:10px;font-size:11px;font-weight:700;max-width:420px">' + escH(company.name) + '</div>' +
-    '<div style="font-size:10px;color:#6b7280;max-width:300px;line-height:1.5">' + escH(company.address) + '<br>GSTIN ' + escH(company.gstin) + '</div>' +
+    '<div style="font-size:10px;color:#6b7280;max-width:300px;line-height:1.5">' + escH(company.address) + '' + (company.gstin ? '<br>GSTIN ' + escH(company.gstin) : '') + '</div>' +
     '<div style="display:flex;gap:40px;margin-top:22px;font-size:10.5px;line-height:1.45">' +
     '<div style="flex:1"><div style="color:#6b7280">Bill To</div><div style="font-weight:700">' + escH(inv.customerName) + '</div><div>' + escH(inv.customerAddress || '') + '</div>' + (inv.customerGST ? '<div>GSTIN ' + escH(inv.customerGST) + '</div>' : '') + '</div>' +
     '<div style="flex:1"><div style="color:#6b7280">Ship To</div><div>' + escH(inv.shipTo || inv.customerAddress || '') + '</div></div></div>' +
@@ -1030,6 +1066,7 @@ function buildRefDocumentInnerHtml(inv) {
 }
 
 function buildDocumentInnerHtml(inv, templateId) {
+  templateId = templateId || DEFAULT_TEMPLATE;
   var pro = inv.invoiceType === 'proforma';
   return (pro || templateId === 'tpl-modern') ? buildRefDocumentInnerHtml(inv) : buildClassicDocumentInnerHtml(inv);
 }
@@ -1044,24 +1081,12 @@ function viewInvoice(id) {
 }
 
 async function generateInvoicePdfBlob(inv, templateId) {
-  var w = document.createElement('div');
-  w.style.cssText = 'position:fixed;left:0;top:0;width:820px;background:#fff;z-index:-1;pointer-events:none;';
-  w.innerHTML = buildDocumentInnerHtml(inv, templateId);
-  document.body.appendChild(w);
-  try {
-    var imgs = [].slice.call(w.querySelectorAll('img'));
-    await Promise.all(imgs.map(function (im) {
-      return new Promise(function (res) {
-        if (im.complete && im.naturalWidth) return res();
-        im.onload = res; im.onerror = function () { im.remove(); res(); };
-      });
-    }));
-    return await html2pdf().from(w).set({
-      margin: 8,
-      html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
-    }).outputPdf('blob');
-  } finally { w.remove(); }
+  var html = '<div style="background:#fff;width:100%;">' + buildDocumentInnerHtml(inv, templateId) + '</div>';
+  return await html2pdf().from(html, 'string').set({
+    margin: 8,
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
+    jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+  }).outputPdf('blob');
 }
 
 // ============================================================= SEARCHABLE PICKER (debounce + scroll pagination)
@@ -1189,7 +1214,7 @@ function openInvoiceModal(existing, type) {
     discount: 0, tax: 18, shipping: 0, otherCharges: 0, status: isPro ? 'OPEN' : 'UNPAID', total: 0, terms: ''
   };
   var isEdit = !!existing, firstCust = !isEdit && customers[0] ? customers[0] : null;
-  var tplName = savedTemplateId ? (invoiceTemplates.find(function (t) { return t.id === savedTemplateId; }) || {}).name : 'Default (Classic Green)';
+  var tplName = savedTemplateId ? (invoiceTemplates.find(function (t) { return t.id === savedTemplateId; }) || {}).name : 'Modern Split';
   var lineItemsHtml = e.items && e.items.length ? e.items.map(lineRowHtml).join('') : EMPTY_ROW;
 
   openModal(`
@@ -1294,7 +1319,7 @@ async function saveInvoice(existingId, type) {
   var sub = its.reduce(function (s, i) { return s + i.qty * i.rate; }, 0), after = sub - sub * disc / 100;
   var total = after + after * tax / 100 + ship + oth, totalINR = total * rate;
   var proj = document.getElementById('f_projectBtn').dataset.code || '', ref = g('f_refNo'), shipTo = g('f_shipTo'), pos = g('f_placeSupply') || cust.state || '', terms = g('f_terms');
-  var tpl = isPro ? null : (savedTemplateId || 'tpl-classic');
+  var tpl = isPro ? null : (savedTemplateId || DEFAULT_TEMPLATE);
 
   var f = { Date: date, CustomerId: isNaN(Number(cust.id)) ? cust.id : Number(cust.id), CustomerName: cust.name, CustomerGst: cust.gst, CustomerEmail: cust.email,
     CustomerState: cust.state, CustomerStateCode: cust.stateCode, CustomerAddress: cust.address, ShippingAddress: shipTo, Currency: cur, ExchangeRate: rate,
@@ -1379,7 +1404,7 @@ function openSendEmail(id) {
       <button onclick="openSendOverlay('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Back</button>
       <button id="emailSendBtn" onclick="sendViaEmail('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">${iconSend()} Send Email</button></div>`, { width: 'max-w-sm' });
 }
-// Shadow email API: POST { toEmail, clientPrimeId, pdfUrl }
+// Email API: { invoicePrimeId | proformaPrimeId, toEmail }
 async function sendViaEmail(id) {
   var inv = invoices.find(function (x) { return String(x.id) === String(id); }); if (!inv) return;
   var pro = inv.invoiceType === 'proforma', inp = document.getElementById('f_sendEmail'), err = document.getElementById('emailSendError'), email = (inp.value || '').trim();
@@ -1390,7 +1415,7 @@ async function sendViaEmail(id) {
   try {
     await apiFetch(pro ? '/api/v1/emails/send-proforma' : '/api/v1/emails/send-invoice', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toEmail: email, clientPrimeId: Number(inv.customerId), pdfUrl: API_BASE + inv.pdfUrl })
+      body: JSON.stringify(pro ? { proformaPrimeId: Number(inv.id), toEmail: email } : { invoicePrimeId: Number(inv.id), toEmail: email })
     });
     if (!pro) { try { await apiFetch('/api/v1/invoices/patch/' + inv.id + '/mark-sent', { method: 'PATCH' }); } catch (e) { console.warn('mark-sent failed', e); } }
     closeModal(); showToast((pro ? 'Proforma' : 'Invoice') + ' ' + inv.number + ' emailed to ' + email, 'success'); renderInvoices();
@@ -1415,7 +1440,7 @@ function downloadInvoice(id) {
 }
 
 // ============================================================= CHOOSE TEMPLATE
-function openChooseTemplate() { renderChooseTemplate(savedTemplateId || invoiceTemplates[0].id); }
+function openChooseTemplate() { renderChooseTemplate(savedTemplateId || DEFAULT_TEMPLATE); }
 function renderChooseTemplate(selectedId) {
   var cards = invoiceTemplates.map(function (t) {
     return `<div class="template-card ${t.id === selectedId ? 'selected' : ''}" onclick="renderChooseTemplate('${t.id}')">
@@ -1466,7 +1491,7 @@ function saveTemplateChoice(id) {
 
 (async function init() {
   buildStatusFilterOptions();
-  await loadCustomers();
+  await Promise.all([loadOrganization(), loadCustomers()]);
   renderInvoices();
 })();
   </script>

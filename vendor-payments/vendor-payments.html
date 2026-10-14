@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+<link rel="manifest" href="/favicon_io/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<title>Vendor Payments — Aquilon ERP</title>
+
+<script>
+  (function () {
+    try {
+      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+    } catch (e) {
+      document.documentElement.classList.add("sidebar-expanded");
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
+          secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<style>
+  body { font-size: 12px; background: #f3f4f6; }
+
+  .form-input {
+    width: 100%; border: 1px solid #e5e7eb; border-radius: 6px;
+    padding: 5px 10px; font-size: 11px; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa; color: #1a1a2e;
+  }
+  .form-input:focus {
+    border-color: #6da84c;
+    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.12);
+    background: #ffffff;
+  }
+  .form-input:disabled { background: #f3f4f6; cursor: not-allowed; }
+
+  .form-label {
+    font-size: 10px; font-weight: 600; color: #374151;
+    display: block; margin-bottom: 3px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .form-label .required { color: #ef4444; margin-left: 2px; }
+  .form-hint { font-size: 9.5px; color: #9ca3af; margin-top: 2px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 12px;
+  }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+  .badge-dot-green { background: #22c55e; }
+  .badge-dot-amber { background: #f59e0b; }
+  .badge-dot-red { background: #ef4444; }
+  .badge-dot-gray { background: #94a3b8; }
+  .badge-dot-blue { background: #3b82f6; }
+  .badge-dot-purple { background: #8b5cf6; }
+
+  .stat-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 10px 14px !important;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+  .stat-card .stat-label {
+    font-size: 9px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #6b7280;
+  }
+  .stat-card .stat-value {
+    font-size: 17px; font-weight: 700;
+    color: #1a1a2e; margin-top: 2px;
+  }
+
+  .table-row-hover:hover { background: #f8fafc; }
+
+  .btn-icon-action {
+    transition: all 0.15s ease; width: 28px; height: 28px;
+    border-radius: 6px; display: inline-flex; align-items: center;
+    justify-content: center; color: #94a3b8;
+    background: transparent; border: none; cursor: pointer;
+  }
+  .btn-icon-action:hover { background: #f1f5f9; color: #6da84c; }
+  .btn-icon-action.danger:hover { background: #fee2e2; color: #ef4444; }
+  .btn-icon-action.primary:hover { background: #eef5e8; color: #6da84c; }
+
+  .toast { animation: fadeIn 0.2s ease; font-size: 12px; }
+  .toast-success { background: #16a34a; }
+  .toast-error { background: #dc2626; }
+  .toast-warning { background: #f59e0b; }
+  .toast-info { background: #6da84c; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-modal { animation: modalIn 0.18s ease; }
+
+  .modal-scroll { max-height: 55vh; overflow-y: auto; }
+  .modal-scroll::-webkit-scrollbar { width: 4px; }
+  .modal-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+  .empty-icon-svg { opacity: 0.2; width: 40px; height: 40px; color: #94a3b8; }
+
+  .page-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .page-subtitle { font-size: 12px; color: #6b7280; }
+  .page-breadcrumb {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #6da84c;
+  }
+
+  table th {
+    font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #6b7280; padding: 8px 12px;
+  }
+  table td { font-size: 12px; padding: 8px 12px; }
+  table td .font-mono { font-size: 11px; }
+
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-subtitle { font-size: 11px; color: #6b7280; }
+
+  .filter-btn { font-size: 11px; padding: 5px 12px; }
+  .filter-btn svg { width: 14px; height: 14px; }
+
+  /* Receipt preview */
+  .receipt-preview {
+    background: #ffffff; border: 1px solid #e5e7eb;
+    border-radius: 12px; padding: 24px 28px;
+    max-width: 720px; margin: 0 auto;
+  }
+  .receipt-preview .receipt-header {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; border-bottom: 2px solid #6da84c;
+    padding-bottom: 12px; margin-bottom: 14px;
+  }
+  .receipt-preview .receipt-title {
+    font-size: 20px; font-weight: 700; color: #6da84c;
+    letter-spacing: 0.04em;
+  }
+  .receipt-preview .receipt-company-name {
+    font-size: 16px; font-weight: 700; color: #1a1a2e;
+  }
+  .receipt-preview .receipt-company-details {
+    font-size: 10.5px; color: #6b7280;
+    line-height: 1.5; margin-top: 2px;
+  }
+  .receipt-preview .receipt-meta {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 14px; font-size: 12px;
+  }
+  .receipt-preview .meta-label {
+    font-weight: 600; color: #6b7280; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .receipt-preview .meta-value { font-weight: 600; color: #1a1a2e; }
+  .receipt-preview .receipt-table {
+    width: 100%; border-collapse: collapse;
+    margin: 10px 0; font-size: 12px;
+  }
+  .receipt-preview .receipt-table th {
+    background: #f8fafc; text-align: left;
+    padding: 8px 10px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; color: #6b7280;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .receipt-preview .receipt-table td {
+    padding: 8px 10px; border-bottom: 1px solid #f1f5f9;
+  }
+  .receipt-preview .receipt-total {
+    margin-top: 10px; border-top: 2px solid #6da84c;
+    padding-top: 10px; text-align: right;
+    font-size: 14px; font-weight: 700; color: #6da84c;
+  }
+  .receipt-preview .receipt-footer {
+    margin-top: 16px; font-size: 10.5px; color: #6b7280;
+    border-top: 1px solid #e5e7eb; padding-top: 10px;
+    text-align: center;
+  }
+
+  /* Email Automation card */
+  .email-auto-card {
+    background: linear-gradient(135deg, #eef5e8, #dcfce7);
+    border: 1px solid #6da84c;
+    border-radius: 8px; padding: 10px 14px;
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-top: 12px;
+  }
+  .email-auto-card .icon-wrap {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #6da84c; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .email-auto-card .title {
+    font-size: 11.5px; font-weight: 700; color: #166534;
+  }
+  .email-auto-card .desc {
+    font-size: 10.5px; color: #374151; margin-top: 2px;
+  }
+</style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased text-sm">
+
+  <div class="flex min-h-screen">
+    <div id="sidebar-root"></div>
+
+    <div class="app-main flex-1 flex flex-col min-w-0">
+      <div id="topbar-root"></div>
+
+      <main class="p-3 sm:p-4 lg:p-5">
+
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+          <!-- ===== PAGE HEADER ===== -->
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <div class="page-breadcrumb">Purchase</div>
+              <h1 class="page-title text-gray-900">Vendor Payments</h1>
+              <p class="page-subtitle mt-0.5">Record vendor payments, allocate against bills, and send automatic payment confirmations.</p>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <div class="relative inline-block" data-dd-trigger>
+                <button onclick="toggleFilterDD()" class="filter-btn inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M7 12h10M11 18h2"/>
+                  </svg>
+                  Filter
+                  <span id="filterBadge" class="hidden text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+                <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-50">
+                  <div class="mb-2">
+                    <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Payment Mode</label>
+                    <select id="filterMode" onchange="filterPayments()" class="form-input text-[10px]">
+                      <option value="all">All Modes</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="NEFT">NEFT</option>
+                      <option value="RTGS">RTGS</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Cheque">Cheque</option>
+                      <option value="Cash">Cash</option>
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Vendor</label>
+                    <select id="filterVendor" onchange="filterPayments()" class="form-input text-[10px]">
+                      <option value="all">All Vendors</option>
+                    </select>
+                  </div>
+                  <button onclick="clearFilters()" class="text-[10px] text-primary font-semibold hover:underline">Clear Filters</button>
+                </div>
+              </div>
+
+              <button onclick="openAddPayment()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Record Payment
+              </button>
+            </div>
+          </div>
+
+          <!-- ===== STATS CARDS ===== -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5 mb-4">
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Total Payments</div>
+              <div class="stat-value" id="totalPayments">0</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Total Paid</div>
+              <div class="stat-value text-primary" id="totalPaid">₹0</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+              <div class="stat-label">This Month</div>
+              <div class="stat-value text-green-600" id="thisMonth">₹0</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Pending</div>
+              <div class="stat-value text-amber-600" id="pendingAmount">₹0</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+              <div class="stat-label">Emails Sent</div>
+              <div class="stat-value text-blue-600" id="emailsSent">0</div>
+            </div>
+          </div>
+
+          <!-- ===== PAYMENTS TABLE ===== -->
+          <div id="paymentsPanel"></div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- SCRIPTS -->
+  <!-- ========================================================== -->
+
+  <script src="/assets/js/nav-sidebar.js"></script>
+  <script>
+    // =============================================================
+    // NAV-SIDEBAR INIT
+    // =============================================================
+    NavSidebar.init({
+      basePath: "",
+      activePage: "vendor-payments",
+      pageTitle: "Vendor Payments",
+      user: {
+        name: "Admin",
+        role: "Super Admin",
+        avatarUrl: "",
+      },
+    });
+
+    // =============================================================
+    // SVG ICONS
+    // =============================================================
+    function iconPlus() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>`; }
+    function iconEdit() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`; }
+    function iconTrash() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`; }
+    function iconEye() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`; }
+    function iconX() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`; }
+    function iconSearch() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`; }
+    function iconSave() { return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`; }
+    function iconPrint() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>`; }
+    function iconMail() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>`; }
+    function iconSend() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>`; }
+    function iconMoney() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V10M10 21V10M14 21V10M19 21V10"/><path d="M2 10l10-6 10 6"/></svg>`; }
+    function iconInfo() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>`; }
+    function iconCheck() { return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>`; }
+
+    // =============================================================
+    // TOAST
+    // =============================================================
+    function showToast(message, kind) {
+      kind = kind || 'success';
+      var wrap = document.getElementById('toastWrap');
+      var colors = { success: 'bg-green-600', info: 'bg-primary', warning: 'bg-amber-600', error: 'bg-red-600' };
+      var el = document.createElement('div');
+      el.className = 'toast ' + colors[kind] + ' text-white font-semibold px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
+      el.innerHTML = '<span>' + message + '</span>';
+      wrap.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = 'opacity .3s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 300);
+      }, 2600);
+    }
+
+    // =============================================================
+    // MODAL
+    // =============================================================
+    function openModal(innerHtml, opts) {
+      opts = opts || {};
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = `
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-3" id="modalOverlay">
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" id="modalBackdrop"></div>
+          <div class="relative bg-white rounded-xl shadow-2xl w-full ${opts.width || 'max-w-4xl'} max-h-[92vh] overflow-hidden animate-modal">
+            ${innerHtml}
+          </div>
+        </div>`;
+      document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      var root = document.getElementById('modalRoot');
+      root.innerHTML = '';
+      document.body.style.overflow = '';
+    }
+
+    function modalHeader(title, subtitle) {
+      return `
+        <div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div>
+            <h3 class="modal-title text-gray-900">${title}</h3>
+            ${subtitle ? '<p class="modal-subtitle mt-0.5">' + subtitle + '</p>' : ''}
+          </div>
+          <button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
+        </div>`;
+    }
+
+    function modalFooter(saveLabel, onSaveAttr, extraBtns) {
+      return `
+        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
+          <div>${extraBtns || ''}</div>
+          <div class="flex gap-2">
+            <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+            <button ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
+              ${iconSave()} ${saveLabel}
+            </button>
+          </div>
+        </div>`;
+    }
+
+    function fld(label, inputHtml, hint) {
+      return `<div class="mb-2"><label class="form-label">${label}</label>${inputHtml}${hint ? '<div class="form-hint">' + hint + '</div>' : ''}</div>`;
+    }
+
+    function inputBase() { return "form-input"; }
+
+    // =============================================================
+    // DROPDOWN
+    // =============================================================
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('[data-dd-trigger]')) {
+        document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+      }
+    });
+
+    function toggleFilterDD() {
+      var menu = document.getElementById('filterDD');
+      var isHidden = menu.classList.contains('hidden');
+      document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
+      if (isHidden) menu.classList.remove('hidden');
+    }
+
+    // =============================================================
+    // HELPERS
+    // =============================================================
+    function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+
+    function statusBadge(status) {
+      var map = { paid: 'badge-green', pending: 'badge-amber', bounced: 'badge-red', cleared: 'badge-blue' };
+      var dot = { paid: 'badge-dot-green', pending: 'badge-dot-amber', bounced: 'badge-dot-red', cleared: 'badge-dot-blue' };
+      var label = status.charAt(0).toUpperCase() + status.slice(1);
+      return '<span class="badge ' + map[status] + '"><span class="badge-dot ' + dot[status] + '"></span>' + label + '</span>';
+    }
+
+    function modeBadge(mode) {
+      var colors = {
+        'Bank Transfer': 'badge-blue',
+        'NEFT': 'badge-blue',
+        'RTGS': 'badge-blue',
+        'UPI': 'badge-purple',
+        'Cheque': 'badge-amber',
+        'Cash': 'badge-green',
+        'Credit Card': 'badge-gray'
+      };
+      return '<span class="badge ' + (colors[mode] || 'badge-gray') + '">' + mode + '</span>';
+    }
+
+    function emailBadge(sent) {
+      return sent
+        ? '<span class="badge badge-green"><span class="badge-dot badge-dot-green"></span>' + iconCheck() + ' Sent</span>'
+        : '<span class="badge badge-gray"><span class="badge-dot badge-dot-gray"></span>Pending</span>';
+    }
+
+    function rowActionsHtml(editFn, delFn, viewFn, printFn, emailFn) {
+      var html = '<div class="flex gap-1">';
+      if (viewFn) html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
+      if (printFn) html += '<button onclick="' + printFn + '" class="btn-icon-action primary" title="Print">' + iconPrint() + '</button>';
+      if (emailFn) html += '<button onclick="' + emailFn + '" class="btn-icon-action primary" title="Send Email">' + iconMail() + '</button>';
+      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      html += '</div>';
+      return html;
+    }
+
+    function panelWrap(titleHtml, bodyHtml, extraHead) {
+      return `
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800 flex items-center gap-2">${titleHtml}</div>
+            ${extraHead || ''}
+          </div>
+          <div>${bodyHtml}</div>
+        </div>`;
+    }
+
+    function tableHtml(cols, rowsHtml) {
+      var colHeaders = cols.map(function(c) {
+        return '<th class="text-left font-semibold whitespace-nowrap">' + c + '</th>';
+      }).join('');
+      return `
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead><tr class="bg-gray-50 border-b border-gray-200">${colHeaders}</tr></thead>
+            <tbody id="tbody-anchor">${rowsHtml}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // =============================================================
+    // DATA
+    // =============================================================
+
+    var vendors = [
+      { id: 'VEN-001', name: 'Global Imports Inc.', email: 'vendor@globalimports.com' },
+      { id: 'VEN-002', name: 'Local Supplier Co.', email: 'info@localsupplier.com' },
+      { id: 'VEN-003', name: 'ABC Distributors', email: 'info@abcdistributors.com' },
+      { id: 'VEN-004', name: 'Tech Components Ltd.', email: 'sales@techcomponents.com' },
+      { id: 'VEN-005', name: 'Premium Raw Materials', email: 'info@premiumraw.com' },
+    ];
+
+    var bills = [
+      { id: 'PB-001', number: 'PUR/25-26/001', vendorId: 'VEN-001', amount: 118000, balance: 68000 },
+      { id: 'PB-002', number: 'PUR/25-26/002', vendorId: 'VEN-002', amount: 95800, balance: 95800 },
+      { id: 'PB-003', number: 'PUR/25-26/003', vendorId: 'VEN-003', amount: 49560, balance: 0 },
+      { id: 'PB-004', number: 'PUR/25-26/004', vendorId: 'VEN-004', amount: 105000, balance: 105000 },
+      { id: 'PB-005', number: 'PUR/25-26/005', vendorId: 'VEN-005', amount: 218500, balance: 218500 },
+    ];
+
+    var payments = [{
+      id: 'VP-001',
+      number: 'VPAY/25-26/001',
+      date: '2026-01-25',
+      vendorId: 'VEN-001',
+      vendorName: 'Global Imports Inc.',
+      vendorEmail: 'vendor@globalimports.com',
+      amount: 50000,
+      mode: 'Bank Transfer',
+      reference: 'TX-20260125-001',
+      bankAccount: 'HDFC Bank — Current',
+      billAllocations: [
+        { billNumber: 'PUR/25-26/001', amount: 50000 }
+      ],
+      notes: 'Part payment against PUR/25-26/001',
+      status: 'paid',
+      emailSent: true,
+      emailSentAt: '2026-01-25 15:45',
+      createdAt: '2026-01-25'
+    }, {
+      id: 'VP-002',
+      number: 'VPAY/25-26/002',
+      date: '2026-01-28',
+      vendorId: 'VEN-003',
+      vendorName: 'ABC Distributors',
+      vendorEmail: 'info@abcdistributors.com',
+      amount: 49560,
+      mode: 'NEFT',
+      reference: 'NEFT-20260128-005',
+      bankAccount: 'HDFC Bank — Current',
+      billAllocations: [
+        { billNumber: 'PUR/25-26/003', amount: 49560 }
+      ],
+      notes: 'Full payment — cleared',
+      status: 'paid',
+      emailSent: true,
+      emailSentAt: '2026-01-28 16:30',
+      createdAt: '2026-01-28'
+    }, {
+      id: 'VP-003',
+      number: 'VPAY/25-26/003',
+      date: '2026-02-01',
+      vendorId: 'VEN-002',
+      vendorName: 'Local Supplier Co.',
+      vendorEmail: 'info@localsupplier.com',
+      amount: 40000,
+      mode: 'Cheque',
+      reference: 'CHQ-123457',
+      bankAccount: 'HDFC Bank — Current',
+      billAllocations: [
+        { billNumber: 'PUR/25-26/002', amount: 40000 }
+      ],
+      notes: 'Cheque under clearing',
+      status: 'pending',
+      emailSent: false,
+      emailSentAt: '',
+      createdAt: '2026-02-01'
+    }, {
+      id: 'VP-004',
+      number: 'VPAY/25-26/004',
+      date: '2026-02-08',
+      vendorId: 'VEN-005',
+      vendorName: 'Premium Raw Materials',
+      vendorEmail: 'info@premiumraw.com',
+      amount: 100000,
+      mode: 'RTGS',
+      reference: 'RTGS-20260208-003',
+      bankAccount: 'ICICI Bank — Current',
+      billAllocations: [
+        { billNumber: 'PUR/25-26/005', amount: 100000 }
+      ],
+      notes: 'Part payment',
+      status: 'paid',
+      emailSent: true,
+      emailSentAt: '2026-02-08 14:20',
+      createdAt: '2026-02-08'
+    }, {
+      id: 'VP-005',
+      number: 'VPAY/25-26/005',
+      date: '2026-02-10',
+      vendorId: 'VEN-004',
+      vendorName: 'Tech Components Ltd.',
+      vendorEmail: 'sales@techcomponents.com',
+      amount: 105000,
+      mode: 'Bank Transfer',
+      reference: 'TX-20260210-002',
+      bankAccount: 'ICICI Bank — Current',
+      billAllocations: [
+        { billNumber: 'PUR/25-26/004', amount: 105000 }
+      ],
+      notes: 'Full and final payment',
+      status: 'paid',
+      emailSent: true,
+      emailSentAt: '2026-02-10 17:15',
+      createdAt: '2026-02-10'
+    }];
+
+    var nextPayNo = 6;
+
+    // =============================================================
+    // FUNCTIONS
+    // =============================================================
+
+    function renderStats() {
+      var total = payments.length;
+      var totalPaid = payments.filter(function(p) { return p.status === 'paid'; }).reduce(function(s, p) { return s + p.amount; }, 0);
+      var today = new Date().toISOString().split('T')[0];
+      var thisMonth = today.substring(0, 7);
+      var monthTotal = payments.filter(function(p) { return p.date.substring(0, 7) === thisMonth && p.status === 'paid'; }).reduce(function(s, p) { return s + p.amount; }, 0);
+      var pendingAmt = payments.filter(function(p) { return p.status === 'pending'; }).reduce(function(s, p) { return s + p.amount; }, 0);
+      var emailsSent = payments.filter(function(p) { return p.emailSent; }).length;
+
+      document.getElementById('totalPayments').textContent = total;
+      document.getElementById('totalPaid').textContent = money(totalPaid);
+      document.getElementById('thisMonth').textContent = money(monthTotal);
+      document.getElementById('pendingAmount').textContent = money(pendingAmt);
+      document.getElementById('emailsSent').textContent = emailsSent;
+
+      var filterVendor = document.getElementById('filterVendor');
+      var currentVal = filterVendor.value;
+      filterVendor.innerHTML = '<option value="all">All Vendors</option>';
+      vendors.forEach(function(v) {
+        filterVendor.innerHTML += '<option value="' + v.id + '">' + v.name + '</option>';
+      });
+      filterVendor.value = currentVal;
+    }
+
+    function getFilteredPayments() {
+      var searchInput = document.getElementById('searchInput');
+      var q = searchInput ? searchInput.value.toLowerCase() : '';
+      var mode = document.getElementById('filterMode').value || 'all';
+      var vendor = document.getElementById('filterVendor').value || 'all';
+
+      return payments.filter(function(p) {
+        var matchSearch = p.number.toLowerCase().indexOf(q) !== -1 ||
+          p.vendorName.toLowerCase().indexOf(q) !== -1 ||
+          (p.reference || '').toLowerCase().indexOf(q) !== -1;
+        var matchMode = mode === 'all' || p.mode === mode;
+        var matchVendor = vendor === 'all' || p.vendorId === vendor;
+        return matchSearch && matchMode && matchVendor;
+      });
+    }
+
+    function renderPayments() {
+      var filtered = getFilteredPayments();
+
+      var rowsHtml = '';
+      if (filtered.length === 0) {
+        rowsHtml = `
+          <tr>
+            <td colspan="9" class="text-center py-10 text-gray-400 text-sm">
+              <div class="flex justify-center mb-2 empty-icon-svg">${iconMoney()}</div>
+              No vendor payments found. Click "Record Payment" to add one.
+            </td>
+          </tr>`;
+      } else {
+        rowsHtml = filtered.map(function(p) {
+          return `
+            <tr class="border-b border-gray-100 table-row-hover">
+              <td class="px-3 py-2.5">
+                <div class="font-semibold text-gray-800 text-sm">${p.number}</div>
+                <div class="text-[10px] text-gray-400">${p.date}</div>
+              </td>
+              <td class="px-3 py-2.5 text-sm text-gray-700">${p.vendorName}</td>
+              <td class="px-3 py-2.5 font-mono font-semibold text-sm text-primary">${money(p.amount)}</td>
+              <td class="px-3 py-2.5">${modeBadge(p.mode)}</td>
+              <td class="px-3 py-2.5 text-[10.5px] text-gray-500 font-mono">${p.reference || '—'}</td>
+              <td class="px-3 py-2.5 text-[10.5px] text-gray-500">${p.billAllocations.map(function(a) { return a.billNumber; }).join(', ')}</td>
+              <td class="px-3 py-2.5">${statusBadge(p.status)}</td>
+              <td class="px-3 py-2.5 text-center">${emailBadge(p.emailSent)}</td>
+              <td class="px-3 py-2.5">${rowActionsHtml(
+                "editPayment('"+p.id+"')",
+                "delPayment('"+p.id+"')",
+                "viewReceipt('"+p.id+"')",
+                "printReceipt('"+p.id+"')",
+                "sendPaymentEmail('"+p.id+"')"
+              )}</td>
+            </tr>`;
+        }).join('');
+      }
+
+      var panelHtml = panelWrap(
+        'All Vendor Payments <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
+        tableHtml(['Payment #', 'Vendor', 'Amount', 'Mode', 'Reference', 'Bills', 'Status', 'Email', 'Actions'], rowsHtml),
+        '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderPayments()" class="text-[10px] border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
+      );
+
+      document.getElementById('paymentsPanel').innerHTML = panelHtml;
+      renderStats();
+    }
+
+    function filterPayments() { renderPayments(); }
+
+    function clearFilters() {
+      document.getElementById('filterMode').value = 'all';
+      document.getElementById('filterVendor').value = 'all';
+      var searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = '';
+      renderPayments();
+      toggleFilterDD();
+    }
+
+    // =============================================================
+    // VIEW RECEIPT
+    // =============================================================
+
+    function viewReceipt(id) {
+      var p = payments.find(function(x) { return x.id === id; });
+      if (!p) return;
+
+      var allocHtml = p.billAllocations.map(function(a) {
+        return `
+          <tr>
+            <td class="px-2 py-1.5 text-xs">${a.billNumber}</td>
+            <td class="px-2 py-1.5 text-xs font-mono text-right">${money(a.amount)}</td>
+          </tr>`;
+      }).join('');
+
+      var modalContent = `
+        ${modalHeader('Vendor Payment Receipt — ' + p.number, p.vendorName)}
+        <div class="px-5 py-4 modal-scroll">
+
+          <div class="receipt-preview">
+            <div class="receipt-header">
+              <div>
+                <div class="receipt-company-name">Kunash Media Pvt. Ltd.</div>
+                <div class="receipt-company-details">
+                  401, Creative Hub, BKC, Mumbai - 400051<br>
+                  GSTIN: 27AABCU1234D1ZP | Phone: +91-9876543210
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div class="receipt-title">PAYMENT RECEIPT</div>
+              </div>
+            </div>
+
+            <div class="receipt-meta">
+              <div>
+                <div class="meta-label">Paid To</div>
+                <div class="meta-value">${p.vendorName}</div>
+                <div class="text-xs text-gray-500">${p.vendorEmail || ''}</div>
+              </div>
+              <div style="text-align:right;">
+                <div><span class="meta-label">Payment #</span> <span class="meta-value">${p.number}</span></div>
+                <div><span class="meta-label">Date</span> <span class="meta-value">${p.date}</span></div>
+                <div><span class="meta-label">Mode</span> <span class="meta-value">${p.mode}</span></div>
+              </div>
+            </div>
+
+            <table class="receipt-table">
+              <thead>
+                <tr>
+                  <th>Bill #</th>
+                  <th class="text-right">Amount Paid</th>
+                </tr>
+              </thead>
+              <tbody>${allocHtml}</tbody>
+            </table>
+
+            <div class="receipt-total">
+              Total Paid: ${money(p.amount)}
+            </div>
+
+            <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+              <div><span class="text-gray-500">Reference:</span> <b>${p.reference || '—'}</b></div>
+              <div><span class="text-gray-500">Paid From:</span> <b>${p.bankAccount}</b></div>
+            </div>
+
+            ${p.notes ? '<div class="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600"><b>Notes:</b> ' + p.notes + '</div>' : ''}
+
+            ${p.emailSent ? `
+              <div class="email-auto-card">
+                <div class="icon-wrap">${iconMail()}</div>
+                <div>
+                  <div class="title">📧 Payment Email Sent (Enhancement #1)</div>
+                  <div class="desc">Email sent to <b>${p.vendorEmail}</b> on ${p.emailSentAt}</div>
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="receipt-footer">
+              <p>This is a system generated payment receipt. | ${p.status === 'paid' ? 'Payment processed successfully.' : 'Payment pending clearance.'}</p>
+            </div>
+          </div>
+
+        </div>
+        ${modalFooter('Close', 'onclick="closeModal()"', `
+          <button onclick="printReceipt('${p.id}')" class="text-xs font-semibold text-gray-600 hover:underline flex items-center gap-1 px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 transition">
+            ${iconPrint()} Print
+          </button>
+          <button onclick="sendPaymentEmail('${p.id}')" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1 px-2 py-1 rounded border border-primary/20 hover:bg-primary-light transition ml-1.5">
+            ${iconSend()} Send Email
+          </button>
+        `)}
+      `;
+
+      openModal(modalContent, { width: 'max-w-2xl' });
+    }
+
+    function printReceipt(id) {
+      showToast('Opening print dialog...', 'info');
+      setTimeout(function() { window.print(); }, 500);
+    }
+
+    // =============================================================
+    // ADD / EDIT PAYMENT
+    // =============================================================
+
+    function openAddPayment() { openPaymentModal(null); }
+
+    function editPayment(id) {
+      var p = payments.find(function(x) { return x.id === id; });
+      if (p) openPaymentModal(p);
+    }
+
+    function openPaymentModal(existing) {
+      var e = existing || {
+        number: 'VPAY/25-26/' + String(payments.length + 1).padStart(3, '0'),
+        date: new Date().toISOString().split('T')[0],
+        vendorId: vendors[0].id,
+        amount: '',
+        mode: 'Bank Transfer',
+        reference: '',
+        bankAccount: 'HDFC Bank — Current',
+        billAllocations: [],
+        notes: '',
+        status: 'paid',
+        emailSent: false
+      };
+      var isEdit = !!existing;
+
+      var vendorOptions = vendors.map(function(v) {
+        return '<option ' + (v.id === e.vendorId ? 'selected' : '') + ' value="' + v.id + '">' + v.name + '</option>';
+      }).join('');
+
+      // Build allocation rows
+      var allocHtml = '';
+      if (e.billAllocations && e.billAllocations.length > 0) {
+        allocHtml = e.billAllocations.map(function(a, idx) {
+          return `
+            <tr class="border-b border-gray-100 line-item-row">
+              <td class="px-2 py-1">
+                <select class="form-input text-[10px] bill-select" data-idx="${idx}">
+                  ${bills.map(function(b) { return '<option ' + (b.number === a.billNumber ? 'selected' : '') + ' value="' + b.number + '">' + b.number + ' (Bal: ₹' + b.balance + ')</option>'; }).join('')}
+                </select>
+              </td>
+              <td class="px-2 py-1">
+                <input type="number" class="form-input text-[10px] bill-amount" value="${a.amount}" data-idx="${idx}" step="0.01" onchange="calcAllocTotal()">
+              </td>
+              <td class="px-2 py-1 text-center">
+                <button onclick="removeAllocation(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
+              </td>
+            </tr>`;
+        }).join('');
+      }
+
+      var modalContent = `
+        ${modalHeader(isEdit ? 'Edit Vendor Payment' : 'Record Vendor Payment', isEdit ? e.number : 'Record a new payment to vendor')}
+        <div class="px-5 py-4 modal-scroll">
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            ${fld('Payment #', '<input type="text" class="form-input" id="p_number" value="' + e.number + '" disabled>')}
+            ${fld('Date *', '<input type="date" class="form-input" id="p_date" value="' + e.date + '">')}
+            ${fld('Vendor *', '<select class="form-input" id="p_vendor">' + vendorOptions + '</select>')}
+            ${fld('Amount (₹) *', '<input type="number" class="form-input" id="p_amount" value="' + e.amount + '" step="0.01" placeholder="0.00">')}
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+            ${fld('Mode *', '<select class="form-input" id="p_mode"><option ' + (e.mode === 'Bank Transfer' ? 'selected' : '') + '>Bank Transfer</option><option ' + (e.mode === 'NEFT' ? 'selected' : '') + '>NEFT</option><option ' + (e.mode === 'RTGS' ? 'selected' : '') + '>RTGS</option><option ' + (e.mode === 'UPI' ? 'selected' : '') + '>UPI</option><option ' + (e.mode === 'Cheque' ? 'selected' : '') + '>Cheque</option><option ' + (e.mode === 'Cash' ? 'selected' : '') + '>Cash</option></select>')}
+            ${fld('Reference', '<input type="text" class="form-input" id="p_reference" value="' + (e.reference || '') + '" placeholder="Txn/Cheque number">')}
+            ${fld('Paid From', '<select class="form-input" id="p_bankAccount"><option ' + (e.bankAccount === 'HDFC Bank — Current' ? 'selected' : '') + '>HDFC Bank — Current</option><option ' + (e.bankAccount === 'ICICI Bank — Current' ? 'selected' : '') + '>ICICI Bank — Current</option><option ' + (e.bankAccount === 'Petty Cash' ? 'selected' : '') + '>Petty Cash</option></select>')}
+            ${fld('Status', '<select class="form-input" id="p_status"><option ' + (e.status === 'paid' ? 'selected' : '') + ' value="paid">Paid</option><option ' + (e.status === 'pending' ? 'selected' : '') + ' value="pending">Pending</option><option ' + (e.status === 'bounced' ? 'selected' : '') + ' value="bounced">Bounced</option></select>')}
+          </div>
+
+          <!-- Bill Allocations -->
+          <div class="mt-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="form-label mb-0">Allocate to Bills</label>
+              <button onclick="addAllocation()" class="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1">
+                ${iconPlus()} Add Bill
+              </button>
+            </div>
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <table class="w-full text-xs" id="allocTable">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-2 py-1.5 text-left font-semibold text-gray-600">Bill</th>
+                    <th class="px-2 py-1.5 text-center font-semibold text-gray-600">Amount Paid</th>
+                    <th class="px-2 py-1.5 text-center font-semibold text-gray-600" style="width:36px;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="allocBody">
+                  ${allocHtml || '<tr><td colspan="3" class="text-center py-3 text-gray-400 text-xs">No allocation. Click "Add Bill" to allocate this payment.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-2 flex justify-between items-center text-[11px]">
+              <span class="text-gray-500">Total Allocated: <b id="allocTotal" class="text-primary">₹0</b></span>
+              <span class="text-gray-500">Unallocated: <b id="unallocTotal" class="text-amber-600">₹0</b></span>
+            </div>
+          </div>
+
+          ${fld('Notes', '<textarea rows="2" class="form-input" id="p_notes" placeholder="Additional notes">' + (e.notes || '') + '</textarea>')}
+
+          <!-- Enhancement #1 — Payment Email Automation -->
+          <div class="email-auto-card">
+            <div class="icon-wrap">${iconMail()}</div>
+            <div>
+              <div class="title">📧 Payment Email Automation (Enhancement #1)</div>
+              <div class="desc">On save, an email will be <b>automatically sent</b> to the vendor with payment details and receipt attached.</div>
+            </div>
+          </div>
+        </div>
+        ${modalFooter(isEdit ? 'Update Payment' : 'Record Payment & Send Email', 'onclick="savePayment(\'' + (isEdit ? e.id : '') + '\')"')}
+      `;
+
+      openModal(modalContent, { width: 'max-w-3xl' });
+      setTimeout(function() { calcAllocTotal(); }, 100);
+    }
+
+    function addAllocation() {
+      var tbody = document.getElementById('allocBody');
+      if (!tbody) return;
+      var emptyRow = tbody.querySelector('tr td[colspan]');
+      if (emptyRow) tbody.innerHTML = '';
+
+      var idx = tbody.children.length;
+      var row = document.createElement('tr');
+      row.className = 'border-b border-gray-100 line-item-row';
+      row.innerHTML = `
+        <td class="px-2 py-1">
+          <select class="form-input text-[10px] bill-select">
+            ${bills.map(function(b) { return '<option value="' + b.number + '">' + b.number + ' (Bal: ₹' + b.balance + ')</option>'; }).join('')}
+          </select>
+        </td>
+        <td class="px-2 py-1">
+          <input type="number" class="form-input text-[10px] bill-amount" value="0" step="0.01" onchange="calcAllocTotal()">
+        </td>
+        <td class="px-2 py-1 text-center">
+          <button onclick="removeAllocation(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function removeAllocation(btn) {
+      var row = btn.closest('tr');
+      if (row) row.remove();
+      calcAllocTotal();
+    }
+
+    function calcAllocTotal() {
+      var total = 0;
+      document.querySelectorAll('#allocBody .bill-amount').forEach(function(inp) {
+        total += parseFloat(inp.value) || 0;
+      });
+      var allocEl = document.getElementById('allocTotal');
+      var unallocEl = document.getElementById('unallocTotal');
+      if (allocEl) allocEl.textContent = money(total);
+
+      var payAmt = parseFloat(document.getElementById('p_amount').value) || 0;
+      if (unallocEl) unallocEl.textContent = money(Math.max(payAmt - total, 0));
+    }
+
+    document.addEventListener('input', function(e) {
+      if (e.target.id === 'p_amount') calcAllocTotal();
+    });
+
+    function savePayment(existingId) {
+      var date = document.getElementById('p_date').value;
+      var vendorId = document.getElementById('p_vendor').value;
+      var amount = parseFloat(document.getElementById('p_amount').value) || 0;
+      var mode = document.getElementById('p_mode').value;
+      var reference = document.getElementById('p_reference').value.trim();
+      var bankAccount = document.getElementById('p_bankAccount').value;
+      var status = document.getElementById('p_status').value;
+      var notes = document.getElementById('p_notes').value.trim();
+
+      if (!date || !vendorId || amount <= 0) {
+        showToast('Please fill required fields (Date, Vendor, Amount)', 'error');
+        return;
+      }
+
+      var allocations = [];
+      document.querySelectorAll('#allocBody .line-item-row').forEach(function(row) {
+        var bill = row.querySelector('.bill-select').value;
+        var amt = parseFloat(row.querySelector('.bill-amount').value) || 0;
+        if (bill && amt > 0) {
+          allocations.push({ billNumber: bill, amount: amt });
+        }
+      });
+
+      var vend = vendors.find(function(v) { return v.id === vendorId; });
+
+      if (existingId) {
+        var p = payments.find(function(x) { return x.id === existingId; });
+        if (p) {
+          p.date = date;
+          p.vendorId = vendorId;
+          p.vendorName = vend ? vend.name : '';
+          p.vendorEmail = vend ? vend.email : '';
+          p.amount = amount;
+          p.mode = mode;
+          p.reference = reference;
+          p.bankAccount = bankAccount;
+          p.status = status;
+          p.notes = notes;
+          p.billAllocations = allocations;
+          showToast('Payment updated successfully', 'success');
+        }
+      } else {
+        var newPay = {
+          id: 'VP-' + String(nextPayNo++).padStart(3, '0'),
+          number: 'VPAY/25-26/' + String(payments.length + 1).padStart(3, '0'),
+          date: date,
+          vendorId: vendorId,
+          vendorName: vend ? vend.name : '',
+          vendorEmail: vend ? vend.email : '',
+          amount: amount,
+          mode: mode,
+          reference: reference,
+          bankAccount: bankAccount,
+          billAllocations: allocations,
+          notes: notes,
+          status: status,
+          emailSent: false,
+          emailSentAt: '',
+          createdAt: date
+        };
+        payments.unshift(newPay);
+
+        // =============================================================
+        // ENHANCEMENT #1 — PAYMENT EMAIL AUTOMATION
+        // Auto-send email to vendor on payment save
+        // =============================================================
+        if (newPay.vendorEmail) {
+          newPay.emailSent = true;
+          newPay.emailSentAt = new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+
+          showToast('📧 Payment email automatically sent to ' + newPay.vendorEmail, 'success');
+
+          // Log the email content
+          console.log('========================================');
+          console.log('📧 PAYMENT EMAIL AUTOMATION (Enhancement #1)');
+          console.log('========================================');
+          console.log('To: ' + newPay.vendorEmail);
+          console.log('Subject: Payment Confirmation - ' + newPay.number);
+          console.log('Payment Details:');
+          console.log('- Amount: ' + money(amount));
+          console.log('- Date: ' + date);
+          console.log('- Reference: ' + reference);
+          console.log('- Mode: ' + mode);
+          console.log('========================================');
+        } else {
+          showToast('Payment recorded. ⚠️ No email address for vendor.', 'warning');
+        }
+      }
+
+      closeModal();
+      renderPayments();
+    }
+
+    function sendPaymentEmail(id) {
+      var p = payments.find(function(x) { return x.id === id; });
+      if (!p) return;
+
+      if (!p.vendorEmail) {
+        showToast('No email address for vendor. Add one in Vendor master.', 'warning');
+        return;
+      }
+
+      showToast('📧 Sending payment confirmation to ' + p.vendorEmail + '...', 'info');
+
+      setTimeout(function() {
+        p.emailSent = true;
+        p.emailSentAt = new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+        renderPayments();
+        showToast('✅ Payment email sent to ' + p.vendorEmail, 'success');
+      }, 1000);
+    }
+
+    function delPayment(id) {
+      var p = payments.find(function(x) { return x.id === id; });
+      if (!p) return;
+
+      var modalContent = `
+        ${modalHeader('Delete Vendor Payment', p.number)}
+        <div class="px-5 py-4 text-sm text-gray-600">
+          <p>Delete <b>${p.number}</b>?</p>
+          <p class="text-gray-400 text-[11px] mt-1">This action cannot be undone. Bill balances will be recalculated.</p>
+          <p class="text-amber-600 text-[11px] mt-2">Amount: ${money(p.amount)}</p>
+        </div>
+        ${modalFooter('Delete', 'onclick="confirmDeletePayment(\'' + id + '\')"', '')}
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
+
+    function confirmDeletePayment(id) {
+      payments = payments.filter(function(x) { return x.id !== id; });
+      closeModal();
+      renderPayments();
+      showToast('Vendor payment deleted successfully', 'warning');
+    }
+
+    // =============================================================
+    // SEARCH
+    // =============================================================
+
+    (function addSearchToTopbar() {
+      var searchContainer = document.querySelector('.app-main header');
+      if (searchContainer) {
+        var searchHtml = `
+          <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+            <input type="text" id="searchInput" placeholder="Search payments by number, vendor, reference…"
+              onkeyup="filterPayments()"
+              class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+          </div>
+        `;
+        var headerContent = searchContainer.innerHTML;
+        var hamburgerIndex = headerContent.indexOf('lg:hidden');
+        if (hamburgerIndex !== -1) {
+          var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
+          var before = headerContent.substring(0, firstDivEnd);
+          var after = headerContent.substring(firstDivEnd);
+          searchContainer.innerHTML = before + searchHtml + after;
+        }
+      }
+    })();
+
+    // =============================================================
+    // INIT
+    // =============================================================
+
+    renderPayments();
+
+    console.log('💰 Vendor Payments Module Loaded Successfully');
+    console.log('📊 Total Payments:', payments.length);
+    console.log('📧 Enhancement #1 — Payment Email Automation enabled');
+
+  </script>
+
+</body>
+</html>

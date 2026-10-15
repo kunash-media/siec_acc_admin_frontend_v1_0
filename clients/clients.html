@@ -8,7 +8,7 @@
 <link rel="manifest" href="/favicon_io/site.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<title>Clients / Customers — SIEC</title>
+<title>Clients / Customers — Aquilon ERP</title>
 
 <!-- ANTI-FLICKER SCRIPT -->
 <script>
@@ -548,6 +548,76 @@
       return '<span class="badge ' + map[color] + '"><span class="badge-dot ' + dot[color] + '"></span>' + text + '</span>';
     }
 
+    // Client type badge: business / government / individual have fixed styles,
+    // anything else (custom "Other" text typed by the user) is shown as a gray badge.
+    var STANDARD_CLIENT_TYPES = ['business', 'individual', 'government'];
+
+    function typeBadgeHtml(t) {
+      var key = (t || '').toLowerCase();
+      if (key === 'business') return badge('Business', 'purple');
+      if (key === 'government') return badge('Government', 'blue');
+      if (key === 'individual') return badge('Individual', 'gray');
+      return badge(t ? escHtml(t) : 'Other', 'gray');
+    }
+
+    // ---------- small helpers ----------
+    function escHtml(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // ---------- Client types (dropdown values come from backend: GET /get-client-types) ----------
+    // Starts with the 3 standard types so the page still works if the API is unreachable.
+    var CLIENT_TYPES = STANDARD_CLIENT_TYPES.slice();
+    var OTHER_TYPE_VALUE = '__other__';   // value of the "Other" option in the form dropdown
+
+    function typeLabel(t) {
+      if (STANDARD_CLIENT_TYPES.indexOf(String(t).toLowerCase()) !== -1) {
+        return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+      }
+      return t;
+    }
+
+    function typeOptionsHtml(selected) {
+      var sel = (selected || '').toLowerCase();
+      return CLIENT_TYPES.map(function(t) {
+        return '<option value="' + escHtml(t) + '"' + (t.toLowerCase() === sel ? ' selected' : '') + '>' + escHtml(typeLabel(t)) + '</option>';
+      }).join('');
+    }
+
+    // ---------- Countries / States (static lists, no backend needed) ----------
+    var COUNTRIES = ['India', 'Indonesia', 'Nepal', 'New Zealand', 'North Korea', 'Russia','Singapore', 'South Africa'];
+
+    var INDIA_STATES = ['Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu', 'Gujarat', 'Uttar Pradesh', 'Rajasthan', 'Kerala', 'Telangana', 'West Bengal', 'Andhra Pradesh', 'Bihar', 'Chhattisgarh', 'Goa', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Madhya Pradesh', 'Odisha', 'Punjab', 'Uttarakhand',
+      'Arunachal Pradesh', 'Assam', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Sikkim', 'Tripura',
+      'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'];
+
+    function countrySelectHtml(current) {
+      current = current || '';
+      var list = COUNTRIES.slice();
+      // a country saved earlier as free text that is not in the list must not be lost
+      if (current && list.indexOf(current) === -1) list.push(current);
+      return '<select id="f_country" class="form-input" onchange="onCountryChange()">' +
+        '<option value=""' + (current ? '' : ' selected') + '>Select Country</option>' +
+        list.map(function(c) {
+          return '<option value="' + escHtml(c) + '"' + (c === current ? ' selected' : '') + '>' + escHtml(c) + '</option>';
+        }).join('') + '</select>';
+    }
+
+    // India -> dropdown of states / UTs.  Any other country -> plain text input (state / province).
+    function stateFieldHtml(country, current, keepUnknown) {
+      current = current || '';
+      if (country === 'India') {
+        var list = INDIA_STATES.slice();
+        if (keepUnknown && current && list.indexOf(current) === -1) list.push(current);
+        return '<select id="f_state" class="form-input">' + list.map(function(st) {
+          return '<option value="' + escHtml(st) + '"' + (st === current ? ' selected' : '') + '>' + escHtml(st) + '</option>';
+        }).join('') + '</select>';
+      }
+      return '<input id="f_state" value="' + escHtml(current) + '" placeholder="State / Province" class="form-input">';
+    }
+
     function rowActionsHtml(editFn, delFn, viewFn) {
       var html = '<div class="flex gap-1 justify-end">';
       if (viewFn) {
@@ -645,7 +715,7 @@
     // Backend can return null for optional fields; the page code expects strings/numbers
     function normalizeCustomer(c) {
       ['name', 'companyName', 'customerType', 'gstin', 'pan', 'email', 'phone', 'billingAddress',
-       'shippingAddress', 'city', 'state', 'stateCode', 'pincode', 'paymentTerms', 'status', 'createdAt']
+       'shippingAddress', 'city', 'state', 'country', 'pincode', 'paymentTerms', 'status', 'createdAt']
         .forEach(function(k) { if (c[k] == null) c[k] = ''; });
       c.creditLimit = Number(c.creditLimit) || 0;
       c.receivable = Number(c.receivable) || 0;
@@ -671,6 +741,15 @@
       params.set('page', currentPage);
       params.set('size', pageSize);
       return params.toString();
+    }
+
+    // Fetch client types (standard + custom saved in DB) for the form and the "All Types" filter
+    function loadClientTypes() {
+      return api('GET', '/get-client-types')
+        .then(function(list) {
+          if (Array.isArray(list) && list.length) CLIENT_TYPES = list;
+        })
+        .catch(function(err) { console.warn('Could not load client types, using defaults:', err.message); });
     }
 
     function loadCustomers() {
@@ -720,9 +799,7 @@
           </select>
           <select id="filterType" onchange="filterCustomers()" class="mini-select border-gray-400">
             <option value="all">All Types</option>
-            <option value="business">Business</option>
-            <option value="individual">Individual</option>
-            <option value="government">Government</option>
+            ${typeOptionsHtml('')}
           </select>
           <button onclick="resetFilters()" class="btn-reset border border-gray-400" title="Reset all filters &amp; search">
             ${iconRefresh()} Reset
@@ -745,9 +822,7 @@
         rowsHtml = customers.map(function(c) {
           var statusBadgeHtml = c.status === 'active' ? badge('Active', 'green') : badge('Inactive', 'gray');
           var gstBadge = c.gstRegistered ? badge('GST Registered', 'blue') : badge('Unregistered', 'amber');
-          var typeBadge = c.customerType === 'business' ? badge('Business', 'purple') :
-                          c.customerType === 'government' ? badge('Government', 'blue') :
-                          badge('Individual', 'gray');
+          var typeBadge = typeBadgeHtml(c.customerType);
           return `
             <tr class="border-b border-gray-400 table-row-hover">
               <td class="px-4 py-3 align-middle">
@@ -886,6 +961,18 @@
       </div>`;
   }
 
+  // Builds the full address only when the street address actually exists.
+  // If the street address is empty, show a dash instead of ", City, State - Pincode".
+  function buildFullAddress(street, cust) {
+    street = (street || '').trim();
+    if (!street) return '—';
+    return street +
+      (cust.city ? ', ' + cust.city : '') +
+      (cust.state ? ', ' + cust.state : '') +
+      (cust.country ? ', ' + cust.country : '') +
+      (cust.pincode ? ' - ' + cust.pincode : '');
+  }
+
   var modalContent = `
     ${modalHeader('Client Details — ' + c.name, c.id)}
     <div class="px-6 py-5 modal-scroll">
@@ -907,11 +994,7 @@
       ${sectionTitle(iconUser(), 'Identity')}
       <div class="grid grid-cols-2 form-grid-2 gap-3">
         ${detailCard('Client ID', '<span class="font-mono font-semibold">' + c.id + '</span>')}
-        ${detailCard('Client Type',
-          c.customerType === 'business' ? badge('Business', 'purple') :
-          c.customerType === 'government' ? badge('Government', 'blue') :
-          badge('Individual', 'gray')
-        )}
+        ${detailCard('Client Type', typeBadgeHtml(c.customerType))}
         ${detailCard('Company Name', c.companyName || '—')}
         ${detailCard('Created On', '<span class="text-gray-600">' + (c.createdAt || '—') + '</span>')}
       </div>
@@ -926,18 +1009,9 @@
       <!-- Address -->
       ${sectionTitle(iconLocation(), 'Address')}
       <div class="grid grid-cols-1 gap-3">
-        ${detailCard('Billing Address',
-          (c.billingAddress || '—') +
-          (c.city ? ', ' + c.city : '') +
-          (c.state ? ', ' + c.state : '') +
-          (c.pincode ? ' - ' + c.pincode : '')
-        )}
-        ${detailCard('Shipping Address',
-          (c.shippingAddress || c.billingAddress || '—') +
-          (c.city ? ', ' + c.city : '') +
-          (c.state ? ', ' + c.state : '') +
-          (c.pincode ? ' - ' + c.pincode : '')
-        )}
+        ${detailCard('Billing Address', buildFullAddress(c.billingAddress, c))}
+        ${detailCard('Shipping Address', buildFullAddress(c.shippingAddress || c.billingAddress, c))}
+        ${detailCard('Country', c.country || '—')}
       </div>
 
       <!-- Tax -->
@@ -945,7 +1019,6 @@
       <div class="grid grid-cols-2 form-grid-2 gap-3">
         ${detailCard('GSTIN', '<span class="font-mono">' + (c.gstin || '—') + '</span>')}
         ${detailCard('PAN', '<span class="font-mono">' + (c.pan || '—') + '</span>')}
-        ${detailCard('State Code', '<span class="font-mono">' + (c.stateCode || '—') + '</span>')}
         ${detailCard('GST Status',
           c.gstRegistered ? badge('Registered', 'blue') : badge('Unregistered', 'amber')
         )}
@@ -979,7 +1052,7 @@
         shippingAddress: '',
         city: '',
         state: 'Maharashtra',
-        stateCode: '27',
+        country: 'India',
         pincode: '',
         paymentTerms: 'Net 15 days',
         creditLimit: '',
@@ -989,7 +1062,11 @@
       };
       var isEdit = !!existing;
 
-      var stateOptions = ['Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu', 'Gujarat', 'Uttar Pradesh', 'Rajasthan', 'Kerala', 'Telangana', 'West Bengal', 'Andhra Pradesh', 'Bihar', 'Chhattisgarh', 'Goa', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Madhya Pradesh', 'Odisha', 'Punjab', 'Uttarakhand'];
+      // Client type: custom types (added via "Other" -> Add) come from the backend list.
+      // If this client has a type that is somehow not in the list yet, keep it so it is not lost.
+      if (e.customerType && CLIENT_TYPES.map(function(t) { return t.toLowerCase(); }).indexOf(e.customerType.toLowerCase()) === -1) {
+        CLIENT_TYPES = CLIENT_TYPES.concat([e.customerType]);
+      }
 
       var modalContent = `
         ${modalHeader(isEdit ? 'Edit Client' : 'Add New Client', isEdit ? e.id : 'Create a new client master record')}
@@ -1013,7 +1090,15 @@
             <div class="grid grid-cols-2 form-grid-2 gap-x-4 gap-y-4">
               ${fld('Client Name', '<input id="f_name" value="' + e.name + '" placeholder="e.g. XYZ Retail Store" class="' + inputBase() + '">')}
               ${fld('Company Name', '<input id="f_company" value="' + (e.companyName || '') + '" placeholder="Company legal name" class="' + inputBase() + '">')}
-              ${fld('Client Type', '<select id="f_type" class="' + inputBase() + '"><option ' + (e.customerType === 'business' ? 'selected' : '') + ' value="business">Business</option><option ' + (e.customerType === 'individual' ? 'selected' : '') + ' value="individual">Individual</option><option ' + (e.customerType === 'government' ? 'selected' : '') + ' value="government">Government</option></select>', null, 'col-span-2')}
+              ${fld('Client Type', '<select id="f_type" class="' + inputBase() + '" onchange="toggleTypeOther()">' + typeOptionsHtml(e.customerType) + '<option value="' + OTHER_TYPE_VALUE + '">Other</option></select>', null, 'col-span-2')}
+              <div id="f_typeOtherWrap" class="col-span-2 hidden">
+                ${fld('Specify Client Type', `<div style="display:flex;align-items:center;gap:8px;">
+                    <input id="f_typeOther" maxlength="30" placeholder="e.g. Trust, NGO, Partnership" class="form-input" style="flex:1;min-width:0;"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomClientType();}">
+                    <button type="button" id="f_typeAddBtn" onclick="addCustomClientType()"
+                      class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm whitespace-nowrap">Add</button>
+                  </div>`, )}
+              </div>
               ${fld('Email', '<input id="f_email" type="email" value="' + e.email + '" placeholder="client@domain.com" class="' + inputBase() + '">')}
               ${fld('Phone', '<input id="f_phone" value="' + e.phone + '" placeholder="+91-XXXXXXXXXX" class="' + inputBase() + '">')}
             </div>
@@ -1026,8 +1111,8 @@
             </div>
             <div class="grid grid-cols-3 form-grid-3 gap-x-4 gap-y-4">
               ${fld('City', '<input id="f_city" value="' + (e.city || '') + '" placeholder="City" class="' + inputBase() + '">')}
-              ${fld('State', '<select id="f_state" class="' + inputBase() + '" onchange="updateCustomerStateCode()">' + stateOptions.map(function(s) { return '<option ' + (s === e.state ? 'selected' : '') + '>' + s + '</option>'; }).join('') + '</select>')}
-              ${fld('State Code', '<input id="f_stateCode" value="' + (e.stateCode || '27') + '" class="' + inputBase() + '" disabled>')}
+              ${fld('State', '<div id="f_stateWrap">' + stateFieldHtml(e.country, e.state, true) + '</div>')}
+              ${fld('Country', countrySelectHtml(e.country))}
               ${fld('Pincode', '<input id="f_pincode" value="' + (e.pincode || '') + '" placeholder="6-digit PIN" class="' + inputBase() + '">')}
             </div>
           </div>
@@ -1068,33 +1153,58 @@
       }, 50);
     }
 
-    // State code updater
-    function updateCustomerStateCode() {
-      var state = document.getElementById('f_state').value;
-      var stateCodeMap = {
-        'Maharashtra': '27',
-        'Delhi': '07',
-        'Karnataka': '29',
-        'Tamil Nadu': '33',
-        'Gujarat': '24',
-        'Uttar Pradesh': '09',
-        'Rajasthan': '08',
-        'Kerala': '32',
-        'Telangana': '36',
-        'West Bengal': '19',
-        'Andhra Pradesh': '28',
-        'Bihar': '10',
-        'Chhattisgarh': '22',
-        'Goa': '30',
-        'Haryana': '06',
-        'Himachal Pradesh': '02',
-        'Jharkhand': '20',
-        'Madhya Pradesh': '23',
-        'Odisha': '21',
-        'Punjab': '03',
-        'Uttarakhand': '05'
-      };
-      document.getElementById('f_stateCode').value = stateCodeMap[state] || '';
+    // Show / hide the "Specify Client Type" input when "Other" is chosen
+    function toggleTypeOther() {
+      var sel = document.getElementById('f_type');
+      var wrap = document.getElementById('f_typeOtherWrap');
+      if (!sel || !wrap) return;
+      if (sel.value === OTHER_TYPE_VALUE) {
+        wrap.classList.remove('hidden');
+        var inp = document.getElementById('f_typeOther');
+        if (inp) inp.focus();
+      } else {
+        wrap.classList.add('hidden');
+      }
+    }
+
+    // "Other" -> Add button: puts the typed type in the Client Type dropdown and selects it.
+    // It is saved in the DB when the client is saved; after that it also appears in the
+    // "All Types" filter (loaded from GET /get-client-types).
+    function addCustomClientType() {
+      var inp = document.getElementById('f_typeOther');
+      var sel = document.getElementById('f_type');
+      if (!inp || !sel) return;
+      var name = inp.value.trim().replace(/\s+/g, ' ');
+      if (!name) { showToast('Please enter a client type', 'warning'); inp.focus(); return; }
+      if (name.toLowerCase() === 'other') { showToast('"Other" is reserved, please enter a specific type', 'warning'); return; }
+
+      // already in the dropdown (any casing)? just select it
+      var found = null;
+      for (var k = 0; k < sel.options.length; k++) {
+        if (sel.options[k].value !== OTHER_TYPE_VALUE && sel.options[k].value.toLowerCase() === name.toLowerCase()) { found = sel.options[k]; break; }
+      }
+      if (!found) {
+        found = document.createElement('option');
+        found.value = name;
+        found.textContent = name;
+        sel.insertBefore(found, sel.querySelector('option[value="' + OTHER_TYPE_VALUE + '"]'));
+      }
+      sel.value = found.value;
+
+      inp.value = '';
+      document.getElementById('f_typeOtherWrap').classList.add('hidden');
+      showToast('"' + found.value + '" added. It will be saved when you save the client', 'success');
+    }
+
+    // Country changed -> India shows the state dropdown, other countries get a free-text state
+    function onCountryChange() {
+      var c = document.getElementById('f_country');
+      var wrap = document.getElementById('f_stateWrap');
+      if (!c || !wrap) return;
+      var stEl = document.getElementById('f_state');
+      var cur = stEl ? stEl.value : '';
+      if (c.value === 'India' && INDIA_STATES.indexOf(cur) === -1) cur = 'Maharashtra';
+      wrap.innerHTML = stateFieldHtml(c.value, cur, false);
     }
 
     // =============================================================
@@ -1105,13 +1215,21 @@
       var name = document.getElementById('f_name') ? document.getElementById('f_name').value.trim() : '';
       var companyName = document.getElementById('f_company') ? document.getElementById('f_company').value.trim() : '';
       var customerType = document.getElementById('f_type') ? document.getElementById('f_type').value : 'business';
+      if (customerType === OTHER_TYPE_VALUE) {
+        var otherText = document.getElementById('f_typeOther') ? document.getElementById('f_typeOther').value.trim() : '';
+        if (!otherText) {
+          showToast('Please specify the client type', 'warning');
+          return;
+        }
+        customerType = otherText; // typed but "Add" not clicked -> backend saves it as a new type anyway
+      }
       var email = document.getElementById('f_email') ? document.getElementById('f_email').value.trim() : '';
       var phone = document.getElementById('f_phone') ? document.getElementById('f_phone').value.trim() : '';
       var billingAddress = document.getElementById('f_billingAddress') ? document.getElementById('f_billingAddress').value.trim() : '';
       var shippingAddress = document.getElementById('f_shippingAddress') ? document.getElementById('f_shippingAddress').value.trim() : '';
       var city = document.getElementById('f_city') ? document.getElementById('f_city').value.trim() : '';
       var state = document.getElementById('f_state') ? document.getElementById('f_state').value : 'Maharashtra';
-      var stateCode = document.getElementById('f_stateCode') ? document.getElementById('f_stateCode').value : '27';
+      var country = document.getElementById('f_country') ? document.getElementById('f_country').value.trim() : '';
       var pincode = document.getElementById('f_pincode') ? document.getElementById('f_pincode').value.trim() : '';
       var gstin = document.getElementById('f_gstin') ? document.getElementById('f_gstin').value.trim().toUpperCase() : '';
       var pan = document.getElementById('f_pan') ? document.getElementById('f_pan').value.trim().toUpperCase() : '';
@@ -1132,7 +1250,7 @@
         shippingAddress: shippingAddress || billingAddress,
         city: city,
         state: state,
-        stateCode: stateCode,
+        country: country,
         pincode: pincode,
         gstin: gstin,
         pan: pan,
@@ -1155,7 +1273,7 @@
         .then(function() {
           closeModal();
           showToast(existingId ? 'Client updated successfully' : 'Client added successfully', 'success');
-          return loadCustomers();
+          return loadClientTypes().then(loadCustomers);
         })
         .catch(function(err) { showToast(err.message, 'error'); });
     }
@@ -1229,7 +1347,7 @@
     // INIT
     // =============================================================
 
-    loadCustomers();
+    loadClientTypes().then(loadCustomers);
 
     console.log('Clients Module Loaded - API:', API_BASE, '| backend-driven pagination');
 

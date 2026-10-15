@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+<link rel="manifest" href="/favicon_io/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Customer Payments — SIEC Accounting</title>
+
+<script>
+  (function () {
+    try {
+      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+    } catch (e) {
+      document.documentElement.classList.add("sidebar-expanded");
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
+          secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<style>
+  body {
+    font-size: 12px;
+    background: #f3f4f6;
+  }
+
+  .form-input {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    color: #1a1a2e;
+  }
+  .form-input:focus {
+    border-color: #6da84c;
+    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.12);
+    background: #ffffff;
+  }
+  .form-input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+
+  .form-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #374151;
+    display: block;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .form-label .required { color: #ef4444; margin-left: 2px; }
+  .form-hint { font-size: 9.5px; color: #9ca3af; margin-top: 2px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .badge-dot-green { background: #22c55e; }
+  .badge-dot-amber { background: #f59e0b; }
+  .badge-dot-red { background: #ef4444; }
+  .badge-dot-gray { background: #94a3b8; }
+  .badge-dot-blue { background: #3b82f6; }
+  .badge-dot-purple { background: #8b5cf6; }
+
+  .stat-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 10px 14px !important;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+  .stat-card .stat-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+  }
+  .stat-card .stat-value {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-top: 2px;
+  }
+
+  .table-row-hover:hover {
+    background: #f8fafc;
+  }
+
+  .btn-icon-action {
+    transition: all 0.15s ease;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-icon-action:hover {
+    background: #f1f5f9;
+    color: #6da84c;
+  }
+  .btn-icon-action.danger:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+  .btn-icon-action.primary:hover {
+    background: #eef5e8;
+    color: #6da84c;
+  }
+
+  .toast {
+    animation: fadeIn 0.2s ease;
+    font-size: 12px;
+  }
+  .toast-success { background: #16a34a; }
+  .toast-error { background: #dc2626; }
+  .toast-warning { background: #f59e0b; }
+  .toast-info { background: #6da84c; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-modal { animation: modalIn 0.18s ease; }
+
+  .modal-scroll {
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+  .modal-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .modal-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
+  .empty-icon-svg {
+    opacity: 0.2;
+    width: 40px;
+    height: 40px;
+    color: #94a3b8;
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .page-subtitle {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .page-breadcrumb {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6da84c;
+  }
+
+  table th {
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    padding: 8px 12px;
+  }
+  table td {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  table td .font-mono {
+    font-size: 11px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .modal-subtitle {
+    font-size: 11px;
+    color: #6b7280;
+  }
+
+  .filter-btn {
+    font-size: 11px;
+    padding: 5px 12px;
+  }
+  .filter-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Receipt preview */
+  .receipt-preview {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px 28px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .receipt-preview .receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #6da84c;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+  }
+  .receipt-preview .receipt-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #6da84c;
+    letter-spacing: 0.04em;
+  }
+  .receipt-preview .receipt-company-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+  .receipt-preview .receipt-company-details {
+    font-size: 10.5px;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-top: 2px;
+  }
+  .receipt-preview .receipt-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+    font-size: 12px;
+  }
+  .receipt-preview .meta-label {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .receipt-preview .meta-value {
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+  .receipt-preview {
+    width: min(100%, 820px);
+    margin: 0 auto;
+    border: 1px solid #6da84c;
+    background: #fff;
+    padding: 30px 34px;
+    box-shadow: 0 8px 24px rgba(15,23,42,.08);
+  }
+  .receipt-preview .receipt-org {
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid #d1d5db;
+  }
+  .receipt-preview .receipt-meta {
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  .receipt-preview .receipt-meta > div {
+    min-height: 58px;
+  }
+  .receipt-preview .receipt-table {
+    margin: 16px 0;
+  }
+  .receipt-preview .receipt-total {
+    margin-top: 16px;
+    padding-top: 12px;
+    padding-bottom: 10px;
+    border-top: 1px solid #6da84c;
+    border-bottom: 1px solid #d1d5db;
+  }
+  .receipt-preview .receipt-details {
+    margin-top: 16px;
+    padding: 12px 0;
+    border-top: 1px solid #d1d5db;
+    border-bottom: 1px solid #d1d5db;
+  }
+  .receipt-preview .receipt-bank {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #d1d5db;
+  }
+  .receipt-preview .receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 12px;
+  }
+  .receipt-preview .receipt-table th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .receipt-preview .receipt-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .receipt-preview .receipt-total {
+    margin-top: 10px;
+    border-top: 2px solid #6da84c;
+    padding-top: 10px;
+    text-align: right;
+    font-size: 14px;
+    font-weight: 700;
+    color: #6da84c;
+  }
+  .receipt-preview .receipt-footer {
+    margin-top: 16px;
+    font-size: 10.5px;
+    color: #6b7280;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 10px;
+    text-align: center;
+  }
+
+  /* SIEC settings-style visual system */
+  .stat-card, .filter-btn, #filterDD { border-color: #6da84c !important; }
+  .stat-card { background: #ffffff; }
+  .btn-icon-action { border: 1px solid #e1e7ee; background: #ffffff; color: #6b7280; }
+  .btn-icon-action:hover, .btn-icon-action.primary:hover { border-color: #6da84c; background: #f3f8ef; color: #5c9140; }
+  .btn-icon-action.danger { border-color: #e6b7b7; color: #b45353; }
+  .btn-icon-action.danger:hover { border-color: #a33a3a; background: #fff4f4; color: #a33a3a; }
+  .payment-panel { border: 1px solid #6da84c !important; }
+  .payment-modal { border: 1px solid #5c9140 !important; }
+  .payment-form-shell { margin: 0 20px 16px; border: 1px solid #6da84c; border-radius: 7px; background: #ffffff; overflow: hidden; }
+  .payment-form-body { border: 0; border-radius: 0; padding: 14px; background: #ffffff; }
+  .payment-form-section { border: 0; border-bottom: 1px solid #9ca3af; border-radius: 0; padding: 0 0 16px; background: #ffffff; }
+  .payment-form-section + .payment-form-section { margin-top: 14px; }
+  .payment-form-section:last-child { border-bottom: 0; padding-bottom: 0; }
+  .payment-form-divider { border-color: #d1d5db !important; }
+  .payment-action-btn { border: 1px solid #e1e7ee; }
+  .payment-modal-footer { border-top: 0 !important; background: #ffffff !important; }
+  .payment-action-btn:hover { border-color: #6da84c; background: #f3f8ef; color: #5c9140; }
+  .receipt-preview { border-color: #6da84c; }
+  .view-modal-close { border: 1px solid #e1e7ee; background: #fff; color: #475569; border-radius: 8px; padding: 7px 18px; font-size: 11px; font-weight: 650; cursor: pointer; }
+  .view-modal-close:hover { background: #f3f8ef; color: #5c9140; border-color: #6da84c; }
+  .history-modal { border: 1px solid #6da84c !important; }
+  .history-header { background: #6da84c; color: #fff; position: relative; }
+  .history-modal .history-filter { border-color: #d1d5db; }
+  .history-modal .history-list-divider { border-color: #d1d5db !important; }
+  .history-filter { border: 1px solid #d1d5db; border-radius: 6px; padding: 6px 9px; font-size: 11px; background: #fff; outline: none; }
+  .history-filter:focus { border-color: #6da84c; box-shadow: 0 0 0 2px rgba(109,168,76,.10); }
+  .history-summary { border: 1px solid #d7e6cf; background: #eef5e8; }
+  .history-summary-value { color: #5c9140; }
+  .history-item .history-amount { color: #5c9140; }
+  .history-title { font-size: 15px; font-weight: 700; line-height: 1.25; }
+  .history-account { font-size: 9.5px; font-weight: 600; line-height: 1.35; opacity: .96; margin-top: 9px; }
+  .history-account.customer-name { font-size: 16px; font-weight: 700; line-height: 1.3; margin-top: 9px; }
+  .history-balance { background: #1a2642; color: #fff; border-radius: 4px; padding: 1px 4px; }
+  .history-meta-row { display: flex; align-items: center; justify-content: flex-start; gap: 24px; margin-top: 4px; }
+  .history-meta-row > div:first-child { min-width: 0; }
+  .history-download { position: absolute; right: 16px; top: 58px; margin: 0; display: flex; flex: 0 0 auto; align-self: center; width: max-content; align-items: center; gap: 5px; background: #5c9140; color: #fff; border: 1px solid rgba(255,255,255,.45); border-radius: 5px; padding: 5px 9px; font-size: 10px; font-weight: 600; cursor: pointer; }
+  .history-download:hover { background: #4f7f37; }
+  .history-close { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; color: #fff; border: 0; background: transparent; border-radius: 5px; cursor: pointer; }
+  .history-close:hover { background: rgba(255,255,255,.12); }
+  .history-item { border: 1px solid #d7dde3; background: #f3f4f6; border-radius: 7px; padding: 10px 11px; }
+  .history-item-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .history-credit { color: #16a34a; font-size: 12px; font-weight: 600; }
+  .history-credit span { color: #111827; font-weight: 700; }
+  .history-date { color: #64748b; font-size: 9.5px; white-space: nowrap; }
+  .history-item-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; padding-top: 7px; border-top: 1px solid #d1d5db; color: #475569; font-size: 10px; }
+  .history-item-bottom b { color: #374151; font-weight: 700; }
+  .history-note { color: #5c2aa8; font-weight: 600; }
+  .history-footer { border-top: 1px solid #e5e7eb; }
+  .delete-confirm-btn { background: #dc2626; color: #fff; border: 1px solid #dc2626; }
+  .delete-confirm-btn:hover { background: #b91c1c; border-color: #b91c1c; }
+  .receipt-meta > div, .receipt-preview .receipt-info-card { border: 1px solid #e1e7ee; border-radius: 8px; padding: 9px; }
+  @page { size: A4 portrait; margin: 8mm; }
+  @media print {
+    html, body { width: 210mm; min-height: 297mm; background: #fff !important; }
+    body * { visibility: hidden !important; }
+    #modalRoot, #modalRoot * { visibility: visible !important; }
+    #modalRoot { position: static !important; }
+    #modalOverlay { position: static !important; background: #fff !important; padding: 0 !important; }
+    #modalOverlay > .absolute { display: none !important; }
+    #modalOverlay > div:last-child { box-shadow: none !important; max-height: none !important; max-width: none !important; width: 100% !important; border: 0 !important; overflow: visible !important; }
+    #modalRoot .receipt-view-header, #modalRoot .view-modal-close-wrap { display: none !important; }
+    #modalRoot .modal-scroll { max-height: none !important; overflow: visible !important; padding: 0 !important; }
+    #modalRoot .receipt-preview { border: 1px solid #6da84c !important; box-shadow: none !important; border-radius: 0 !important; width: 190mm !important; max-width: 190mm !important; padding: 14mm 12mm !important; margin: 6mm auto 0 !important; page-break-inside: avoid !important; }
+    #modalRoot .receipt-preview > * { page-break-inside: avoid !important; }
+    #modalRoot .receipt-preview .receipt-org { padding-bottom: 10mm !important; margin-bottom: 8mm !important; }
+    #modalRoot .receipt-preview .receipt-meta { gap: 8mm !important; margin-bottom: 8mm !important; }
+    #modalRoot .receipt-preview .receipt-meta > div { min-height: 16mm !important; }
+    #modalRoot .receipt-preview .receipt-table { margin: 7mm 0 !important; }
+    #modalRoot .receipt-preview .receipt-details, #modalRoot .receipt-preview .receipt-bank { margin-top: 6mm !important; padding-top: 5mm !important; }
+    .receipt-preview .receipt-title { font-size: 18px !important; }
+    .receipt-preview .receipt-company-name { font-size: 16px !important; }
+    .receipt-preview .receipt-company-details { font-size: 9.5px !important; line-height: 1.3 !important; }
+    .receipt-preview .receipt-meta { gap: 12px !important; margin-bottom: 12px !important; font-size: 10.5px !important; }
+    .receipt-preview .receipt-meta > div { padding: 6px !important; }
+    .receipt-preview .receipt-table { margin: 10px 0 !important; font-size: 10.5px !important; }
+    .receipt-preview .receipt-table th, .receipt-preview .receipt-table td { padding: 7px 8px !important; }
+    .receipt-preview .receipt-total { margin-top: 10px !important; padding-top: 8px !important; font-size: 13px !important; }
+    .receipt-preview .receipt-footer { margin-top: 8px !important; padding-top: 6px !important; font-size: 8.5px !important; }
+    .receipt-preview .mt-3 { margin-top: 6px !important; }
+    .receipt-preview .mt-2 { margin-top: 4px !important; }
+  }
+
+</style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased text-sm">
+  <div class="flex min-h-screen">
+    <div id="sidebar-root"></div>
+    <div class="app-main flex-1 flex flex-col min-w-0">
+      <div id="topbar-root"></div>
+      <main class="p-3 sm:p-4 lg:p-5">
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+        <div id="modalRoot"></div>
+        <div class="max-w-7xl mx-auto">
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <div class="page-breadcrumb">Sales</div>
+              <h1 class="page-title text-gray-900">Customer Payments</h1>
+              <p class="page-subtitle mt-0.5">Manage customer receipts with a clean customer-wise payment summary and transaction history.</p>
+            </div>
+            <button onclick="openAddPayment()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm">
+              <span><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></span> Record Payment
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-2.5 mb-4">
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Total Payments</div><div class="stat-value" id="totalPayments">0</div></div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Total Received</div><div class="stat-value text-primary" id="totalReceived">₹0.00</div></div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">This Month</div><div class="stat-value text-green-600" id="thisMonth">₹0.00</div></div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Today</div><div class="stat-value text-blue-600" id="todayAmount">₹0.00</div></div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Customers Paid</div><div class="stat-value text-amber-600" id="customersPaid">0</div></div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Outstanding</div><div class="stat-value text-amber-600" id="outstandingAmount">₹0.00</div></div>
+          </div>
+
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm payment-panel overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-gray-100">
+              <div>
+                <div class="font-semibold text-sm text-gray-800">Customer Payment Summary</div>
+                <div class="text-[10px] text-gray-400">One row per customer. Open History to see every individual payment.</div>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="relative">
+                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+                  <input id="searchInput" oninput="filterPayments()" class="form-input pl-8 w-52" placeholder="Search customer...">
+                </div>
+                <select id="filterCustomer" onchange="filterPayments()" class="form-input w-44"><option value="all">All Customers</option></select>
+                <select id="filterMode" onchange="filterPayments()" class="form-input w-36"><option value="all">All Modes</option></select>
+                <button onclick="clearFilters()" class="text-[10px] font-semibold text-primary hover:underline px-2">Clear</button>
+              </div>
+            </div>
+            <div id="paymentsTableWrap"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/assets/js/nav-sidebar.js"></script>
+  <script>
+    NavSidebar.init({
+      basePath: "",
+      activePage: "customer-payments",
+      pageTitle: "Customer Payments",
+      user: { name: "Admin", role: "Super Admin", avatarUrl: "" }
+    });
+
+    function iconPlus(){return '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>';}
+    function iconEdit(){return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';}
+    function iconTrash(){return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>';}
+    function iconHistory(){return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/><path d="M12 7v5l3 2"/></svg>';}
+    function iconEye(){return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';}
+    function iconX(){return '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>';}
+    function iconSearch(){return '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';}
+    function iconSave(){return '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>';}
+    function iconPrint(){return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>';}
+    function iconDownload(){return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>';}
+
+    var CUSTOMER_PAYMENT_API='http://localhost:9093/api/customer-payments';
+    var CLIENT_LIST_API='http://localhost:9093/api/clients/v1/client-list';
+    var ORGANIZATION_API='http://localhost:9093/api/organization';
+    var INVOICE_API='http://localhost:9093/api/v1/invoices';
+    var customerInvoices=[];
+    var ORGANIZATION_ID_KEY='siec_organization_id';
+    var organization=null;
+    var payments=[];
+    var summaries=[];
+    var customers=[];
+    var currentPaymentEditId='';
+    var currentHistoryCustomer='';
+
+    function esc(value){return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+    function money(n){return '₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+    function getOrganizationId(){return localStorage.getItem(ORGANIZATION_ID_KEY)||'';}
+    function absoluteOrganizationUrl(url){if(!url)return '';if(/^https?:\/\//i.test(url))return url;return 'http://localhost:9093'+(url.charAt(0)==='/'?url:'/'+url);}
+
+    async function apiRequest(url,options){
+      var response=await fetch(url,options||{});
+      var text=await response.text();
+      var data=null;
+      try{data=text?JSON.parse(text):null;}catch(e){data=text;}
+      if(!response.ok){throw new Error((data&&(data.message||data.error||data.detail))||(typeof data==='string'?data:'Request failed'));}
+      return data;
+    }
+
+    async function loadOrganization(){
+      var id=getOrganizationId();
+      if(!id)throw new Error('Organization is not selected. Please complete Organization Settings first.');
+      organization=await apiRequest(ORGANIZATION_API+'/'+encodeURIComponent(id));
+    }
+
+    async function loadCustomers(){
+      customers=[];
+      var page=0;
+      var size=100;
+      do{
+        var data=await apiRequest(CLIENT_LIST_API+'?page='+page+'&size='+size);
+        var content=Array.isArray(data&&data.content)?data.content:[];
+        customers=customers.concat(content);
+        if(!data||!data.hasNext)break;
+        page=Number(data.nextPage==null?page+1:data.nextPage);
+      }while(page<100);
+      customers.sort(function(a,b){return String(a.clientName||'').localeCompare(String(b.clientName||''));});
+      renderCustomerOptions();
+    }
+
+    function customerLabel(c){
+      var name=c.clientName||c.clientCompanyName||c.clientStrId||'Customer';
+      var company=c.clientCompanyName&&c.clientCompanyName!==c.clientName?' · '+c.clientCompanyName:'';
+      return name+company;
+    }
+
+    function renderCustomerOptions(){
+      var select=document.getElementById('filterCustomer');
+      if(select){
+        var current=select.value||'all';
+        select.innerHTML='<option value="all">All Customers</option>'+customers.map(function(c){return '<option value="'+esc(c.clientStrId)+'">'+esc(customerLabel(c))+'</option>';}).join('');
+        select.value=customers.some(function(c){return c.clientStrId===current;})?current:'all';
+      }
+      var modeSelect=document.getElementById('filterMode');
+      var modes=Array.from(new Set(payments.map(function(p){return p.mode;}).filter(Boolean))).sort();
+      if(modeSelect){var currentMode=modeSelect.value||'all';modeSelect.innerHTML='<option value="all">All Modes</option>'+modes.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('');modeSelect.value=modes.indexOf(currentMode)>=0?currentMode:'all';}
+    }
+
+    async function loadPayments(){
+      var id=getOrganizationId();
+      if(!id){payments=[];summaries=[];renderAll();return;}
+      var results=await Promise.all([
+        apiRequest(CUSTOMER_PAYMENT_API+'/organization/'+encodeURIComponent(id)),
+        apiRequest(CUSTOMER_PAYMENT_API+'/organization/'+encodeURIComponent(id)+'/summary')
+      ]);
+      payments=(Array.isArray(results[0])?results[0]:[]).map(normalizePayment);
+      summaries=(Array.isArray(results[1])?results[1]:[]).filter(function(s){
+        return Number(s.totalTransactions||0)>0;
+      });
+      renderAll();
+    }
+
+    function normalizePayment(p){
+      return {id:p.paymentId,number:p.receiptNumber||'—',date:p.paymentDate||'',clientStrId:p.clientStrId||'',clientPrimeId:p.clientPrimeId||null,customerName:p.customerName||'',customerCompanyName:p.customerCompanyName||'',amount:Number(p.amount||0),mode:p.paymentMode||'',reference:p.referenceNumber||'',bankAccount:p.bankAccount||'',invoiceReference:p.invoiceReference||'',invoicePrimeId:p.invoicePrimeId||null,allocatedAmount:Number(p.allocatedAmount||0),outstandingAmount:Number(p.outstandingAmount||0),notes:p.notes||'',status:String(p.status||'RECEIVED').toLowerCase(),organization:p.organization||organization,organizationId:p.organizationId||getOrganizationId(),createdAt:p.createdAt||''};
+    }
+
+    function calculatedOutstanding(p){
+      return Math.max(Number(p.allocatedAmount||0)-Number(p.amount||0),0);
+    }
+
+    function renderStats(){
+      var today=new Date().toISOString().split('T')[0];
+      var month=today.substring(0,7);
+      var totalReceived=payments.filter(function(p){return p.status==='received';}).reduce(function(s,p){return s+p.amount;},0);
+      var monthTotal=payments.filter(function(p){return p.date.substring(0,7)===month&&p.status==='received';}).reduce(function(s,p){return s+p.amount;},0);
+      var todayTotal=payments.filter(function(p){return p.date===today&&p.status==='received';}).reduce(function(s,p){return s+p.amount;},0);
+      var outstanding=payments.reduce(function(s,p){return s+calculatedOutstanding(p);},0);
+      document.getElementById('totalPayments').textContent=payments.length;
+      document.getElementById('totalReceived').textContent=money(totalReceived);
+      document.getElementById('thisMonth').textContent=money(monthTotal);
+      document.getElementById('todayAmount').textContent=money(todayTotal);
+      document.getElementById('customersPaid').textContent=new Set(payments.map(function(p){return p.clientStrId||p.customerName;}).filter(Boolean)).size;
+      document.getElementById('outstandingAmount').textContent=money(outstanding);
+    }
+
+    function buildFilteredSummaries(){
+      var q=((document.getElementById('searchInput')||{}).value||'').toLowerCase().trim();
+      var clientId=(document.getElementById('filterCustomer')||{}).value||'all';
+      var mode=(document.getElementById('filterMode')||{}).value||'all';
+      if(!q&&clientId==='all'&&mode==='all'&&summaries.length){
+        return summaries.slice().sort(function(a,b){return String(b.lastPaymentDate||'').localeCompare(String(a.lastPaymentDate||''));});
+      }
+      var source=payments.filter(function(p){
+        var text=(p.clientStrId+' '+p.customerName+' '+p.customerCompanyName).toLowerCase();
+        return (!q||text.indexOf(q)!==-1)&&(!clientId||clientId==='all'||p.clientStrId===clientId)&&(!mode||mode==='all'||p.mode===mode);
+      });
+      var map={};
+      source.forEach(function(p){
+        var key=p.clientStrId||p.customerName;
+        if(!key)return;
+        if(!map[key])map[key]={clientPrimeId:p.clientPrimeId,clientStrId:p.clientStrId,customerName:p.customerName,customerCompanyName:p.customerCompanyName,totalTransactions:0,totalPayment:0,totalAllocated:0,outstanding:0,lastPaymentDate:''};
+        map[key].totalTransactions++;
+        map[key].totalPayment+=p.amount;
+        map[key].totalAllocated+=p.allocatedAmount;
+        map[key].outstanding+=calculatedOutstanding(p);
+        if(!map[key].lastPaymentDate||p.date>map[key].lastPaymentDate)map[key].lastPaymentDate=p.date;
+      });
+      return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return String(b.lastPaymentDate||'').localeCompare(String(a.lastPaymentDate||''));});
+    }
+
+    function renderAll(){renderStats();renderCustomerOptions();renderSummaryTable();}
+    function filterPayments(){renderSummaryTable();}
+    function clearFilters(){document.getElementById('searchInput').value='';document.getElementById('filterCustomer').value='all';document.getElementById('filterMode').value='all';renderSummaryTable();}
+
+    function renderSummaryTable(){
+      var rows=buildFilteredSummaries();
+      var body='';
+      if(!rows.length){
+        body='<tr><td colspan="7" class="text-center py-12 text-gray-400"><div class="flex justify-center mb-2">'+iconHistory()+'</div>No customer payment records found.</td></tr>';
+      }else{
+        body=rows.map(function(s){
+          return '<tr class="border-b border-gray-100 table-row-hover">'+
+            '<td class="px-3 py-3"><div class="font-semibold text-gray-800">'+esc(s.customerName||'—')+'</div><div class="text-[10px] text-gray-400">'+esc(s.clientStrId||'')+(s.customerCompanyName?' · '+esc(s.customerCompanyName):'')+'</div></td>'+
+            '<td class="px-3 py-3 font-mono font-semibold text-primary">'+money(s.totalPayment)+'</td>'+
+            '<td class="px-3 py-3 font-mono text-gray-700">'+money(s.totalAllocated)+'</td>'+
+            '<td class="px-3 py-3 font-mono font-semibold '+(s.outstanding>0?'text-amber-600':'text-gray-400')+'">'+money(s.outstanding)+'</td>'+
+            '<td class="px-3 py-3 text-gray-600">'+esc(s.lastPaymentDate||'—')+'</td>'+
+            '<td class="px-3 py-3 text-gray-600">'+s.totalTransactions+'</td>'+
+            '<td class="px-3 py-3"><button onclick="showCustomerHistoryByClient(\''+esc(s.clientStrId)+'\')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#d7e6cf] bg-[#f3f8ef] text-[#5c9140] text-[10px] font-semibold hover:border-[#6da84c]">'+iconHistory()+' History</button></td>'+
+          '</tr>';
+        }).join('');
+      }
+      document.getElementById('paymentsTableWrap').innerHTML='<div class="overflow-x-auto"><table class="w-full"><thead><tr class="bg-gray-50 border-b border-gray-200"><th class="text-left">Customer</th><th class="text-left">Total Payment</th><th class="text-left">Invoice Amount</th><th class="text-left">Outstanding</th><th class="text-left">Last Payment</th><th class="text-left">Transactions</th><th class="text-left">Actions</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+    }
+
+    function openModal(innerHtml,opts){
+      opts=opts||{};
+      document.getElementById('modalRoot').innerHTML='<div class="fixed inset-0 z-[100] flex items-center justify-center p-3" id="modalOverlay"><div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" id="modalBackdrop"></div><div class="relative bg-white rounded-xl shadow-2xl w-full '+(opts.width||'max-w-4xl')+' max-h-[92vh] overflow-hidden animate-modal payment-modal '+(opts.modalClass||'')+'">'+innerHtml+'</div></div>';
+      document.getElementById('modalBackdrop').addEventListener('click',closeModal);
+      document.body.style.overflow='hidden';
+    }
+    function closeModal(){document.getElementById('modalRoot').innerHTML='';document.body.style.overflow='';}
+    function backToHistory(){
+      var customerId=currentHistoryCustomer;
+      closeModal();
+      if(customerId) showCustomerHistoryByClient(customerId);
+    }
+    function closePaymentChild(){
+      if(currentHistoryCustomer) backToHistory();
+      else closeModal();
+    }
+    function modalHeader(title,subtitle){return '<div class="flex items-start justify-between px-5 py-3.5 bg-white sticky top-0 z-10"><div><h3 class="modal-title text-gray-900">'+esc(title)+'</h3>'+(subtitle?'<p class="modal-subtitle mt-0.5">'+esc(subtitle)+'</p>':'')+'</div><button onclick="closePaymentChild()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700">'+iconX()+'</button></div>';}
+    function modalFooter(label,saveAttr){return '<div class="payment-modal-footer flex items-center justify-end gap-2 px-5 py-3 bg-white"><button onclick="closePaymentChild()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50">Cancel</button><button '+saveAttr+' class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark shadow-sm flex items-center gap-1.5">'+iconSave()+esc(label)+'</button></div>';}
+    function fld(label,inputHtml){return '<div class="mb-2"><label class="form-label">'+esc(label)+'</label>'+inputHtml+'</div>';}
+
+    function openAddPayment(){currentHistoryCustomer='';openPaymentModal(null);}
+    function editPayment(id){var p=payments.find(function(x){return x.id===id;});if(p)openPaymentModal(p);}
+
+    function openPaymentModal(existing){
+      currentPaymentEditId=existing?existing.id:'';
+      var e=existing||{number:'Auto-generated',date:new Date().toISOString().split('T')[0],clientStrId:'',amount:'',mode:'Bank Transfer',reference:'',bankAccount:'',invoiceReference:'',invoicePrimeId:null,allocatedAmount:0,notes:'',status:'received'};
+      var options='<option value="">Select customer</option>'+customers.map(function(c){return '<option value="'+esc(c.clientStrId)+'" '+(c.clientStrId===e.clientStrId?'selected':'')+'>'+esc(customerLabel(c))+'</option>';}).join('');
+      var isEdit=!!existing;
+      var content=modalHeader(isEdit?'Edit Payment':'Record Payment',isEdit?e.number:'Record a new customer receipt')+
+        '<div class="payment-form-shell"><div class="px-5 py-4 modal-scroll"><div class="payment-form-body">'+
+        '<div class="payment-form-section"><div class="text-[10px] font-semibold uppercase tracking-wide text-primary mb-2">Payment Details</div><div class="grid grid-cols-2 md:grid-cols-4 gap-3">'+
+        fld('Receipt #','<input class="form-input" id="p_number" value="'+esc(e.number)+'" disabled>')+
+        fld('Date *','<input type="date" class="form-input" id="p_date" value="'+esc(e.date)+'">')+
+        fld('Customer *','<select class="form-input" id="p_customer">'+options+'</select>')+
+        fld('Amount (₹) *','<input type="number" class="form-input" id="p_amount" value="'+(e.amount||'')+'" min="0.01" step="0.01" placeholder="0.00">')+'</div></div>'+
+        '<div class="payment-form-section"><div class="text-[10px] font-semibold uppercase tracking-wide text-primary mb-2">Transaction Details</div><div class="grid grid-cols-2 md:grid-cols-4 gap-3">'+
+        fld('Mode *','<select class="form-input" id="p_mode">'+['Bank Transfer','UPI','Cheque','Cash','Credit Card','Debit Card'].map(function(m){return '<option '+(e.mode===m?'selected':'')+'>'+m+'</option>';}).join('')+'</select>')+
+        fld('Reference','<input class="form-input" id="p_reference" value="'+esc(e.reference||'')+'" placeholder="Transaction / cheque number">')+
+        fld('Deposited To','<input class="form-input" id="p_bankAccount" value="'+esc(e.bankAccount||'')+'" placeholder="Bank / cash account">')+
+        fld('Status','<select class="form-input" id="p_status"><option value="RECEIVED" '+(e.status==='received'?'selected':'')+'>Received</option><option value="PENDING" '+(e.status==='pending'?'selected':'')+'>Pending</option><option value="BOUNCED" '+(e.status==='bounced'?'selected':'')+'>Bounced</option></select>')+'</div></div>'+
+        '<div class="payment-form-section"><div class="text-[10px] font-semibold uppercase tracking-wide text-primary mb-2">Invoice Allocation</div><div class="grid grid-cols-2 gap-3">'+
+        fld('Invoice','<select class="form-input" id="p_invoiceSelect"><option value="">No invoice selected</option></select>')+
+        fld('Invoice Total (₹)','<input type="number" class="form-input" id="p_allocated" value="'+(e.allocatedAmount||0)+'" readonly>')+'</div><div class="mt-2 text-[11px] text-gray-500">Invoice balance: <b id="outstandingTotal" class="text-amber-600">₹0.00</b></div></div>'+
+        '<div class="payment-form-section"><div class="text-[10px] font-semibold uppercase tracking-wide text-primary mb-2">Notes</div>'+fld('Notes','<textarea rows="2" class="form-input" id="p_notes" placeholder="Additional notes">'+esc(e.notes||'')+'</textarea>')+'</div>'+
+        '</div></div></div>'+modalFooter(isEdit?'Update Payment':'Save Payment','onclick="savePayment()"');
+      openModal(content,{width:'max-w-5xl'});
+      var customerSelect=document.getElementById('p_customer');
+      customerSelect.addEventListener('change',function(){loadCustomerInvoices(this.value,null);});
+      document.getElementById('p_invoiceSelect').addEventListener('change',function(){applySelectedInvoice(this.value);});
+      loadCustomerInvoices(e.clientStrId,e.invoicePrimeId);
+    }
+
+    async function loadCustomerInvoices(clientStrId,selectedInvoiceId){
+      customerInvoices=[];
+      var select=document.getElementById('p_invoiceSelect');if(!select)return;
+      select.innerHTML='<option value="">Loading invoices...</option>';
+      if(!clientStrId){select.innerHTML='<option value="">Select a customer first</option>';applySelectedInvoice('');return;}
+      var customer=customers.find(function(c){return c.clientStrId===clientStrId;});
+      if(!customer||!customer.clientPrimeId){select.innerHTML='<option value="">Customer ID unavailable</option>';return;}
+      try{
+        var result=await apiRequest(INVOICE_API+'/get-all-invoices?customerId='+encodeURIComponent(customer.clientPrimeId)+'&pageNumber=1&pageSize=100');
+        customerInvoices=Array.isArray(result&&result.content)?result.content:[];
+        select.innerHTML='<option value="">Select invoice (optional)</option>'+customerInvoices.map(function(i){var total=Number(i.invoiceTotalAmountInr||i.invoiceTotalAmount||0);var paid=Number(i.invoicePaidAmount||0);var balance=Math.max(total-paid,0);return '<option value="'+i.invoicePrimeId+'">'+esc(i.invoiceStrId)+' — Balance '+esc(money(balance))+'</option>';}).join('');
+        select.value=selectedInvoiceId?String(selectedInvoiceId):'';
+        applySelectedInvoice(select.value);
+      }catch(err){select.innerHTML='<option value="">Unable to load invoices</option>';showToast(err.message||'Unable to load invoices for this customer.','error');}
+    }
+    function applySelectedInvoice(invoicePrimeId){
+      var invoice=customerInvoices.find(function(i){return String(i.invoicePrimeId)===String(invoicePrimeId);});
+      var allocated=document.getElementById('p_allocated');var reference=document.getElementById('p_invoice');var balanceEl=document.getElementById('outstandingTotal');
+      if(allocated)allocated.value=invoice?Number(invoice.invoiceTotalAmountInr||invoice.invoiceTotalAmount||0):0;
+      if(reference)reference.value=invoice?(invoice.invoiceStrId||''):'';
+      if(balanceEl){var total=invoice?Number(invoice.invoiceTotalAmountInr||invoice.invoiceTotalAmount||0):0;var paid=invoice?Number(invoice.invoicePaidAmount||0):0;balanceEl.textContent=money(Math.max(total-paid,0));}
+    }
+    function calcPaymentAllocation(){var amount=Number((document.getElementById('p_amount')||{}).value||0),allocated=Number((document.getElementById('p_allocated')||{}).value||0),el=document.getElementById('outstandingTotal');if(el){var selected=document.getElementById('p_invoiceSelect');var invoice=customerInvoices.find(function(i){return selected&&String(i.invoicePrimeId)===String(selected.value);});var total=invoice?Number(invoice.invoiceTotalAmountInr||invoice.invoiceTotalAmount||0):allocated;var paid=invoice?Number(invoice.invoicePaidAmount||0):0;el.textContent=money(Math.max(total-paid,0));}} 
+    document.addEventListener('input',function(e){if(e.target.id==='p_amount')calcPaymentAllocation();});
+
+    async function savePayment(){
+      var existingId=currentPaymentEditId;
+      var clientStrId=document.getElementById('p_customer').value;
+      var amount=Number(document.getElementById('p_amount').value||0);
+      var allocated=Number(document.getElementById('p_allocated').value||0);
+      var invoiceSelect=document.getElementById('p_invoiceSelect');
+      var invoicePrimeId=invoiceSelect&&invoiceSelect.value?Number(invoiceSelect.value):null;
+      if(!clientStrId||!document.getElementById('p_date').value||amount<=0){showToast('Please select customer, date and amount.','error');return;}
+      if(allocated<0){showToast('Invoice amount cannot be negative.','error');return;}
+      var selectedInvoice=customerInvoices.find(function(i){return String(i.invoicePrimeId)===String(invoicePrimeId);});var invoicePaid=selectedInvoice?Number(selectedInvoice.invoicePaidAmount||0):0;if(selectedInvoice&&amount>Math.max(allocated-invoicePaid,0)){showToast('Payment amount cannot be greater than the selected invoice balance.','error');return;}
+      var payload={organizationId:getOrganizationId(),clientStrId:clientStrId,receiptNumber:existingId?document.getElementById('p_number').value.trim():'',paymentDate:document.getElementById('p_date').value,amount:amount,paymentMode:document.getElementById('p_mode').value,referenceNumber:document.getElementById('p_reference').value.trim(),bankAccount:document.getElementById('p_bankAccount').value.trim(),invoiceReference:(customerInvoices.find(function(i){return String(i.invoicePrimeId)===String(invoicePrimeId);})||{}).invoiceStrId||'',invoicePrimeId:invoicePrimeId,allocatedAmount:allocated,status:document.getElementById('p_status').value,notes:document.getElementById('p_notes').value.trim()};
+      try{
+        await apiRequest(existingId?CUSTOMER_PAYMENT_API+'/'+encodeURIComponent(existingId):CUSTOMER_PAYMENT_API,{method:existingId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        closeModal();await loadPayments();showToast(existingId?'Payment updated successfully':'Payment recorded successfully','success');
+      }catch(error){showToast(error.message||'Unable to save payment.','error');}
+    }
+
+    function showCustomerHistoryByClient(clientStrId){
+      var customer=customers.find(function(c){return c.clientStrId===clientStrId;});
+      currentHistoryCustomer=clientStrId;
+      var history=payments.filter(function(p){return p.clientStrId===clientStrId;}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+      renderHistoryModal(clientStrId,customer,history);
+    }
+
+    function showCustomerHistory(id){var p=payments.find(function(x){return x.id===id;});if(p)showCustomerHistoryByClient(p.clientStrId);}
+
+    function renderHistoryModal(clientStrId,customer,history){
+      var total=history.reduce(function(s,p){return s+p.amount;},0);
+      var allocated=history.reduce(function(s,p){return s+p.allocatedAmount;},0);
+      var outstanding=history.reduce(function(s,p){return s+calculatedOutstanding(p);},0);
+      var modes=Array.from(new Set(history.map(function(p){return p.mode;}).filter(Boolean))).sort();
+      var name=customer?(customer.clientName||customer.clientCompanyName||clientStrId):((history[0]||{}).customerName||clientStrId);
+      var company=customer&&customer.clientCompanyName&&customer.clientCompanyName!==customer.clientName?customer.clientCompanyName:'';
+      var content='<div class="history-header px-4 py-3 flex items-start justify-between gap-3">'+
+        '<div><div class="history-title">Transaction History - '+esc(clientStrId||'—')+'</div><div class="history-account customer-name">'+esc(name||'—')+'</div><div class="history-meta-row"><div><div class="history-account">Total Transactions: '+history.length+'</div><div class="history-account">Outstanding: <span class="history-balance">'+money(outstanding)+'</span></div></div><button onclick="downloadHistoryStatement()" class="history-download">'+iconDownload()+' Download Statement</button></div></div>'+
+        '<button onclick="closeModal()" class="history-close">'+iconX()+'</button></div>'+ 
+        '<div class="history-filter-area px-4 py-3 border-b border-gray-200 bg-white"><div class="grid grid-cols-1 sm:grid-cols-3 gap-2"><div><label class="form-label">From Date</label><input id="historyFrom" type="date" class="history-filter w-full" onchange="filterHistoryList()"></div><div><label class="form-label">To Date</label><input id="historyTo" type="date" class="history-filter w-full" onchange="filterHistoryList()"></div><div><label class="form-label">Payment Mode</label><select id="historyMode" class="history-filter w-full" onchange="filterHistoryList()"><option value="all">All Modes</option>'+modes.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div></div></div>'+ 
+        '<div class="px-4 py-3 modal-scroll"><div class="history-summary grid grid-cols-3 gap-2 p-2.5 mb-3"><div><div class="text-[9px] text-gray-500">Total Received</div><div id="historyTotal" class="history-summary-value text-sm font-bold">'+money(total)+'</div></div><div><div class="text-[9px] text-gray-500">Invoice Amount</div><div id="historyAllocated" class="history-summary-value text-sm font-bold">'+money(allocated)+'</div></div><div><div class="text-[9px] text-gray-500">Outstanding</div><div id="historyOutstanding" class="history-summary-value text-sm font-bold">'+money(outstanding)+'</div></div></div><div id="historyList" class="space-y-2">'+historyRows(history)+'</div></div>'+ 
+        '<div class="history-footer flex justify-end px-4 py-3 bg-white"><button onclick="closeModal()" class="view-modal-close">Close</button></div>';
+      openModal(content,{width:'max-w-2xl',modalClass:'history-modal'});
+    }
+
+    function historyRows(list){
+      if(!list.length)return '<div class="text-center py-8 text-sm text-gray-400">No payment history found.</div>';
+      return list.map(function(p){return '<div class="history-item"><div class="history-item-top"><div class="history-credit">CREDIT · <span>'+money(p.amount)+'</span></div><div class="history-date">'+esc(formatHistoryDateTime(p))+'</div></div><div class="history-item-bottom"><div><b>Mode:</b> '+esc(p.mode||'—')+'</div><div><b>Note:</b> <span class="history-note">'+esc(p.notes||'no note')+'</span></div></div><div class="flex justify-end gap-1 mt-2"><button onclick="viewReceipt(\''+esc(p.id)+'\')" class="btn-icon-action" title="View">'+iconEye()+'</button><button onclick="printReceipt(\''+esc(p.id)+'\')" class="btn-icon-action primary" title="Print">'+iconPrint()+'</button><button onclick="editPayment(\''+esc(p.id)+'\')" class="btn-icon-action" title="Edit">'+iconEdit()+'</button><button onclick="delPayment(\''+esc(p.id)+'\')" class="btn-icon-action danger" title="Delete">'+iconTrash()+'</button></div></div>';}).join('');
+    }
+
+    function filterHistoryList(){
+      var from=(document.getElementById('historyFrom')||{}).value||'';
+      var to=(document.getElementById('historyTo')||{}).value||'';
+      var mode=(document.getElementById('historyMode')||{}).value||'all';
+      var list=payments.filter(function(p){return p.clientStrId===currentHistoryCustomer&&(!from||p.date>=from)&&(!to||p.date<=to)&&(mode==='all'||p.mode===mode);}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+      var total=list.reduce(function(s,p){return s+p.amount;},0);
+      var allocated=list.reduce(function(s,p){return s+p.allocatedAmount;},0);
+      var outstanding=list.reduce(function(s,p){return s+calculatedOutstanding(p);},0);
+      document.getElementById('historyList').innerHTML=historyRows(list);
+      document.getElementById('historyTotal').textContent=money(total);
+      document.getElementById('historyAllocated').textContent=money(allocated);
+      document.getElementById('historyOutstanding').textContent=money(outstanding);
+    }
+
+    function formatHistoryDateTime(p){
+      if(p.createdAt){var d=new Date(p.createdAt);if(!isNaN(d.getTime()))return d.toLocaleString('en-US',{month:'short',day:'2-digit',year:'numeric',hour:'numeric',minute:'2-digit'});}
+      return p.date||'—';
+    }
+
+    function downloadHistoryStatement(){
+      var from=(document.getElementById('historyFrom')||{}).value||'';var to=(document.getElementById('historyTo')||{}).value||'';var mode=(document.getElementById('historyMode')||{}).value||'all';
+      var list=payments.filter(function(p){return p.clientStrId===currentHistoryCustomer&&(!from||p.date>=from)&&(!to||p.date<=to)&&(mode==='all'||p.mode===mode);}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+      var lines=[['Receipt Number','Date','Amount','Payment Mode','Reference','Outstanding','Note']];
+      list.forEach(function(p){lines.push([p.number,p.date,p.amount.toFixed(2),p.mode,p.reference,calculatedOutstanding(p).toFixed(2),p.notes]);});
+      var csv=lines.map(function(row){return row.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+      var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='payment-history-'+currentHistoryCustomer+'.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    }
+
+    function receiptOrganizationHtml(org){
+      if(!org)return '';
+      var logo=absoluteOrganizationUrl(org.logoUrl);var address=[org.address,org.city,org.state,org.country,org.pincode].filter(Boolean).join(', ');var gst=org.gstRegistered?('GSTIN: '+esc(org.gstNumber||'Registered')):'GST Registered: No';
+      return '<div class="receipt-org flex items-start justify-between gap-4"><div class="flex items-start gap-3">'+(logo?'<img src="'+esc(logo)+'" alt="Organization Logo" class="w-10 h-10 object-contain border border-[#5c9140] rounded-md bg-white p-1">':'')+'<div><div class="receipt-company-name">'+esc(org.companyName||org.legalName||'Organization')+'</div><div class="receipt-company-details">'+esc(address||'—')+'<br>'+esc(gst)+(org.phone?' | Phone: '+esc(org.phone):'')+(org.email?' | '+esc(org.email):'')+'</div></div></div><div class="receipt-title">PAYMENT RECEIPT</div></div>';
+    }
+
+    function viewReceipt(id){
+      var p=payments.find(function(x){return x.id===id;});if(!p)return;
+      var org=p.organization||organization;var invoice=p.invoiceReference||'No invoice reference';
+      var bank=org?'<div class="receipt-bank"><div class="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Organization Bank Details</div><div class="grid grid-cols-3 gap-2 text-xs"><div><span class="text-gray-500">Bank:</span> <b>'+esc(org.bankName||'—')+'</b></div><div><span class="text-gray-500">Account:</span> <b>'+esc(org.bankAccountNumber||'—')+'</b></div><div><span class="text-gray-500">IFSC:</span> <b>'+esc(org.bankIfscCode||'—')+'</b></div></div></div>':'';
+      var content='<div class="receipt-view-header flex items-start justify-between px-5 py-3.5 bg-white sticky top-0 z-10"><div><h3 class="modal-title">Payment Receipt</h3><p class="modal-subtitle mt-0.5">'+esc(p.number)+' · '+esc(p.customerName)+'</p></div><button onclick="backToHistory()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400">'+iconX()+'</button></div><div class="px-5 py-4 modal-scroll"><div class="receipt-preview">'+receiptOrganizationHtml(org)+'<div class="receipt-meta"><div><div class="meta-label">Received From</div><div class="meta-value">'+esc(p.clientStrId||'—')+'</div><div class="text-xs text-gray-700 mt-1"><b>'+esc(p.customerName||'—')+'</b></div><div class="text-xs text-gray-500 mt-0.5">'+esc(p.customerCompanyName||'—')+'</div></div><div><div class="meta-label">Receipt #</div><div class="meta-value">'+esc(p.number)+'</div><div class="meta-label mt-2">Date</div><div class="meta-value">'+esc(p.date)+'</div><div class="meta-label mt-2">Mode</div><div class="meta-value">'+esc(p.mode)+'</div></div></div><table class="receipt-table"><thead><tr><th>Invoice / Reference</th><th class="text-right">Amount Applied</th></tr></thead><tbody><tr><td>'+esc(invoice)+'</td><td class="text-right">'+money(p.allocatedAmount)+'</td></tr></tbody></table><div class="receipt-total">Total Received: '+money(p.amount)+'</div><div class="receipt-details grid grid-cols-2 gap-3 text-xs"><div><span class="text-gray-500">Reference:</span> <b>'+esc(p.reference||'—')+'</b></div><div><span class="text-gray-500">Deposited To:</span> <b>'+esc(p.bankAccount||'—')+'</b></div></div>'+bank+'<div class="mt-2 text-xs text-amber-700">Outstanding: <b>'+money(calculatedOutstanding(p))+'</b></div>'+(p.notes?'<div class="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600"><b>Notes:</b> '+esc(p.notes)+'</div>':'')+'<div class="receipt-footer">This is a system generated payment receipt.</div></div></div><div class="view-modal-close-wrap flex justify-end px-5 py-3 bg-white"><button onclick="backToHistory()" class="view-modal-close">Close</button></div>';
+      openModal(content,{width:'max-w-5xl'});
+    }
+
+    function printReceipt(id){viewReceipt(id);setTimeout(function(){window.print();},350);}
+
+    function delPayment(id){
+      var p=payments.find(function(x){return x.id===id;});if(!p)return;
+      var content=modalHeader('Delete Payment',p.number)+'<div class="px-5 py-4 text-sm text-gray-600"><p>Are you sure you want to delete <b>'+esc(p.number)+'</b>?</p><p class="text-gray-400 text-[11px] mt-1">This action cannot be undone.</p><p class="text-amber-600 text-[11px] mt-2">Amount: '+money(p.amount)+'</p></div><div class="flex items-center justify-end gap-2 px-5 py-3 bg-white"><button onclick="closePaymentChild()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200">Cancel</button><button onclick="confirmDeletePayment(\''+esc(id)+'\')" class="px-3 py-1.5 rounded-lg text-xs font-semibold delete-confirm-btn">Delete</button></div>';
+      openModal(content,{width:'max-w-md'});
+    }
+
+    async function confirmDeletePayment(id){try{await apiRequest(CUSTOMER_PAYMENT_API+'/'+encodeURIComponent(id),{method:'DELETE'});await loadPayments();if(currentHistoryCustomer)showCustomerHistoryByClient(currentHistoryCustomer);else closeModal();showToast('Payment deleted successfully','warning');}catch(error){showToast(error.message||'Unable to delete payment.','error');}}
+
+    function showToast(message,kind){kind=kind||'success';var colors={success:'bg-green-600',info:'bg-primary',warning:'bg-amber-600',error:'bg-red-600'};var el=document.createElement('div');el.className='toast '+colors[kind]+' text-white font-semibold px-3 py-2 rounded-lg shadow-lg';el.textContent=message;document.getElementById('toastWrap').appendChild(el);setTimeout(function(){el.style.opacity='0';setTimeout(function(){el.remove();},300);},2600);}
+
+    async function initializeModule(){
+      try{await loadOrganization();await loadCustomers();await loadPayments();}
+      catch(error){payments=[];summaries=[];renderAll();showToast(error.message||'Unable to load Customer Payments.','error');}
+    }
+
+    initializeModule();
+  </script>
+</body>
+</html>

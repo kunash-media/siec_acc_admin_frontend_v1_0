@@ -89,7 +89,7 @@
 
   .progress-bar { height: 6px; border-radius: 3px; background: #e5e7eb; overflow: hidden; margin-top: 6px; }
   .progress-bar .fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
-  .fill-green { background: #22c55e; } .fill-amber { background: #f59e0b; } .fill-blue { background: #3b82f6; }
+  .fill-green { background: #22c55e; } .fill-amber { background: #f59e0b; } .fill-blue { background: #3b82f6; } .fill-red { background: #ef4444; }
 
   .doc-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid #9ca3af; border-radius: 8px; background: #fff; transition: border-color .2s, background .15s; }
   .doc-item:hover { border-color: #6da84c; background: #f8fafc; }
@@ -121,6 +121,10 @@
   .tab-arrow { width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; border: 1px solid #6da84c; background: #fff; color: #6da84c; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; font-size: 12px; }
   .tab-arrow:hover:not(:disabled) { background: #eef5e8; }
   .tab-arrow:disabled { opacity: .35; cursor: not-allowed; }
+
+  .btn-primary-sm { display: inline-flex; align-items: center; gap: 6px; background: #6da84c; color: #fff; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); transition: background .15s; cursor: pointer; border: none; }
+  .btn-primary-sm:hover { background: #5c9140; }
+  .btn-primary-sm:disabled { opacity: .6; cursor: not-allowed; }
 </style>
 </head>
 
@@ -263,12 +267,67 @@
   <script>
     NavSidebar.init({ basePath: "", activePage: "projects", pageTitle: "Projects", user: { name: "Admin", role: "Super Admin", avatarUrl: "" } });
 
+    // =====================================================================
+    // CONFIG  -  change API_BASE if your backend is not on localhost:9093.
+    // Use '' (empty string) if this page is served by the same Spring Boot app.
+    // You can also set  window.API_BASE = '...'  in a script above this one.
+    // =====================================================================
+    var API_BASE = (typeof window.API_BASE === 'string') ? window.API_BASE : 'http://localhost:9093';
+    var PROJECT_API = API_BASE + '/api/projects/v1';
+    var CLIENT_API  = API_BASE + '/api/clients/v1';
+    var INVOICE_API = API_BASE + '/api/v1/invoices';
+    var BILL_API    = API_BASE + '/api/purchase-bills/v1';
+    var CURRENT_USER = 'Admin';
+
+    // If your APIs are protected with the JWT, put the token lookup here.
+    function authHeaders() {
+      var h = {};
+      try {
+        var t = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('jwt');
+        if (t) h['Authorization'] = 'Bearer ' + t;
+      } catch (e) {}
+      return h;
+    }
+
+    // Every call returns the parsed JSON body or throws Error(message from the backend).
+    async function apiRequest(url, opts) {
+      opts = opts || {};
+      var headers = authHeaders();
+      var init = { method: opts.method || 'GET', headers: headers };
+      if (opts.json !== undefined) { headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(opts.json); }
+      else if (opts.form) { init.body = opts.form; }   // multipart: browser sets the boundary itself
+      var res;
+      try { res = await fetch(url, init); }
+      catch (e) { throw new Error('Cannot reach the server. Check that the backend is running and API_BASE is correct.'); }
+      var text = await res.text();
+      var body = null;
+      try { body = text ? JSON.parse(text) : null; } catch (e) { body = null; }
+      if (!res.ok || (body && body.status === 'ERROR')) {
+        throw new Error((body && body.message) ? body.message : ('Request failed (' + res.status + ')'));
+      }
+      return body;
+    }
+
+    async function downloadFromApi(relativeUrl, fileName) {
+      try {
+        var res = await fetch(API_BASE + relativeUrl, { headers: authHeaders() });
+        if (!res.ok) throw new Error('Download failed (' + res.status + ')');
+        var blob = await res.blob();
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = fileName || 'download';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function() { URL.revokeObjectURL(url); }, 30000);
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
     // ---------- SVG icons ----------
     function svg(path, cls) { return '<svg class="' + (cls || 'w-3.5 h-3.5') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' + path + '</svg>'; }
     function iconEdit() { return svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>'); }
     function iconTrash() { return svg('<path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>'); }
     function iconEye() { return svg('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'); }
     function iconX() { return svg('<path d="M18 6L6 18M6 6l12 12"/>', 'w-4 h-4'); }
+    function iconUnlink() { return svg('<path d="M18 6L6 18M6 6l12 12"/>'); }
     function iconSave() { return svg('<path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/>', 'w-4 h-4'); }
     function iconBox() { return svg('<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>', 'w-4 h-4'); }
     function iconSearch() { return svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>', 'w-4 h-4'); }
@@ -277,15 +336,31 @@
     function iconDownload() { return svg('<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>'); }
     function iconInfo() { return svg('<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/>', 'w-4 h-4'); }
 
+    // ---------- Escaping / formatting helpers ----------
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function enc(s) { return encodeURIComponent(s); }
+    function money(n) { n = Number(n || 0); return (n < 0 ? '-' : '') + '₹' + Math.abs(n).toLocaleString('en-IN'); }
+    function fmtSize(bytes) {
+      if (bytes == null) return '—';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return Math.round(bytes / 1024) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+    function numVal(x) { return (x === null || x === undefined || Number(x) === 0) ? '' : x; }
+
     // ---------- Toast ----------
     function showToast(message, kind) {
       kind = kind || 'success';
       var colors = { success: 'bg-green-600', info: 'bg-primary', warning: 'bg-amber-600', error: 'bg-red-600' };
       var el = document.createElement('div');
       el.className = 'toast ' + colors[kind] + ' text-white text-sm font-semibold px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
-      el.innerHTML = '<span>' + message + '</span>';
+      var span = document.createElement('span');
+      span.textContent = message;
+      el.appendChild(span);
       document.getElementById('toastWrap').appendChild(el);
-      setTimeout(function() { el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 300); }, 2600);
+      setTimeout(function() { el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 300); }, kind === 'error' ? 4500 : 2600);
     }
 
     // ---------- Modal ----------
@@ -302,7 +377,7 @@
     function closeModal() { document.getElementById('modalRoot').innerHTML = ''; document.body.style.overflow = ''; }
     function modalHeader(title, subtitle) {
       return `<div class="flex items-start justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-        <div><h3 class="text-lg font-bold text-gray-900">${title}</h3>${subtitle ? '<p class="text-xs text-gray-500 mt-0.5">' + subtitle + '</p>' : ''}</div>
+        <div><h3 class="text-lg font-bold text-gray-900">${esc(title)}</h3>${subtitle ? '<p class="text-xs text-gray-500 mt-0.5">' + esc(subtitle) + '</p>' : ''}</div>
         <button onclick="closeModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button></div>`;
     }
     function modalFooter(saveLabel, onSaveAttr, extraBtns) {
@@ -310,38 +385,37 @@
         <div>${extraBtns || ''}</div>
         <div class="flex gap-2">
           <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
-          <button ${onSaveAttr} class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">${iconSave()} ${saveLabel}</button>
+          <button id="modalSaveBtn" ${onSaveAttr} class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5 disabled:opacity-60">${iconSave()} ${esc(saveLabel)}</button>
         </div></div>`;
     }
+    function setSaving(on) { var b = document.getElementById('modalSaveBtn'); if (b) b.disabled = !!on; }
     function fld(label, inputHtml, hint) {
       return `<div class="mb-3"><label class="form-label">${label}</label>${inputHtml}${hint ? '<div class="form-hint">' + hint + '</div>' : ''}</div>`;
     }
 
-    // ---------- Helpers ----------
-    function money(n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); }
-
+    // ---------- Badges / panels / tables ----------
     function badge(text, color) {
       var map = { green: 'badge-green', amber: 'badge-amber', red: 'badge-red', gray: 'badge-gray', blue: 'badge-blue' };
       var dot = { green: 'badge-dot-green', amber: 'badge-dot-amber', red: 'badge-dot-red', gray: 'badge-dot-gray', blue: 'badge-dot-blue' };
-      return '<span class="badge ' + map[color] + '"><span class="badge-dot ' + dot[color] + '"></span>' + text + '</span>';
+      return '<span class="badge ' + map[color] + '"><span class="badge-dot ' + dot[color] + '"></span>' + esc(text) + '</span>';
     }
     function statusBadge(status) {
-      var map = { active: 'blue', completed: 'green', onhold: 'amber', cancelled: 'red', pending: 'gray', paid: 'green', partial: 'amber', sent: 'blue', received: 'green', approved: 'green' };
-      var label = status.charAt(0).toUpperCase() + status.slice(1);
+      status = String(status || '').toLowerCase();
+      var map = { active: 'blue', completed: 'green', onhold: 'amber', cancelled: 'red', pending: 'gray',
+                  paid: 'green', partial: 'amber', sent: 'blue', received: 'green', approved: 'green',
+                  unpaid: 'gray', draft: 'gray', overdue: 'red', rejected: 'red' };
+      var label = status ? status.charAt(0).toUpperCase() + status.slice(1) : '—';
       if (status === 'onhold') label = 'On Hold';
       return badge(label, map[status] || 'gray');
     }
     function countPill(n) { return '<span class="text-[11px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full">' + n + '</span>'; }
 
-    // Panel with green border (same as Products page)
     function panelWrap(titleHtml, bodyHtml, extraHead) {
       return `<div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
         <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-gray-100">
           <div class="font-bold text-[14.5px] text-gray-800 flex items-center gap-2">${titleHtml}</div>${extraHead || ''}
         </div><div>${bodyHtml}</div></div>`;
     }
-
-    // Table: grey header, green header border, bordered rows (same as Products page)
     function tableHtml(cols, rowsHtml) {
       var headers = cols.map(function(c) {
         return '<th class="text-left text-[11px] font-bold uppercase tracking-wide text-gray-500 px-4 py-3 whitespace-nowrap">' + c + '</th>';
@@ -351,7 +425,13 @@
         <tbody>${rowsHtml}</tbody></table></div>`;
     }
     function emptyRow(cols, msg) {
-      return '<tr><td colspan="' + cols + '" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>' + msg + '</td></tr>';
+      return '<tr><td colspan="' + cols + '" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>' + esc(msg) + '</td></tr>';
+    }
+    function loadingRow(cols) {
+      return '<tr><td colspan="' + cols + '" class="text-center py-10 text-gray-400 text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading…</td></tr>';
+    }
+    function infoNote(text) {
+      return '<div class="m-4 p-3 bg-primary-soft rounded-lg text-xs text-gray-600 border border-primary/20"><div class="flex items-start gap-2">' + iconInfo() + '<div>' + text + '</div></div></div>';
     }
 
     // ---------- Tabs + arrows ----------
@@ -377,425 +457,112 @@
       updateTabArrows();
     });
 
-    // ---------- Data ----------
-    var projects = [
-      { id: 'PRJ-001', name: 'Operation & Supervision — WHE', code: '26LW069', customer: 'Sustro Speciality Oils Pvt Ltd', status: 'active', startDate: '2025-11-01', endDate: '2026-06-30', progress: 62, budget: 500000, actualCost: 310000, revenue: 450000, profit: 140000, pm: 'Rajesh Sharma', description: 'Operation and supervision contract for WHE' },
-      { id: 'PRJ-002', name: 'Odor Control Unit — Retrofit', code: '26LW070', customer: 'XYZ Technologies', status: 'active', startDate: '2025-12-15', endDate: '2026-05-31', progress: 31, budget: 350000, actualCost: 120000, revenue: 200000, profit: 80000, pm: 'Priya Patel', description: 'Retrofit of odor control unit' },
-      { id: 'PRJ-003', name: 'Dual Media Filter — Phase II', code: '26LW071', customer: 'ABC Distributor Group', status: 'completed', startDate: '2025-08-01', endDate: '2026-01-15', progress: 100, budget: 750000, actualCost: 720000, revenue: 950000, profit: 230000, pm: 'Rajesh Sharma', description: 'Dual media filter installation phase II' },
-      { id: 'PRJ-004', name: 'Site Survey & Consulting', code: '26LW072', customer: 'Global Exports Ltd.', status: 'onhold', startDate: '2026-01-10', endDate: '2026-08-31', progress: 15, budget: 150000, actualCost: 25000, revenue: 0, profit: -25000, pm: 'Amit Kumar', description: 'Site survey and consulting services', holdReason: 'Client requested hold for 2 months' }
-    ];
-
-    var projectSales = [
-      { number: 'INV/25-26/001', date: '2026-01-15', customer: 'Sustro Speciality Oils Pvt Ltd', amount: 167029, status: 'paid', projectId: 'PRJ-001' },
-      { number: 'INV/25-26/002', date: '2026-02-01', customer: 'Sustro Speciality Oils Pvt Ltd', amount: 250000, status: 'partial', projectId: 'PRJ-001' },
-      { number: 'INV/25-26/003', date: '2026-02-10', customer: 'XYZ Technologies', amount: 200000, status: 'sent', projectId: 'PRJ-002' },
-      { number: 'INV/25-26/004', date: '2026-02-15', customer: 'ABC Distributor Group', amount: 950000, status: 'paid', projectId: 'PRJ-003' }
-    ];
-    var projectPurchases = [
-      { number: 'PUR/25-26/001', date: '2026-01-10', vendor: 'Global Imports Inc.', amount: 118000, status: 'received', projectId: 'PRJ-001' },
-      { number: 'PUR/25-26/002', date: '2026-01-20', vendor: 'Tech Components Ltd.', amount: 95000, status: 'partial', projectId: 'PRJ-001' },
-      { number: 'PUR/25-26/003', date: '2026-02-05', vendor: 'Premium Raw Materials', amount: 72000, status: 'received', projectId: 'PRJ-002' }
-    ];
-    var projectExpenses = [
-      { date: '2026-01-15', category: 'Raw Materials', amount: 48500, vendor: 'Global Imports Inc.', status: 'approved', projectId: 'PRJ-001' },
-      { date: '2026-01-20', category: 'Transport & Logistics', amount: 31200, vendor: 'ABC Logistics', status: 'approved', projectId: 'PRJ-001' },
-      { date: '2026-02-01', category: 'Marketing & Advertising', amount: 25000, vendor: 'Google Ads', status: 'pending', projectId: null },
-      { date: '2026-02-05', category: 'Travel', amount: 15000, vendor: null, status: 'pending', projectId: 'PRJ-002' }
-    ];
-    var projectBudgets = [
-      { projectId: 'PRJ-001', totalBudget: 500000, purchaseBudget: 200000, expenseBudget: 100000, hoursBudget: 200000, actualCost: 310000, variance: 190000 },
-      { projectId: 'PRJ-002', totalBudget: 350000, purchaseBudget: 150000, expenseBudget: 80000, hoursBudget: 120000, actualCost: 120000, variance: 230000 },
-      { projectId: 'PRJ-003', totalBudget: 750000, purchaseBudget: 400000, expenseBudget: 150000, hoursBudget: 200000, actualCost: 720000, variance: 30000 },
-      { projectId: 'PRJ-004', totalBudget: 150000, purchaseBudget: 50000, expenseBudget: 50000, hoursBudget: 50000, actualCost: 25000, variance: 125000 }
-    ];
-    var projectDocuments = [
-      { id: 'DOC-001', type: 'Invoice', name: 'INV/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-15', size: '245 KB', uploadedBy: 'System' },
-      { id: 'DOC-002', type: 'Purchase Order', name: 'PO/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-10', size: '180 KB', uploadedBy: 'System' },
-      { id: 'DOC-003', type: 'Purchase Bill', name: 'PUR/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-20', size: '210 KB', uploadedBy: 'System' },
-      { id: 'DOC-004', type: 'Delivery Challan', name: 'DC/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-22', size: '150 KB', uploadedBy: 'System' },
-      { id: 'DOC-005', type: 'Packing List', name: 'PL/25-26/001.pdf', projectId: 'PRJ-001', date: '2026-01-22', size: '120 KB', uploadedBy: 'System' },
-      { id: 'DOC-006', type: 'Contract', name: 'Contract_Sustro_2025.pdf', projectId: 'PRJ-001', date: '2025-11-01', size: '1.2 MB', uploadedBy: 'Rajesh Sharma' },
-      { id: 'DOC-007', type: 'Site Photo', name: 'site_photo_01.jpg', projectId: 'PRJ-001', date: '2025-11-15', size: '3.4 MB', uploadedBy: 'Amit Kumar' },
-      { id: 'DOC-008', type: 'Invoice', name: 'INV/25-26/003.pdf', projectId: 'PRJ-002', date: '2026-02-10', size: '250 KB', uploadedBy: 'System' },
-      { id: 'DOC-009', type: 'Contract', name: 'Contract_XYZ_2025.pdf', projectId: 'PRJ-002', date: '2025-12-15', size: '950 KB', uploadedBy: 'Priya Patel' }
-    ];
-
+    // =====================================================================
+    // STATE
+    // =====================================================================
+    var STATUS_OPTIONS = ['active', 'pending', 'onhold', 'completed', 'cancelled'];
+    var projects = [];
+    var projectMeta = {};
+    var currentStatus = 'all';
+    var currentSearch = '';
     var selectedProjectId = null;
+    var selectedProject = null;
+    var tabData = { sales: [], purchases: [], expenses: [], budget: null, documents: [] };
+    var visibleDocs = [];
+    var clientsCache = null;
+    var pendingUnlink = null;
+    var pendingDocDeleteId = null;
+    var linkMode = null;
 
-    // ---------- Stats ----------
+    // =====================================================================
+    // LIST VIEW
+    // =====================================================================
     function renderStats() {
-      document.getElementById('totalProjects').textContent = projects.length;
-      document.getElementById('activeProjects').textContent = projects.filter(function(p) { return p.status === 'active'; }).length;
-      document.getElementById('completedProjects').textContent = projects.filter(function(p) { return p.status === 'completed'; }).length;
-      document.getElementById('totalBudget').textContent = money(projects.reduce(function(s, p) { return s + p.budget; }, 0));
-      document.getElementById('totalProfit').textContent = money(projects.reduce(function(s, p) { return s + p.profit; }, 0));
+      var m = projectMeta || {};
+      document.getElementById('totalProjects').textContent = m.totalProjects != null ? m.totalProjects : 0;
+      document.getElementById('activeProjects').textContent = m.activeProjects != null ? m.activeProjects : 0;
+      document.getElementById('completedProjects').textContent = m.completedProjects != null ? m.completedProjects : 0;
+      document.getElementById('totalBudget').textContent = money(m.totalBudget);
+      document.getElementById('totalProfit').textContent = money(m.totalProfit);
     }
 
-    // ---------- List view ----------
+    function listHeadExtra() {
+      var opts = ['all'].concat(STATUS_OPTIONS).map(function(s) {
+        var label = s === 'all' ? 'All Statuses' : (s === 'onhold' ? 'On Hold' : s.charAt(0).toUpperCase() + s.slice(1));
+        return '<option value="' + s + '"' + (s === currentStatus ? ' selected' : '') + '>' + label + '</option>';
+      }).join('');
+      return '<select class="form-input text-[12px]" style="width:160px;" onchange="onStatusFilterChange(this.value)">' + opts + '</select>';
+    }
+    function listTitle(count) {
+      return '<i class="fa-solid fa-folder-tree text-primary"></i> All Projects ' + (count == null ? '' : countPill(count));
+    }
+    var LIST_COLS = ['Project', 'Code', 'Status', 'Progress', 'Budget', 'Profit', 'Actions'];
+
     function renderProjects() {
       var rowsHtml = projects.map(function(p) {
         var fill = p.status === 'completed' ? 'fill-green' : (p.status === 'onhold' ? 'fill-amber' : 'fill-blue');
+        var profit = Number(p.profit || 0);
         return `
-          <tr class="project-row border-b border-gray-400" onclick="openProjectDetail('${p.id}')">
-            <td class="px-4 py-3"><div class="proj-name-link">${p.name}</div><div class="proj-customer-sm">${p.customer}</div></td>
-            <td class="px-4 py-3 text-xs text-gray-500 font-mono">${p.code}</td>
+          <tr class="project-row border-b border-gray-400" onclick="openProjectDetail('${esc(p.id)}')">
+            <td class="px-4 py-3"><div class="proj-name-link">${esc(p.name)}</div><div class="proj-customer-sm">${esc(p.customer)}</div></td>
+            <td class="px-4 py-3 text-xs text-gray-500 font-mono">${esc(p.code)}</td>
             <td class="px-4 py-3">${statusBadge(p.status)}</td>
             <td class="px-4 py-3" style="min-width:120px;">
-              <div class="flex justify-between text-[11px] text-gray-500 mb-1"><span>${p.progress}%</span></div>
-              <div class="progress-bar"><div class="fill ${fill}" style="width:${p.progress}%;"></div></div>
+              <div class="flex justify-between text-[11px] text-gray-500 mb-1"><span>${Number(p.progress || 0)}%</span></div>
+              <div class="progress-bar"><div class="fill ${fill}" style="width:${Math.min(Number(p.progress || 0), 100)}%;"></div></div>
             </td>
             <td class="px-4 py-3 font-mono font-semibold text-primary">${money(p.budget)}</td>
-            <td class="px-4 py-3 font-mono font-semibold ${p.profit >= 0 ? 'text-green-600' : 'text-red-600'}">${money(p.profit)}</td>
+            <td class="px-4 py-3 font-mono font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${money(profit)}</td>
             <td class="px-4 py-3">
               <div class="flex gap-1" onclick="event.stopPropagation();">
-                <button onclick="openProjectDetail('${p.id}')" class="btn-icon-action" title="View">${iconEye()}</button>
-                <button onclick="editProjectFromList('${p.id}')" class="btn-icon-action" title="Edit">${iconEdit()}</button>
-                <button onclick="deleteProjectFromList('${p.id}')" class="btn-icon-action danger" title="Delete">${iconTrash()}</button>
+                <button onclick="openProjectDetail('${esc(p.id)}')" class="btn-icon-action" title="View">${iconEye()}</button>
+                <button onclick="editProjectFromList('${esc(p.id)}')" class="btn-icon-action" title="Edit">${iconEdit()}</button>
+                <button onclick="deleteProjectFromList('${esc(p.id)}')" class="btn-icon-action danger" title="Delete">${iconTrash()}</button>
               </div>
             </td>
           </tr>`;
       }).join('');
-      if (!rowsHtml) rowsHtml = emptyRow(7, 'No projects yet');
+      if (!rowsHtml) rowsHtml = emptyRow(LIST_COLS.length, (currentSearch || currentStatus !== 'all') ? 'No projects match your filters' : 'No projects yet');
 
-      document.getElementById('projectsList').innerHTML = panelWrap(
-        '<i class="fa-solid fa-folder-tree text-primary"></i> All Projects ' + countPill(projects.length),
-        tableHtml(['Project', 'Code', 'Status', 'Progress', 'Budget', 'Profit', 'Actions'], rowsHtml)
-      );
+      document.getElementById('projectsList').innerHTML = panelWrap(listTitle(projects.length), tableHtml(LIST_COLS, rowsHtml), listHeadExtra());
     }
 
-    // ---------- View switching ----------
-    function openProjectDetail(id) {
-      selectedProjectId = id;
-      var p = projects.find(function(x) { return x.id === id; });
-      if (!p) return;
-
-      document.getElementById('listView').classList.add('hidden');
-      var dv = document.getElementById('detailView');
-      dv.classList.remove('hidden', 'animate-slidein');
-      void dv.offsetWidth;
-      dv.classList.add('animate-slidein');
-
-      document.querySelectorAll('#projTabs .page-tab-btn').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
-      document.querySelectorAll('.page-tab-panel').forEach(function(pnl, i) { pnl.classList.toggle('active', i === 0); });
-      document.getElementById('projTabs').scrollLeft = 0;
-
-      renderDetailHeader(p);
-      renderOverview();
-      renderSales();
-      renderPurchases();
-      renderExpenses();
-      renderBudget();
-      renderDocuments();
-
-      setTimeout(updateTabArrows, 50);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    function renderListLoading() {
+      document.getElementById('projectsList').innerHTML = panelWrap(listTitle(null), tableHtml(LIST_COLS, loadingRow(LIST_COLS.length)), listHeadExtra());
+    }
+    function renderListError(msg) {
+      var body = '<div class="text-center py-12 text-sm"><div class="text-red-600 font-semibold mb-3">' + esc(msg) + '</div>' +
+                 '<button class="btn-primary-sm" onclick="loadProjects()"><i class="fa-solid fa-rotate-right"></i> Retry</button></div>';
+      document.getElementById('projectsList').innerHTML = panelWrap(listTitle(null), body, '');
     }
 
-    function backToList() {
-      document.getElementById('detailView').classList.add('hidden');
-      document.getElementById('listView').classList.remove('hidden');
-      selectedProjectId = null;
-      renderProjects();
-      renderStats();
-    }
-
-    function renderDetailHeader(p) {
-      document.getElementById('detailProjectName').textContent = p.name;
-      document.getElementById('detailStatusBadge').innerHTML = statusBadge(p.status);
-      document.getElementById('di_code').textContent = p.code;
-      document.getElementById('di_customer').textContent = p.customer;
-      document.getElementById('di_pm').textContent = p.pm;
-      document.getElementById('di_start').textContent = p.startDate;
-      document.getElementById('di_end').textContent = p.endDate || '—';
-      document.getElementById('di_progress').textContent = p.progress + '%';
-      var f = document.getElementById('di_progress_fill');
-      f.style.width = p.progress + '%';
-      f.className = 'fill ' + (p.status === 'completed' ? 'fill-green' : (p.status === 'onhold' ? 'fill-amber' : 'fill-blue'));
-      document.getElementById('di_budget').textContent = money(p.budget);
-      var pe = document.getElementById('di_profit');
-      pe.textContent = money(p.profit);
-      pe.className = 'detail-info-value ' + (p.profit >= 0 ? 'text-green-600' : 'text-red-600');
-      document.getElementById('di_desc').textContent = p.description || '—';
-      var hr = document.getElementById('di_hold_row');
-      if (p.holdReason) { hr.style.display = ''; document.getElementById('di_hold').textContent = p.holdReason; }
-      else hr.style.display = 'none';
-    }
-
-    // ---------- Delete ----------
-    function deleteConfirmModal(p, onclickAttr) {
-      openModal(`
-        ${modalHeader('Delete Project', p.name)}
-        <div class="px-6 py-4 text-sm text-gray-600">
-          <p>Are you sure you want to permanently delete <b class="text-gray-800">${p.name}</b>?</p>
-          <p class="text-gray-400 text-[12px] mt-1">This action cannot be undone.</p>
-        </div>
-        ${modalFooter('Delete', onclickAttr, '')}`, { width: 'max-w-md' });
-    }
-    function editSelectedProject() {
-      var p = projects.find(function(x) { return x.id === selectedProjectId; });
-      if (p) openProjectForm(p);
-    }
-    function deleteSelectedProject() {
-      var p = projects.find(function(x) { return x.id === selectedProjectId; });
-      if (p) deleteConfirmModal(p, 'onclick="confirmDeleteProject()"');
-    }
-    function confirmDeleteProject() {
-      projects = projects.filter(function(x) { return x.id !== selectedProjectId; });
-      closeModal(); backToList(); showToast('Project deleted', 'warning');
-    }
-    function deleteProjectFromList(id) {
-      var p = projects.find(function(x) { return x.id === id; });
-      if (p) deleteConfirmModal(p, 'onclick="confirmDeleteProjectFromList(\'' + id + '\')"');
-    }
-    function confirmDeleteProjectFromList(id) {
-      projects = projects.filter(function(x) { return x.id !== id; });
-      closeModal(); renderProjects(); renderStats(); showToast('Project deleted', 'warning');
-    }
-
-    // ---------- Overview ----------
-    function renderOverview() {
-      var p = projects.find(function(x) { return x.id === selectedProjectId; });
-      if (!p) return;
-      var html = `
-        <div class="p-5">
-          <h3 class="text-[14px] font-bold text-gray-800 mb-3">Financial Summary</h3>
-          <table class="report-table"><tbody>
-            <tr><td class="text-gray-500">Total Budget</td><td class="text-right font-mono font-semibold">${money(p.budget)}</td></tr>
-            <tr><td class="text-gray-500">Revenue Generated</td><td class="text-right font-mono font-semibold text-primary">${money(p.revenue)}</td></tr>
-            <tr><td class="text-gray-500">Actual Cost</td><td class="text-right font-mono font-semibold text-red-600">${money(p.actualCost)}</td></tr>
-            <tr class="total-row"><td class="text-right font-bold">Net Profit</td><td class="text-right font-mono font-bold ${p.profit >= 0 ? 'text-green-600' : 'text-red-600'}">${money(p.profit)}</td></tr>
-            <tr><td class="text-gray-500">Margin</td><td class="text-right font-semibold">${p.revenue > 0 ? ((p.profit / p.revenue) * 100).toFixed(1) : 0}%</td></tr>
-          </tbody></table>
-        </div>`;
-      document.getElementById('overviewPanel').innerHTML = panelWrap(
-        '<i class="fa-solid fa-chart-pie text-primary"></i> Project Overview', html,
-        '<div class="text-[11px] text-gray-400 font-mono">Project ID: ' + p.id + '</div>');
-    }
-
-    // ---------- Sales / Purchases / Expenses ----------
-    function renderSales() {
-      var list = projectSales.filter(function(s) { return s.projectId === selectedProjectId; });
-      var rows = list.map(function(s) {
-        return `<tr class="border-b border-gray-400 table-row-hover">
-          <td class="px-4 py-3 text-sm font-semibold">${s.number}</td>
-          <td class="px-4 py-3 text-xs text-gray-500">${s.date}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">${s.customer}</td>
-          <td class="px-4 py-3 font-mono font-semibold text-primary">${money(s.amount)}</td>
-          <td class="px-4 py-3">${statusBadge(s.status)}</td></tr>`;
-      }).join('') || emptyRow(5, 'No sales linked to this project');
-      document.getElementById('salesPanel').innerHTML = panelWrap(
-        '<i class="fa-solid fa-cart-shopping text-primary"></i> Project Sales ' + countPill(list.length),
-        tableHtml(['Invoice #', 'Date', 'Customer', 'Amount', 'Status'], rows));
-    }
-
-    function renderPurchases() {
-      var list = projectPurchases.filter(function(p) { return p.projectId === selectedProjectId; });
-      var rows = list.map(function(p) {
-        return `<tr class="border-b border-gray-400 table-row-hover">
-          <td class="px-4 py-3 text-sm font-semibold">${p.number}</td>
-          <td class="px-4 py-3 text-xs text-gray-500">${p.date}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">${p.vendor}</td>
-          <td class="px-4 py-3 font-mono font-semibold text-red-600">${money(p.amount)}</td>
-          <td class="px-4 py-3">${statusBadge(p.status)}</td></tr>`;
-      }).join('') || emptyRow(5, 'No purchases linked to this project');
-      document.getElementById('purchasesPanel').innerHTML = panelWrap(
-        '<i class="fa-solid fa-truck-fast text-primary"></i> Project Purchases ' + countPill(list.length),
-        tableHtml(['Bill #', 'Date', 'Vendor', 'Amount', 'Status'], rows));
-    }
-
-    function renderExpenses() {
-      var list = projectExpenses.filter(function(e) { return e.projectId === selectedProjectId; });
-      var rows = list.map(function(e) {
-        return `<tr class="border-b border-gray-400 table-row-hover">
-          <td class="px-4 py-3 text-xs text-gray-500">${e.date}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">${e.category}</td>
-          <td class="px-4 py-3 text-sm text-gray-500">${e.vendor || '—'}</td>
-          <td class="px-4 py-3 font-mono font-semibold text-amber-600">${money(e.amount)}</td>
-          <td class="px-4 py-3">${statusBadge(e.status)}</td></tr>`;
-      }).join('') || emptyRow(5, 'No expenses linked to this project');
-      document.getElementById('expensesPanel').innerHTML = panelWrap(
-        '<i class="fa-solid fa-receipt text-primary"></i> Project Expenses ' + countPill(list.length),
-        tableHtml(['Date', 'Category', 'Vendor', 'Amount', 'Status'], rows));
-    }
-
-    // ---------- Budget ----------
-    function renderBudget() {
-      var b = projectBudgets.find(function(x) { return x.projectId === selectedProjectId; });
-      if (!b) {
-        document.getElementById('budgetPanel').innerHTML = panelWrap('Project Budget', '<div class="text-center py-10 text-gray-400 text-sm">No budget configured</div>');
-        return;
+    async function loadProjects() {
+      renderListLoading();
+      try {
+        var qs = '?status=' + enc(currentStatus) + '&search=' + enc(currentSearch);
+        var body = await apiRequest(PROJECT_API + '/get-all-projects' + qs);
+        projects = (body.data && body.data.projects) || [];
+        projectMeta = (body.data && body.data.meta) || {};
+        renderProjects();
+        renderStats();
+      } catch (e) {
+        renderListError(e.message);
       }
-      var usage = b.totalBudget > 0 ? ((b.actualCost / b.totalBudget) * 100).toFixed(1) : 0;
-      var html = `
-        <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <h3 class="text-[14px] font-bold text-gray-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-simple text-primary"></i> Budget Breakdown</h3>
-            <table class="report-table"><tbody>
-              <tr><td class="text-gray-500">Total Budget</td><td class="text-right font-mono font-semibold">${money(b.totalBudget)}</td></tr>
-              <tr><td class="text-gray-500">Purchase Budget</td><td class="text-right font-mono">${money(b.purchaseBudget)}</td></tr>
-              <tr><td class="text-gray-500">Expense Budget</td><td class="text-right font-mono">${money(b.expenseBudget)}</td></tr>
-              <tr><td class="text-gray-500">Hours Budget</td><td class="text-right font-mono">${money(b.hoursBudget)}</td></tr>
-              <tr class="total-row"><td class="text-right font-bold">Actual Cost</td><td class="text-right font-mono font-bold text-red-600">${money(b.actualCost)}</td></tr>
-              <tr class="grand-total"><td class="text-right font-bold">Budget Variance</td><td class="text-right font-mono font-bold text-primary">${money(b.variance)}</td></tr>
-            </tbody></table>
-          </div>
-          <div>
-            <h3 class="text-[14px] font-bold text-gray-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-gauge-high text-primary"></i> Budget Utilization</h3>
-            <div class="progress-bar" style="height:12px;"><div class="fill ${usage > 90 ? 'fill-amber' : 'fill-blue'}" style="width:${Math.min(usage, 100)}%;height:100%;"></div></div>
-            <div class="flex justify-between text-xs mt-1">
-              <span class="text-gray-500">${usage}% used</span>
-              <span class="text-gray-500">${money(b.actualCost)} / ${money(b.totalBudget)}</span>
-            </div>
-            <div class="mt-4 p-3 bg-primary-soft rounded-lg text-xs text-gray-600 border border-primary/20">
-              <div class="flex items-start gap-2">${iconInfo()}<span>Budget alerts trigger automatically when usage exceeds thresholds.</span></div>
-            </div>
-          </div>
-        </div>`;
-      document.getElementById('budgetPanel').innerHTML = panelWrap('<i class="fa-solid fa-chart-simple text-primary"></i> Budget Configuration & Variance', html);
     }
 
-    // ---------- Documents ----------
-    function renderDocuments() {
-      var all = projectDocuments.filter(function(d) { return d.projectId === selectedProjectId; });
-      var sel = document.getElementById('docTypeFilter');
-      var typeFilter = sel ? sel.value : 'all';
-      var docs = typeFilter === 'all' ? all : all.filter(function(d) { return d.type === typeFilter; });
+    function onStatusFilterChange(v) { currentStatus = v; loadProjects(); }
 
-      var docsHtml = docs.map(function(d) {
-        var icon = d.type === 'Site Photo' ? iconImage() : iconDocument();
-        return `<div class="doc-item">
-          <div class="doc-icon">${icon}</div>
-          <div class="flex-1 min-w-0"><div class="doc-name truncate">${d.name}</div>
-            <div class="doc-meta">${d.type} · ${d.date} · ${d.size} · ${d.uploadedBy}</div></div>
-          <div class="flex gap-1">
-            <button onclick="downloadDocument('${d.id}')" class="btn-icon-action" title="Download">${iconDownload()}</button>
-            <button onclick="deleteDocument('${d.id}')" class="btn-icon-action danger" title="Delete">${iconTrash()}</button>
-          </div></div>`;
-      }).join('') || '<div class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>No documents uploaded for this project</div>';
-
-      var types = ['all'];
-      all.forEach(function(d) { if (types.indexOf(d.type) === -1) types.push(d.type); });
-      var opts = types.map(function(t) {
-        return '<option value="' + t + '"' + (t === typeFilter ? ' selected' : '') + '>' + (t === 'all' ? 'All Types' : t) + '</option>';
-      }).join('');
-
-      var html = `
-        <div class="p-5">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <div class="flex items-center gap-2">
-              <label class="form-label mb-0">Filter by Type</label>
-              <select id="docTypeFilter" class="form-input text-[12px] max-w-xs" onchange="renderDocuments()">${opts}</select>
-            </div>
-            <button onclick="uploadDocument()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12px] font-semibold px-3.5 py-1.5 rounded-lg transition shadow-sm">
-              <i class="fa-solid fa-plus"></i> Upload Document
-            </button>
-          </div>
-          <div class="space-y-2">${docsHtml}</div>
-          <div class="mt-3 p-3 bg-primary-soft rounded-lg text-xs text-gray-600 border border-primary/20">
-            <div class="flex items-start gap-2">${iconInfo()}
-              <div>Purchase Orders, Purchase Bills, Sales Invoices, Delivery Challans and Packing Lists appear here automatically. Uploaded documents (contracts, site photos) stay linked to this project.</div></div>
-          </div>
-        </div>`;
-
-      document.getElementById('documentsPanel').innerHTML = panelWrap(
-        '<i class="fa-solid fa-folder-open text-primary"></i> Project Documents ' + countPill(docs.length), html);
-    }
-
-    function uploadDocument() { showToast('Document upload — coming soon!', 'info'); }
-    function downloadDocument(id) {
-      var d = projectDocuments.find(function(x) { return x.id === id; });
-      if (d) showToast('Downloading ' + d.name + '...', 'info');
-    }
-    function deleteDocument(id) {
-      var d = projectDocuments.find(function(x) { return x.id === id; });
-      if (!d) return;
-      openModal(`
-        ${modalHeader('Delete Document', d.name)}
-        <div class="px-6 py-4 text-sm text-gray-600">
-          <p>Are you sure you want to permanently delete <b class="text-gray-800">${d.name}</b>?</p>
-          <p class="text-gray-400 text-[12px] mt-1">This action cannot be undone.</p>
-        </div>
-        ${modalFooter('Delete', 'onclick="confirmDeleteDocument(\'' + id + '\')"', '')}`, { width: 'max-w-md' });
-    }
-    function confirmDeleteDocument(id) {
-      projectDocuments = projectDocuments.filter(function(x) { return x.id !== id; });
-      closeModal(); renderDocuments(); showToast('Document deleted', 'warning');
-    }
-
-    // ---------- Add / Edit project ----------
-    function openAddProject() { openProjectForm(null); }
-    function editProjectFromList(id) {
-      var p = projects.find(function(x) { return x.id === id; });
-      if (p) openProjectForm(p);
-    }
-
-    function openProjectForm(existing) {
-      var isEdit = !!existing;
-      var e = existing || { name: '', code: '', customer: '', pm: '', startDate: new Date().toISOString().split('T')[0], endDate: '', budget: '', status: 'active', description: '' };
-      var statusOpts = ['active', 'pending', 'onhold', 'completed'].map(function(s) {
-        return '<option value="' + s + '" ' + (e.status === s ? 'selected' : '') + '>' + (s === 'onhold' ? 'On Hold' : s.charAt(0).toUpperCase() + s.slice(1)) + '</option>';
-      }).join('');
-
-      openModal(`
-        ${modalHeader(isEdit ? 'Edit Project' : 'New Project', isEdit ? e.code : 'Create a new project')}
-        <div class="px-6 py-4 modal-scroll">
-          <div class="grid grid-cols-2 gap-3">
-            ${fld('Project Name <span class="required">*</span>', '<input type="text" class="form-input" id="p_name" value="' + e.name + '" placeholder="Project name">')}
-            ${fld('Project Code <span class="required">*</span>', '<input type="text" class="form-input" id="p_code" value="' + e.code + '" placeholder="e.g. 26LW073">')}
-            ${fld('Customer <span class="required">*</span>', '<input type="text" class="form-input" id="p_customer" value="' + e.customer + '" placeholder="Customer name">')}
-            ${fld('Project Manager', '<input type="text" class="form-input" id="p_pm" value="' + (e.pm || '') + '" placeholder="PM name">')}
-            ${fld('Start Date', '<input type="date" class="form-input" id="p_start" value="' + e.startDate + '">')}
-            ${fld('End Date', '<input type="date" class="form-input" id="p_end" value="' + (e.endDate || '') + '">')}
-            ${fld('Total Budget (₹)', '<input type="number" class="form-input" id="p_budget" value="' + e.budget + '" placeholder="0.00">')}
-            ${fld('Status', '<select class="form-input" id="p_status">' + statusOpts + '</select>')}
-          </div>
-          ${fld('Description', '<textarea rows="2" class="form-input" id="p_desc" placeholder="Project description">' + (e.description || '') + '</textarea>')}
-        </div>
-        ${modalFooter(isEdit ? 'Update Project' : 'Create Project', 'onclick="saveProject(\'' + (isEdit ? e.id : '') + '\')"')}`, { width: 'max-w-2xl' });
-    }
-
-    function saveProject(existingId) {
-      var v = function(id) { return document.getElementById(id).value; };
-      var name = v('p_name').trim(), code = v('p_code').trim(), customer = v('p_customer').trim();
-      if (!name || !code || !customer) { showToast('Please fill required fields (Name, Code, Customer)', 'error'); return; }
-
-      if (existingId) {
-        var p = projects.find(function(x) { return x.id === existingId; });
-        if (p) {
-          p.name = name; p.code = code; p.customer = customer;
-          p.pm = v('p_pm') || '—'; p.startDate = v('p_start'); p.endDate = v('p_end');
-          p.budget = parseFloat(v('p_budget')) || 0; p.status = v('p_status'); p.description = v('p_desc');
-          showToast('Project updated successfully', 'success');
-          if (selectedProjectId === existingId) renderDetailHeader(p);
-        }
-      } else {
-        projects.unshift({
-          id: 'PRJ-' + String(projects.length + 1).padStart(3, '0'),
-          name: name, code: code, customer: customer, status: v('p_status'),
-          startDate: v('p_start'), endDate: v('p_end'), progress: 0,
-          budget: parseFloat(v('p_budget')) || 0, actualCost: 0, revenue: 0, profit: 0,
-          pm: v('p_pm') || '—', description: v('p_desc')
-        });
-        showToast('Project created successfully', 'success');
-      }
-      closeModal(); renderProjects(); renderStats();
-    }
-
-    function exportProjectReport() {
-      showToast('Exporting project report...', 'info');
-      setTimeout(function() { showToast('Report exported successfully!', 'success'); }, 1200);
-    }
-
-    // ---------- Search (list view) ----------
+    // ---------- Search (top bar, server-side) ----------
     var searchDebounceTimer = null;
-    function onSearchInput() { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(filterProjects, 300); }
-    function filterProjects() {
+    function onSearchInput() { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applySearch, 350); }
+    function applySearch() {
       var input = document.getElementById('searchInput');
       if (!input) return;
-      var q = input.value.trim().toLowerCase();
-      document.querySelectorAll('.project-row').forEach(function(r) {
-        r.style.display = (q.length < 2 || r.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
-      });
+      var q = input.value.trim();
+      if (q.length < 2) q = '';
+      if (q === currentSearch) return;
+      currentSearch = q;
+      loadProjects();
     }
 
     (function addSearchToTopbar() {
@@ -815,9 +582,553 @@
       }
     })();
 
+    // =====================================================================
+    // DETAIL VIEW
+    // =====================================================================
+    async function openProjectDetail(id) {
+      selectedProjectId = id;
+      selectedProject = null;
+      tabData = { sales: [], purchases: [], expenses: [], budget: null, documents: [] };
+
+      document.getElementById('listView').classList.add('hidden');
+      var dv = document.getElementById('detailView');
+      dv.classList.remove('hidden', 'animate-slidein');
+      void dv.offsetWidth;
+      dv.classList.add('animate-slidein');
+
+      document.querySelectorAll('#projTabs .page-tab-btn').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
+      document.querySelectorAll('.page-tab-panel').forEach(function(pnl, i) { pnl.classList.toggle('active', i === 0); });
+      document.getElementById('projTabs').scrollLeft = 0;
+
+      var loading = '<div class="text-center py-16 text-gray-400 text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading…</div>';
+      ['overviewPanel', 'salesPanel', 'purchasesPanel', 'expensesPanel', 'budgetPanel', 'documentsPanel'].forEach(function(pid) {
+        document.getElementById(pid).innerHTML = loading;
+      });
+
+      var ok = await refreshDetail();
+      if (!ok) { backToList(); return; }
+
+      setTimeout(updateTabArrows, 50);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Re-fetches the project + every tab. Returns true when the project loaded.
+    async function refreshDetail() {
+      var id = selectedProjectId;
+      if (!id) return false;
+      try {
+        var r = await Promise.all([
+          apiRequest(PROJECT_API + '/get-project/' + enc(id)),
+          apiRequest(PROJECT_API + '/get-sales/' + enc(id)),
+          apiRequest(PROJECT_API + '/get-purchases/' + enc(id)),
+          apiRequest(PROJECT_API + '/get-expenses/' + enc(id)),
+          apiRequest(PROJECT_API + '/get-budget/' + enc(id)),
+          apiRequest(PROJECT_API + '/get-documents/' + enc(id))
+        ]);
+        if (selectedProjectId !== id) return true;   // user already moved on
+        selectedProject = r[0].data;
+        tabData.sales = r[1].data || [];
+        tabData.purchases = r[2].data || [];
+        tabData.expenses = r[3].data || [];
+        tabData.budget = r[4].data || null;
+        tabData.documents = r[5].data || [];
+        renderDetailHeader(selectedProject);
+        renderOverview();
+        renderSales();
+        renderPurchases();
+        renderExpenses();
+        renderBudget();
+        renderDocuments();
+        return true;
+      } catch (e) {
+        showToast(e.message, 'error');
+        return false;
+      }
+    }
+
+    function backToList() {
+      document.getElementById('detailView').classList.add('hidden');
+      document.getElementById('listView').classList.remove('hidden');
+      selectedProjectId = null;
+      selectedProject = null;
+      loadProjects();
+    }
+
+    function renderDetailHeader(p) {
+      var profit = Number(p.profit || 0);
+      var progress = Number(p.progress || 0);
+      document.getElementById('detailProjectName').textContent = p.name;
+      document.getElementById('detailStatusBadge').innerHTML = statusBadge(p.status);
+      document.getElementById('di_code').textContent = p.code || '—';
+      document.getElementById('di_customer').textContent = p.customer || '—';
+      document.getElementById('di_pm').textContent = p.pm || '—';
+      document.getElementById('di_start').textContent = p.startDate || '—';
+      document.getElementById('di_end').textContent = p.endDate || '—';
+      document.getElementById('di_progress').textContent = progress + '%';
+      var f = document.getElementById('di_progress_fill');
+      f.style.width = Math.min(progress, 100) + '%';
+      f.className = 'fill ' + (p.status === 'completed' ? 'fill-green' : (p.status === 'onhold' ? 'fill-amber' : 'fill-blue'));
+      document.getElementById('di_budget').textContent = money(p.budget);
+      var pe = document.getElementById('di_profit');
+      pe.textContent = money(profit);
+      pe.className = 'detail-info-value ' + (profit >= 0 ? 'text-green-600' : 'text-red-600');
+      document.getElementById('di_desc').textContent = p.description || '—';
+      var hr = document.getElementById('di_hold_row');
+      if (p.holdReason) { hr.style.display = ''; document.getElementById('di_hold').textContent = p.holdReason; }
+      else hr.style.display = 'none';
+    }
+
+    // ---------- Overview ----------
+    function renderOverview() {
+      var p = selectedProject;
+      if (!p) return;
+      var profit = Number(p.profit || 0);
+      var html = `
+        <div class="p-5">
+          <h3 class="text-[14px] font-bold text-gray-800 mb-3">Financial Summary</h3>
+          <table class="report-table"><tbody>
+            <tr><td class="text-gray-500">Total Budget</td><td class="text-right font-mono font-semibold">${money(p.budget)}</td></tr>
+            <tr><td class="text-gray-500">Revenue Generated</td><td class="text-right font-mono font-semibold text-primary">${money(p.revenue)}</td></tr>
+            <tr><td class="text-gray-500">Actual Cost</td><td class="text-right font-mono font-semibold text-red-600">${money(p.actualCost)}</td></tr>
+            <tr class="total-row"><td class="text-right font-bold">Net Profit</td><td class="text-right font-mono font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${money(profit)}</td></tr>
+            <tr><td class="text-gray-500">Margin</td><td class="text-right font-semibold">${Number(p.margin || 0).toFixed(1)}%</td></tr>
+          </tbody></table>
+          <div class="mt-3 text-[11px] text-gray-400">Revenue = linked invoices · Cost = linked purchase bills + approved expenses (amounts include GST/tax).</div>
+        </div>`;
+      document.getElementById('overviewPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-chart-pie text-primary"></i> Project Overview', html,
+        '<div class="text-[11px] text-gray-400 font-mono">Project ID: ' + esc(p.id) + '</div>');
+    }
+
+    // ---------- Sales ----------
+    function renderSales() {
+      var list = tabData.sales;
+      var rows = list.map(function(s, i) {
+        return `<tr class="border-b border-gray-400 table-row-hover">
+          <td class="px-4 py-3 text-sm font-semibold">${esc(s.number)}</td>
+          <td class="px-4 py-3 text-xs text-gray-500">${esc(s.date || '—')}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">${esc(s.customer || '—')}</td>
+          <td class="px-4 py-3 font-mono font-semibold text-primary">${money(s.amount)}</td>
+          <td class="px-4 py-3">${statusBadge(s.status)}</td>
+          <td class="px-4 py-3"><button onclick="askUnlinkSale(${i})" class="btn-icon-action danger" title="Remove from project">${iconUnlink()}</button></td></tr>`;
+      }).join('') || emptyRow(6, 'No sales linked to this project');
+      var btn = '<button class="btn-primary-sm" onclick="openLinkInvoice()"><i class="fa-solid fa-link"></i> Link Invoice</button>';
+      document.getElementById('salesPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-cart-shopping text-primary"></i> Project Sales ' + countPill(list.length),
+        tableHtml(['Invoice #', 'Date', 'Customer', 'Amount', 'Status', 'Action'], rows), btn);
+    }
+
+    // ---------- Purchases ----------
+    function renderPurchases() {
+      var list = tabData.purchases;
+      var rows = list.map(function(p, i) {
+        return `<tr class="border-b border-gray-400 table-row-hover">
+          <td class="px-4 py-3 text-sm font-semibold">${esc(p.number)}</td>
+          <td class="px-4 py-3 text-xs text-gray-500">${esc(p.date || '—')}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">${esc(p.vendor || '—')}</td>
+          <td class="px-4 py-3 font-mono font-semibold text-red-600">${money(p.amount)}</td>
+          <td class="px-4 py-3">${statusBadge(p.status)}</td>
+          <td class="px-4 py-3"><button onclick="askUnlinkPurchase(${i})" class="btn-icon-action danger" title="Remove from project">${iconUnlink()}</button></td></tr>`;
+      }).join('') || emptyRow(6, 'No purchases linked to this project');
+      var btn = '<button class="btn-primary-sm" onclick="openLinkBill()"><i class="fa-solid fa-link"></i> Link Purchase Bill</button>';
+      document.getElementById('purchasesPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-truck-fast text-primary"></i> Project Purchases ' + countPill(list.length),
+        tableHtml(['Bill #', 'Date', 'Vendor', 'Amount', 'Status', 'Action'], rows), btn);
+    }
+
+    // ---------- Expenses (read-only: assigned from the Expenses page) ----------
+    function renderExpenses() {
+      var list = tabData.expenses;
+      var rows = list.map(function(e) {
+        return `<tr class="border-b border-gray-400 table-row-hover">
+          <td class="px-4 py-3 text-xs text-gray-500">${esc(e.date || '—')}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">${esc(e.category)}</td>
+          <td class="px-4 py-3 text-sm text-gray-500">${esc(e.vendor || '—')}</td>
+          <td class="px-4 py-3 font-mono font-semibold text-amber-600">${money(e.amount)}</td>
+          <td class="px-4 py-3">${statusBadge(e.status)}</td></tr>`;
+      }).join('') || emptyRow(5, 'No expenses linked to this project');
+      document.getElementById('expensesPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-receipt text-primary"></i> Project Expenses ' + countPill(list.length),
+        tableHtml(['Date', 'Category', 'Vendor', 'Amount', 'Status'], rows) +
+        infoNote('Expenses appear here when this project is selected on the expense. Only <b>Approved</b> expenses count towards the project cost.'));
+    }
+
+    // ---------- Budget ----------
+    function renderBudget() {
+      var b = tabData.budget;
+      if (!b) {
+        document.getElementById('budgetPanel').innerHTML = panelWrap('Project Budget', '<div class="text-center py-10 text-gray-400 text-sm">No budget configured</div>');
+        return;
+      }
+      var usage = Number(b.usagePct || 0);
+      var variance = Number(b.variance || 0);
+      var barClass = usage > 100 ? 'fill-red' : (usage > 90 ? 'fill-amber' : 'fill-blue');
+      var html = `
+        <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h3 class="text-[14px] font-bold text-gray-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-simple text-primary"></i> Budget Breakdown</h3>
+            <table class="report-table"><tbody>
+              <tr><td class="text-gray-500">Total Budget</td><td class="text-right font-mono font-semibold">${money(b.totalBudget)}</td></tr>
+              <tr><td class="text-gray-500">Purchase Budget</td><td class="text-right font-mono">${money(b.purchaseBudget)}</td></tr>
+              <tr><td class="text-gray-500">Expense Budget</td><td class="text-right font-mono">${money(b.expenseBudget)}</td></tr>
+              <tr><td class="text-gray-500">Hours Budget</td><td class="text-right font-mono">${money(b.hoursBudget)}</td></tr>
+              <tr class="total-row"><td class="text-right font-bold">Actual Cost</td><td class="text-right font-mono font-bold text-red-600">${money(b.actualCost)}</td></tr>
+              <tr class="grand-total"><td class="text-right font-bold">Budget Variance</td><td class="text-right font-mono font-bold ${variance >= 0 ? 'text-primary' : 'text-red-600'}">${money(variance)}</td></tr>
+            </tbody></table>
+          </div>
+          <div>
+            <h3 class="text-[14px] font-bold text-gray-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-gauge-high text-primary"></i> Budget Utilization</h3>
+            <div class="progress-bar" style="height:12px;"><div class="fill ${barClass}" style="width:${Math.min(usage, 100)}%;height:100%;"></div></div>
+            <div class="flex justify-between text-xs mt-1">
+              <span class="text-gray-500">${usage.toFixed(1)}% used</span>
+              <span class="text-gray-500">${money(b.actualCost)} / ${money(b.totalBudget)}</span>
+            </div>
+            <div class="mt-4 p-3 bg-primary-soft rounded-lg text-xs text-gray-600 border border-primary/20">
+              <div class="flex items-start gap-2">${iconInfo()}<span>Edit the project to change the budget split.</span></div>
+            </div>
+          </div>
+        </div>`;
+      document.getElementById('budgetPanel').innerHTML = panelWrap('<i class="fa-solid fa-chart-simple text-primary"></i> Budget Configuration & Variance', html);
+    }
+
+    // ---------- Documents ----------
+    function renderDocuments() {
+      var all = tabData.documents;
+      var sel = document.getElementById('docTypeFilter');
+      var typeFilter = sel ? sel.value : 'all';
+      if (typeFilter !== 'all' && !all.some(function(d) { return d.type === typeFilter; })) typeFilter = 'all';
+      visibleDocs = typeFilter === 'all' ? all : all.filter(function(d) { return d.type === typeFilter; });
+
+      var docsHtml = visibleDocs.map(function(d, i) {
+        var icon = d.type === 'Site Photo' ? iconImage() : iconDocument();
+        var del = d.source === 'UPLOADED'
+          ? '<button onclick="askDeleteDocument(' + i + ')" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>' : '';
+        return `<div class="doc-item">
+          <div class="doc-icon">${icon}</div>
+          <div class="flex-1 min-w-0"><div class="doc-name truncate">${esc(d.name)}</div>
+            <div class="doc-meta">${esc(d.type)} · ${esc(d.date || '—')} · ${fmtSize(d.size)} · ${esc(d.uploadedBy || '—')}</div></div>
+          <div class="flex gap-1">
+            <button onclick="downloadDoc(${i})" class="btn-icon-action" title="Download">${iconDownload()}</button>${del}
+          </div></div>`;
+      }).join('') || '<div class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconBox() + '</div>No documents for this project</div>';
+
+      var types = ['all'];
+      all.forEach(function(d) { if (types.indexOf(d.type) === -1) types.push(d.type); });
+      var opts = types.map(function(t) {
+        return '<option value="' + esc(t) + '"' + (t === typeFilter ? ' selected' : '') + '>' + (t === 'all' ? 'All Types' : esc(t)) + '</option>';
+      }).join('');
+
+      var html = `
+        <div class="p-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <label class="form-label mb-0">Filter by Type</label>
+              <select id="docTypeFilter" class="form-input text-[12px] max-w-xs" onchange="renderDocuments()">${opts}</select>
+            </div>
+            <button onclick="openUploadDocument()" class="btn-primary-sm"><i class="fa-solid fa-plus"></i> Upload Document</button>
+          </div>
+          <div class="space-y-2">${docsHtml}</div>
+          <div class="mt-3 p-3 bg-primary-soft rounded-lg text-xs text-gray-600 border border-primary/20">
+            <div class="flex items-start gap-2">${iconInfo()}
+              <div>PDFs of linked sales invoices appear here automatically. Uploaded documents (contracts, site photos) stay linked to this project.</div></div>
+          </div>
+        </div>`;
+
+      document.getElementById('documentsPanel').innerHTML = panelWrap(
+        '<i class="fa-solid fa-folder-open text-primary"></i> Project Documents ' + countPill(visibleDocs.length), html);
+    }
+
+    function downloadDoc(i) {
+      var d = visibleDocs[i];
+      if (!d || !d.downloadUrl) { showToast('No file available to download', 'warning'); return; }
+      downloadFromApi(d.downloadUrl, d.name);
+    }
+
+    function openUploadDocument() {
+      var types = ['Contract', 'Site Photo', 'Drawing', 'Report', 'Other'].map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+      openModal(`
+        ${modalHeader('Upload Document', selectedProject ? selectedProject.name : '')}
+        <div class="px-6 py-4 modal-scroll">
+          ${fld('File <span class="required">*</span>', '<input type="file" class="form-input" id="up_file">', 'Max 10 MB')}
+          ${fld('Document Type', '<select class="form-input" id="up_type">' + types + '</select>')}
+          ${fld('Uploaded By', '<input type="text" class="form-input" id="up_by" value="' + esc(CURRENT_USER) + '">')}
+        </div>
+        ${modalFooter('Upload', 'onclick="submitUploadDocument()"')}`, { width: 'max-w-md' });
+    }
+    async function submitUploadDocument() {
+      var f = document.getElementById('up_file').files[0];
+      if (!f) { showToast('Please choose a file', 'error'); return; }
+      if (f.size > 10 * 1024 * 1024) { showToast('File is too large (max 10 MB)', 'error'); return; }
+      var fd = new FormData();
+      fd.append('file', f);
+      fd.append('documentType', document.getElementById('up_type').value);
+      fd.append('uploadedBy', document.getElementById('up_by').value.trim());
+      setSaving(true);
+      try {
+        await apiRequest(PROJECT_API + '/upload-document/' + enc(selectedProjectId), { method: 'POST', form: fd });
+        closeModal(); showToast('Document uploaded', 'success');
+        await refreshDetail();
+      } catch (e) { setSaving(false); showToast(e.message, 'error'); }
+    }
+
+    function askDeleteDocument(i) {
+      var d = visibleDocs[i];
+      if (!d) return;
+      pendingDocDeleteId = d.id;
+      openModal(`
+        ${modalHeader('Delete Document', d.name)}
+        <div class="px-6 py-4 text-sm text-gray-600">
+          <p>Are you sure you want to permanently delete <b class="text-gray-800">${esc(d.name)}</b>?</p>
+          <p class="text-gray-400 text-[12px] mt-1">This action cannot be undone.</p>
+        </div>
+        ${modalFooter('Delete', 'onclick="confirmDeleteDocument()"')}`, { width: 'max-w-md' });
+    }
+    async function confirmDeleteDocument() {
+      setSaving(true);
+      try {
+        await apiRequest(PROJECT_API + '/delete-document/' + enc(pendingDocDeleteId), { method: 'DELETE' });
+        closeModal(); showToast('Document deleted', 'warning');
+        await refreshDetail();
+      } catch (e) { closeModal(); showToast(e.message, 'error'); }
+    }
+
+    // ---------- Link / unlink invoices and purchase bills ----------
+    async function openLinkInvoice() {
+      linkMode = 'INVOICE';
+      openModal(modalHeader('Link Invoice', 'Add an existing sales invoice to this project') +
+        '<div class="px-6 py-10 text-center text-gray-400 text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading invoices…</div>', { width: 'max-w-lg' });
+      try {
+        var body = await apiRequest(INVOICE_API + '/get-all-invoices?pageNumber=1&pageSize=200');
+        var linked = tabData.sales.map(function(s) { return s.number; });
+        var items = ((body && body.content) || []).filter(function(i) { return linked.indexOf(i.invoiceStrId) === -1; });
+        var options = items.map(function(i) {
+          return '<option value="' + esc(i.invoiceStrId) + '">' + esc(i.invoiceStrId + ' — ' + (i.invoiceCustomerName || '') + ' — ' + money(i.invoiceTotalAmountInr)) + '</option>';
+        }).join('');
+        renderLinkModal('Link Invoice', 'Add an existing sales invoice to this project', 'Invoice', options, items.length);
+      } catch (e) { closeModal(); showToast(e.message, 'error'); }
+    }
+    async function openLinkBill() {
+      linkMode = 'PURCHASE_BILL';
+      openModal(modalHeader('Link Purchase Bill', 'Add an existing purchase bill to this project') +
+        '<div class="px-6 py-10 text-center text-gray-400 text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading bills…</div>', { width: 'max-w-lg' });
+      try {
+        var body = await apiRequest(BILL_API + '/get-all-purchase-bills');
+        var linked = tabData.purchases.map(function(p) { return p.refId; });
+        var items = ((body && body.data) || []).filter(function(b) { return linked.indexOf(b.pbStrId) === -1; });
+        var options = items.map(function(b) {
+          return '<option value="' + esc(b.pbStrId) + '">' + esc(b.pbNumber + ' — ' + (b.vendorName || '') + ' — ' + money(b.amount)) + '</option>';
+        }).join('');
+        renderLinkModal('Link Purchase Bill', 'Add an existing purchase bill to this project', 'Purchase Bill', options, items.length);
+      } catch (e) { closeModal(); showToast(e.message, 'error'); }
+    }
+    function renderLinkModal(title, subtitle, label, options, count) {
+      var body = count
+        ? fld(label + ' <span class="required">*</span>', '<select class="form-input" id="link_ref"><option value="">— Select —</option>' + options + '</select>',
+              'A record can belong to only one project.')
+        : '<div class="text-center py-6 text-gray-400 text-sm">No unlinked ' + label.toLowerCase() + 's available.</div>';
+      openModal(`${modalHeader(title, subtitle)}<div class="px-6 py-4">${body}</div>
+        ${count ? modalFooter('Link', 'onclick="submitLink()"') : ''}`, { width: 'max-w-lg' });
+    }
+    async function submitLink() {
+      var ref = document.getElementById('link_ref').value;
+      if (!ref) { showToast('Please select a record', 'error'); return; }
+      setSaving(true);
+      try {
+        await apiRequest(PROJECT_API + '/link-record/' + enc(selectedProjectId), { method: 'POST', json: { linkType: linkMode, refStrId: ref } });
+        closeModal(); showToast('Linked to project', 'success');
+        await refreshDetail();
+      } catch (e) { setSaving(false); showToast(e.message, 'error'); }
+    }
+
+    function askUnlinkSale(i) {
+      var d = tabData.sales[i]; if (!d) return;
+      pendingUnlink = { type: 'INVOICE', ref: d.number };
+      confirmUnlinkModal('Invoice ' + d.number);
+    }
+    function askUnlinkPurchase(i) {
+      var d = tabData.purchases[i]; if (!d) return;
+      pendingUnlink = { type: 'PURCHASE_BILL', ref: d.refId };
+      confirmUnlinkModal('Purchase bill ' + d.number);
+    }
+    function confirmUnlinkModal(what) {
+      openModal(`
+        ${modalHeader('Remove from Project', what)}
+        <div class="px-6 py-4 text-sm text-gray-600">
+          <p>Remove <b class="text-gray-800">${esc(what)}</b> from this project?</p>
+          <p class="text-gray-400 text-[12px] mt-1">The record itself is not deleted - it just stops counting in this project.</p>
+        </div>
+        ${modalFooter('Remove', 'onclick="confirmUnlink()"')}`, { width: 'max-w-md' });
+    }
+    async function confirmUnlink() {
+      if (!pendingUnlink) return;
+      setSaving(true);
+      try {
+        await apiRequest(PROJECT_API + '/unlink-record/' + enc(selectedProjectId) + '?linkType=' + enc(pendingUnlink.type) + '&refStrId=' + enc(pendingUnlink.ref), { method: 'DELETE' });
+        closeModal(); showToast('Removed from project', 'warning');
+        await refreshDetail();
+      } catch (e) { closeModal(); showToast(e.message, 'error'); }
+    }
+
+    // =====================================================================
+    // DELETE PROJECT
+    // =====================================================================
+    function deleteConfirmModal(p, onclickAttr) {
+      openModal(`
+        ${modalHeader('Delete Project', p.name)}
+        <div class="px-6 py-4 text-sm text-gray-600">
+          <p>Are you sure you want to permanently delete <b class="text-gray-800">${esc(p.name)}</b>?</p>
+          <p class="text-gray-400 text-[12px] mt-1">A project with linked invoices, bills or expenses cannot be deleted - unlink them first. This action cannot be undone.</p>
+        </div>
+        ${modalFooter('Delete', onclickAttr)}`, { width: 'max-w-md' });
+    }
+    function editSelectedProject() { if (selectedProject) openProjectForm(selectedProject); }
+    function deleteSelectedProject() { if (selectedProject) deleteConfirmModal(selectedProject, 'onclick="confirmDeleteProject(\'' + esc(selectedProject.id) + '\', true)"'); }
+    function deleteProjectFromList(id) {
+      var p = projects.find(function(x) { return x.id === id; });
+      if (p) deleteConfirmModal(p, 'onclick="confirmDeleteProject(\'' + esc(id) + '\', false)"');
+    }
+    async function confirmDeleteProject(id, fromDetail) {
+      setSaving(true);
+      try {
+        await apiRequest(PROJECT_API + '/delete-project/' + enc(id), { method: 'DELETE' });
+        closeModal(); showToast('Project deleted', 'warning');
+        if (fromDetail) backToList(); else loadProjects();
+      } catch (e) { closeModal(); showToast(e.message, 'error'); }
+    }
+
+    // =====================================================================
+    // ADD / EDIT PROJECT
+    // =====================================================================
+    async function loadClients() {
+      if (clientsCache) return clientsCache;
+      try {
+        var body = await apiRequest(CLIENT_API + '/get-all-clients');
+        clientsCache = ((body.data && body.data.customers) || []).map(function(c) { return { id: c.id, label: c.companyName || c.name }; });
+        return clientsCache;
+      } catch (e) {
+        showToast('Could not load customers: ' + e.message, 'warning');
+        return [];
+      }
+    }
+
+    function openAddProject() { openProjectForm(null); }
+    function editProjectFromList(id) {
+      var p = projects.find(function(x) { return x.id === id; });
+      if (p) openProjectForm(p);
+    }
+
+    async function openProjectForm(existing) {
+      var clients = (await loadClients()).slice();
+      var isEdit = !!existing;
+      var e = existing || { name: '', clientStrId: null, customer: '', pm: '', startDate: new Date().toISOString().split('T')[0], endDate: '',
+                            progress: 0, budget: '', purchaseBudget: '', expenseBudget: '', hoursBudget: '', status: 'active', description: '', holdReason: '' };
+      if (e.clientStrId && !clients.some(function(c) { return c.id === e.clientStrId; })) clients.push({ id: e.clientStrId, label: e.customer });
+      var otherSelected = isEdit && !e.clientStrId;
+
+      var clientOpts = '<option value="">— Select customer —</option>' +
+        clients.map(function(c) { return '<option value="' + esc(c.id) + '"' + (c.id === e.clientStrId ? ' selected' : '') + '>' + esc(c.label) + '</option>'; }).join('') +
+        '<option value="__other__"' + (otherSelected ? ' selected' : '') + '>Other (type a name)</option>';
+
+      var statusOpts = STATUS_OPTIONS.map(function(s) {
+        return '<option value="' + s + '"' + (e.status === s ? ' selected' : '') + '>' + (s === 'onhold' ? 'On Hold' : s.charAt(0).toUpperCase() + s.slice(1)) + '</option>';
+      }).join('');
+
+      openModal(`
+        ${modalHeader(isEdit ? 'Edit Project' : 'New Project', isEdit ? 'Code: ' + e.code : 'Project code is generated automatically')}
+        <div class="px-6 py-4 modal-scroll">
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Project Name <span class="required">*</span>', '<input type="text" class="form-input" id="p_name" value="' + esc(e.name) + '" placeholder="Project name">')}
+            <div>
+              ${fld('Customer <span class="required">*</span>', '<select class="form-input" id="p_client" onchange="onCustomerChange()">' + clientOpts + '</select>')}
+              <div id="p_customer_wrap" style="display:${otherSelected ? 'block' : 'none'};margin-top:-6px;margin-bottom:12px;">
+                <input type="text" class="form-input" id="p_customer_text" value="${esc(otherSelected ? e.customer : '')}" placeholder="Customer name">
+              </div>
+            </div>
+            ${fld('Project Manager', '<input type="text" class="form-input" id="p_pm" value="' + esc(e.pm || '') + '" placeholder="PM name">')}
+            ${fld('Status', '<select class="form-input" id="p_status" onchange="onStatusChange()">' + statusOpts + '</select>')}
+            ${fld('Start Date', '<input type="date" class="form-input" id="p_start" value="' + esc(e.startDate || '') + '">')}
+            ${fld('End Date', '<input type="date" class="form-input" id="p_end" value="' + esc(e.endDate || '') + '">')}
+            ${fld('Progress (%)', '<input type="number" min="0" max="100" class="form-input" id="p_progress" value="' + esc(e.progress == null ? 0 : e.progress) + '">')}
+            ${fld('Total Budget (₹)', '<input type="number" min="0" class="form-input" id="p_budget" value="' + esc(numVal(e.budget)) + '" placeholder="0.00">')}
+            ${fld('Purchase Budget (₹)', '<input type="number" min="0" class="form-input" id="p_pbudget" value="' + esc(numVal(e.purchaseBudget)) + '" placeholder="0.00">')}
+            ${fld('Expense Budget (₹)', '<input type="number" min="0" class="form-input" id="p_ebudget" value="' + esc(numVal(e.expenseBudget)) + '" placeholder="0.00">')}
+            ${fld('Hours Budget (₹)', '<input type="number" min="0" class="form-input" id="p_hbudget" value="' + esc(numVal(e.hoursBudget)) + '" placeholder="0.00">')}
+          </div>
+          <div id="p_hold_wrap" style="display:${e.status === 'onhold' ? 'block' : 'none'};">
+            ${fld('Hold Reason <span class="required">*</span>', '<input type="text" class="form-input" id="p_hold" value="' + esc(e.holdReason || '') + '" placeholder="Why is the project on hold?">')}
+          </div>
+          ${fld('Description', '<textarea rows="2" class="form-input" id="p_desc" placeholder="Project description">' + esc(e.description || '') + '</textarea>')}
+          <div class="form-hint">Purchase + expense + hours budget cannot exceed the total budget.</div>
+        </div>
+        ${modalFooter(isEdit ? 'Update Project' : 'Create Project', 'onclick="saveProject(\'' + (isEdit ? esc(e.id) : '') + '\')"')}`, { width: 'max-w-2xl' });
+    }
+
+    function onCustomerChange() {
+      document.getElementById('p_customer_wrap').style.display = document.getElementById('p_client').value === '__other__' ? 'block' : 'none';
+    }
+    function onStatusChange() {
+      document.getElementById('p_hold_wrap').style.display = document.getElementById('p_status').value === 'onhold' ? 'block' : 'none';
+    }
+
+    async function saveProject(existingId) {
+      var v = function(id) { return document.getElementById(id).value; };
+      var num = function(id) { var x = parseFloat(v(id)); return isNaN(x) ? 0 : x; };
+      var name = v('p_name').trim();
+      var sel = v('p_client');
+      var status = v('p_status');
+      var customerText = v('p_customer_text').trim();
+
+      if (!name) { showToast('Project name is required', 'error'); return; }
+      if (!sel || (sel === '__other__' && !customerText)) { showToast('Please select or enter a customer', 'error'); return; }
+      if (status === 'onhold' && !v('p_hold').trim()) { showToast('Hold reason is required when the project is On Hold', 'error'); return; }
+
+      var progressRaw = v('p_progress');
+      // Only fields that exist in ProjectRequestDto - the backend rejects unknown properties.
+      var payload = {
+        name: name,
+        clientStrId: sel === '__other__' ? null : sel,
+        customer: sel === '__other__' ? customerText : null,
+        pm: v('p_pm').trim() || null,
+        status: status,
+        startDate: v('p_start') || null,
+        endDate: v('p_end') || null,
+        progress: progressRaw === '' ? null : parseInt(progressRaw, 10),
+        budget: num('p_budget'),
+        purchaseBudget: num('p_pbudget'),
+        expenseBudget: num('p_ebudget'),
+        hoursBudget: num('p_hbudget'),
+        description: v('p_desc').trim() || null,
+        holdReason: status === 'onhold' ? v('p_hold').trim() : null
+      };
+
+      setSaving(true);
+      try {
+        if (existingId) {
+          await apiRequest(PROJECT_API + '/update-project/' + enc(existingId), { method: 'PUT', json: payload });
+          showToast('Project updated successfully', 'success');
+        } else {
+          var res = await apiRequest(PROJECT_API + '/create-project', { method: 'POST', json: payload });
+          showToast('Project created: ' + (res.data && res.data.code ? res.data.code : ''), 'success');
+        }
+        closeModal();
+        if (existingId && selectedProjectId === existingId) await refreshDetail();
+        else loadProjects();
+      } catch (e) {
+        setSaving(false);
+        showToast(e.message, 'error');
+      }
+    }
+
+    // =====================================================================
+    // EXPORT (CSV from the backend)
+    // =====================================================================
+    async function exportProjectReport() {
+      showToast('Exporting project report...', 'info');
+      await downloadFromApi('/api/projects/v1/export', 'projects.csv');
+    }
+
     // ---------- Init ----------
-    renderProjects();
-    renderStats();
+    loadProjects();
   </script>
 
 </body>

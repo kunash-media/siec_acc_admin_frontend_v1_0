@@ -713,7 +713,9 @@
     }
 
     // Backend can return null for optional fields; the page code expects strings/numbers
-    function normalizeCustomer(c) {
+        function normalizeCustomer(c) {
+      // backend sends the country as "clientCountry"; the page uses "country"
+      if (c.country == null && c.clientCountry != null) c.country = c.clientCountry;
       ['name', 'companyName', 'customerType', 'gstin', 'pan', 'email', 'phone', 'billingAddress',
        'shippingAddress', 'city', 'state', 'country', 'pincode', 'paymentTerms', 'status', 'createdAt']
         .forEach(function(k) { if (c[k] == null) c[k] = ''; });
@@ -743,19 +745,26 @@
       return params.toString();
     }
 
-    // Fetch client types (standard + custom saved in DB) for the form and the "All Types" filter
+    // Backend has no /get-client-types endpoint. Custom types are learned from the
+    // customer rows returned by /get-all-clients (see mergeTypesFromCustomers).
     function loadClientTypes() {
-      return api('GET', '/get-client-types')
-        .then(function(list) {
-          if (Array.isArray(list) && list.length) CLIENT_TYPES = list;
-        })
-        .catch(function(err) { console.warn('Could not load client types, using defaults:', err.message); });
+      return Promise.resolve();
+    }
+
+    function mergeTypesFromCustomers(list) {
+      list.forEach(function(c) {
+        var t = c.customerType;
+        if (t && CLIENT_TYPES.map(function(x) { return x.toLowerCase(); }).indexOf(t.toLowerCase()) === -1) {
+          CLIENT_TYPES.push(t);
+        }
+      });
     }
 
     function loadCustomers() {
       return api('GET', '/get-all-clients?' + buildQuery())
         .then(function(data) {
           customers = ((data && data.customers) || []).map(normalizeCustomer);
+          mergeTypesFromCustomers(customers);
           PAGINATION = (data && data.pagination) || null;
           META = (data && data.meta) || null; // meta now arrives in the same response, no separate call needed
         })
@@ -1229,7 +1238,7 @@
       var shippingAddress = document.getElementById('f_shippingAddress') ? document.getElementById('f_shippingAddress').value.trim() : '';
       var city = document.getElementById('f_city') ? document.getElementById('f_city').value.trim() : '';
       var state = document.getElementById('f_state') ? document.getElementById('f_state').value : 'Maharashtra';
-      var country = document.getElementById('f_country') ? document.getElementById('f_country').value.trim() : '';
+      var clientCountry = document.getElementById('f_country') ? document.getElementById('f_country').value.trim() : '';
       var pincode = document.getElementById('f_pincode') ? document.getElementById('f_pincode').value.trim() : '';
       var gstin = document.getElementById('f_gstin') ? document.getElementById('f_gstin').value.trim().toUpperCase() : '';
       var pan = document.getElementById('f_pan') ? document.getElementById('f_pan').value.trim().toUpperCase() : '';
@@ -1250,7 +1259,7 @@
         shippingAddress: shippingAddress || billingAddress,
         city: city,
         state: state,
-        country: country,
+        clientCountry: clientCountry,
         pincode: pincode,
         gstin: gstin,
         pan: pan,
@@ -1266,7 +1275,7 @@
       } else {
         body.receivable = 0;
         body.color = customerColors[Math.floor(Math.random() * customerColors.length)];
-        request = api('POST', '/create-client', body);
+         request = api('POST', '/create-client', body);
       }
 
       request
@@ -1279,33 +1288,33 @@
     }
 
     function delCustomer(id) {
-  var c = customers.find(function(x) { return x.id === id; });
-  if (!c) return;
+      var c = customers.find(function(x) { return x.id === id; });
+      if (!c) return;
 
-  var modalContent = `
-    ${modalHeader('Delete Client', c.name)}
-    <div class="px-6 py-5 text-sm text-gray-600">
-      <div class="flex items-start gap-3 p-3.5 border border-red-200 bg-red-50 rounded-lg mb-4">
-        <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-          ${iconTrash()}
+      var modalContent = `
+        ${modalHeader('Delete Client', c.name)}
+        <div class="px-6 py-5 text-sm text-gray-600">
+          <div class="flex items-start gap-3 p-3.5 border border-red-200 bg-red-50 rounded-lg mb-4">
+            <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+              ${iconTrash()}
+            </div>
+            <div>
+              <p class="font-semibold text-red-700">This action cannot be undone</p>
+              <p class="text-[12px] text-red-600 mt-0.5">The client record and its associations will be permanently removed.</p>
+            </div>
+          </div>
+
+          <p class="mb-2">Are you sure you want to permanently delete
+            <b class="text-gray-900">${c.name}</b>${c.companyName ? ' (' + c.companyName + ')' : ''}?</p>
+
+          ${c.receivable > 0
+            ? '<div class="border border-amber-200 bg-amber-50 rounded-lg px-3.5 py-2.5 mt-3 text-[12.5px] text-amber-700">⚠ This client has an outstanding receivable of <b>' + money(c.receivable) + '</b>.</div>'
+            : ''}
         </div>
-        <div>
-          <p class="font-semibold text-red-700">This action cannot be undone</p>
-          <p class="text-[12px] text-red-600 mt-0.5">The client record and its associations will be permanently removed.</p>
-        </div>
-      </div>
-
-      <p class="mb-2">Are you sure you want to permanently delete
-        <b class="text-gray-900">${c.name}</b>${c.companyName ? ' (' + c.companyName + ')' : ''}?</p>
-
-      ${c.receivable > 0
-        ? '<div class="border border-amber-200 bg-amber-50 rounded-lg px-3.5 py-2.5 mt-3 text-[12.5px] text-amber-700">⚠ This client has an outstanding receivable of <b>' + money(c.receivable) + '</b>.</div>'
-        : ''}
-    </div>
-    ${modalFooter('Delete', 'onclick="confirmDeleteCustomer(\'' + id + '\')"', '', 'danger')}
-  `;
-  openModal(modalContent, { width: 'max-w-md' });
-}
+        ${modalFooter('Delete', 'onclick="confirmDeleteCustomer(\'' + id + '\')"', '', 'danger')}
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
 
     function confirmDeleteCustomer(id) {
       api('DELETE', '/delete-client/' + encodeURIComponent(id))

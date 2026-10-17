@@ -8,7 +8,7 @@
 <link rel="manifest" href="/favicon_io/site.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<title>Sales Orders — SIEC</title>
+<title>Sales Orders — Aquilon ERP</title>
 
 <script>
   (function () {
@@ -536,6 +536,40 @@
     });
 
     // =============================================================
+    // API CONFIG  (Spring Boot backend on port 9093)
+    // =============================================================
+    var API_BASE = 'http://localhost:9093/api/sales-orders';
+
+    var API = {
+      create:  '/create-sales-order',
+      getById: '/get-sales-order-by-id/',
+      getAll:  '/get-all-sales-orders',
+      update:  '/update-sales-order/',
+      patch:   '/patch-sales-order/',
+      remove:  '/delete-sales-order/'
+    };
+
+    async function apiRequest(path, method, body) {
+      var opts = {
+        method: method || 'GET',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+      };
+      if (body !== undefined && body !== null) opts.body = JSON.stringify(body);
+
+      var res = await fetch(API_BASE + path, opts);
+      if (!res.ok) {
+        var raw = '';
+        try { raw = await res.text(); } catch (e) {}
+        var msg = raw;
+        try { var j = JSON.parse(raw); if (j && j.message) msg = j.message; } catch (e) {}
+        throw new Error(msg ? msg.substring(0, 200) : ('Request failed (HTTP ' + res.status + ')'));
+      }
+      if (res.status === 204) return null;
+      var text = await res.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    // =============================================================
     // SVG ICONS
     // =============================================================
     function iconPlus() {
@@ -710,8 +744,12 @@
       if (rejectFn) {
         html += '<button onclick="' + rejectFn + '" class="btn-icon-action reject" title="Reject">' + iconReject() + '</button>';
       }
-      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
-      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      if (editFn) {
+        html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      }
+      if (delFn) {
+        html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      }
       html += '</div>';
       return html;
     }
@@ -825,6 +863,8 @@
     // DATA
     // =============================================================
 
+    // Customers / items / quotation / PI lookups: no backend endpoints
+    // exist for these yet, so they remain local reference lists.
     var customers = [
       { id: 'CUS-001', name: 'XYZ Retail Store', address: 'A-12, Connaught Place, New Delhi' },
       { id: 'CUS-002', name: 'ABC Enterprises', address: '45, Industrial Estate, Pune' },
@@ -856,137 +896,67 @@
       { id: 'PI-002', number: 'PI/25-26/002' },
     ];
 
-    var salesOrders = [{
-      id: 'SO-001',
-      number: 'SO/25-26/001',
-      date: '2026-01-12',
-      customerId: 'CUS-001',
-      customerName: 'XYZ Retail Store',
-      customerAddress: 'A-12, Connaught Place, New Delhi',
-      deliveryLocation: 'A-12, Connaught Place, New Delhi',
-      expectedDelivery: '2026-02-12',
-      paymentTerms: 'Net 15 days',
-      status: 'approved',
-      items: [
-        { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', qty: 2, rate: 42000, gst: 18, unit: 'Pcs' },
-        { itemId: 'ITM-1003', name: 'Activated Carbon Media', qty: 10, rate: 6500, gst: 18, unit: 'Kg' }
-      ],
-      discount: 5,
-      tax: 18,
-      total: 0,
-      createdAt: '2026-01-12',
-      quotationReference: 'QUOT-001',
-      piReference: null,
-      projectReference: null,
-      fulfillmentStatus: 'partial',
-      notes: ''
-    }, {
-      id: 'SO-002',
-      number: 'SO/25-26/002',
-      date: '2026-01-18',
-      customerId: 'CUS-002',
-      customerName: 'ABC Enterprises',
-      customerAddress: '45, Industrial Estate, Pune',
-      deliveryLocation: '45, Industrial Estate, Pune',
-      expectedDelivery: '2026-02-18',
-      paymentTerms: 'Net 30 days',
-      status: 'pending',
-      items: [
-        { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', qty: 1, rate: 118000, gst: 18, unit: 'Pcs' },
-        { itemId: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', qty: 20, rate: 850, gst: 18, unit: 'Mtr' }
-      ],
-      discount: 10,
-      tax: 18,
-      total: 0,
-      createdAt: '2026-01-18',
-      quotationReference: null,
-      piReference: null,
-      projectReference: null,
-      fulfillmentStatus: 'pending',
-      notes: 'Awaiting approval from management'
-    }, {
-      id: 'SO-003',
-      number: 'SO/25-26/003',
-      date: '2026-01-22',
-      customerId: 'CUS-003',
-      customerName: 'Rahul Sharma',
-      customerAddress: '12, Green Park, Mumbai',
-      deliveryLocation: '12, Green Park, Mumbai',
-      expectedDelivery: '2026-02-22',
-      paymentTerms: 'Advance Payment',
-      status: 'fulfilled',
-      items: [
-        { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', qty: 2, rate: 28000, gst: 18, unit: 'Pcs' }
-      ],
-      discount: 0,
-      tax: 18,
-      total: 0,
-      createdAt: '2026-01-22',
-      quotationReference: 'QUOT-003',
-      piReference: 'PI-001',
-      projectReference: null,
-      fulfillmentStatus: 'fulfilled',
-      notes: 'Order completed and delivered'
-    }, {
-      id: 'SO-004',
-      number: 'SO/25-26/004',
-      date: '2026-01-28',
-      customerId: 'CUS-004',
-      customerName: 'Tech Solutions Inc.',
-      customerAddress: '88, Electronics City, Bengaluru',
-      deliveryLocation: '88, Electronics City, Bengaluru',
-      expectedDelivery: '2026-02-28',
-      paymentTerms: 'Net 45 days',
-      status: 'rejected',
-      items: [
-        { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', qty: 3, rate: 42000, gst: 18, unit: 'Pcs' }
-      ],
-      discount: 8,
-      tax: 18,
-      total: 0,
-      createdAt: '2026-01-28',
-      quotationReference: null,
-      piReference: null,
-      projectReference: null,
-      fulfillmentStatus: 'pending',
-      notes: 'Rejected due to credit limit exceeded'
-    }, {
-      id: 'SO-005',
-      number: 'SO/25-26/005',
-      date: '2026-02-05',
-      customerId: 'CUS-006',
-      customerName: 'Global Exports Ltd.',
-      customerAddress: '101, Trade Tower, Delhi',
-      deliveryLocation: '101, Trade Tower, Delhi',
-      expectedDelivery: '2026-03-05',
-      paymentTerms: 'Net 15 days',
-      status: 'approved',
-      items: [
-        { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', qty: 2, rate: 118000, gst: 18, unit: 'Pcs' },
-        { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', qty: 3, rate: 28000, gst: 18, unit: 'Pcs' }
-      ],
-      discount: 5,
-      tax: 18,
-      total: 0,
-      createdAt: '2026-02-05',
-      quotationReference: null,
-      piReference: 'PI-002',
-      projectReference: null,
-      fulfillmentStatus: 'pending',
-      notes: 'Approved, awaiting fulfillment'
-    }];
-
-    var nextSONo = 6;
+    // Sales orders are now loaded from the backend (GET /get-all-sales-orders)
+    var salesOrders = [];
     var currentPage = 1;
 
-    // Calculate totals
-    salesOrders.forEach(function(so) {
-      var subtotal = so.items.reduce(function(sum, item) { return sum + (item.qty * item.rate); }, 0);
-      var discountAmt = subtotal * (so.discount / 100);
-      var afterDiscount = subtotal - discountAmt;
-      var taxAmt = afterDiscount * (so.tax / 100);
-      so.total = afterDiscount + taxAmt;
-    });
+    // Make sure whatever the backend returns has every field the UI expects
+    // (and computes the total if the backend did not send one).
+    function normalizeSO(so) {
+      so = so || {};
+      var soItems = (so.items || []).map(function(it) {
+        return {
+          itemId: it.itemId,
+          name: it.name || '',
+          qty: Number(it.qty) || 0,
+          rate: Number(it.rate) || 0,
+          gst: it.gst != null ? Number(it.gst) : 18,
+          unit: it.unit || 'Pcs'
+        };
+      });
+      var discount = Number(so.discount) || 0;
+      var tax = so.tax != null ? Number(so.tax) : 18;
+
+      var subtotal = soItems.reduce(function(sum, it) { return sum + (it.qty * it.rate); }, 0);
+      var afterDiscount = subtotal - subtotal * (discount / 100);
+      var computedTotal = afterDiscount + afterDiscount * (tax / 100);
+      var total = (so.total != null && Number(so.total) > 0) ? Number(so.total) : computedTotal;
+
+      return Object.assign({}, so, {
+        id: String(so.id != null ? so.id : (so.salesOrderId != null ? so.salesOrderId : (so._id != null ? so._id : ''))),
+        number: so.number || '',
+        date: so.date || '',
+        customerId: so.customerId || '',
+        customerName: so.customerName || getCustomerName(so.customerId),
+        customerAddress: so.customerAddress || '',
+        deliveryLocation: so.deliveryLocation || '',
+        expectedDelivery: so.expectedDelivery || '',
+        paymentTerms: so.paymentTerms || '',
+        status: String(so.status || 'pending').toLowerCase(),
+        fulfillmentStatus: String(so.fulfillmentStatus || 'pending').toLowerCase(),
+        items: soItems,
+        discount: discount,
+        tax: tax,
+        total: total,
+        notes: so.notes || '',
+        quotationReference: so.quotationReference || null,
+        piReference: so.piReference || null,
+        projectReference: so.projectReference || null
+      });
+    }
+
+    async function loadSalesOrders() {
+      try {
+        var data = await apiRequest(API.getAll, 'GET');
+        salesOrders = (Array.isArray(data) ? data : []).map(normalizeSO);
+        currentPage = 1;
+        renderSalesOrders();
+      } catch (err) {
+        console.error('Failed to load sales orders:', err);
+        showToast('Could not load sales orders from server', 'error');
+        renderSalesOrders();
+      }
+    }
 
     // =============================================================
     // FUNCTIONS
@@ -1011,7 +981,7 @@
       var total = salesOrders.length;
       var pending = salesOrders.filter(function(so) { return so.status === 'pending'; }).length;
       var approved = salesOrders.filter(function(so) { return so.status === 'approved'; }).length;
-      var fulfilled = salesOrders.filter(function(so) { return so.status === 'fulfilled'; }).length;
+      var fulfilled = salesOrders.filter(function(so) { return so.fulfillmentStatus === 'fulfilled'; }).length;
       var totalVal = salesOrders.reduce(function(sum, so) { return sum + so.total; }, 0);
 
       document.getElementById('totalOrders').textContent = total;
@@ -1034,7 +1004,8 @@
         var matchSearch = so.number.toLowerCase().indexOf(q) !== -1 ||
           so.customerName.toLowerCase().indexOf(q) !== -1 ||
           so.id.toLowerCase().indexOf(q) !== -1;
-        var matchStatus = status === 'all' || so.status === status;
+        var matchStatus = status === 'all' ||
+          ((status === 'partial' || status === 'fulfilled') ? so.fulfillmentStatus === status : so.status === status);
         var matchCustomer = customer === 'all' || so.customerId === customer;
         return matchSearch && matchStatus && matchCustomer;
       });
@@ -1065,6 +1036,9 @@
         rowsHtml = pageItems.map(function(so) {
           var canApprove = so.status === 'pending';
           var canReject = so.status === 'pending';
+          var deliveryStarted = so.fulfillmentStatus === 'partial' || so.fulfillmentStatus === 'fulfilled';
+          var canEdit = so.status !== 'rejected' && so.status !== 'fulfilled' && !deliveryStarted;
+          var canDelete = !deliveryStarted;
           return `
             <tr class="border-b border-gray-100 table-row-hover">
               <td class="px-3 py-2.5">
@@ -1078,8 +1052,8 @@
               <td class="px-3 py-2.5">${statusBadge(so.status)}</td>
               <td class="px-3 py-2.5 text-[10px] font-semibold ${so.fulfillmentStatus === 'fulfilled' ? 'text-green-600' : so.fulfillmentStatus === 'partial' ? 'text-purple-600' : 'text-amber-600'}">${so.fulfillmentStatus.charAt(0).toUpperCase() + so.fulfillmentStatus.slice(1)}</td>
               <td class="px-3 py-2.5">${rowActionsHtml(
-                "editSO('"+so.id+"')",
-                "delSO('"+so.id+"')",
+                canEdit ? "editSO('"+so.id+"')" : null,
+                canDelete ? "delSO('"+so.id+"')" : null,
                 "viewSO('"+so.id+"')",
                 canApprove ? "approveSO('"+so.id+"')" : null,
                 canReject ? "rejectSO('"+so.id+"')" : null
@@ -1150,8 +1124,24 @@
     // VIEW SALES ORDER
     // =============================================================
 
-    function viewSO(id) {
+    async function viewSO(id) {
       var so = salesOrders.find(function(x) { return x.id === id; });
+
+      // Fetch the freshest copy from the backend; fall back to the local copy
+      try {
+        var fresh = await apiRequest(API.getById + encodeURIComponent(id), 'GET');
+        if (fresh) {
+          so = normalizeSO(fresh);
+          var idx = salesOrders.findIndex(function(x) { return x.id === id; });
+          if (idx !== -1) salesOrders[idx] = so;
+        }
+      } catch (err) {
+        console.error('Failed to fetch sales order by id:', err);
+        if (!so) {
+          showToast('Could not load sales order: ' + err.message, 'error');
+          return;
+        }
+      }
       if (!so) return;
 
       var itemsHtml = so.items.map(function(item) {
@@ -1251,12 +1241,18 @@
 
     function editSO(id) {
       var so = salesOrders.find(function(x) { return x.id === id; });
-      if (so) openSOModal(so);
+      if (!so) return;
+      if (so.status === 'rejected') { showToast('A rejected order cannot be edited', 'error'); return; }
+      if (so.fulfillmentStatus === 'partial' || so.fulfillmentStatus === 'fulfilled') {
+        showToast('Delivery has started on this order - it can no longer be edited', 'error');
+        return;
+      }
+      openSOModal(so);
     }
 
     function openSOModal(existing) {
       var e = existing || {
-        number: 'SO/25-26/' + String(salesOrders.length + 1).padStart(3, '0'),
+        number: 'Auto-generated on save',
         date: new Date().toISOString().split('T')[0],
         expectedDelivery: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0],
         customerId: customers[0].id,
@@ -1323,7 +1319,7 @@
           <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
             ${fld('Delivery Location', '<input type="text" class="form-input" id="f_deliveryLocation" value="' + (e.deliveryLocation || '') + '" placeholder="Delivery address">')}
             ${fld('Payment Terms', '<select class="form-input" id="f_paymentTerms"><option ' + (e.paymentTerms === 'Net 7 days' ? 'selected' : '') + '>Net 7 days</option><option ' + (e.paymentTerms === 'Net 15 days' ? 'selected' : '') + '>Net 15 days</option><option ' + (e.paymentTerms === 'Net 30 days' ? 'selected' : '') + '>Net 30 days</option><option ' + (e.paymentTerms === 'Net 45 days' ? 'selected' : '') + '>Net 45 days</option><option ' + (e.paymentTerms === 'Advance Payment' ? 'selected' : '') + '>Advance Payment</option><option ' + (e.paymentTerms === 'Cash on Delivery' ? 'selected' : '') + '>Cash on Delivery</option></select>')}
-            ${fld('Status', '<select class="form-input" id="f_status"><option ' + (e.status === 'pending' ? 'selected' : '') + ' value="pending">Pending</option><option ' + (e.status === 'approved' ? 'selected' : '') + ' value="approved">Approved</option><option ' + (e.status === 'rejected' ? 'selected' : '') + ' value="rejected">Rejected</option><option ' + (e.status === 'fulfilled' ? 'selected' : '') + ' value="fulfilled">Fulfilled</option></select>')}
+            ${fld('Status', '<input type="text" class="form-input" id="f_statusView" value="' + (isEdit ? (e.status.charAt(0).toUpperCase() + e.status.slice(1)) : 'Pending') + '" disabled>', isEdit ? 'Use Approve / Reject in the list to change this' : 'New orders start as Pending')}
           </div>
 
           <!-- Linked References -->
@@ -1366,7 +1362,7 @@
             ${fld('Discount (%)', '<input type="number" min="0" max="100" step="0.01" class="form-input" id="f_discount" value="' + e.discount + '" placeholder="0" onchange="calcSOTotal()">')}
             ${fld('Tax Rate (%)', '<select class="form-input" id="f_tax" onchange="calcSOTotal()"><option ' + (e.tax == 0 ? 'selected' : '') + '>0</option><option ' + (e.tax == 5 ? 'selected' : '') + '>5</option><option ' + (e.tax == 12 ? 'selected' : '') + '>12</option><option ' + (e.tax == 18 ? 'selected' : '') + '>18</option><option ' + (e.tax == 28 ? 'selected' : '') + '>28</option></select>')}
             ${fld('Total Amount', '<input type="text" class="form-input" id="f_total" value="' + (e.total ? money(e.total) : '₹0') + '" disabled style="font-weight:bold;color:#6da84c;">')}
-            ${fld('Fulfillment Status', '<select class="form-input" id="f_fulfillment"><option ' + (e.fulfillmentStatus === 'pending' ? 'selected' : '') + ' value="pending">Pending</option><option ' + (e.fulfillmentStatus === 'partial' ? 'selected' : '') + ' value="partial">Partial</option><option ' + (e.fulfillmentStatus === 'fulfilled' ? 'selected' : '') + ' value="fulfilled">Fulfilled</option></select>')}
+            ${fld('Fulfillment Status', '<input type="text" class="form-input" id="f_fulfillmentView" value="' + (e.fulfillmentStatus.charAt(0).toUpperCase() + e.fulfillmentStatus.slice(1)) + '" disabled>', 'Updated automatically from deliveries')}
           </div>
 
           ${fld('Notes', '<textarea rows="2" class="form-input" id="f_notes" placeholder="Any additional notes">' + (e.notes || '') + '</textarea>')}
@@ -1394,7 +1390,7 @@
         if (select.dataset.wired === 'true') return;
         select.dataset.wired = 'true';
         select.addEventListener('change', function() {
-          var selectedItem = items.find(function(it) { return it.id === this.value; });
+          var selectedItem = items.find(function(it) { return it.id === this.value; }, this);
           var rateInput = this.closest('tr').querySelector('.item-rate');
           if (selectedItem && rateInput) {
             rateInput.value = selectedItem.price;
@@ -1481,18 +1477,15 @@
     }
 
     // =============================================================
-    // SAVE / DELETE SALES ORDER
+    // SAVE / DELETE SALES ORDER  (backend integrated)
     // =============================================================
 
-    function saveSO(existingId) {
-      var number = document.getElementById('f_number').value;
+    async function saveSO(existingId) {
       var date = document.getElementById('f_date').value;
       var customerId = document.getElementById('f_customer').value;
       var deliveryLocation = document.getElementById('f_deliveryLocation').value || '';
       var expectedDelivery = document.getElementById('f_delivery').value;
       var paymentTerms = document.getElementById('f_paymentTerms').value;
-      var status = document.getElementById('f_status').value;
-      var fulfillment = document.getElementById('f_fulfillment').value;
       var discount = Math.min(100, Math.max(0, parseFloat(document.getElementById('f_discount').value) || 0));
       var tax = parseFloat(document.getElementById('f_tax').value) || 0;
       var notes = document.getElementById('f_notes').value || '';
@@ -1510,9 +1503,9 @@
       var rows = document.querySelectorAll('#lineItemsBody .line-item-row');
       rows.forEach(function(row) {
         var itemId = row.querySelector('.item-select').value;
-        var qty = Math.max(0, parseFloat(row.querySelector('.item-qty').value) || 0);
+        var qty = Math.max(0, Math.floor(parseFloat(row.querySelector('.item-qty').value) || 0));
         var rate = Math.max(0, parseFloat(row.querySelector('.item-rate').value) || 0);
-        if (qty > 0 && rate > 0) {
+        if (qty > 0) {
           if (seenItemIds[itemId]) {
             hasDuplicate = true;
             return;
@@ -1540,63 +1533,48 @@
         return;
       }
 
-      var subtotal = itemsData.reduce(function(sum, item) { return sum + (item.qty * item.rate); }, 0);
-      var discountAmt = subtotal * (discount / 100);
-      var afterDiscount = subtotal - discountAmt;
-      var taxAmt = afterDiscount * (tax / 100);
-      var total = afterDiscount + taxAmt;
-
       var customer = customers.find(function(c) { return c.id === customerId; });
-      var customerName = customer ? customer.name : '';
 
-      if (existingId) {
-        var so = salesOrders.find(function(x) { return x.id === existingId; });
-        if (so) {
-          so.number = number;
-          so.date = date;
-          so.customerId = customerId;
-          so.customerName = customerName;
-          so.customerAddress = customer ? customer.address : '';
-          so.deliveryLocation = deliveryLocation || (customer ? customer.address : '');
-          so.expectedDelivery = expectedDelivery;
-          so.paymentTerms = paymentTerms;
-          so.status = status;
-          so.items = itemsData;
-          so.discount = discount;
-          so.tax = tax;
-          so.total = total;
-          so.fulfillmentStatus = fulfillment;
-          so.notes = notes;
-          so.quotationReference = quotationReference;
-          so.piReference = piReference;
+      if (expectedDelivery < date) {
+        showToast('Expected delivery cannot be before the order date', 'error');
+        return;
+      }
+
+      // Only what the user controls. Number, status, fulfilment, subtotal and total are set by the server.
+      var payload = {
+        date: date,
+        customerId: customerId,
+        deliveryLocation: deliveryLocation || (customer ? customer.address : ''),
+        expectedDelivery: expectedDelivery,
+        paymentTerms: paymentTerms,
+        items: itemsData.map(function(it) { return { itemId: it.itemId, qty: it.qty, rate: it.rate }; }),
+        discount: discount,
+        tax: tax,
+        notes: notes,
+        quotationReference: quotationReference,
+        piReference: piReference
+      };
+
+      try {
+        if (existingId) {
+          console.log('PUT ' + API_BASE + API.update + existingId, payload);
+          var updated = await apiRequest(API.update + encodeURIComponent(existingId), 'PUT', payload);
+          console.log('PUT response:', updated);
+          var saved = normalizeSO(Object.assign({}, updated, { id: existingId }));
+          var idx = salesOrders.findIndex(function(x) { return x.id === existingId; });
+          if (idx !== -1) salesOrders[idx] = saved;
+          else salesOrders.unshift(saved);
           showToast('Sales Order updated successfully', 'success');
+        } else {
+          var created = await apiRequest(API.create, 'POST', payload);
+          salesOrders.unshift(normalizeSO(created));
+          currentPage = 1;
+          showToast('Sales Order created successfully', 'success');
         }
-      } else {
-        var newSO = {
-          id: 'SO-' + String(nextSONo++).padStart(3, '0'),
-          number: number || 'SO/25-26/' + String(salesOrders.length + 1).padStart(3, '0'),
-          date: date,
-          customerId: customerId,
-          customerName: customerName,
-          customerAddress: customer ? customer.address : '',
-          deliveryLocation: deliveryLocation || (customer ? customer.address : ''),
-          expectedDelivery: expectedDelivery,
-          paymentTerms: paymentTerms,
-          status: status,
-          items: itemsData,
-          discount: discount,
-          tax: tax,
-          total: total,
-          fulfillmentStatus: fulfillment,
-          notes: notes,
-          createdAt: date,
-          quotationReference: quotationReference,
-          piReference: piReference,
-          projectReference: null
-        };
-        salesOrders.unshift(newSO);
-        currentPage = 1;
-        showToast('Sales Order created successfully', 'success');
+      } catch (err) {
+        console.error('Save sales order failed:', err);
+        showToast('Save failed: ' + err.message, 'error');
+        return;
       }
 
       closeModal();
@@ -1611,7 +1589,7 @@
         ${modalHeader('Delete Sales Order', so.number)}
         <div class="px-5 py-4 text-sm text-gray-600">
           <p>Are you sure you want to permanently delete <b class="text-gray-800">${so.number}</b>?</p>
-          <p class="text-gray-400 text-[11px] mt-1">This action cannot be undone. All associated data will be removed.</p>
+          <p class="text-gray-400 text-[11px] mt-1">This action cannot be undone. Orders with deliveries against them cannot be deleted.</p>
           <p class="text-amber-600 text-[11px] mt-2">Total Value: ${money(so.total)}</p>
         </div>
         ${modalFooter('Delete', 'onclick="confirmDeleteSO(\'' + id + '\')"', '')}
@@ -1619,7 +1597,14 @@
       openModal(modalContent, { width: 'max-w-md' });
     }
 
-    function confirmDeleteSO(id) {
+    async function confirmDeleteSO(id) {
+      try {
+        await apiRequest(API.remove + encodeURIComponent(id), 'DELETE');
+      } catch (err) {
+        console.error('Delete sales order failed:', err);
+        showToast('Delete failed: ' + err.message, 'error');
+        return;
+      }
       salesOrders = salesOrders.filter(function(x) { return x.id !== id; });
       closeModal();
       renderSalesOrders();
@@ -1630,10 +1615,22 @@
     // ACTIONS
     // =============================================================
 
-    function approveSO(id) {
+    async function approveSO(id) {
       var so = salesOrders.find(function(x) { return x.id === id; });
       if (!so) return;
-      so.status = 'approved';
+      try {
+        var res = await apiRequest(API.patch + encodeURIComponent(id), 'PATCH', { status: 'approved' });
+        if (res && res.id) {
+          var idx = salesOrders.findIndex(function(x) { return x.id === id; });
+          if (idx !== -1) salesOrders[idx] = normalizeSO(res);
+        } else {
+          so.status = 'approved';
+        }
+      } catch (err) {
+        console.error('Approve failed:', err);
+        showToast('Approve failed: ' + err.message, 'error');
+        return;
+      }
       renderSalesOrders();
       showToast('Sales Order ' + so.number + ' approved!', 'success');
     }
@@ -1646,7 +1643,7 @@
         ${modalHeader('Reject Sales Order', so.number)}
         <div class="px-5 py-4 text-sm text-gray-600">
           <p>Are you sure you want to reject <b class="text-gray-800">${so.number}</b> for <b class="text-gray-800">${so.customerName}</b>?</p>
-          <p class="text-gray-400 text-[11px] mt-1">You can change the status again later from Edit if needed.</p>
+          <p class="text-gray-400 text-[11px] mt-1">A rejected order is closed and cannot be edited or approved later.</p>
         </div>
         <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
           <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
@@ -1656,10 +1653,22 @@
       openModal(modalContent, { width: 'max-w-md' });
     }
 
-    function confirmRejectSO(id) {
+    async function confirmRejectSO(id) {
       var so = salesOrders.find(function(x) { return x.id === id; });
       if (!so) return;
-      so.status = 'rejected';
+      try {
+        var res = await apiRequest(API.patch + encodeURIComponent(id), 'PATCH', { status: 'rejected' });
+        if (res && res.id) {
+          var idx = salesOrders.findIndex(function(x) { return x.id === id; });
+          if (idx !== -1) salesOrders[idx] = normalizeSO(res);
+        } else {
+          so.status = 'rejected';
+        }
+      } catch (err) {
+        console.error('Reject failed:', err);
+        showToast('Reject failed: ' + err.message, 'error');
+        return;
+      }
       closeModal();
       renderSalesOrders();
       showToast('Sales Order ' + so.number + ' rejected', 'warning');
@@ -1704,12 +1713,10 @@
     };
 
     renderSalesOrders();
+    loadSalesOrders();     
 
     console.log('📄 Sales Orders Module Loaded Successfully');
-    console.log('📊 Total Sales Orders:', salesOrders.length);
-    console.log('📌 Status: Pending(' + salesOrders.filter(function(so) { return so.status === 'pending'; }).length +
-      '), Approved(' + salesOrders.filter(function(so) { return so.status === 'approved'; }).length +
-      '), Fulfilled(' + salesOrders.filter(function(so) { return so.status === 'fulfilled'; }).length + ')');
+    console.log('🌐 API Base:', API_BASE);
 
   </script>
 

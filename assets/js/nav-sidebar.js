@@ -197,6 +197,14 @@
     '        </a>',
     '      </li>',
 
+    '      <li class="sidebar-nav-item">',
+    '        <a href="/activity-log/activity-log.html" class="sidebar-nav-link" data-page="activity-log.html">',
+    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>',
+    '          <span class="sidebar-nav-label">Activity & Logs</span>',
+    '          <span class="sidebar-tooltip">activity</span>',
+    '        </a>',
+    '      </li>',
+
     /* ============ TOOLS ============ */
     '      <li class="sidebar-nav-divider" role="separator"></li>',
     '      <li class="sidebar-nav-heading"><span>Tools</span></li>',
@@ -384,13 +392,7 @@
     '        </a>',
     '      </li>',
 
-    '      <li class="sidebar-nav-item">',
-    '        <a href="/activity-log/activity-log.html" class="sidebar-nav-link" data-page="activity-log.html">',
-    '          <span class="sidebar-nav-icon"><i class="fa-solid fa-bell"></i></span>',
-    '          <span class="sidebar-nav-label">Activity & Logs</span>',
-    '          <span class="sidebar-tooltip">activity</span>',
-    '        </a>',
-    '      </li>',
+  
 
     '      <li class="sidebar-nav-item">',
     '        <a href="/settings/settings.html" class="sidebar-nav-link" data-page="settings">',
@@ -633,7 +635,10 @@
         });
       }
 
-      if (matched) return;
+      if (matched) {
+        this._scrollActiveIntoView();
+        return;
+      }
 
       // Fallback: no activePage was passed, or it didn't match anything —
       // auto-detect the active link by comparing each link's URL path to
@@ -649,11 +654,34 @@
         } catch (e) {
           return; // malformed href, skip
         }
-        if (linkPath && linkPath === currentPath) {
+                if (linkPath && linkPath === currentPath) {
           link.classList.add("active");
           link.setAttribute("aria-current", "page");
         }
       });
+
+      this._scrollActiveIntoView();
+    },
+
+    /**
+     * Scrolls the sidebar nav so the active link is visible (centered)
+     * when the list is longer than the viewport. Only scrolls the nav
+     * container itself, never the page.
+     */
+    _scrollActiveIntoView: function () {
+      var active = document.querySelector(".sidebar-nav-link.active");
+      var nav = document.querySelector("#app-sidebar .sidebar-nav");
+      if (!active || !nav) return;
+
+      var doScroll = function () {
+        var navRect = nav.getBoundingClientRect();
+        var linkRect = active.getBoundingClientRect();
+        var offset = linkRect.top - navRect.top - (nav.clientHeight / 2) + (linkRect.height / 2);
+        nav.scrollTop += offset;
+      };
+
+      // Run after layout is committed so measurements are correct.
+      requestAnimationFrame(doScroll);
     },
 
     /* ---------------------------------------------------------------- */

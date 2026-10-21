@@ -107,6 +107,7 @@
   .stat-card {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     padding: 10px 14px !important;
+    border: 1px solid #6da84c !important;
   }
   .stat-card:hover {
     transform: translateY(-2px);
@@ -411,7 +412,7 @@
             <div>
               <div class="page-breadcrumb">Sales</div>
               <h1 class="page-title text-gray-900">Delivery Challan</h1>
-              <p class="page-subtitle mt-0.5">Record physical delivery of goods. Generate Packing List (Enhancement #6).</p>
+              <p class="page-subtitle mt-0.5">Record physical delivery of goods. Dispatch to reduce stock, then mark delivered.</p>
             </div>
             <div class="flex gap-2 flex-wrap">
               <div class="relative inline-block" data-dd-trigger>
@@ -422,7 +423,7 @@
                   Filter
                   <span id="filterBadge" class="hidden text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full">0</span>
                 </button>
-                <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-50">
+                <div id="filterDD" data-dd-menu class="hidden absolute top-full left-0 mt-2 w-56 bg-white border border-gray-300 rounded-xl shadow-lg p-3 z-50">
                   <div class="mb-2">
                     <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Status</label>
                     <select id="filterStatus" onchange="filterDC()" class="form-input text-[10px]">
@@ -484,1029 +485,701 @@
   <!-- ========================================================== -->
 
   <script src="/assets/js/nav-sidebar.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <script>
-    // =============================================================
-    // NAV-SIDEBAR INIT
-    // =============================================================
-    NavSidebar.init({
-      basePath: "",
-      activePage: "delivery-challan",
-      pageTitle: "Delivery Challan",
-      user: {
-        name: "Admin",
-        role: "Super Admin",
-        avatarUrl: "",
-      },
-    });
+    // ============================================================= CONFIG
+    var API_BASE = 'http://localhost:9093';
+    var DS = '/api/v1/delivery-challans';
+    var EMAIL_API = '/api/v1/emails/send-dc';            // body: { dcPrimeId, toEmail }
+    var PRODUCT_API = '/api/products/v1/get-product-list';
+    var WAREHOUSE_API = '/api/warehouses/v1/get-all-warehouses';
+    var SO_API = '/api/sales-orders/sales-order-list';
+    var PROJECT_API = '';                                 // TODO: set your project list API path (same one used on invoices)
+    var ORG_STORAGE_KEY = 'siec_organization_id';
+    var company = { name: '', address: '', gstin: '', phone: '', email: '', state: '', stateCode: '', logoUrl: '', logoData: '' };
+    var DC_TYPES = [['JOB_WORK', 'Job Work'], ['SUPPLY_ON_APPROVAL', 'Supply on Approval'], ['STOCK_TRANSFER', 'Stock Transfer'],
+      ['EXHIBITION_OR_FAIRS', 'Exhibition or Fairs'], ['SUPPLY_OF_LIQUID_GAS', 'Supply of Liquid Gas'], ['LINE_SALES', 'Line Sales'], ['OTHERS', 'Others']];
+    function typeLabel(c) { var t = DC_TYPES.find(function (x) { return x[0] === c; }); return t ? t[1] : (c || ''); }
 
-    // =============================================================
-    // SVG ICONS
-    // =============================================================
-    function iconPlus() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>`;
+    var STATE_CODES = { 'jammu and kashmir': '01', 'himachal pradesh': '02', 'punjab': '03', 'chandigarh': '04', 'uttarakhand': '05', 'haryana': '06', 'delhi': '07', 'rajasthan': '08',
+      'uttar pradesh': '09', 'bihar': '10', 'sikkim': '11', 'arunachal pradesh': '12', 'nagaland': '13', 'manipur': '14', 'mizoram': '15', 'tripura': '16', 'meghalaya': '17', 'assam': '18',
+      'west bengal': '19', 'jharkhand': '20', 'odisha': '21', 'chhattisgarh': '22', 'madhya pradesh': '23', 'gujarat': '24', 'dadra and nagar haveli and daman and diu': '26',
+      'maharashtra': '27', 'karnataka': '29', 'goa': '30', 'lakshadweep': '31', 'kerala': '32', 'tamil nadu': '33', 'puducherry': '34', 'andaman and nicobar islands': '35',
+      'telangana': '36', 'andhra pradesh': '37', 'ladakh': '38' };
+    function stateCodeFor(state, gstin) {
+      if (/^\d{2}/.test(gstin || '')) return gstin.slice(0, 2);
+      return STATE_CODES[String(state || '').trim().toLowerCase()] || '';
     }
-    function iconEdit() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+    function toTitle(s) { return String(s || '').toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
+    function stateNameFor(code) {
+      var k = Object.keys(STATE_CODES).find(function (n) { return STATE_CODES[n] === code; });
+      return k ? toTitle(k) : '';
     }
-    function iconTrash() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>`;
+    async function fetchLogoDataUrl(url) {
+      try {
+        var res = await fetch(url); if (!res.ok) return '';
+        var obj = URL.createObjectURL(await res.blob());
+        var img = await new Promise(function (ok, no) { var i = new Image(); i.onload = function () { ok(i); }; i.onerror = no; i.src = obj; });
+        var w = Math.min(320, img.naturalWidth), h = Math.round(img.naturalHeight * w / img.naturalWidth);
+        var cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(obj);
+        return cv.toDataURL('image/png');
+      } catch (e) { return ''; }
     }
-    function iconEye() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    async function apiFetch(path, options) {
+      options = options || {};
+      var res;
+      try { res = await fetch(API_BASE + path, options); }
+      catch (e) { throw new Error('Something went wrong! Check your connection.'); }
+      var isJson = (res.headers.get('content-type') || '').indexOf('application/json') !== -1;
+      if (!res.ok) {
+        var message = 'Something went wrong (HTTP ' + res.status + ').';
+        if (isJson) { try { var b = await res.json(); message = b.message || b.error || message; } catch (e) {} }
+        throw new Error(message);
+      }
+      if (res.status === 204) return null;
+      return isJson ? res.json() : res;
     }
-    function iconX() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
-    }
-    function iconFilter() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
-    }
-    function iconSave() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`;
-    }
-    function iconInfo() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>`;
-    }
-    function iconDocument() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>`;
-    }
-    function iconSearch() {
-      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
-    }
-    function iconPackage() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`;
-    }
-    function iconTruck() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18" r="2.5"/><circle cx="18.5" cy="18" r="2.5"/></svg>`;
-    }
-    function iconPrint() {
-      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>`;
+    async function loadOrganization() {
+      var orgId = null;
+      try { orgId = localStorage.getItem(ORG_STORAGE_KEY); } catch (e) {}
+      if (!orgId) { showToast('Organization id not found (localStorage key: ' + ORG_STORAGE_KEY + ')', 'error'); return; }
+      try {
+        var o = await apiFetch('/api/organization/' + encodeURIComponent(orgId), { method: 'GET' });
+        var name = o.legalName || o.companyName || '', st = o.state || o.taxState || '';
+        company = {
+          name: name, address: [o.address, o.city, st, o.pincode].filter(Boolean).join(', '),
+          gstin: o.gstNumber || '', phone: o.phone || '', email: o.email || '',
+          state: st, stateCode: stateCodeFor(st, o.gstNumber),
+          logoUrl: o.logoUrl ? API_BASE + o.logoUrl : '', logoData: ''
+        };
+        if (company.logoUrl) company.logoData = await fetchLogoDataUrl(company.logoUrl);
+      } catch (e) { showToast(e.message || 'Could not load organization details', 'error'); }
     }
 
-    // =============================================================
-    // TOAST
-    // =============================================================
+    NavSidebar.init({ basePath: "", activePage: "delivery-challan", pageTitle: "Delivery Challan", user: { name: "Admin", role: "Super Admin", avatarUrl: "" } });
+
+    // ============================================================= ICONS
+    function iconPlus() { return '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>'; }
+    function iconEdit() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>'; }
+    function iconTrash() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>'; }
+    function iconEye() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'; }
+    function iconX() { return '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>'; }
+    function iconSave() { return '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>'; }
+    function iconDocument() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>'; }
+    function iconSearch() { return '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'; }
+    function iconSend() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>'; }
+    function iconDownload() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>'; }
+    function iconCheck() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>'; }
+    function iconTruck() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18" r="2.5"/><circle cx="18.5" cy="18" r="2.5"/></svg>'; }
+    var SPINNER = '<svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M22 12a10 10 0 00-10-10"/></svg>';
+
+    // ============================================================= UI PRIMITIVES
     function showToast(message, kind) {
       kind = kind || 'success';
-      var wrap = document.getElementById('toastWrap');
-      var colors = {
-        success: 'bg-green-600',
-        info: 'bg-primary',
-        warning: 'bg-amber-600',
-        error: 'bg-red-600'
-      };
+      var colors = { success: 'bg-green-600', info: 'bg-primary', warning: 'bg-amber-600', error: 'bg-red-600' };
       var el = document.createElement('div');
       el.className = 'toast ' + colors[kind] + ' text-white font-semibold px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
       el.innerHTML = '<span>' + message + '</span>';
-      wrap.appendChild(el);
-      setTimeout(function() {
-        el.style.transition = 'opacity .3s';
-        el.style.opacity = '0';
-        setTimeout(function() { el.remove(); }, 300);
-      }, 2600);
+      document.getElementById('toastWrap').appendChild(el);
+      setTimeout(function () { el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(function () { el.remove(); }, 300); }, 2600);
     }
-
-    // =============================================================
-    // MODAL
-    // =============================================================
     function openModal(innerHtml, opts) {
       opts = opts || {};
-      var root = document.getElementById('modalRoot');
-      root.innerHTML = `
-        <div class="fixed inset-0 z-[100] flex items-center justify-center p-3" id="modalOverlay">
-          <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" id="modalBackdrop"></div>
-          <div class="relative bg-white rounded-xl shadow-2xl w-full ${opts.width || 'max-w-4xl'} max-h-[92vh] overflow-hidden animate-modal">
-            ${innerHtml}
-          </div>
-        </div>`;
+      document.getElementById('modalRoot').innerHTML =
+        '<div class="fixed inset-0 z-[100] flex items-center justify-center p-3" id="modalOverlay">' +
+        '<div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" id="modalBackdrop"></div>' +
+        '<div class="relative bg-white rounded-xl shadow-2xl w-full ' + (opts.width || 'max-w-5xl') + ' max-h-[92vh] overflow-hidden animate-modal">' + innerHtml + '</div></div>';
       document.getElementById('modalBackdrop').addEventListener('click', closeModal);
       document.body.style.overflow = 'hidden';
     }
-
-    function closeModal() {
-      var root = document.getElementById('modalRoot');
-      root.innerHTML = '';
-      document.body.style.overflow = '';
-    }
-
+    function closeModal() { closePicker(); document.getElementById('modalRoot').innerHTML = ''; document.body.style.overflow = ''; }
     function modalHeader(title, subtitle) {
-      return `
-        <div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <div>
-            <h3 class="modal-title text-gray-900">${title}</h3>
-            ${subtitle ? '<p class="modal-subtitle mt-0.5">' + subtitle + '</p>' : ''}
-          </div>
-          <button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">${iconX()}</button>
-        </div>`;
+      return '<div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">' +
+        '<div><h3 class="modal-title text-gray-900">' + title + '</h3>' + (subtitle ? '<p class="modal-subtitle mt-0.5">' + subtitle + '</p>' : '') + '</div>' +
+        '<button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition">' + iconX() + '</button></div>';
     }
-
     function modalFooter(saveLabel, onSaveAttr, extraBtns) {
-      return `
-        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
-          <div>${extraBtns || ''}</div>
-          <div class="flex gap-2">
-            <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
-            <button ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
-              ${iconSave()} ${saveLabel}
-            </button>
-          </div>
-        </div>`;
+      return '<div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">' +
+        '<div>' + (extraBtns || '') + '</div><div class="flex gap-2">' +
+        '<button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>' +
+        '<button id="modalSaveBtn" ' + onSaveAttr + ' class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">' + iconSave() + ' ' + saveLabel + '</button></div></div>';
     }
-
     function fld(label, inputHtml, hint) {
-      return `
-        <div class="mb-2">
-          <label class="form-label">${label}</label>
-          ${inputHtml}
-          ${hint ? '<div class="form-hint">' + hint + '</div>' : ''}
-        </div>`;
+      return '<div class="mb-2"><label class="form-label">' + label + '</label>' + inputHtml + (hint ? '<div class="form-hint">' + hint + '</div>' : '') + '</div>';
     }
-
-    function inputBase() { return "form-input"; }
-
-    // =============================================================
-    // DROPDOWN
-    // =============================================================
-    document.addEventListener('click', function(e) {
-      if (!e.target.closest('[data-dd-trigger]')) {
-        document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
-      }
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('[data-dd-trigger]')) document.querySelectorAll('[data-dd-menu]').forEach(function (m) { m.classList.add('hidden'); });
     });
-
     function toggleFilterDD() {
-      var menu = document.getElementById('filterDD');
-      var isHidden = menu.classList.contains('hidden');
-      document.querySelectorAll('[data-dd-menu]').forEach(function(m) { m.classList.add('hidden'); });
-      if (isHidden) menu.classList.remove('hidden');
+      var menu = document.getElementById('filterDD'), hidden = menu.classList.contains('hidden');
+      document.querySelectorAll('[data-dd-menu]').forEach(function (m) { m.classList.add('hidden'); });
+      if (hidden) menu.classList.remove('hidden');
     }
 
-    // =============================================================
-    // HELPERS
-    // =============================================================
-    function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
-
+    // ============================================================= HELPERS
+    function n2(v) { return Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function fm(v) { return '₹' + n2(v); }
+    function fd(s) { if (!s) return '—'; var p = String(s).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : s; }
+    function escH(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function inrWords(n) {
+      var a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+      var b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+      function two(x) { return x < 20 ? a[x] : b[Math.floor(x / 10)] + (x % 10 ? '-' + a[x % 10] : ''); }
+      function three(x) { return (x >= 100 ? a[Math.floor(x / 100)] + ' Hundred' + (x % 100 ? ' ' : '') : '') + (x % 100 ? two(x % 100) : ''); }
+      var r = Math.floor(n), p = Math.round((n - r) * 100), parts = [];
+      var cr = Math.floor(r / 10000000), lk = Math.floor(r / 100000) % 100, th = Math.floor(r / 1000) % 100, hu = r % 1000;
+      if (cr) parts.push(three(cr) + ' Crore'); if (lk) parts.push(two(lk) + ' Lakh'); if (th) parts.push(two(th) + ' Thousand'); if (hu) parts.push(three(hu));
+      return 'Indian Rupee ' + (parts.join(' ') || 'Zero') + (p ? ' and ' + two(p) + ' Paise' : '') + ' Only';
+    }
     function statusBadge(status) {
-      var map = {
-        draft: 'badge-gray',
-        dispatched: 'badge-blue',
-        delivered: 'badge-green'
-      };
-      var dot = {
-        draft: 'badge-dot-gray',
-        dispatched: 'badge-dot-blue',
-        delivered: 'badge-dot-green'
-      };
-      var label = status.charAt(0).toUpperCase() + status.slice(1);
-      return '<span class="badge ' + map[status] + '"><span class="badge-dot ' + dot[status] + '"></span>' + label + '</span>';
+      var map = { draft: 'badge-gray', dispatched: 'badge-blue', delivered: 'badge-green' };
+      var dot = { draft: 'badge-dot-gray', dispatched: 'badge-dot-blue', delivered: 'badge-dot-green' };
+      var s = String(status || '').toLowerCase();
+      return '<span class="badge ' + (map[s] || 'badge-gray') + '"><span class="badge-dot ' + (dot[s] || 'badge-dot-gray') + '"></span>' + s.charAt(0).toUpperCase() + s.slice(1) + '</span>';
     }
-
-    function rowActionsHtml(editFn, delFn, viewFn, plFn) {
-      var html = '<div class="flex gap-1">';
-      if (viewFn) {
-        html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
-      }
-      if (plFn) {
-        html += '<button onclick="' + plFn + '" class="btn-icon-action primary" title="Packing List">' + iconPackage() + '</button>';
-      }
-      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
-      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
-      html += '</div>';
-      return html;
-    }
-
     function panelWrap(titleHtml, bodyHtml, extraHead) {
-      return `
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
-            <div class="font-semibold text-sm text-gray-800 flex items-center gap-2">${titleHtml}</div>
-            ${extraHead || ''}
-          </div>
-          <div>${bodyHtml}</div>
-        </div>`;
+      return '<div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">' +
+        '<div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">' +
+        '<div class="font-semibold text-sm text-gray-800 flex items-center gap-2">' + titleHtml + '</div>' + (extraHead || '') + '</div><div>' + bodyHtml + '</div></div>';
     }
-
     function tableHtml(cols, rowsHtml) {
-      var colHeaders = cols.map(function(c) {
-        return '<th class="text-left font-semibold whitespace-nowrap">' + c + '</th>';
-      }).join('');
-      return `
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="bg-gray-50 border-b border-gray-200">${colHeaders}</tr>
-            </thead>
-            <tbody id="tbody-anchor">${rowsHtml}</tbody>
-          </table>
-        </div>`;
+      var th = cols.map(function (c) { return '<th class="text-left font-semibold whitespace-nowrap">' + c + '</th>'; }).join('');
+      return '<div class="overflow-x-auto"><table class="w-full"><thead><tr class="bg-gray-200 border border-[#6da84c]">' + th + '</tr></thead><tbody id="tbody-anchor">' + rowsHtml + '</tbody></table></div>';
     }
 
-    // =============================================================
-    // DATA
-    // =============================================================
-
-    var customers = [
-      { id: 'CUS-001', name: 'XYZ Retail Store', address: 'A-12, Connaught Place, New Delhi' },
-      { id: 'CUS-002', name: 'ABC Enterprises', address: '45, Industrial Estate, Pune' },
-      { id: 'CUS-003', name: 'Rahul Sharma', address: '12, Green Park, Mumbai' },
-      { id: 'CUS-004', name: 'Tech Solutions Inc.', address: '88, Electronics City, Bengaluru' },
-      { id: 'CUS-005', name: 'Priya Patel', address: '22, Lake View, Surat' },
-      { id: 'CUS-006', name: 'Global Exports Ltd.', address: '101, Trade Tower, Delhi' },
-    ];
-
-    var salesOrders = [
-      { id: 'SO-001', number: 'SO/25-26/001', customerId: 'CUS-001', customerName: 'XYZ Retail Store' },
-      { id: 'SO-002', number: 'SO/25-26/002', customerId: 'CUS-002', customerName: 'ABC Enterprises' },
-      { id: 'SO-003', number: 'SO/25-26/003', customerId: 'CUS-003', customerName: 'Rahul Sharma' },
-      { id: 'SO-004', number: 'SO/25-26/004', customerId: 'CUS-004', customerName: 'Tech Solutions Inc.' },
-      { id: 'SO-005', number: 'SO/25-26/005', customerId: 'CUS-006', customerName: 'Global Exports Ltd.' },
-    ];
-
-    var items = [
-      { id: 'ITM-1001', name: 'Centrifugal Blower — 5HP', price: 42000, unit: 'Pcs' },
-      { id: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', price: 118000, unit: 'Pcs' },
-      { id: 'ITM-1003', name: 'Activated Carbon Media', price: 6500, unit: 'Kg' },
-      { id: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', price: 850, unit: 'Mtr' },
-      { id: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', price: 28000, unit: 'Pcs' },
-    ];
-
-    var deliveryChallans = [{
-      id: 'DC-001',
-      number: 'DC/25-26/001',
-      date: '2026-01-14',
-      customerId: 'CUS-001',
-      customerName: 'XYZ Retail Store',
-      customerAddress: 'A-12, Connaught Place, New Delhi',
-      shippingAddress: 'A-12, Connaught Place, New Delhi',
-      soReference: 'SO/25-26/001',
-      status: 'delivered',
-      items: [
-        { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', qty: 2, unit: 'Pcs', serial: 'BLW-001, BLW-002' },
-        { itemId: 'ITM-1003', name: 'Activated Carbon Media', qty: 10, unit: 'Kg', serial: '' }
-      ],
-      packingList: {
-        packages: 3,
-        packageType: 'Cardboard Box',
-        dimensions: '30x20x15 cm',
-        totalWeight: '15.5 Kg',
-        created: true
-      },
-      notes: 'Delivered to warehouse',
-      createdAt: '2026-01-14'
-    }, {
-      id: 'DC-002',
-      number: 'DC/25-26/002',
-      date: '2026-01-20',
-      customerId: 'CUS-002',
-      customerName: 'ABC Enterprises',
-      customerAddress: '45, Industrial Estate, Pune',
-      shippingAddress: '45, Industrial Estate, Pune',
-      soReference: 'SO/25-26/002',
-      status: 'dispatched',
-      items: [
-        { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', qty: 1, unit: 'Pcs', serial: 'FIL-001' },
-        { itemId: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', qty: 20, unit: 'Mtr', serial: '' }
-      ],
-      packingList: {
-        packages: 2,
-        packageType: 'Wooden Crate',
-        dimensions: '120x80x60 cm',
-        totalWeight: '85 Kg',
-        created: true
-      },
-      notes: 'Dispatched via surface transport',
-      createdAt: '2026-01-20'
-    }, {
-      id: 'DC-003',
-      number: 'DC/25-26/003',
-      date: '2026-01-25',
-      customerId: 'CUS-003',
-      customerName: 'Rahul Sharma',
-      customerAddress: '12, Green Park, Mumbai',
-      shippingAddress: '12, Green Park, Mumbai',
-      soReference: 'SO/25-26/003',
-      status: 'draft',
-      items: [
-        { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', qty: 2, unit: 'Pcs', serial: '' }
-      ],
-      packingList: {
-        packages: 0,
-        packageType: '',
-        dimensions: '',
-        totalWeight: '',
-        created: false
-      },
-      notes: 'Pending packing',
-      createdAt: '2026-01-25'
-    }, {
-      id: 'DC-004',
-      number: 'DC/25-26/004',
-      date: '2026-02-01',
-      customerId: 'CUS-004',
-      customerName: 'Tech Solutions Inc.',
-      customerAddress: '88, Electronics City, Bengaluru',
-      shippingAddress: '88, Electronics City, Bengaluru',
-      soReference: 'SO/25-26/004',
-      status: 'dispatched',
-      items: [
-        { itemId: 'ITM-1001', name: 'Centrifugal Blower — 5HP', qty: 3, unit: 'Pcs', serial: 'BLW-003, BLW-004, BLW-005' }
-      ],
-      packingList: {
-        packages: 3,
-        packageType: 'Cardboard Box',
-        dimensions: '40x30x25 cm',
-        totalWeight: '22 Kg',
-        created: true
-      },
-      notes: 'Express delivery',
-      createdAt: '2026-02-01'
-    }, {
-      id: 'DC-005',
-      number: 'DC/25-26/005',
-      date: '2026-02-08',
-      customerId: 'CUS-006',
-      customerName: 'Global Exports Ltd.',
-      customerAddress: '101, Trade Tower, Delhi',
-      shippingAddress: '101, Trade Tower, Delhi',
-      soReference: 'SO/25-26/005',
-      status: 'delivered',
-      items: [
-        { itemId: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', qty: 2, unit: 'Pcs', serial: 'FIL-002, FIL-003' },
-        { itemId: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', qty: 3, unit: 'Pcs', serial: 'DOSE-001, DOSE-002, DOSE-003' }
-      ],
-      packingList: {
-        packages: 5,
-        packageType: 'Export Grade Box',
-        dimensions: '100x80x70 cm',
-        totalWeight: '120 Kg',
-        created: true
-      },
-      notes: 'Export documentation attached',
-      createdAt: '2026-02-08'
-    }];
-
-    var nextDCNo = 6;
-
-    // =============================================================
-    // FUNCTIONS
-    // =============================================================
-
-    function getCustomerName(id) {
-      var c = customers.find(function(x) { return x.id === id; });
-      return c ? c.name : id;
+    // ============================================================= LOOKUP DATA
+    var customers = [], warehouses = [], salesOrders = [];
+    async function loadCustomers() {
+      try {
+        var data = await apiFetch('/api/clients/v1/client-list');
+        var content = Array.isArray(data.content) ? data.content : [];
+        customers = content.map(function (c) {
+          var gst = c.clientGstin || '', isIndia = (c.clientCountry || '') === 'India';
+          return {
+            id: c.clientPrimeId, strId: c.clientStrId || '', name: c.clientCompanyName || c.clientName, contactName: c.clientName, gst: gst,
+            country: c.clientCountry, state: c.clientState || '',
+            stateCode: c.clientStateCode || (isIndia ? stateCodeFor(c.clientState, gst) : ''),
+            address: c.clientBillingAddress || [c.clientShippingAddress, c.clientState, c.clientPincode].filter(Boolean).join(', '),
+            shipAddress: c.clientShippingAddress || '', email: c.clientEmail, phone: c.clientPhone
+          };
+        });
+      } catch (e) { customers = []; showToast(e.message || 'Could not load clients', 'error'); }
+    }
+    async function loadWarehouses() {
+      try {
+        var r = await apiFetch(WAREHOUSE_API, { method: 'GET' }), l = Array.isArray(r) ? r : (r.data || []);
+        warehouses = l.filter(function (w) { return w.warehouseStatus === 'ACTIVE'; });
+      } catch (e) { warehouses = []; showToast(e.message || 'Could not load warehouses', 'error'); }
+    }
+    async function loadSalesOrders() {
+      try {
+        var r = await apiFetch(SO_API, { method: 'GET' });
+        salesOrders = Array.isArray(r) ? r : (r.data || r.content || []);
+      } catch (e) { salesOrders = []; showToast(e.message || 'Could not load sales orders', 'error'); }
     }
 
-    function renderStats() {
-      var total = deliveryChallans.length;
-      var draft = deliveryChallans.filter(function(dc) { return dc.status === 'draft'; }).length;
-      var dispatched = deliveryChallans.filter(function(dc) { return dc.status === 'dispatched'; }).length;
-      var delivered = deliveryChallans.filter(function(dc) { return dc.status === 'delivered'; }).length;
-
-      document.getElementById('totalDC').textContent = total;
-      document.getElementById('draftDC').textContent = draft;
-      document.getElementById('dispatchedDC').textContent = dispatched;
-      document.getElementById('deliveredDC').textContent = delivered;
-
-      var filterCustomer = document.getElementById('filterCustomer');
-      var currentVal = filterCustomer.value;
-      filterCustomer.innerHTML = '<option value="all">All Customers</option>';
-      customers.forEach(function(c) {
-        filterCustomer.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>';
-      });
-      filterCustomer.value = currentVal;
-    }
-
-    function getFilteredDC() {
-      var searchInput = document.getElementById('searchInput');
-      var q = searchInput ? searchInput.value.toLowerCase() : '';
-      var status = document.getElementById('filterStatus').value || 'all';
-      var customer = document.getElementById('filterCustomer').value || 'all';
-
-      return deliveryChallans.filter(function(dc) {
-        var matchSearch = dc.number.toLowerCase().indexOf(q) !== -1 ||
-          dc.customerName.toLowerCase().indexOf(q) !== -1 ||
-          dc.id.toLowerCase().indexOf(q) !== -1;
-        var matchStatus = status === 'all' || dc.status === status;
-        var matchCustomer = customer === 'all' || dc.customerId === customer;
-        return matchSearch && matchStatus && matchCustomer;
-      });
-    }
-
-    function renderDC() {
-      var filtered = getFilteredDC();
-
-      var rowsHtml = '';
-      if (filtered.length === 0) {
-        rowsHtml = `
-          <tr>
-            <td colspan="8" class="text-center py-10 text-gray-400 text-sm">
-              <div class="flex justify-center mb-2 empty-icon-svg">${iconDocument()}</div>
-              No delivery challans found. Try adjusting your filters or
-              <button onclick="openAddDC()" class="text-primary font-semibold hover:underline">create a new delivery challan</button>.
-            </td>
-          </tr>`;
-      } else {
-        rowsHtml = filtered.map(function(dc) {
-          var hasPL = dc.packingList && dc.packingList.created;
-          return `
-            <tr class="border-b border-gray-100 table-row-hover">
-              <td class="px-3 py-2.5">
-                <div class="font-semibold text-gray-800 text-sm">${dc.number}</div>
-                <div class="text-[10px] text-gray-400 font-mono">${dc.id}</div>
-              </td>
-              <td class="px-3 py-2.5 text-xs">${dc.date}</td>
-              <td class="px-3 py-2.5 text-sm text-gray-700">${dc.customerName}</td>
-              <td class="px-3 py-2.5 text-xs">${dc.soReference || '—'}</td>
-              <td class="px-3 py-2.5 text-[10px]">${dc.items.reduce(function(sum, item) { return sum + item.qty; }, 0)} items</td>
-              <td class="px-3 py-2.5">${statusBadge(dc.status)}</td>
-              <td class="px-3 py-2.5 text-center">${hasPL ? '<span class="text-green-600 text-[10px] font-semibold">✓ Generated</span>' : '<span class="text-amber-600 text-[10px] font-semibold">Pending</span>'}</td>
-              <td class="px-3 py-2.5">${rowActionsHtml(
-                "editDC('"+dc.id+"')",
-                "delDC('"+dc.id+"')",
-                "viewDC('"+dc.id+"')",
-                hasPL ? "viewPackingList('"+dc.id+"')" : "generatePackingList('"+dc.id+"')"
-              )}</td>
-            </tr>`;
-        }).join('');
+    // ============================================================= SEARCHABLE PICKER
+    function closePicker() { var b = document.getElementById('pickerBox'); if (b) b.remove(); document.removeEventListener('mousedown', pickerOutside); }
+    function pickerOutside(e) { var b = document.getElementById('pickerBox'); if (b && !b.contains(e.target)) closePicker(); }
+    function openPicker(anchor, cfg) {
+      closePicker();
+      var r = anchor.getBoundingClientRect(), box = document.createElement('div');
+      box.id = 'pickerBox';
+      box.style.cssText = 'position:fixed;z-index:300;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);width:' + Math.max(r.width, 320) + 'px;left:' + r.left + 'px;top:' + (r.bottom + 4) + 'px;';
+      box.innerHTML = '<input class="form-input" placeholder="Type 2+ letters to search…" style="margin:6px;width:calc(100% - 12px)"><div style="max-height:220px;overflow-y:auto"></div>';
+      document.body.appendChild(box);
+      var inp = box.firstChild, list = box.lastChild, page = 0, more = true, busy = false, q = '', tok = 0, t;
+      async function load(reset) {
+        if (reset) { tok++; page = 0; more = true; busy = false; list.innerHTML = ''; }
+        if (busy || !more) return;
+        busy = true; var my = tok;
+        var ld = document.createElement('div'); ld.textContent = 'Loading…'; ld.style.cssText = 'padding:8px;font-size:11px;color:#9ca3af'; list.appendChild(ld);
+        try {
+          var res = await cfg.fetchPage(q, page);
+          if (my !== tok) return;
+          ld.remove(); more = !!res.hasNext; page = res.nextPage != null ? res.nextPage : page + 1;
+          res.items.forEach(function (it) {
+            var d = document.createElement('div');
+            d.style.cssText = 'padding:7px 10px;font-size:11px;cursor:pointer;border-top:1px solid #f3f4f6';
+            d.innerHTML = cfg.render(it);
+            d.onmouseenter = function () { d.style.background = '#f8fafc'; }; d.onmouseleave = function () { d.style.background = ''; };
+            d.onclick = function () { cfg.onPick(it); closePicker(); };
+            list.appendChild(d);
+          });
+          if (!list.children.length) list.innerHTML = '<div style="padding:8px;font-size:11px;color:#9ca3af">No results</div>';
+        } catch (e) { if (my === tok) { ld.remove(); more = false; showToast(e.message || 'Could not load', 'error'); } }
+        finally { if (my === tok) busy = false; }
       }
-
-      var panelHtml = panelWrap(
-        'Delivery Challans <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + filtered.length + '</span>',
-        tableHtml(['DC #', 'Date', 'Customer', 'SO Reference', 'Items', 'Status', 'Packing List', 'Actions'], rowsHtml),
-        '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="renderDC()" class="text-[10px] border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></div>'
-      );
-
-      document.getElementById('dcPanel').innerHTML = panelHtml;
-      renderStats();
-    }
-
-    function filterDC() { renderDC(); }
-
-    function clearFilters() {
-      document.getElementById('filterStatus').value = 'all';
-      document.getElementById('filterCustomer').value = 'all';
-      var searchInput = document.getElementById('searchInput');
-      if (searchInput) searchInput.value = '';
-      renderDC();
-      toggleFilterDD();
-    }
-
-    // =============================================================
-    // VIEW DELIVERY CHALLAN
-    // =============================================================
-
-    function viewDC(id) {
-      var dc = deliveryChallans.find(function(x) { return x.id === id; });
-      if (!dc) return;
-
-      var itemsHtml = dc.items.map(function(item) {
-        return `
-          <tr>
-            <td class="px-2 py-1.5 text-xs">${item.name}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${item.qty}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${item.unit || 'Pcs'}</td>
-            <td class="px-2 py-1.5 text-xs">${item.serial || '—'}</td>
-          </tr>`;
-      }).join('');
-
-      var hasPL = dc.packingList && dc.packingList.created;
-
-      var modalContent = `
-        ${modalHeader('Delivery Challan Details — ' + dc.number, dc.id)}
-        <div class="px-5 py-4 modal-scroll">
-
-          <div class="dc-preview">
-            <div class="dc-header">
-              <div>
-                <div class="dc-company-name">${company.name || 'Kunash Media Pvt. Ltd.'}</div>
-                <div class="dc-company-details">
-                  ${company.address || '401, Creative Hub, BKC, Mumbai - 400051'}<br>
-                  GSTIN: ${company.gstin || '27AABCU1234D1ZP'} | Phone: ${company.phone || '+91-9876543210'}
-                </div>
-              </div>
-              <div style="text-align:right;">
-                <div class="dc-title">DELIVERY CHALLAN</div>
-              </div>
-            </div>
-
-            <div class="dc-meta">
-              <div>
-                <div class="meta-label">Customer</div>
-                <div class="meta-value">${dc.customerName}</div>
-                <div class="text-xs text-gray-500">${dc.customerAddress || ''}</div>
-              </div>
-              <div style="text-align:right;">
-                <div><span class="meta-label">DC #</span> <span class="meta-value">${dc.number}</span></div>
-                <div><span class="meta-label">Date</span> <span class="meta-value">${dc.date}</span></div>
-                <div><span class="meta-label">SO Reference</span> <span class="meta-value">${dc.soReference || '—'}</span></div>
-                <div><span class="meta-label">Status</span> ${statusBadge(dc.status)}</div>
-              </div>
-            </div>
-
-            <div style="margin-bottom:8px;">
-              <span class="meta-label">Shipping Address</span>
-              <div class="text-sm text-gray-700">${dc.shippingAddress || dc.customerAddress}</div>
-            </div>
-
-            <table class="dc-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th class="text-center">Qty</th>
-                  <th class="text-center">Unit</th>
-                  <th>Serial / Batch</th>
-                </tr>
-              </thead>
-              <tbody>${itemsHtml}</tbody>
-            </table>
-
-            ${dc.notes ? `<div class="text-xs text-gray-500 mt-2"><strong>Notes:</strong> ${dc.notes}</div>` : ''}
-
-            <div class="dc-footer">
-              <p>This is a system generated delivery challan. | ${company.name}</p>
-            </div>
-          </div>
-
-        </div>
-        ${modalFooter('Close', 'onclick="closeModal()"', `
-          <div class="flex gap-1.5">
-            <button onclick="generatePackingList('${dc.id}')" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1 px-2 py-1 rounded border border-primary/20 hover:bg-primary-light transition">
-              ${iconPackage()} ${hasPL ? 'View Packing List' : 'Generate Packing List'}
-            </button>
-            <button onclick="printDC('${dc.id}')" class="text-xs font-semibold text-gray-600 hover:underline flex items-center gap-1 px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 transition">
-              ${iconPrint()} Print
-            </button>
-          </div>
-        `)}
-      `;
-
-      openModal(modalContent, { width: 'max-w-4xl' });
-    }
-
-    // =============================================================
-    // PACKING LIST FUNCTIONS (Enhancement #6)
-    // =============================================================
-
-    function generatePackingList(id) {
-      var dc = deliveryChallans.find(function(x) { return x.id === id; });
-      if (!dc) return;
-
-      // Open modal to enter packing list details
-      var modalContent = `
-        ${modalHeader('Generate Packing List', dc.number)}
-        <div class="px-5 py-4 modal-scroll">
-
-          <div class="grid grid-cols-2 gap-3">
-            ${fld('Package Count *', '<input type="number" class="form-input" id="pl_packages" value="' + (dc.packingList && dc.packingList.packages ? dc.packingList.packages : 1) + '" placeholder="Number of packages">')}
-            ${fld('Package Type', '<select class="form-input" id="pl_type"><option ' + (dc.packingList && dc.packingList.packageType === 'Cardboard Box' ? 'selected' : '') + '>Cardboard Box</option><option ' + (dc.packingList && dc.packingList.packageType === 'Wooden Crate' ? 'selected' : '') + '>Wooden Crate</option><option ' + (dc.packingList && dc.packingList.packageType === 'Plastic Container' ? 'selected' : '') + '>Plastic Container</option><option ' + (dc.packingList && dc.packingList.packageType === 'Export Grade Box' ? 'selected' : '') + '>Export Grade Box</option><option ' + (dc.packingList && dc.packingList.packageType === 'Pallet' ? 'selected' : '') + '>Pallet</option><option ' + (dc.packingList && dc.packingList.packageType === 'Other' ? 'selected' : '') + '>Other</option></select>')}
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            ${fld('Dimensions (LxWxH)', '<input type="text" class="form-input" id="pl_dimensions" value="' + (dc.packingList && dc.packingList.dimensions ? dc.packingList.dimensions : '') + '" placeholder="e.g. 30x20x15 cm">')}
-            ${fld('Total Weight', '<input type="text" class="form-input" id="pl_weight" value="' + (dc.packingList && dc.packingList.totalWeight ? dc.packingList.totalWeight : '') + '" placeholder="e.g. 15.5 Kg">')}
-          </div>
-
-          <div class="mt-3 p-3 bg-gray-50 rounded-lg">
-            <p class="text-[10px] text-gray-500">ⓘ Packing List will be linked to this Delivery Challan and will appear in Project Documents (Enhancement #5)</p>
-          </div>
-        </div>
-        ${modalFooter('Generate Packing List', 'onclick="savePackingList(\'' + id + '\')"')}
-      `;
-
-      openModal(modalContent, { width: 'max-w-lg' });
-    }
-
-    function savePackingList(id) {
-      var dc = deliveryChallans.find(function(x) { return x.id === id; });
-      if (!dc) return;
-
-      var packages = parseInt(document.getElementById('pl_packages').value) || 0;
-      var packageType = document.getElementById('pl_type').value || '';
-      var dimensions = document.getElementById('pl_dimensions').value || '';
-      var totalWeight = document.getElementById('pl_weight').value || '';
-
-      if (packages === 0) {
-        showToast('Please enter package count', 'error');
-        return;
-      }
-
-      dc.packingList = {
-        packages: packages,
-        packageType: packageType,
-        dimensions: dimensions,
-        totalWeight: totalWeight,
-        created: true
+      list.onscroll = function () { if (list.scrollTop + list.clientHeight >= list.scrollHeight - 24) load(false); };
+      inp.oninput = function () {
+        clearTimeout(t);
+        t = setTimeout(function () { var v = inp.value.trim(); if (v.length === 1 || v === q) return; q = v; load(true); }, 400);
       };
-
-      closeModal();
-      renderDC();
-      showToast('Packing List generated successfully for ' + dc.number + '!', 'success');
-
-      // Show packing list view
-      setTimeout(function() {
-        viewPackingList(id);
-      }, 300);
+      setTimeout(function () { document.addEventListener('mousedown', pickerOutside); }, 0);
+      inp.focus(); load(true);
     }
-
-    function viewPackingList(id) {
-      var dc = deliveryChallans.find(function(x) { return x.id === id; });
-      if (!dc || !dc.packingList || !dc.packingList.created) {
-        showToast('Packing List not found for this Delivery Challan', 'error');
-        return;
-      }
-
-      var pl = dc.packingList;
-
-      var itemsHtml = dc.items.map(function(item) {
-        return `
-          <tr>
-            <td class="px-2 py-1.5 text-xs">${item.name}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${item.qty}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${item.unit || 'Pcs'}</td>
-          </tr>`;
-      }).join('');
-
-      var modalContent = `
-        ${modalHeader('Packing List — ' + dc.number, 'For Delivery Challan ' + dc.number)}
-        <div class="px-5 py-4 modal-scroll">
-
-          <div class="pl-preview">
-            <div class="pl-header">
-              <div>
-                <div class="dc-company-name">${company.name || 'Kunash Media Pvt. Ltd.'}</div>
-                <div class="dc-company-details">
-                  ${company.address || '401, Creative Hub, BKC, Mumbai - 400051'}<br>
-                  GSTIN: ${company.gstin || '27AABCU1234D1ZP'} | Phone: ${company.phone || '+91-9876543210'}
-                </div>
-              </div>
-              <div style="text-align:right;">
-                <div class="pl-title">PACKING LIST</div>
-              </div>
-            </div>
-
-            <div class="dc-meta">
-              <div>
-                <div class="meta-label">Customer</div>
-                <div class="meta-value">${dc.customerName}</div>
-                <div class="text-xs text-gray-500">${dc.customerAddress || ''}</div>
-              </div>
-              <div style="text-align:right;">
-                <div><span class="meta-label">DC #</span> <span class="meta-value">${dc.number}</span></div>
-                <div><span class="meta-label">Date</span> <span class="meta-value">${dc.date}</span></div>
-                <div><span class="meta-label">SO Reference</span> <span class="meta-value">${dc.soReference || '—'}</span></div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 text-sm mb-3">
-              <div><span class="text-gray-500">Package Count:</span> <span class="font-semibold">${pl.packages}</span></div>
-              <div><span class="text-gray-500">Package Type:</span> <span class="font-semibold">${pl.packageType || '—'}</span></div>
-              <div><span class="text-gray-500">Dimensions:</span> <span class="font-semibold">${pl.dimensions || '—'}</span></div>
-              <div><span class="text-gray-500">Total Weight:</span> <span class="font-semibold">${pl.totalWeight || '—'}</span></div>
-            </div>
-
-            <table class="pl-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th class="text-center">Qty</th>
-                  <th class="text-center">Unit</th>
-                </tr>
-              </thead>
-              <tbody>${itemsHtml}</tbody>
-            </table>
-
-            <div class="pl-totals">
-              <div class="total-row"><span class="label">Total Items</span><span class="value">${dc.items.reduce(function(sum, item) { return sum + item.qty; }, 0)}</span></div>
-              <div class="total-row"><span class="label">Total Packages</span><span class="value">${pl.packages}</span></div>
-            </div>
-
-            <div class="dc-footer">
-              <p>This is a system generated packing list. | ${company.name}</p>
-            </div>
-          </div>
-
-        </div>
-        ${modalFooter('Close', 'onclick="closeModal()"', `
-          <div class="flex gap-1.5">
-            <button onclick="printPackingList('${dc.id}')" class="text-xs font-semibold text-gray-600 hover:underline flex items-center gap-1 px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 transition">
-              ${iconPrint()} Print
-            </button>
-          </div>
-        `)}
-      `;
-
-      openModal(modalContent, { width: 'max-w-4xl' });
-    }
-
-    // =============================================================
-    // PRINT FUNCTIONS
-    // =============================================================
-
-    function printDC(id) {
-      showToast('Printing Delivery Challan...', 'info');
-    }
-
-    function printPackingList(id) {
-      showToast('Printing Packing List...', 'info');
-    }
-
-    // =============================================================
-    // ADD / EDIT DELIVERY CHALLAN
-    // =============================================================
-
-    function openAddDC() { openDCModal(null); }
-
-    function editDC(id) {
-      var dc = deliveryChallans.find(function(x) { return x.id === id; });
-      if (dc) openDCModal(dc);
-    }
-
-    function openDCModal(existing) {
-      var e = existing || {
-        number: 'DC/25-26/' + String(deliveryChallans.length + 1).padStart(3, '0'),
-        date: new Date().toISOString().split('T')[0],
-        customerId: customers[0].id,
-        status: 'draft',
-        items: [],
-        notes: '',
-        shippingAddress: ''
-      };
-      var isEdit = !!existing;
-
-      // Line items
-      var lineItemsHtml = '';
-      if (e.items && e.items.length > 0) {
-        lineItemsHtml = e.items.map(function(item, idx) {
-          return `
-            <tr class="border-b border-gray-100 line-item-row">
-              <td class="px-2 py-1">
-                <select class="form-input text-[10px] item-select" data-idx="${idx}">
-                  ${items.map(function(it) { return '<option ' + (it.id === item.itemId ? 'selected' : '') + ' value="' + it.id + '">' + it.name + '</option>'; }).join('')}
-                </select>
-              </td>
-              <td class="px-2 py-1">
-                <input type="number" class="form-input text-[10px] item-qty" value="${item.qty}" data-idx="${idx}" placeholder="Qty">
-              </td>
-              <td class="px-2 py-1">
-                <input type="text" class="form-input text-[10px] item-serial" value="${item.serial || ''}" data-idx="${idx}" placeholder="Serial numbers">
-              </td>
-              <td class="px-2 py-1 text-center">
-                <button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
-              </td>
-            </tr>`;
-        }).join('');
-      }
-
-      var modalContent = `
-        ${modalHeader(isEdit ? 'Edit Delivery Challan' : 'New Delivery Challan', isEdit ? e.number : 'Create a new delivery challan')}
-
-        <div class="px-5 py-4 modal-scroll">
-
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            ${fld('DC #', '<input type="text" class="form-input" id="f_number" value="' + e.number + '" disabled>')}
-            ${fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">')}
-            ${fld('Customer *', '<select id="f_customer" class="form-input" onchange="updateAddress()">' + customers.map(function(c) { return '<option ' + (c.id === e.customerId ? 'selected' : '') + ' value="' + c.id + '">' + c.name + '</option>'; }).join('') + '</select>')}
-            ${fld('SO Reference', '<select class="form-input" id="f_soReference"><option value="">None</option>' + salesOrders.map(function(so) { return '<option ' + (so.id === e.soReference ? 'selected' : '') + ' value="' + so.number + '">' + so.number + ' - ' + so.customerName + '</option>'; }).join('') + '</select>')}
-          </div>
-
-          ${fld('Shipping Address', '<input type="text" class="form-input" id="f_shippingAddress" value="' + (e.shippingAddress || '') + '" placeholder="Shipping address">')}
-
-          <!-- Line Items -->
-          <div class="mt-3">
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="form-label mb-0">Items</label>
-              <button onclick="addLineItem()" class="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1">
-                ${iconPlus()} Add Item
-              </button>
-            </div>
-            <div class="border border-gray-200 rounded-lg overflow-hidden">
-              <table class="w-full text-xs" id="lineItemsTable">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-2 py-1.5 text-left font-semibold text-gray-600">Item</th>
-                    <th class="px-2 py-1.5 text-center font-semibold text-gray-600">Qty</th>
-                    <th class="px-2 py-1.5 text-left font-semibold text-gray-600">Serial / Batch</th>
-                    <th class="px-2 py-1.5 text-center font-semibold text-gray-600" style="width:36px;">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="lineItemsBody">
-                  ${lineItemsHtml || '<tr><td colspan="4" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products.</td></tr>'}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3 mt-3">
-            ${fld('Status', '<select class="form-input" id="f_status"><option ' + (e.status === 'draft' ? 'selected' : '') + ' value="draft">Draft</option><option ' + (e.status === 'dispatched' ? 'selected' : '') + ' value="dispatched">Dispatched</option><option ' + (e.status === 'delivered' ? 'selected' : '') + ' value="delivered">Delivered</option></select>')}
-          </div>
-
-          ${fld('Notes', '<textarea rows="2" class="form-input" id="f_notes" placeholder="Additional notes">' + (e.notes || '') + '</textarea>')}
-        </div>
-        ${modalFooter(isEdit ? 'Update Delivery Challan' : 'Save Delivery Challan', 'onclick="saveDC(\'' + (isEdit ? e.id : '') + '\')"')}
-      `;
-
-      openModal(modalContent, { width: 'max-w-4xl' });
-    }
-
-    // =============================================================
-    // LINE ITEM FUNCTIONS
-    // =============================================================
-
-    function addLineItem() {
-      var tbody = document.getElementById('lineItemsBody');
-      if (!tbody) return;
-      var emptyRow = tbody.querySelector('tr td[colspan]');
-      if (emptyRow) tbody.innerHTML = '';
-
-      var idx = tbody.children.length;
-      var row = document.createElement('tr');
-      row.className = 'border-b border-gray-100 line-item-row';
-      row.innerHTML = `
-        <td class="px-2 py-1">
-          <select class="form-input text-[10px] item-select" data-idx="${idx}">
-            ${items.map(function(it) { return '<option value="' + it.id + '">' + it.name + '</option>'; }).join('')}
-          </select>
-        </td>
-        <td class="px-2 py-1">
-          <input type="number" class="form-input text-[10px] item-qty" value="1" data-idx="${idx}" placeholder="Qty">
-        </td>
-        <td class="px-2 py-1">
-          <input type="text" class="form-input text-[10px] item-serial" data-idx="${idx}" placeholder="Serial numbers">
-        </td>
-        <td class="px-2 py-1 text-center">
-          <button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
-        </td>
-      `;
-      tbody.appendChild(row);
-    }
-
-    function removeLineItem(btn) {
-      var row = btn.closest('tr');
-      if (row) row.remove();
-      var tbody = document.getElementById('lineItemsBody');
-      if (tbody && tbody.children.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products.</td></tr>';
-      }
-    }
-
-    function updateAddress() {
-      var customerId = document.getElementById('f_customer').value;
-      var customer = customers.find(function(c) { return c.id === customerId; });
-      if (customer && customer.address) {
-        document.getElementById('f_shippingAddress').value = customer.address;
-      }
-    }
-
-    // =============================================================
-    // SAVE / DELETE DELIVERY CHALLAN
-    // =============================================================
-
-    function saveDC(existingId) {
-      var number = document.getElementById('f_number').value;
-      var date = document.getElementById('f_date').value;
-      var customerId = document.getElementById('f_customer').value;
-      var shippingAddress = document.getElementById('f_shippingAddress').value || '';
-      var soReference = document.getElementById('f_soReference').value || '';
-      var status = document.getElementById('f_status').value;
-      var notes = document.getElementById('f_notes').value || '';
-
-      if (!date || !customerId) {
-        showToast('Please fill all required fields (Date, Customer)', 'error');
-        return;
-      }
-
-      var itemsData = [];
-      var rows = document.querySelectorAll('#lineItemsBody .line-item-row');
-      rows.forEach(function(row) {
-        var itemId = row.querySelector('.item-select').value;
-        var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-        var serial = row.querySelector('.item-serial').value || '';
-        if (qty > 0) {
-          var item = items.find(function(it) { return it.id === itemId; });
-          itemsData.push({
-            itemId: itemId,
-            name: item ? item.name : '',
-            qty: qty,
-            unit: item ? item.unit : 'Pcs',
-            serial: serial
+    async function fetchProductPage(q, page) {
+      var r = await apiFetch(PRODUCT_API + '?page=' + page + '&size=20' + (q ? '&search=' + encodeURIComponent(q) : ''), { method: 'GET' });
+      var d = r.data || r, out = [];
+      (d.content || []).forEach(function (p) {
+        var base = { hsn: p.productHsnCode || '', gst: p.productGstRate != null ? Number(p.productGstRate) : null, pid: p.productPrimeId };
+        if (!p.variants || !p.variants.length) {
+          out.push(Object.assign({}, base, { vid: null, name: p.productName, unit: p.productUnit, price: p.productSellingPrice, sub: p.productStrId }));
+        } else {
+          p.variants.forEach(function (v) {
+            out.push(Object.assign({}, base, { vid: v.variantPrimeId, name: p.productName + ' — ' + v.variantName, unit: v.variantUnit || p.productUnit,
+              price: v.variantSellingPrice != null ? v.variantSellingPrice : p.productSellingPrice, sub: v.variantSku || v.variantStrId }));
           });
         }
       });
+      return { items: out, hasNext: !!d.hasNext, nextPage: d.nextPage };
+    }
+    async function fetchProjectPage(q, page) {
+      if (!PROJECT_API) throw new Error('Project API is not configured (PROJECT_API).');
+      var r = await apiFetch(PROJECT_API + '?page=' + page + '&size=20' + (q ? '&search=' + encodeURIComponent(q) : ''), { method: 'GET' });
+      var d = r.data || r, list = Array.isArray(d) ? d : (d.content || []);
+      return { items: list, hasNext: !!d.hasNext, nextPage: d.nextPage };
+    }
 
-      if (itemsData.length === 0) {
-        showToast('Please add at least one item to the delivery challan', 'error');
+    // ============================================================= MAPPING + TOTALS
+    var dcs = [], currentPage = 1, pageSize = 25, totalPages = 1, totalElements = 0, searchTimer, _editCust = null;
+
+    function mapDc(d) {
+      return {
+        id: d.dcPrimeId, number: d.dcStrId, date: d.dcDate, type: d.dcType, customerId: d.dcClientPrimeId,
+        customerName: d.dcClientCompanyName || d.dcClientName, contactName: d.dcClientName, customerGST: d.dcClientGstin, customerEmail: d.dcClientEmail,
+        customerState: d.dcClientState, customerStateCode: d.dcClientStateCode, customerCountry: d.dcClientCountry,
+        customerAddress: d.dcClientBillingAddress, shipTo: d.dcShippingAddress, pos: d.dcPlaceOfSupply, posCode: d.dcPlaceOfSupplyStateCode, gstType: d.dcGstType,
+        soNumber: d.dcSoNumber, ref: d.dcReferenceNumber, projectCode: d.dcProjectCode,
+        warehouseStrId: d.dcWarehouseStrId, warehouseName: d.dcWarehouseName, destStrId: d.dcDestWarehouseStrId, destName: d.dcDestWarehouseName,
+        subTotal: d.dcSubTotal, total: d.dcTotalAmount, status: d.dcStatus, notes: d.dcNotes, pdfUrl: d.dcPdfUrl,
+        items: (d.dcItems || []).map(function (i) {
+          return { pid: i.dcItemProductId, vid: i.dcItemVariantId, name: i.dcItemName, desc: i.dcItemDescription, hsn: i.dcItemHsnCode, unit: i.dcItemUnit,
+            qty: i.dcItemQty, rate: i.dcItemRate, amount: i.dcItemAmount, gst: i.dcItemGstPercent,
+            cgst: i.dcItemCgstAmount, sgst: i.dcItemSgstAmount, igst: i.dcItemIgstAmount, serial: i.dcItemSerial };
+        })
+      };
+    }
+    // Tax rows for the PDF, grouped by GST rate using the server's per-item amounts
+    function groupTax(dc) {
+      var by = {};
+      dc.items.forEach(function (i) {
+        var k = i.gst || 0; by[k] = by[k] || { cgst: 0, sgst: 0, igst: 0 };
+        by[k].cgst += Number(i.cgst || 0); by[k].sgst += Number(i.sgst || 0); by[k].igst += Number(i.igst || 0);
+      });
+      return by;
+    }
+
+    // ============================================================= PDF / PREVIEW (matches reference image)
+    function buildDcHtml(dc) {
+      var by = groupTax(dc), intra = dc.gstType === 'CGST_SGST';
+      var tr = function (l, v) { return '<div style="display:flex;justify-content:flex-end;padding:5px 0;font-size:10.5px"><span style="width:150px;text-align:right;color:#374151">' + l + '</span><span style="width:110px;text-align:right">' + v + '</span></div>'; };
+      var th = 'background:#3a3a3a;color:#fff;padding:8px;font-size:10px;font-weight:600;';
+      var td = 'padding:10px 8px;font-size:10px;vertical-align:top;border-bottom:1px solid #d1d5db;';
+      var rows = dc.items.map(function (i, k) {
+        return '<tr><td style="' + td + '">' + (k + 1) + '</td><td style="' + td + '"><div>' + escH(i.name) + '</div>' +
+          (i.desc ? '<div style="white-space:pre-wrap;margin-top:2px">' + escH(i.desc) + '</div>' : '') + '</td>' +
+          '<td style="' + td + 'text-align:right">' + Number(i.qty).toFixed(2) + (i.unit ? '<div style="font-size:8.5px;color:#6b7280">' + escH(i.unit) + '</div>' : '') + '</td>' +
+          '<td style="' + td + 'text-align:right">' + n2(i.rate) + '</td><td style="' + td + 'text-align:right">' + n2(i.amount) + '</td></tr>';
+      }).join('');
+      var taxRows = '';
+      Object.keys(by).forEach(function (r) {
+        var g = by[r];
+        if (intra) { var h = r / 2; if (g.cgst || g.sgst) taxRows += tr('CGST' + h + ' (' + h + '%)', n2(g.cgst)) + tr('SGST' + h + ' (' + h + '%)', n2(g.sgst)); }
+        else if (g.igst) taxRows += tr('IGST' + r + ' (' + r + '%)', n2(g.igst));
+      });
+      var logo = (company.logoData || company.logoUrl) ? '<img src="' + (company.logoData || company.logoUrl) + '" crossorigin="anonymous" style="max-height:90px;max-width:180px;object-fit:contain">' : '';
+      var meta = function (l, v) { return '<div style="display:flex;justify-content:space-between;gap:24px;padding:3px 0"><span style="color:#374151">' + l + '</span><span>' + escH(v) + '</span></div>'; };
+      return '<div style="font-family:Arial,Helvetica,sans-serif;color:#111;padding:26px 30px;background:#fff;width:100%;box-sizing:border-box">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start"><div>' + logo + '</div>' +
+        '<div style="text-align:right"><div style="font-size:26px">Delivery Challan</div><div style="font-size:10px;font-weight:700;margin-top:4px">Delivery Challan# ' + escH(dc.number) + '</div></div></div>' +
+        '<div style="font-size:10px;line-height:1.6;margin-top:10px;max-width:340px"><div style="font-weight:700;font-size:10.5px">' + escH(company.name) + '</div>' + escH(company.address) + '<br>India' + (company.gstin ? '<br>GSTIN: ' + escH(company.gstin) : '') + '</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-top:36px;font-size:10px;line-height:1.6"><div style="max-width:300px"><div>Deliver To</div><div style="font-weight:700;font-size:10.5px">' + escH(dc.customerName) + '</div>' +
+        '<div style="white-space:pre-wrap">' + escH(dc.shipTo || dc.customerAddress || '') + '</div>' + (dc.customerCountry ? '<div>' + escH(dc.customerCountry) + '</div>' : '') + '</div>' +
+        '<div style="width:260px">' + meta('Challan Date :', fd(dc.date)) + (dc.ref ? meta('Ref# :', dc.ref) : '') + meta('Challan Type :', typeLabel(dc.type)) + '</div></div>' +
+        '<div style="font-size:10px;margin:22px 0 10px">Place Of Supply: ' + escH(dc.pos || '') + (dc.posCode ? ' (' + escH(dc.posCode) + ')' : '') + '</div>' +
+        '<table style="width:100%;border-collapse:collapse"><thead><tr><th style="' + th + 'text-align:left;width:26px">#</th><th style="' + th + 'text-align:left">Item &amp; Description</th>' +
+        '<th style="' + th + 'text-align:right">Qty</th><th style="' + th + 'text-align:right">Rate</th><th style="' + th + 'text-align:right">Amount</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+        '<div style="display:flex;justify-content:flex-end;margin-top:14px"><div>' + tr('Sub Total', n2(dc.subTotal)) + taxRows +
+        '<div style="background:#f3f4f6;margin-top:8px;display:flex;justify-content:flex-end;padding:10px 0;font-size:10.5px;font-weight:700"><span style="width:150px;text-align:right">Total</span><span style="width:110px;text-align:right">' + fm(dc.total) + '</span></div></div></div>' +
+        '<div style="margin-top:10px;font-size:9.5px;text-align:right"><span style="color:#374151">Total In Words:</span> <i><b>' + inrWords(Number(dc.total || 0)) + '</b></i></div>' +
+        (dc.notes ? '<div style="margin-top:16px;font-size:9.5px;color:#6b7280;white-space:pre-wrap">Notes: ' + escH(dc.notes) + '</div>' : '') +
+        '<div style="margin-top:44px;font-size:10px;display:flex;align-items:flex-end;gap:8px"><span>Authorized Signature</span><span style="border-bottom:1px solid #111;width:150px;display:inline-block"></span></div></div>';
+    }
+    async function uploadPdf(id, row) {
+      var blob = await html2pdf().from('<div style="background:#fff;width:100%">' + buildDcHtml(row) + '</div>', 'string').set({
+        margin: 8, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
+        jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+      }).outputPdf('blob');
+      var f = new FormData(); f.append('file', blob, 'delivery-challan.pdf');
+      await apiFetch(DS + '/' + id + '/upload-pdf', { method: 'POST', body: f });
+    }
+
+    // ============================================================= LIST / STATS / FILTERS
+    function filterDC() { currentPage = 1; clearTimeout(searchTimer); searchTimer = setTimeout(renderDC, 350); }
+    function goToPage(p) { currentPage = p; renderDC(); }
+    function changePageSize(v) { pageSize = parseInt(v, 10) || 25; currentPage = 1; renderDC(); }
+    function clearFilters() {
+      document.getElementById('filterStatus').value = 'all'; document.getElementById('filterCustomer').value = 'all';
+      var si = document.getElementById('searchInput'); if (si) si.value = '';
+      currentPage = 1; renderDC(); toggleFilterDD();
+    }
+    async function loadStats() {
+      try {
+        var s = await apiFetch(DS + '/stats', { method: 'GET' });
+        document.getElementById('totalDC').textContent = s.totalCount;
+        document.getElementById('draftDC').textContent = s.draftCount;
+        document.getElementById('dispatchedDC').textContent = s.dispatchedCount;
+        document.getElementById('deliveredDC').textContent = s.deliveredCount;
+      } catch (e) { showToast(e.message || 'Could not load stats', 'error'); }
+      var fc = document.getElementById('filterCustomer'), cur = fc.value;
+      fc.innerHTML = '<option value="all">All Customers</option>' + customers.map(function (c) { return '<option value="' + c.id + '">' + escH(c.name) + '</option>'; }).join('');
+      fc.value = cur;
+    }
+    async function renderDC() {
+      var si = document.getElementById('searchInput'), p = new URLSearchParams();
+      var st = document.getElementById('filterStatus').value, cid = document.getElementById('filterCustomer').value;
+      if (st && st !== 'all') p.set('status', st.toUpperCase());
+      if (cid && cid !== 'all') p.set('clientPrimeId', cid);
+      if (si && si.value.trim()) p.set('search', si.value.trim());
+      p.set('pageNumber', currentPage); p.set('pageSize', pageSize);
+      var res;
+      try { res = await apiFetch(DS + '/get-all-dcs?' + p.toString(), { method: 'GET' }); }
+      catch (e) {
+        showToast(e.message || 'Could not load delivery challans', 'error');
+        document.getElementById('dcPanel').innerHTML = panelWrap('Delivery Challans', '<div class="text-center py-10 text-sm text-red-500">' + escH(e.message || 'Failed to load data') + '</div>');
         return;
       }
+      dcs = (res.content || []).map(mapDc); totalPages = res.totalPages || 1; totalElements = res.totalElements || 0;
+      if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
 
-      var customer = customers.find(function(c) { return c.id === customerId; });
-      var customerName = customer ? customer.name : '';
+      var btn = function (fn, title, ico, cls) { return '<button onclick="' + fn + '" class="btn-icon-action ' + (cls || '') + '" title="' + title + '">' + ico + '</button>'; };
+      var rows = dcs.length ? dcs.map(function (d) {
+        var a = btn("viewDC('" + d.id + "')", 'View', iconEye()) + btn("openSendOverlay('" + d.id + "')", 'Send', iconSend(), 'primary');
+        if (d.status === 'DRAFT') a += btn("confirmDispatch('" + d.id + "')", 'Dispatch (reduces stock)', iconTruck(), 'primary');
+        if (d.status === 'DISPATCHED') a += btn("setStatus('" + d.id + "','DELIVERED')", 'Mark Delivered', iconCheck(), 'primary');
+        a += btn("downloadDC('" + d.id + "')", 'Download PDF', iconDownload(), 'primary');
+        if (d.status === 'DRAFT') a += btn("editDC('" + d.id + "')", 'Edit', iconEdit()) + btn("delDC('" + d.id + "')", 'Delete', iconTrash(), 'danger');
+        return '<tr class="border-b border-gray-100 table-row-hover">' +
+          '<td class="px-3 py-2.5"><div class="font-semibold text-gray-800 text-sm">' + escH(d.number) + '</div><div class="text-[10px] text-gray-400 font-mono">#' + d.id + '</div></td>' +
+          '<td class="px-3 py-2.5 text-xs">' + fd(d.date) + '</td><td class="px-3 py-2.5 text-sm text-gray-700">' + escH(d.customerName) + '</td>' +
+          '<td class="px-3 py-2.5 text-xs">' + escH(typeLabel(d.type)) + '</td><td class="px-3 py-2.5 text-xs">' + escH(d.soNumber || '—') + '</td>' +
+          '<td class="px-3 py-2.5 font-mono font-semibold text-sm">' + fm(d.total) + '</td><td class="px-3 py-2.5">' + statusBadge(d.status) + '</td>' +
+          '<td class="px-3 py-2.5"><div class="flex gap-1">' + a + '</div></td></tr>';
+      }).join('') :
+        '<tr><td colspan="8" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconDocument() + '</div>No delivery challans found. Try adjusting your filters or ' +
+        '<button onclick="openAddDC()" class="text-primary font-semibold hover:underline">create a new delivery challan</button>.</td></tr>';
 
-      if (existingId) {
-        var dc = deliveryChallans.find(function(x) { return x.id === existingId; });
-        if (dc) {
-          dc.number = number;
-          dc.date = date;
-          dc.customerId = customerId;
-          dc.customerName = customerName;
-          dc.customerAddress = customer ? customer.address : '';
-          dc.shippingAddress = shippingAddress || (customer ? customer.address : '');
-          dc.soReference = soReference;
-          dc.status = status;
-          dc.items = itemsData;
-          dc.notes = notes;
-          showToast('Delivery Challan updated successfully', 'success');
-        }
-      } else {
-        var newDC = {
-          id: 'DC-' + String(nextDCNo++).padStart(3, '0'),
-          number: number || 'DC/25-26/' + String(deliveryChallans.length + 1).padStart(3, '0'),
-          date: date,
-          customerId: customerId,
-          customerName: customerName,
-          customerAddress: customer ? customer.address : '',
-          shippingAddress: shippingAddress || (customer ? customer.address : ''),
-          soReference: soReference,
-          status: status,
-          items: itemsData,
-          packingList: { packages: 0, packageType: '', dimensions: '', totalWeight: '', created: false },
-          notes: notes,
-          createdAt: date
-        };
-        deliveryChallans.unshift(newDC);
-        showToast('Delivery Challan created successfully', 'success');
+      var sizes = [10, 25, 50, 100].map(function (n) { return '<option value="' + n + '"' + (n === pageSize ? ' selected' : '') + '>' + n + '</option>'; }).join('');
+      var pag = '';
+      if (dcs.length) {
+        var rs = (currentPage - 1) * pageSize + 1, re = Math.min(rs + dcs.length - 1, totalElements);
+        pag = '<div class="flex items-center justify-between gap-2 px-4 py-2.5 border-t border-gray-100"><span class="text-[10px] text-gray-400">Showing ' + rs + '–' + re + ' of ' + totalElements + '</span>' +
+          '<div class="flex items-center gap-2"><button onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + ' class="text-[10px] px-2 py-1 border border-gray-200 rounded disabled:opacity-40">Prev</button>' +
+          '<span class="text-[10px] text-gray-500">Page ' + currentPage + ' of ' + totalPages + '</span>' +
+          '<button onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + ' class="text-[10px] px-2 py-1 border border-gray-200 rounded disabled:opacity-40">Next</button></div></div>';
       }
-
-      closeModal();
-      renderDC();
+      document.getElementById('dcPanel').innerHTML = panelWrap(
+        'Delivery Challans <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + totalElements + '</span>',
+        tableHtml(['DC #', 'Date', 'Customer', 'Type', 'SO Reference', 'Total', 'Status', 'Actions'], rows) + pag,
+        '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select onchange="changePageSize(this.value)" class="text-[10px] border border-gray-300 rounded-lg px-2 py-1 bg-white outline-none">' + sizes + '</select></div>');
+      loadStats();
     }
 
+    // ============================================================= VIEW / ACTIONS
+    function findDc(id) { return dcs.find(function (x) { return String(x.id) === String(id); }); }
+    function viewDC(id) {
+      var d = findDc(id); if (!d) return;
+      var wh = d.warehouseName ? 'Warehouse: ' + escH(d.warehouseName) + (d.destName ? ' → ' + escH(d.destName) : '') : '';
+      openModal(modalHeader('Delivery Challan', escH(d.number) + (wh ? ' · ' + wh : '')) + '<div class="px-5 py-4 modal-scroll">' + buildDcHtml(d) + '</div>' +
+        modalFooter('Close', 'onclick="closeModal()"', '<button onclick="downloadDC(\'' + d.id + '\')" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1">' + iconDownload() + ' Download PDF</button>'), { width: 'max-w-4xl' });
+    }
+    function downloadDC(id) {
+      var d = findDc(id); if (!d) return;
+      if (!d.pdfUrl) { showToast('No PDF stored for ' + d.number + ' yet.', 'error'); return; }
+      window.open(API_BASE + d.pdfUrl, '_blank');
+    }
+    function confirmDispatch(id) {
+      var d = findDc(id); if (!d) return;
+      var tr = d.type === 'STOCK_TRANSFER' ? ' and added to <b>' + escH(d.destName || '') + '</b>' : '';
+      openModal(modalHeader('Dispatch Delivery Challan', escH(d.number)) +
+        '<div class="px-5 py-4 text-sm text-gray-600"><p>Dispatching reduces stock of <b>' + d.items.length + ' item(s)</b> from <b>' + escH(d.warehouseName || '') + '</b>' + tr + '.</p>' +
+        '<p class="text-gray-400 text-[11px] mt-1">After dispatch the challan can no longer be edited or deleted.</p></div>' +
+        modalFooter('Dispatch', 'onclick="doDispatch(\'' + id + '\')"', ''), { width: 'max-w-md' });
+    }
+    async function doDispatch(id) {
+      var btn = document.getElementById('modalSaveBtn'); btn.disabled = true; btn.innerHTML = SPINNER + ' Dispatching…';
+      try { await apiFetch(DS + '/patch-status/' + id + '?status=DISPATCHED', { method: 'PATCH' }); closeModal(); showToast('Dispatched — stock updated', 'success'); renderDC(); }
+      catch (e) { closeModal(); showToast(e.message || 'Could not dispatch', 'error'); }
+    }
+    async function setStatus(id, status) {
+      try { await apiFetch(DS + '/patch-status/' + id + '?status=' + status, { method: 'PATCH' }); showToast('Marked ' + status.toLowerCase(), 'success'); renderDC(); }
+      catch (e) { showToast(e.message || 'Could not update status', 'error'); }
+    }
     function delDC(id) {
-      var dc = deliveryChallans.find(function(x) { return x.id === id; });
-      if (!dc) return;
-
-      var modalContent = `
-        ${modalHeader('Delete Delivery Challan', dc.number)}
-        <div class="px-5 py-4 text-sm text-gray-600">
-          <p>Are you sure you want to permanently delete <b class="text-gray-800">${dc.number}</b>?</p>
-          <p class="text-gray-400 text-[11px] mt-1">This action cannot be undone. All associated data will be removed.</p>
-        </div>
-        ${modalFooter('Delete', 'onclick="confirmDeleteDC(\'' + id + '\')"', '')}
-      `;
-      openModal(modalContent, { width: 'max-w-md' });
+      var d = findDc(id); if (!d) return;
+      openModal(modalHeader('Delete Delivery Challan', escH(d.number)) +
+        '<div class="px-5 py-4 text-sm text-gray-600"><p>Are you sure you want to permanently delete <b class="text-gray-800">' + escH(d.number) + '</b>?</p><p class="text-gray-400 text-[11px] mt-1">This action cannot be undone.</p></div>' +
+        modalFooter('Delete', 'onclick="confirmDeleteDC(\'' + id + '\')"', ''), { width: 'max-w-md' });
+    }
+    async function confirmDeleteDC(id) {
+      try { await apiFetch(DS + '/delete/' + id, { method: 'DELETE' }); closeModal(); showToast('Delivery challan deleted', 'warning'); renderDC(); }
+      catch (e) { showToast(e.message || 'Could not delete', 'error'); }
     }
 
-    function confirmDeleteDC(id) {
-      deliveryChallans = deliveryChallans.filter(function(x) { return x.id !== id; });
-      closeModal();
-      renderDC();
-      showToast('Delivery Challan deleted successfully', 'warning');
+    // ============================================================= SEND (Email / WhatsApp)
+    function openSendOverlay(id) {
+      var d = findDc(id); if (!d) return;
+      openModal(modalHeader('Send Delivery Challan', escH(d.number)) +
+        '<div class="px-5 py-5"><p class="text-xs text-gray-500 mb-4">Choose how you\'d like to send this delivery challan to <b class="text-gray-700">' + escH(d.customerName) + '</b>.</p>' +
+        '<div class="grid grid-cols-2 gap-3">' +
+        '<button onclick="openSendEmail(\'' + id + '\')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary-soft transition">' +
+        '<svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span class="text-xs font-semibold text-gray-700">Email</span></button>' +
+        '<button onclick="sendViaWhatsapp(\'' + id + '\')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary-soft transition">' +
+        '<svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.02c-.25.68-1.44 1.31-1.98 1.35-.5.05-1.14.07-1.84-.12-.42-.11-.96-.31-1.66-.6-2.92-1.26-4.82-4.2-4.97-4.4-.15-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.65.5.24.58.83 2 .9 2.15.07.15.12.32.02.52-.1.2-.15.32-.29.49-.15.17-.31.38-.44.51-.15.15-.3.31-.13.61.17.3.75 1.24 1.61 2 1.11.99 2.04 1.3 2.34 1.45.3.15.48.12.65-.07.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.35.07.13.07.75-.18 1.43z"/></svg><span class="text-xs font-semibold text-gray-700">WhatsApp</span></button>' +
+        '</div></div>', { width: 'max-w-sm' });
+    }
+    function isValidEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+    function openSendEmail(id) {
+      var d = findDc(id); if (!d) return;
+      var cu = customers.find(function (c) { return String(c.id) === String(d.customerId); });
+      var pre = d.customerEmail || (cu && cu.email) || '';
+      openModal(modalHeader('Send via Email', escH(d.number)) +
+        '<div class="px-5 py-4">' +
+        fld('Recipient Email *', '<input type="email" class="form-input" id="f_sendEmail" value="' + escH(pre) + '" placeholder="customer@example.com">', 'Pre-filled from the client record — edit if needed') +
+        '<div class="mt-2 text-[10px] text-gray-400 p-2.5 bg-gray-50 rounded-lg border border-gray-100">Subject: Delivery Challan ' + escH(d.number) + ' from ' + escH(company.name) + '<br>Attachment: stored PDF link</div>' +
+        '<div id="emailSendError" class="hidden text-[10px] text-red-600 mt-1.5"></div></div>' +
+        '<div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">' +
+        '<button onclick="openSendOverlay(\'' + id + '\')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Back</button>' +
+        '<button id="emailSendBtn" onclick="sendViaEmail(\'' + id + '\')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">' + iconSend() + ' Send Email</button></div>',
+        { width: 'max-w-sm' });
+    }
+    async function sendViaEmail(id) {
+      var d = findDc(id); if (!d) return;
+      var inp = document.getElementById('f_sendEmail'), err = document.getElementById('emailSendError'), email = (inp.value || '').trim();
+      if (!isValidEmail(email)) { err.textContent = 'Please enter a valid email address.'; err.classList.remove('hidden'); inp.classList.add('border-red-400'); return; }
+      if (!d.pdfUrl) { showToast('No PDF stored for this delivery challan yet.', 'error'); return; }
+      err.classList.add('hidden'); inp.classList.remove('border-red-400');
+      var btn = document.getElementById('emailSendBtn'); btn.disabled = true; btn.innerHTML = SPINNER + ' Sending…';
+      try {
+        await apiFetch(EMAIL_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dcPrimeId: Number(d.id), toEmail: email }) });
+        closeModal(); showToast('Delivery challan ' + d.number + ' emailed to ' + email, 'success');
+      } catch (e) { btn.disabled = false; btn.innerHTML = iconSend() + ' Send Email'; showToast(e.message || 'Could not send the email', 'error'); }
+    }
+    function sendViaWhatsapp(id) {
+      var d = findDc(id); if (!d) return;
+      if (!d.pdfUrl) { showToast('No PDF has been generated for this delivery challan yet.', 'error'); return; }
+      var msg = 'Delivery Challan ' + d.number + ' from ' + company.name + '\nClient: ' + d.customerName + '\nAmount: ' + fm(d.total) + '\nDate: ' + fd(d.date) + '\nView / Download: ' + API_BASE + d.pdfUrl;
+      var cu = customers.find(function (c) { return String(c.id) === String(d.customerId); });
+      var phone = cu && cu.phone ? String(cu.phone).replace(/[^0-9]/g, '') : '';
+      window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+      closeModal(); showToast('Opening WhatsApp to send ' + d.number + '…', 'info');
     }
 
-    // =============================================================
-    // SEARCH
-    // =============================================================
-
-    (function addSearchToTopbar() {
-      var searchContainer = document.querySelector('.app-main header');
-      if (searchContainer) {
-        var searchHtml = `
-          <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
-            <input type="text" id="searchInput" placeholder="Search delivery challans by number, customer…"
-              onkeyup="filterDC()"
-              class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
-          </div>
-        `;
-        var headerContent = searchContainer.innerHTML;
-        var hamburgerIndex = headerContent.indexOf('lg:hidden');
-        if (hamburgerIndex !== -1) {
-          var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
-          var before = headerContent.substring(0, firstDivEnd);
-          var after = headerContent.substring(firstDivEnd);
-          searchContainer.innerHTML = before + searchHtml + after;
+    // ============================================================= ADD / EDIT FORM
+    var EMPTY_ROW = '<tr><td colspan="8" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products.</td></tr>';
+    function lineRowHtml(i) {
+      i = i || {};
+      return '<tr class="border-b border-gray-100 line-item-row" data-pid="' + (i.pid || '') + '" data-vid="' + (i.vid || '') + '" data-name="' + escH(i.name || '') + '" data-unit="' + escH(i.unit || '') + '">' +
+        '<td class="px-2 py-1" style="min-width:190px"><button type="button" class="form-input text-left item-pick" onclick="pickProduct(this)">' + (i.name ? escH(i.name) : 'Select item…') + '</button></td>' +
+        '<td class="px-2 py-1" style="min-width:200px"><textarea rows="2" class="form-input item-desc" placeholder="Description">' + escH(i.desc || '') + '</textarea></td>' +
+        '<td class="px-2 py-1"><input class="form-input item-hsn" style="width:70px" value="' + escH(i.hsn || '') + '"></td>' +
+        '<td class="px-2 py-1"><input type="number" class="form-input item-qty" style="width:62px" value="' + (i.qty != null ? i.qty : 1) + '" onchange="calcDcTotal()"></td>' +
+        '<td class="px-2 py-1"><input type="number" class="form-input item-rate" style="width:92px" value="' + (i.rate != null ? i.rate : 0) + '" onchange="calcDcTotal()"></td>' +
+        '<td class="px-2 py-1"><input type="number" class="form-input item-gst" style="width:54px" value="' + (i.gst != null ? i.gst : 0) + '" onchange="calcDcTotal()"></td>' +
+        '<td class="px-2 py-1"><input class="form-input item-serial" style="width:110px" placeholder="Internal only" value="' + escH(i.serial || '') + '"></td>' +
+        '<td class="px-2 py-1 text-center"><button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">' + iconX() + '</button></td></tr>';
+    }
+    function addLineItem() {
+      var tb = document.getElementById('lineItemsBody'); if (!tb) return;
+      if (tb.querySelector('td[colspan]')) tb.innerHTML = '';
+      tb.insertAdjacentHTML('beforeend', lineRowHtml()); calcDcTotal();
+    }
+    function removeLineItem(b) {
+      var row = b.closest('tr'); if (row) row.remove();
+      var tb = document.getElementById('lineItemsBody'); if (tb && !tb.children.length) tb.innerHTML = EMPTY_ROW;
+      calcDcTotal();
+    }
+    function pickProduct(btn) {
+      openPicker(btn, {
+        fetchPage: fetchProductPage,
+        render: function (o) { return '<div style="font-weight:600">' + escH(o.name) + '</div><div style="color:#9ca3af;font-size:10px">' + escH(o.sub || '') + ' · ' + Number(o.price || 0).toLocaleString('en-IN') + ' / ' + escH(o.unit || '') + '</div>'; },
+        onPick: function (o) {
+          var r = btn.closest('tr'); r.dataset.pid = o.pid || ''; r.dataset.vid = o.vid || ''; r.dataset.name = o.name; r.dataset.unit = o.unit || '';
+          btn.textContent = o.name;
+          r.querySelector('.item-rate').value = o.price != null ? o.price : 0;
+          r.querySelector('.item-hsn').value = o.hsn;
+          r.querySelector('.item-gst').value = o.gst != null ? o.gst : 0;
+          calcDcTotal();
         }
+      });
+    }
+    function pickClient(btn) {
+      openPicker(btn, {
+        fetchPage: async function (q) {
+          var s = (q || '').toLowerCase();
+          return { items: customers.filter(function (c) { return !s || (c.name + ' ' + (c.contactName || '')).toLowerCase().indexOf(s) !== -1; }), hasNext: false };
+        },
+        render: function (c) { return '<div style="font-weight:600">' + escH(c.name) + '</div><div style="color:#9ca3af;font-size:10px">' + escH(c.contactName || '') + ' · ' + escH(c.gst || 'No GSTIN') + '</div>'; },
+        onPick: function (c) {
+          btn.dataset.id = c.id; btn.textContent = c.name; _editCust = null;
+          document.getElementById('f_pos').value = stateNameFor(c.stateCode) || toTitle(c.state);
+          document.getElementById('f_shipTo').value = c.shipAddress || c.address || '';
+          refreshSoOptions(c, '');
+          calcDcTotal();
+        }
+      });
+    }
+    function pickProject(btn) {
+      openPicker(btn, {
+        fetchPage: fetchProjectPage,
+        render: function (p) { return '<div style="font-weight:600">' + escH(p.projectName) + ' (' + escH(p.projectCode) + ')</div>'; },
+        onPick: function (p) { btn.dataset.code = p.projectCode || ''; btn.textContent = p.projectName + ' (' + p.projectCode + ')'; }
+      });
+    }
+    function clearProject() { var b = document.getElementById('f_projectBtn'); b.dataset.code = ''; b.textContent = 'Select project (optional)'; }
+    function refreshSoOptions(cust, selected) {
+      var sel = document.getElementById('f_so'); if (!sel) return;
+      var list = salesOrders.filter(function (s) { return !cust || !cust.strId || s.clientId === cust.strId; });
+      var html = '<option value="">None</option>' + list.map(function (s) { return '<option value="' + escH(s.number) + '">' + escH(s.number) + '</option>'; }).join('');
+      if (selected && !list.some(function (s) { return s.number === selected; })) html += '<option value="' + escH(selected) + '">' + escH(selected) + '</option>';
+      sel.innerHTML = html; sel.value = selected || '';
+    }
+    function toggleDest() {
+      var t = document.getElementById('f_type').value;
+      document.getElementById('destWrap').style.display = t === 'STOCK_TRANSFER' ? '' : 'none';
+    }
+    function readItems() {
+      var out = [];
+      document.querySelectorAll('#lineItemsBody .line-item-row').forEach(function (r) {
+        out.push({
+          pid: r.dataset.pid ? Number(r.dataset.pid) : null, vid: r.dataset.vid ? Number(r.dataset.vid) : null, name: r.dataset.name, unit: r.dataset.unit,
+          desc: r.querySelector('.item-desc').value.trim(), hsn: r.querySelector('.item-hsn').value,
+          qty: parseFloat(r.querySelector('.item-qty').value) || 0, rate: parseFloat(r.querySelector('.item-rate').value) || 0,
+          gst: parseFloat(r.querySelector('.item-gst').value) || 0, serial: r.querySelector('.item-serial').value.trim()
+        });
+      });
+      return out;
+    }
+    function calcDcTotal() {
+      var pos = document.getElementById('f_pos').value, posCode = STATE_CODES[String(pos).toLowerCase()] || '', sub = 0, tax = 0;
+      readItems().filter(function (i) { return i.name; }).forEach(function (i) { var a = i.qty * i.rate; sub += a; tax += a * i.gst / 100; });
+      var same = !!company.stateCode && company.stateCode === posCode;
+      document.getElementById('f_total').value = fm(sub + tax);
+      document.getElementById('f_taxInfo').textContent = (same ? 'CGST + SGST' : 'IGST') + ': ' + fm(tax) + ' (company state ' + (company.stateCode || '?') + ' vs supply state ' + (posCode || '?') + ')';
+    }
+    function openAddDC() { openDcModal(null); }
+    function editDC(id) { var d = findDc(id); if (d) openDcModal(d); }
+
+    function openDcModal(ex) {
+      var today = new Date().toISOString().split('T')[0];
+      var first = !ex && customers[0] ? customers[0] : null;
+      var e = ex || { number: 'Auto-generated on save', date: today, type: 'OTHERS', items: [], notes: '', ref: '', soNumber: '', projectCode: '' };
+      _editCust = ex ? { id: ex.customerId, name: ex.customerName, contactName: ex.contactName, gst: ex.customerGST, email: ex.customerEmail, state: ex.customerState, stateCode: ex.customerStateCode, country: ex.customerCountry, address: ex.customerAddress } : null;
+      var cName = ex ? ex.customerName : (first ? first.name : 'Select client…'), cId = ex ? ex.customerId : (first ? first.id : '');
+      var pos = ex ? ex.pos : (first ? (stateNameFor(first.stateCode) || toTitle(first.state)) : '');
+      var states = Object.keys(STATE_CODES).map(function (s) { var nm = toTitle(s); return '<option ' + (nm.toLowerCase() === String(pos || '').toLowerCase() ? 'selected' : '') + '>' + nm + '</option>'; }).join('');
+      var typeOpts = DC_TYPES.map(function (t) { return '<option value="' + t[0] + '"' + (t[0] === e.type ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('');
+      var def = warehouses.find(function (w) { return w.warehouseIsDefault; });
+      var selWh = ex ? ex.warehouseStrId : (def ? def.warehouseStrId : '');
+      var whOpts = function (sel) { return warehouses.map(function (w) { return '<option value="' + w.warehouseStrId + '"' + (w.warehouseStrId === sel ? ' selected' : '') + '>' + escH(w.warehouseName) + '</option>'; }).join(''); };
+      var projTxt = e.projectCode ? escH(e.projectCode) : 'Select project (optional)';
+
+      openModal(
+        modalHeader(ex ? 'Edit Delivery Challan' : 'New Delivery Challan', ex ? escH(e.number) : 'Record goods leaving your warehouse') +
+        '<div class="px-5 py-4 modal-scroll">' +
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+        fld('DC #', '<input class="form-input" value="' + escH(e.number) + '" disabled>') +
+        fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">') +
+        fld('Client *', '<button type="button" id="f_clientBtn" class="form-input text-left" data-id="' + cId + '" onclick="pickClient(this)">' + escH(cName) + '</button>') +
+        fld('Challan Type *', '<select class="form-input" id="f_type" onchange="toggleDest()">' + typeOpts + '</select>') + '</div>' +
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' +
+        fld('SO Reference', '<select class="form-input" id="f_so"></select>') +
+        fld('Reference No', '<input class="form-input" id="f_ref" value="' + escH(e.ref || '') + '">') +
+        fld('Project Code', '<div style="display:flex;gap:4px"><button type="button" id="f_projectBtn" class="form-input text-left" data-code="' + escH(e.projectCode || '') + '" onclick="pickProject(this)">' + projTxt + '</button>' +
+          '<button type="button" onclick="clearProject()" class="text-gray-400 hover:text-red-500" title="Clear">' + iconX() + '</button></div>') +
+        fld('Place of Supply *', '<select class="form-input" id="f_pos" onchange="calcDcTotal()"><option value=""></option>' + states + '</select>', 'Decides CGST+SGST vs IGST') + '</div>' +
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' +
+        fld('Warehouse *', '<select class="form-input" id="f_wh">' + whOpts(selWh) + '</select>', 'Stock reduces from here on dispatch') +
+        '<div id="destWrap" style="display:none">' + fld('Destination Warehouse *', '<select class="form-input" id="f_destWh"><option value="">Select…</option>' + whOpts(ex ? ex.destStrId : '') + '</select>', 'Stock is added here on dispatch') + '</div>' +
+        '<div class="col-span-2">' + fld('Ship To', '<textarea rows="2" class="form-input" id="f_shipTo">' + escH(ex ? (ex.shipTo || '') : (first ? (first.shipAddress || first.address) : '')) + '</textarea>') + '</div></div>' +
+        '<div class="mt-3"><div class="flex items-center justify-between mb-1.5"><label class="form-label mb-0">Items</label>' +
+        '<button onclick="addLineItem()" class="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1">' + iconPlus() + ' Add Item</button></div>' +
+        '<div class="border border-gray-200 rounded-lg overflow-x-auto"><table class="w-full text-xs"><thead class="bg-gray-50"><tr>' +
+        '<th class="px-2 py-1.5 text-left">Item</th><th class="px-2 py-1.5 text-left">Description</th><th class="px-2 py-1.5 text-left">HSN</th>' +
+        '<th class="px-2 py-1.5">Qty</th><th class="px-2 py-1.5">Rate</th><th class="px-2 py-1.5">GST %</th><th class="px-2 py-1.5 text-left">Serial / Batch</th><th style="width:36px"></th></tr></thead>' +
+        '<tbody id="lineItemsBody">' + (e.items.length ? e.items.map(lineRowHtml).join('') : EMPTY_ROW) + '</tbody></table></div></div>' +
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">' +
+        fld('Total Amount', '<input class="form-input" id="f_total" disabled style="font-weight:bold;color:#6da84c;">', '<span id="f_taxInfo"></span>') + '</div>' +
+        fld('Notes', '<textarea rows="2" class="form-input" id="f_notes">' + escH(e.notes || '') + '</textarea>') + '</div>' +
+        modalFooter(ex ? 'Update Delivery Challan' : 'Save Delivery Challan', 'onclick="saveDC(\'' + (ex ? ex.id : '') + '\')"'),
+        { width: 'max-w-5xl' });
+      var c0 = ex ? customers.find(function (c) { return String(c.id) === String(ex.customerId); }) : first;
+      refreshSoOptions(c0, e.soNumber || '');
+      toggleDest();
+      setTimeout(calcDcTotal, 100);
+    }
+
+    async function saveDC(existingId) {
+      var g = function (i) { return document.getElementById(i).value; }, cb = document.getElementById('f_clientBtn');
+      var cust = customers.find(function (c) { return String(c.id) === String(cb.dataset.id); }) || _editCust;
+      var items = readItems().filter(function (i) { return i.name && i.qty > 0 && i.rate >= 0; });
+      var pos = g('f_pos'), posCode = STATE_CODES[String(pos).toLowerCase()] || '', type = g('f_type');
+      if (!g('f_date') || !cust) { showToast('Please fill Date and Client', 'error'); return; }
+      if (!items.length) { showToast('Please add at least one item', 'error'); return; }
+      if (items.some(function (i) { return !i.pid; })) { showToast('Every item must be selected from the product list', 'error'); return; }
+      if (!g('f_wh')) { showToast('Please select a warehouse', 'error'); return; }
+      if (type === 'STOCK_TRANSFER' && !g('f_destWh')) { showToast('Please select the destination warehouse', 'error'); return; }
+      if (!company.stateCode || !posCode) { showToast('Company state or Place of Supply is missing — needed to decide the GST type', 'error'); return; }
+
+      var dto = {
+        dcDate: g('f_date'), dcType: type, dcClientPrimeId: Number(cust.id), dcClientName: cust.contactName || cust.name, dcClientCompanyName: cust.name,
+        dcClientGstin: cust.gst, dcClientEmail: cust.email, dcClientState: cust.state, dcClientStateCode: cust.stateCode, dcClientCountry: cust.country,
+        dcClientBillingAddress: cust.address, dcShippingAddress: g('f_shipTo'), dcCompanyStateCode: company.stateCode, dcPlaceOfSupply: pos, dcPlaceOfSupplyStateCode: posCode,
+        dcSoNumber: g('f_so'), dcReferenceNumber: g('f_ref'), dcProjectCode: document.getElementById('f_projectBtn').dataset.code || '',
+        dcWarehouseStrId: g('f_wh'), dcDestWarehouseStrId: type === 'STOCK_TRANSFER' ? g('f_destWh') : null, dcNotes: g('f_notes'),
+        dcItems: items.map(function (i) {
+          return { dcItemProductId: i.pid, dcItemVariantId: i.vid, dcItemName: i.name, dcItemDescription: i.desc, dcItemHsnCode: i.hsn, dcItemUnit: i.unit,
+            dcItemQty: i.qty, dcItemRate: i.rate, dcItemGstPercent: i.gst, dcItemSerial: i.serial };
+        })
+      };
+
+      var btn = document.getElementById('modalSaveBtn'), orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = SPINNER + ' Saving…';
+      try {
+        var r;
+        if (existingId) r = await apiFetch(DS + '/update/' + existingId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dto) });
+        else {
+          var f = new FormData(); f.append('dc', new Blob([JSON.stringify(dto)], { type: 'application/json' }));
+          r = await apiFetch(DS + '/create', { method: 'POST', body: f });
+        }
+        var saved = mapDc(r);
+        try { await uploadPdf(saved.id, saved); showToast('Delivery challan ' + saved.number + ' saved', 'success'); }
+        catch (e) { showToast('Saved, but PDF upload failed: ' + (e.message || ''), 'warning'); }
+        closeModal(); currentPage = 1; renderDC();
+      } catch (err) {
+        showToast(err.message || 'Could not save — please try again', 'error');
+        btn.disabled = false; btn.innerHTML = orig;
       }
+    }
+
+    // ============================================================= SEARCH (topbar) + INIT
+    (function addSearchToTopbar() {
+      var header = document.querySelector('.app-main header');
+      if (!header) return;
+      var searchHtml = '<div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">' +
+        '<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">' + iconSearch() + '</span>' +
+        '<input type="text" id="searchInput" placeholder="Search delivery challans by number, client, SO…" onkeyup="filterDC()" ' +
+        'class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400"></div>';
+      var html = header.innerHTML, i = html.indexOf('lg:hidden');
+      if (i !== -1) { var end = html.indexOf('</div>', i) + 6; header.innerHTML = html.substring(0, end) + searchHtml + html.substring(end); }
     })();
 
-    // =============================================================
-    // INIT
-    // =============================================================
-
-    // Company details
-    var company = {
-      name: 'Kunash Media Pvt. Ltd.',
-      address: '401, Creative Hub, BKC, Bandra East, Mumbai - 400051',
-      gstin: '27AABCU1234D1ZP',
-      phone: '+91-9876543210'
-    };
-
-    renderDC();
-
-    console.log('📦 Delivery Challan Module Loaded Successfully');
-    console.log('📊 Total DC:', deliveryChallans.length);
-    console.log('📦 Packing List (Enhancement #6) enabled');
-    console.log('📌 Status: Draft(' + deliveryChallans.filter(function(dc) { return dc.status === 'draft'; }).length +
-      '), Dispatched(' + deliveryChallans.filter(function(dc) { return dc.status === 'dispatched'; }).length +
-      '), Delivered(' + deliveryChallans.filter(function(dc) { return dc.status === 'delivered'; }).length + ')');
-
-  </script>
-
+    (async function init() {
+      await Promise.all([loadOrganization(), loadCustomers(), loadWarehouses(), loadSalesOrders()]);
+      renderDC();
+    })();
+</script>
 </body>
 </html>

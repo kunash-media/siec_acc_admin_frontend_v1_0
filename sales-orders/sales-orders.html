@@ -442,6 +442,71 @@
     height: 11px;
   }
 
+
+  /* ---------- searchable dropdown (client / product / quotation / PI / project) ---------- */
+  .ss-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    text-align: left;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 5px 8px 5px 10px;
+    font-size: 11px;
+    background: #fafafa;
+    color: #1a1a2e;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 28px;
+  }
+  .ss-trigger:hover { border-color: #cbd5e1; }
+  .ss-trigger.ss-open { border-color: #6da84c; box-shadow: 0 0 0 3px rgba(109,168,76,0.12); background: #fff; }
+  .ss-trigger.ss-sm { font-size: 10px; padding: 4px 8px; min-height: 26px; }
+  .ss-trigger .ss-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ss-trigger .ss-placeholder { color: #9ca3af; }
+  .ss-trigger .ss-clear { color: #9ca3af; line-height: 1; padding: 0 2px; font-size: 13px; }
+  .ss-trigger .ss-clear:hover { color: #ef4444; }
+  .ss-trigger .ss-caret { color: #9ca3af; flex-shrink: 0; display: inline-flex; }
+  .ss-trigger:disabled { background: #f3f4f6; cursor: not-allowed; }
+  .ss-panel {
+    position: fixed;
+    z-index: 400;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .ss-search { padding: 6px; border-bottom: 1px solid #f1f5f9; background: #fafafa; }
+  .ss-search input {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 11px;
+    outline: none;
+    background: #fff;
+  }
+  .ss-search input:focus { border-color: #6da84c; box-shadow: 0 0 0 3px rgba(109,168,76,0.12); }
+  .ss-hint { font-size: 9.5px; color: #9ca3af; padding: 3px 8px 0; }
+  .ss-list { overflow-y: auto; max-height: 220px; }
+  .ss-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f8fafc;
+    font-size: 11px;
+  }
+  .ss-item:hover, .ss-item.ss-active { background: #eef5e8; }
+  .ss-item.ss-selected { background: #eef5e8; font-weight: 600; }
+  .ss-item .ss-main { color: #1f2937; }
+  .ss-item .ss-sub { color: #9ca3af; font-size: 9.5px; margin-top: 1px; }
+  .ss-state { padding: 10px; text-align: center; font-size: 10.5px; color: #9ca3af; }
+  .ss-state button { color: #6da84c; font-weight: 600; text-decoration: underline; }
+
   @media print {
     body * { visibility: hidden; }
     #printArea, #printArea * { visibility: visible; }
@@ -471,7 +536,7 @@
             <div>
               <div class="page-breadcrumb">Sales</div>
               <h1 class="page-title text-gray-900">Sales Orders</h1>
-              <p class="page-subtitle mt-0.5">Record customer confirmed orders. Convert from quotations or create directly.</p>
+              <p class="page-subtitle mt-0.5">Record client confirmed orders. Convert from quotations or create directly.</p>
             </div>
             <div class="flex gap-2 flex-wrap">
               <button onclick="openAddSO()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm">
@@ -538,7 +603,9 @@
     // =============================================================
     // API CONFIG  (Spring Boot backend on port 9093)
     // =============================================================
-    var API_BASE = 'http://localhost:9093/api/sales-orders';
+    // Single place to change host / port for every call made from this page.
+    var API_ORIGIN = 'http://localhost:9093';
+    var API_BASE = API_ORIGIN + '/api/sales-orders';
 
     var API = {
       create:  '/create-sales-order',
@@ -549,14 +616,31 @@
       remove:  '/delete-sales-order/'
     };
 
-    async function apiRequest(path, method, body) {
-      var opts = {
-        method: method || 'GET',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
-      };
-      if (body !== undefined && body !== null) opts.body = JSON.stringify(body);
+    // Shared lookup endpoints used by the Client / Product / Quotation / PI / Project dropdowns
+    var LOOKUP_API = {
+      clients:      '/api/clients/v1/client-list',
+      clientGet:    '/api/clients/v1/get-client/',
+      products:     '/api/products/v1/get-product-list',
+      productGet:   '/api/products/v1/get-product/',
+      quotes:       '/api/v1/quotes/quote-list',
+      proformas:    '/api/v1/proformas/proforma-list',
+      projects:     '/api/projects/v1/get-all-projects',
+      projectGet:   '/api/projects/v1/get-project/',
+      organization: '/api/organization'
+    };
 
-      var res = await fetch(API_BASE + path, opts);
+    var LOOKUP_PAGE_SIZE = 20;       // rows fetched per page by every dropdown
+    var SEARCH_MIN_CHARS = 2;        // dropdown search starts after this many characters
+    var SEARCH_DEBOUNCE_MS = 400;    // pause after the last keystroke before the API is called
+
+    async function httpJson(url, method, body) {
+      var opts = { method: method || 'GET', headers: { 'Accept': 'application/json' } };
+      if (body !== undefined && body !== null) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+
+      var res = await fetch(url, opts);
       if (!res.ok) {
         var raw = '';
         try { raw = await res.text(); } catch (e) {}
@@ -569,6 +653,449 @@
       return text ? JSON.parse(text) : null;
     }
 
+    // Sales order endpoints (relative to /api/sales-orders)
+    function apiRequest(path, method, body) {
+      return httpJson(API_BASE + path, method, body);
+    }
+
+    // GET against any other module; empty / null params are dropped from the query string
+    function apiGet(path, params) {
+      var qs = [];
+      Object.keys(params || {}).forEach(function(k) {
+        var v = params[k];
+        if (v === null || v === undefined || v === '') return;
+        qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+      });
+      return httpJson(API_ORIGIN + path + (qs.length ? '?' + qs.join('&') : ''), 'GET');
+    }
+
+    // Escapes anything coming from the backend before it is placed in innerHTML
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // =============================================================
+    // LOOKUP FETCHERS  (each returns { items, hasNext, next } for the dropdown)
+    // =============================================================
+
+    // GET /api/clients/v1/client-list   -> { content, page(0-based), hasNext, nextPage }
+    function fetchClients(query, page) {
+      return apiGet(LOOKUP_API.clients, {
+        page: page == null ? 0 : page,
+        size: LOOKUP_PAGE_SIZE,
+        search: query
+      }).then(function(res) {
+        var rows = (res && res.content) || [];
+        return {
+          items: rows.map(function(c) {
+            return {
+              value: c.clientStrId,
+              label: c.clientName || c.clientStrId,
+              sub: [c.clientCompanyName, c.clientStrId].filter(Boolean).join(' · '),
+              raw: c
+            };
+          }),
+          hasNext: !!(res && res.hasNext),
+          next: res ? res.nextPage : null
+        };
+      });
+    }
+
+    // GET /api/products/v1/get-product-list -> { data: { content, page(0-based), hasNext, nextPage } }
+    function fetchProducts(query, page) {
+      return apiGet(LOOKUP_API.products, {
+        page: page == null ? 0 : page,
+        size: LOOKUP_PAGE_SIZE,
+        search: query
+      }).then(function(res) {
+        var data = (res && res.data) || {};
+        var rows = data.content || [];
+        return {
+          items: rows.map(function(p) {
+            var price = p.productSellingPrice != null ? money(p.productSellingPrice) : '';
+            return {
+              value: p.productStrId,
+              label: p.productName || p.productStrId,
+              sub: [p.productStrId, price ? price + (p.productUnit ? ' / ' + p.productUnit : '') : p.productUnit].filter(Boolean).join(' · '),
+              raw: p
+            };
+          }),
+          hasNext: !!data.hasNext,
+          next: data.nextPage
+        };
+      });
+    }
+
+    // The quote / proforma list endpoints only accept pageNumber + pageSize (no search param),
+    // so typed searches are matched here, in the browser, against the rows of each fetched page.
+    // The dropdown keeps pulling the next page automatically until the visible list is filled.
+    function matchesQuery(query, values) {
+      if (!query) return true;
+      var q = String(query).toLowerCase();
+      return values.some(function(v) { return String(v == null ? '' : v).toLowerCase().indexOf(q) !== -1; });
+    }
+
+    // Reads the PagedResponseDto shape ({ content, pageNumber(1-based), totalPages }) defensively
+    function pagedInfo(res, pn) {
+      var cur = Number(res && res.pageNumber) || pn;
+      var total = Number(res && res.totalPages) || 1;
+      var hasNext = (res && typeof res.hasNext === 'boolean') ? res.hasNext : cur < total;
+      return { hasNext: hasNext, next: cur + 1 };
+    }
+
+    // GET /api/v1/quotes/quote-list?pageNumber=&pageSize=  -> PagedResponseDto<QuoteSummaryResponseDto>
+    function fetchQuotes(query, page) {
+      var pn = page == null ? 1 : page;
+      return apiGet(LOOKUP_API.quotes, {
+        pageNumber: pn,
+        pageSize: LOOKUP_PAGE_SIZE
+      }).then(function(res) {
+        var rows = (res && res.content) || [];
+        var pg = pagedInfo(res, pn);
+        var items = rows.map(function(q) {
+          var id = q.quoteStrId || q.quoteId || q.id;
+          var status = q.quoteStatus || q.status || '';
+          var valid = q.quoteValidTill || q.validTill || '';
+          return {
+            value: id,
+            label: id,
+            sub: [q.clientName || q.quoteClientName, status, valid ? 'valid till ' + valid : ''].filter(Boolean).join(' · '),
+            raw: q
+          };
+        }).filter(function(it) {
+          return matchesQuery(query, [it.label, it.sub]);
+        });
+        return { items: items, hasNext: pg.hasNext, next: pg.next };
+      });
+    }
+
+    // GET /api/v1/proformas/proforma-list?pageNumber=&pageSize=  -> PagedResponseDto<ProformaSummaryResponseDto>
+    function fetchProformas(query, page) {
+      var pn = page == null ? 1 : page;
+      return apiGet(LOOKUP_API.proformas, {
+        pageNumber: pn,
+        pageSize: LOOKUP_PAGE_SIZE
+      }).then(function(res) {
+        var rows = (res && res.content) || [];
+        var pg = pagedInfo(res, pn);
+        var items = rows.map(function(p) {
+          var id = p.proformaStrId || p.proformaId || p.id;
+          var status = p.proformaStatus || p.status || '';
+          var valid = p.proformaValidUntil || p.validUntil || '';
+          return {
+            value: id,
+            label: id,
+            sub: [p.customerName || p.proformaCustomerName, status, valid ? 'valid until ' + valid : ''].filter(Boolean).join(' · '),
+            raw: p
+          };
+        }).filter(function(it) {
+          return matchesQuery(query, [it.label, it.sub]);
+        });
+        return { items: items, hasNext: pg.hasNext, next: pg.next };
+      });
+    }
+
+    // GET /api/projects/v1/get-all-projects -> { data: { projects, pagination: { page(1-based), hasNext } } }
+    function fetchProjects(query, page) {
+      var pn = page == null ? 1 : page;
+      return apiGet(LOOKUP_API.projects, {
+        status: 'all',
+        search: query,
+        page: pn,
+        size: LOOKUP_PAGE_SIZE
+      }).then(function(res) {
+        var data = (res && res.data) || {};
+        var rows = data.projects || [];
+        var pg = data.pagination || {};
+        return {
+          items: rows.map(function(p) {
+            return {
+              value: p.id,
+              label: p.name || p.id,
+              sub: [p.code || p.id, p.customer].filter(Boolean).join(' · '),
+              raw: p
+            };
+          }),
+          hasNext: !!pg.hasNext,
+          next: (pg.page || pn) + 1
+        };
+      });
+    }
+
+    // =============================================================
+    // SEARCHABLE DROPDOWN
+    //   - the first page loads when the dropdown opens
+    //   - typing SEARCH_MIN_CHARS+ characters searches the server (debounced)
+    //   - scrolling to the bottom of the list loads the next page automatically
+    // =============================================================
+    var ssCounter = 0;
+    var ssRegistry = {};
+    var ssOpenInst = null;
+
+    function createSearchSelect(cfg) {
+      var inst = {
+        id: 'ss' + (++ssCounter),
+        cfg: cfg,
+        group: cfg.group || 'modal',
+        host: cfg.host,
+        selected: cfg.selected || null,
+        items: [],
+        next: null,
+        hasNext: false,
+        loading: false,
+        loaded: false,
+        error: null,
+        query: '',
+        seq: 0,
+        timer: null,
+        activeIdx: -1,
+        panel: null,
+        listEl: null,
+        inputEl: null,
+        hintEl: null,
+        triggerEl: null
+      };
+      ssRegistry[inst.id] = inst;
+      ssRenderTrigger(inst);
+      return inst;
+    }
+
+    function ssRenderTrigger(inst) {
+      var sel = inst.selected;
+      var label = sel
+        ? '<span class="ss-label">' + esc(sel.label) + '</span>'
+        : '<span class="ss-label ss-placeholder">' + esc(inst.cfg.placeholder || 'Select…') + '</span>';
+      var clear = (sel && inst.cfg.allowClear) ? '<span class="ss-clear" data-ss-clear="1" title="Clear">&times;</span>' : '';
+      inst.host.innerHTML =
+        '<button type="button" class="ss-trigger' + (inst.cfg.small ? ' ss-sm' : '') + '">' +
+          label + clear + '<span class="ss-caret">' + iconChevronDown() + '</span>' +
+        '</button>';
+      inst.triggerEl = inst.host.firstChild;
+      inst.triggerEl.addEventListener('click', function(ev) {
+        if (ev.target && ev.target.getAttribute && ev.target.getAttribute('data-ss-clear')) {
+          ev.stopPropagation();
+          ssChoose(inst, null);
+          return;
+        }
+        if (ssOpenInst === inst) ssClose(); else ssOpen(inst);
+      });
+    }
+
+    function ssOpen(inst) {
+      ssClose();
+      ssOpenInst = inst;
+      inst.triggerEl.classList.add('ss-open');
+
+      var panel = document.createElement('div');
+      panel.className = 'ss-panel';
+      panel.innerHTML =
+        '<div class="ss-search"><input type="text" autocomplete="off" placeholder="' + esc(inst.cfg.searchPlaceholder || 'Search…') + '"></div>' +
+        '<div class="ss-hint" style="display:none;"></div>' +
+        '<div class="ss-list"></div>';
+      document.body.appendChild(panel);
+
+      inst.panel = panel;
+      inst.inputEl = panel.querySelector('input');
+      inst.hintEl = panel.querySelector('.ss-hint');
+      inst.listEl = panel.querySelector('.ss-list');
+      inst.activeIdx = -1;
+      ssPosition(inst);
+
+      inst.inputEl.addEventListener('input', function() {
+        var raw = inst.inputEl.value.trim();
+        var effective = raw.length >= SEARCH_MIN_CHARS ? raw : '';
+        if (raw.length > 0 && raw.length < SEARCH_MIN_CHARS) {
+          inst.hintEl.textContent = 'Type at least ' + SEARCH_MIN_CHARS + ' characters to search';
+          inst.hintEl.style.display = 'block';
+        } else {
+          inst.hintEl.style.display = 'none';
+        }
+        clearTimeout(inst.timer);
+        inst.timer = setTimeout(function() {
+          if (!inst.panel || effective === inst.query) return;
+          inst.query = effective;
+          inst.activeIdx = -1;
+          ssReload(inst);
+        }, SEARCH_DEBOUNCE_MS);
+      });
+
+      inst.inputEl.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Escape') { ev.preventDefault(); ssClose(); return; }
+        if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+          ev.preventDefault();
+          if (!inst.items.length) return;
+          var step = ev.key === 'ArrowDown' ? 1 : -1;
+          inst.activeIdx = Math.min(inst.items.length - 1, Math.max(0, inst.activeIdx + step));
+          ssRenderList(inst);
+          var act = inst.listEl.querySelector('.ss-active');
+          if (act && act.scrollIntoView) act.scrollIntoView({ block: 'nearest' });
+          return;
+        }
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          if (inst.activeIdx >= 0 && inst.items[inst.activeIdx]) ssChoose(inst, inst.items[inst.activeIdx]);
+        }
+      });
+
+      inst.listEl.addEventListener('click', function(ev) {
+        if (ev.target && ev.target.getAttribute && ev.target.getAttribute('data-ss-retry')) {
+          ssLoad(inst, inst.items.length === 0);
+          return;
+        }
+        var row = ev.target.closest ? ev.target.closest('.ss-item') : null;
+        if (!row) return;
+        var idx = parseInt(row.getAttribute('data-idx'), 10);
+        if (idx === -1) ssChoose(inst, null);
+        else if (inst.items[idx]) ssChoose(inst, inst.items[idx]);
+      });
+
+      inst.listEl.addEventListener('scroll', function() {
+        if (inst.listEl.scrollTop + inst.listEl.clientHeight >= inst.listEl.scrollHeight - 30) ssLoadMore(inst);
+      });
+
+      inst.query = '';
+      ssReload(inst);          // always start from a fresh first page
+      inst.inputEl.focus();
+    }
+
+    function ssClose() {
+      var inst = ssOpenInst;
+      if (!inst) return;
+      clearTimeout(inst.timer);
+      if (inst.panel && inst.panel.parentNode) inst.panel.parentNode.removeChild(inst.panel);
+      inst.panel = null;
+      inst.listEl = null;
+      if (inst.triggerEl) inst.triggerEl.classList.remove('ss-open');
+      ssOpenInst = null;
+    }
+
+    function ssChoose(inst, item) {
+      inst.selected = item ? { value: item.value, label: item.label } : null;
+      ssClose();
+      ssRenderTrigger(inst);
+      if (inst.cfg.onChange) inst.cfg.onChange(inst.selected, item ? item.raw : null);
+    }
+
+    function ssSetSelected(inst, sel) {
+      inst.selected = sel;
+      ssRenderTrigger(inst);
+    }
+
+    function ssPosition(inst) {
+      if (!inst.panel || !inst.triggerEl) return;
+      var rect = inst.triggerEl.getBoundingClientRect();
+      var width = Math.max(rect.width, 240);
+      var left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+      var spaceBelow = window.innerHeight - rect.bottom;
+      var panel = inst.panel;
+      panel.style.width = width + 'px';
+      panel.style.left = left + 'px';
+      if (spaceBelow < 290 && rect.top > spaceBelow) {
+        panel.style.top = 'auto';
+        panel.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+        inst.listEl.style.maxHeight = Math.max(120, Math.min(220, rect.top - 70)) + 'px';
+      } else {
+        panel.style.bottom = 'auto';
+        panel.style.top = (rect.bottom + 4) + 'px';
+        inst.listEl.style.maxHeight = Math.max(120, Math.min(220, spaceBelow - 80)) + 'px';
+      }
+    }
+
+    function ssReload(inst) {
+      inst.seq++;
+      inst.items = [];
+      inst.next = null;
+      inst.hasNext = false;
+      inst.loading = false;
+      inst.loaded = false;
+      inst.error = null;
+      ssLoad(inst, true);
+    }
+
+    function ssLoadMore(inst) {
+      if (inst.loading || !inst.hasNext || inst.error) return;
+      ssLoad(inst, false);
+    }
+
+    async function ssLoad(inst, first) {
+      if (inst.loading) return;
+      inst.loading = true;
+      inst.error = null;
+      var my = inst.seq;
+      ssRenderList(inst);
+      try {
+        var res = await inst.cfg.fetchPage(inst.query, first ? null : inst.next);
+        if (my !== inst.seq) return;                       // a newer search superseded this response
+        inst.items = inst.items.concat(res.items || []);
+        inst.hasNext = !!res.hasNext;
+        inst.next = (res.next === undefined) ? null : res.next;
+        inst.loaded = true;
+      } catch (err) {
+        if (my !== inst.seq) return;
+        inst.error = (err && err.message) ? err.message : 'Could not load the list';
+      }
+      inst.loading = false;
+      ssRenderList(inst);
+      // a short first page leaves nothing to scroll, so keep pulling pages until the list fills up
+      if (inst.panel && inst.hasNext && !inst.error && inst.listEl.scrollHeight <= inst.listEl.clientHeight + 4) {
+        ssLoad(inst, false);
+      }
+    }
+
+    function ssRenderList(inst) {
+      if (!inst.panel || !inst.listEl) return;
+      var st = inst.listEl.scrollTop;
+      var html = '';
+      if (inst.cfg.allowClear && !inst.query) {
+        html += '<div class="ss-item" data-idx="-1"><div class="ss-main" style="color:#9ca3af;">' + esc(inst.cfg.clearLabel || '— None —') + '</div></div>';
+      }
+      inst.items.forEach(function(it, i) {
+        var isSel = inst.selected && inst.selected.value === it.value;
+        html += '<div class="ss-item' + (isSel ? ' ss-selected' : '') + (i === inst.activeIdx ? ' ss-active' : '') + '" data-idx="' + i + '">' +
+                  '<div class="ss-main">' + esc(it.label) + '</div>' +
+                  (it.sub ? '<div class="ss-sub">' + esc(it.sub) + '</div>' : '') +
+                '</div>';
+      });
+      if (inst.loading) {
+        html += '<div class="ss-state">Loading…</div>';
+      } else if (inst.error) {
+        html += '<div class="ss-state">' + esc(inst.error) + '<br><button type="button" data-ss-retry="1">Retry</button></div>';
+      } else if (inst.items.length === 0) {
+        html += '<div class="ss-state">' + (inst.query ? 'No results for "' + esc(inst.query) + '"' : 'No records found') + '</div>';
+      }
+      inst.listEl.innerHTML = html;
+      inst.listEl.scrollTop = st;
+    }
+
+    function ssDestroy(inst) {
+      if (!inst) return;
+      if (ssOpenInst === inst) ssClose();
+      clearTimeout(inst.timer);
+      delete ssRegistry[inst.id];
+    }
+
+    function ssDestroyGroup(group) {
+      Object.keys(ssRegistry).forEach(function(k) {
+        if (ssRegistry[k].group === group) ssDestroy(ssRegistry[k]);
+      });
+    }
+
+    document.addEventListener('mousedown', function(ev) {
+      if (!ssOpenInst) return;
+      var t = ev.target;
+      if (ssOpenInst.panel && ssOpenInst.panel.contains(t)) return;
+      if (ssOpenInst.triggerEl && ssOpenInst.triggerEl.contains(t)) return;
+      ssClose();
+    });
+    window.addEventListener('resize', function() { if (ssOpenInst) ssPosition(ssOpenInst); });
+    window.addEventListener('scroll', function(ev) {
+      if (!ssOpenInst) return;
+      if (ssOpenInst.panel && ssOpenInst.panel.contains(ev.target)) return;
+      if (!ssOpenInst.triggerEl || !document.body.contains(ssOpenInst.triggerEl)) { ssClose(); return; }
+      ssPosition(ssOpenInst);
+    }, true);
     // =============================================================
     // SVG ICONS
     // =============================================================
@@ -668,6 +1195,7 @@
     }
 
     function closeModal() {
+      ssDestroyGroup('modal');
       var root = document.getElementById('modalRoot');
       root.innerHTML = '';
       document.body.style.overflow = '';
@@ -826,13 +1354,9 @@
       renderSalesOrders();
     }
 
-    // Filter bar rendered directly above the table: status + customer
-    // selects and a reset button that clears filters back to "All".
-    function filterBarHtml(statusVal, customerVal) {
-      var customerOptionsHtml = '<option value="all">All Customers</option>' + customers.map(function(c) {
-        return '<option ' + (c.id === customerVal ? 'selected' : '') + ' value="' + c.id + '">' + c.name + '</option>';
-      }).join('');
-
+    // Filter bar rendered directly above the table: status + client
+    // (searchable, loaded from the client list API) and a reset button.
+    function filterBarHtml(statusVal) {
       return `
         <div class="flex items-center gap-2 flex-wrap px-4 py-2.5 border-b border-gray-100 bg-gray-50/60">
           <div class="flex items-center gap-1.5">
@@ -847,10 +1371,8 @@
             </select>
           </div>
           <div class="flex items-center gap-1.5">
-            <label class="text-[9.5px] font-semibold text-gray-500 uppercase tracking-wide">Customer</label>
-            <select id="filterCustomer" onchange="filterSalesOrders()" class="form-input text-[10.5px]" style="width:auto;min-width:160px;">
-              ${customerOptionsHtml}
-            </select>
+            <label class="text-[9.5px] font-semibold text-gray-500 uppercase tracking-wide">Client</label>
+            <div id="filterClientHost" style="width:210px;"></div>
           </div>
           <button onclick="clearFilters()" class="inline-flex items-center gap-1.5 text-[10.5px] font-semibold text-gray-600 border border-gray-200 bg-white hover:bg-gray-100 px-2.5 py-1.5 rounded-lg transition ml-auto">
             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
@@ -859,46 +1381,39 @@
         </div>`;
     }
 
+    // The filter bar is re-rendered with the table, so the client dropdown is re-mounted each time
+    function mountFilterClient() {
+      ssDestroyGroup('filter');
+      var host = document.getElementById('filterClientHost');
+      if (!host) return;
+      createSearchSelect({
+        group: 'filter',
+        host: host,
+        small: true,
+        allowClear: true,
+        clearLabel: 'All Clients',
+        placeholder: 'All Clients',
+        searchPlaceholder: 'Search clients…',
+        selected: filterClient,
+        fetchPage: fetchClients,
+        onChange: function(sel) {
+          filterClient = sel;
+          filterSalesOrders();
+        }
+      });
+    }
+
     // =============================================================
-    // DATA
+    // DATA  (everything is loaded from the backend - no local sample data)
     // =============================================================
-
-    // Customers / items / quotation / PI lookups: no backend endpoints
-    // exist for these yet, so they remain local reference lists.
-    var customers = [
-      { id: 'CUS-001', name: 'XYZ Retail Store', address: 'A-12, Connaught Place, New Delhi' },
-      { id: 'CUS-002', name: 'ABC Enterprises', address: '45, Industrial Estate, Pune' },
-      { id: 'CUS-003', name: 'Rahul Sharma', address: '12, Green Park, Mumbai' },
-      { id: 'CUS-004', name: 'Tech Solutions Inc.', address: '88, Electronics City, Bengaluru' },
-      { id: 'CUS-005', name: 'Priya Patel', address: '22, Lake View, Surat' },
-      { id: 'CUS-006', name: 'Global Exports Ltd.', address: '101, Trade Tower, Delhi' },
-    ];
-
-    var items = [
-      { id: 'ITM-1001', name: 'Centrifugal Blower — 5HP', price: 42000, gst: 18, unit: 'Pcs' },
-      { id: 'ITM-1002', name: 'Dual Media Filter Vessel — 500L', price: 118000, gst: 18, unit: 'Pcs' },
-      { id: 'ITM-1003', name: 'Activated Carbon Media', price: 6500, gst: 18, unit: 'Kg' },
-      { id: 'ITM-1004', name: 'PVC Pressure Pipe — 6"', price: 850, gst: 18, unit: 'Mtr' },
-      { id: 'ITM-1005', name: 'Chemical Dosing Pump — 50LPH', price: 28000, gst: 18, unit: 'Pcs' },
-    ];
-
-    // Reference lookups for linked fields (Quotation / PI). Project module
-    // does not exist yet — projectReference stays a placeholder until it ships.
-    var quotations = [
-      { id: 'QUOT-001', number: 'QUOT/25-26/001' },
-      { id: 'QUOT-002', number: 'QUOT/25-26/002' },
-      { id: 'QUOT-003', number: 'QUOT/25-26/003' },
-      { id: 'QUOT-004', number: 'QUOT/25-26/004' },
-    ];
-
-    var proformaInvoices = [
-      { id: 'PI-001', number: 'PI/25-26/001' },
-      { id: 'PI-002', number: 'PI/25-26/002' },
-    ];
-
-    // Sales orders are now loaded from the backend (GET /get-all-sales-orders)
     var salesOrders = [];
     var currentPage = 1;
+    var filterClient = null;                 // { value, label } picked in the filter bar
+    var modalState = {};                     // selections made inside the open Add / Edit modal
+    var company = { name: '', address: '', gstin: '', phone: '' };
+    var productMetaCache = {};
+    var clientInfoCache = {};
+    var projectLabelCache = {};
 
     // Make sure whatever the backend returns has every field the UI expects
     // (and computes the total if the backend did not send one).
@@ -910,8 +1425,7 @@
           name: it.name || '',
           qty: Number(it.qty) || 0,
           rate: Number(it.rate) || 0,
-          gst: it.gst != null ? Number(it.gst) : 18,
-          unit: it.unit || 'Pcs'
+          unit: it.unit || ''
         };
       });
       var discount = Number(so.discount) || 0;
@@ -926,9 +1440,8 @@
         id: String(so.id != null ? so.id : (so.salesOrderId != null ? so.salesOrderId : (so._id != null ? so._id : ''))),
         number: so.number || '',
         date: so.date || '',
-        customerId: so.customerId || '',
-        customerName: so.customerName || getCustomerName(so.customerId),
-        customerAddress: so.customerAddress || '',
+        clientId: so.clientId || '',
+        clientName: so.clientName || so.clientId || '',
         deliveryLocation: so.deliveryLocation || '',
         expectedDelivery: so.expectedDelivery || '',
         paymentTerms: so.paymentTerms || '',
@@ -958,25 +1471,78 @@
       }
     }
 
+    // Company details for the sales order preview come from the Organization module
+    async function loadCompany() {
+      try {
+        var orgs = await httpJson(API_ORIGIN + LOOKUP_API.organization, 'GET');
+        var org = Array.isArray(orgs) ? orgs[0] : orgs;
+        if (!org) return;
+        company = {
+          name: org.companyName || org.legalName || '',
+          address: [org.address, org.city, org.state, org.pincode].filter(Boolean).join(', '),
+          gstin: org.gstNumber || '',
+          phone: org.phone || ''
+        };
+      } catch (err) {
+        console.error('Could not load company details:', err);
+      }
+    }
+
+    // Product name / unit for an item id (cached). Sales order rows only carry the item id,
+    // so the product API is the source of truth for anything the order response leaves blank.
+    async function getProductMeta(itemId) {
+      if (!itemId) return null;
+      if (productMetaCache[itemId] !== undefined) return productMetaCache[itemId];
+      try {
+        var res = await apiGet(LOOKUP_API.productGet + encodeURIComponent(itemId));
+        productMetaCache[itemId] = (res && res.data) ? res.data : null;
+      } catch (err) {
+        console.error('Could not load product ' + itemId + ':', err);
+        return null;                          // not cached, will be retried next time
+      }
+      return productMetaCache[itemId];
+    }
+
+    async function enrichSOItems(so) {
+      await Promise.all((so.items || []).map(async function(it) {
+        var p = await getProductMeta(it.itemId);
+        if (!p) return;
+        if (!it.name) it.name = p.productName || '';
+        if (!it.unit) it.unit = p.productUnit || '';
+      }));
+    }
+
+    async function getClientInfo(clientId) {
+      if (!clientId) return null;
+      if (clientInfoCache[clientId] !== undefined) return clientInfoCache[clientId];
+      try {
+        var res = await apiGet(LOOKUP_API.clientGet + encodeURIComponent(clientId));
+        clientInfoCache[clientId] = (res && res.data) ? res.data : null;
+      } catch (err) {
+        console.error('Could not load client ' + clientId + ':', err);
+        return null;
+      }
+      return clientInfoCache[clientId];
+    }
+
+    // Project reference is stored as the project id; the name is looked up for display
+    async function getProjectLabel(projectId) {
+      if (!projectId) return '';
+      if (projectLabelCache[projectId] !== undefined) return projectLabelCache[projectId];
+      try {
+        var res = await apiGet(LOOKUP_API.projectGet + encodeURIComponent(projectId));
+        var p = res && res.data;
+        projectLabelCache[projectId] = p && p.name ? p.name : projectId;
+      } catch (err) {
+        console.error('Could not load project ' + projectId + ':', err);
+        return projectId;
+      }
+      return projectLabelCache[projectId];
+    }
+
     // =============================================================
     // FUNCTIONS
     // =============================================================
-
-    function getCustomerName(id) {
-      var c = customers.find(function(x) { return x.id === id; });
-      return c ? c.name : id;
-    }
-
-    function getQuotationNumber(id) {
-      var q = quotations.find(function(x) { return x.id === id; });
-      return q ? q.number : id;
-    }
-
-    function getPINumber(id) {
-      var p = proformaInvoices.find(function(x) { return x.id === id; });
-      return p ? p.number : id;
-    }
-
     function renderStats() {
       var total = salesOrders.length;
       var pending = salesOrders.filter(function(so) { return so.status === 'pending'; }).length;
@@ -996,18 +1562,17 @@
       var searchInput = document.getElementById('searchInput');
       var q = searchInput ? searchInput.value.toLowerCase() : '';
       var statusEl = document.getElementById('filterStatus');
-      var customerEl = document.getElementById('filterCustomer');
       var status = statusEl ? statusEl.value : 'all';
-      var customer = customerEl ? customerEl.value : 'all';
+      var clientId = filterClient ? filterClient.value : 'all';
 
       return salesOrders.filter(function(so) {
         var matchSearch = so.number.toLowerCase().indexOf(q) !== -1 ||
-          so.customerName.toLowerCase().indexOf(q) !== -1 ||
+          so.clientName.toLowerCase().indexOf(q) !== -1 ||
           so.id.toLowerCase().indexOf(q) !== -1;
         var matchStatus = status === 'all' ||
           ((status === 'partial' || status === 'fulfilled') ? so.fulfillmentStatus === status : so.status === status);
-        var matchCustomer = customer === 'all' || so.customerId === customer;
-        return matchSearch && matchStatus && matchCustomer;
+        var matchClient = clientId === 'all' || so.clientId === clientId;
+        return matchSearch && matchStatus && matchClient;
       });
     }
 
@@ -1042,12 +1607,12 @@
           return `
             <tr class="border-b border-gray-100 table-row-hover">
               <td class="px-3 py-2.5">
-                <div class="font-semibold text-gray-800 text-sm">${so.number}</div>
-                <div class="text-[10px] text-gray-400 font-mono">${so.id}</div>
+                <div class="font-semibold text-gray-800 text-sm">${esc(so.number)}</div>
+                <div class="text-[10px] text-gray-400 font-mono">${esc(so.id)}</div>
               </td>
-              <td class="px-3 py-2.5 text-xs">${so.date}</td>
-              <td class="px-3 py-2.5 text-sm text-gray-700">${so.customerName}</td>
-              <td class="px-3 py-2.5 text-xs">${so.expectedDelivery}</td>
+              <td class="px-3 py-2.5 text-xs">${esc(so.date)}</td>
+              <td class="px-3 py-2.5 text-sm text-gray-700">${esc(so.clientName)}</td>
+              <td class="px-3 py-2.5 text-xs">${esc(so.expectedDelivery)}</td>
               <td class="px-3 py-2.5 font-mono font-semibold text-sm">${money(so.total)}</td>
               <td class="px-3 py-2.5">${statusBadge(so.status)}</td>
               <td class="px-3 py-2.5 text-[10px] font-semibold ${so.fulfillmentStatus === 'fulfilled' ? 'text-green-600' : so.fulfillmentStatus === 'partial' ? 'text-purple-600' : 'text-amber-600'}">${so.fulfillmentStatus.charAt(0).toUpperCase() + so.fulfillmentStatus.slice(1)}</td>
@@ -1063,21 +1628,20 @@
       }
 
       var statusEl = document.getElementById('filterStatus');
-      var customerEl = document.getElementById('filterCustomer');
       var statusVal = statusEl ? statusEl.value : 'all';
-      var customerVal = customerEl ? customerEl.value : 'all';
 
       var panelHtml = `
         <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
           <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
             <div class="font-semibold text-sm text-gray-800 flex items-center gap-2">All Sales Orders <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">${filtered.length}</span></div>
           </div>
-          ${filterBarHtml(statusVal, customerVal)}
-          ${tableHtml(['SO #', 'Date', 'Customer', 'Expected Delivery', 'Total', 'Status', 'Fulfillment', 'Actions'], rowsHtml)}
+          ${filterBarHtml(statusVal)}
+          ${tableHtml(['SO #', 'Date', 'Client', 'Expected Delivery', 'Total', 'Status', 'Fulfillment', 'Actions'], rowsHtml)}
           ${filtered.length > 0 ? paginationHtml(filtered.length, currentPage, pageSize) : ''}
         </div>`;
 
       document.getElementById('salesOrdersPanel').innerHTML = panelHtml;
+      mountFilterClient();
       renderStats();
     }
 
@@ -1085,9 +1649,8 @@
 
     function clearFilters() {
       var statusEl = document.getElementById('filterStatus');
-      var customerEl = document.getElementById('filterCustomer');
       if (statusEl) statusEl.value = 'all';
-      if (customerEl) customerEl.value = 'all';
+      filterClient = null;
       var searchInput = document.getElementById('searchInput');
       if (searchInput) searchInput.value = '';
       currentPage = 1;
@@ -1099,25 +1662,15 @@
     // REFERENCE CHIPS (Quotation / PI / Project)
     // =============================================================
 
-    function refChip(kind, id) {
+    function refChip(kind, id, label) {
+      if (!id) return '';
       var config = {
-        quotation: { label: 'Quotation', icon: iconQuote(), display: id ? getQuotationNumber(id) : null, bg: '#dbeafe', color: '#1e40af' },
-        pi: { label: 'PI', icon: iconDocument(), display: id ? getPINumber(id) : null, bg: '#ede9fe', color: '#5b21b6' },
-        project: { label: 'Project', icon: iconFolder(), display: id, bg: '#f1f5f9', color: '#475569' }
+        quotation: { label: 'Quotation', icon: iconQuote(), bg: '#dbeafe', color: '#1e40af' },
+        pi: { label: 'PI', icon: iconDocument(), bg: '#ede9fe', color: '#5b21b6' },
+        project: { label: 'Project', icon: iconFolder(), bg: '#f1f5f9', color: '#475569' }
       };
       var c = config[kind];
-
-      if (kind === 'project' && !id) {
-        return `<span class="ref-chip ref-empty" style="background:${c.bg};color:${c.color};" title="Project module coming soon">${c.icon}${c.label}: Not linked yet</span>`;
-      }
-      if (!id) return '';
-
-      return `<button type="button" onclick="openReference('${kind}','${id}')" class="ref-chip" style="background:${c.bg};color:${c.color};" title="Open ${c.label} ${c.display}">${c.icon}${c.label}: ${c.display}</button>`;
-    }
-
-    function openReference(kind, id) {
-      var labels = { quotation: 'Quotation', pi: 'Proforma Invoice', project: 'Project' };
-      showToast('Opening ' + labels[kind] + ' ' + id + ' — module link coming soon', 'info');
+      return `<span class="ref-chip" style="background:${c.bg};color:${c.color};cursor:default;" title="${c.label} ${esc(id)}">${c.icon}${c.label}: ${esc(label || id)}</span>`;
     }
 
     // =============================================================
@@ -1144,13 +1697,22 @@
       }
       if (!so) return;
 
+      // Product names / units, client address and project name are looked up from their own modules
+      var results = await Promise.all([
+        enrichSOItems(so),
+        getClientInfo(so.clientId),
+        getProjectLabel(so.projectReference)
+      ]);
+      var clientInfo = results[1] || {};
+      var projectLabel = results[2] || '';
+
       var itemsHtml = so.items.map(function(item) {
         var amount = item.qty * item.rate;
         return `
           <tr>
-            <td class="px-2 py-1.5 text-xs">${item.name}</td>
+            <td class="px-2 py-1.5 text-xs">${esc(item.name || item.itemId)}</td>
             <td class="px-2 py-1.5 text-xs text-center">${item.qty}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${item.unit || 'Pcs'}</td>
+            <td class="px-2 py-1.5 text-xs text-center">${esc(item.unit || '—')}</td>
             <td class="px-2 py-1.5 text-xs font-mono text-right">${money(item.rate)}</td>
             <td class="px-2 py-1.5 text-xs font-mono text-right">${money(amount)}</td>
           </tr>`;
@@ -1161,17 +1723,25 @@
       var afterDiscount = subtotal - discountAmt;
       var taxAmt = afterDiscount * (so.tax / 100);
 
+      var companyLines = [];
+      if (company.address) companyLines.push(esc(company.address));
+      var companyContact = [];
+      if (company.gstin) companyContact.push('GSTIN: ' + esc(company.gstin));
+      if (company.phone) companyContact.push('Phone: ' + esc(company.phone));
+      if (companyContact.length) companyLines.push(companyContact.join(' | '));
+
+      var clientCompany = clientInfo.companyName && clientInfo.companyName !== so.clientName ? clientInfo.companyName : '';
+
       var modalContent = `
-        ${modalHeader('Sales Order Details — ' + so.number, so.id)}
+        ${modalHeader('Sales Order Details — ' + esc(so.number), esc(so.id))}
         <div class="px-5 py-4 modal-scroll" id="printArea">
 
           <div class="so-preview">
             <div class="so-header">
               <div>
-                <div class="so-company-name">${company.name || 'Kunash Media Pvt. Ltd.'}</div>
+                <div class="so-company-name">${esc(company.name)}</div>
                 <div class="so-company-details">
-                  ${company.address || '401, Creative Hub, BKC, Mumbai - 400051'}<br>
-                  GSTIN: ${company.gstin || '27AABCU1234D1ZP'} | Phone: ${company.phone || '+91-9876543210'}
+                  ${companyLines.join('<br>')}
                 </div>
               </div>
               <div style="text-align:right;">
@@ -1181,14 +1751,15 @@
 
             <div class="so-meta">
               <div>
-                <div class="meta-label">Customer</div>
-                <div class="meta-value">${so.customerName}</div>
-                <div class="text-xs text-gray-500">${so.customerAddress || ''}</div>
+                <div class="meta-label">Client</div>
+                <div class="meta-value">${esc(so.clientName)}</div>
+                ${clientCompany ? '<div class="text-xs text-gray-500">' + esc(clientCompany) + '</div>' : ''}
+                <div class="text-xs text-gray-500">${esc(clientInfo.billingAddress || '')}</div>
               </div>
               <div style="text-align:right;">
-                <div><span class="meta-label">SO #</span> <span class="meta-value">${so.number}</span></div>
-                <div><span class="meta-label">Date</span> <span class="meta-value">${so.date}</span></div>
-                <div><span class="meta-label">Expected Delivery</span> <span class="meta-value">${so.expectedDelivery}</span></div>
+                <div><span class="meta-label">SO #</span> <span class="meta-value">${esc(so.number)}</span></div>
+                <div><span class="meta-label">Date</span> <span class="meta-value">${esc(so.date)}</span></div>
+                <div><span class="meta-label">Expected Delivery</span> <span class="meta-value">${esc(so.expectedDelivery)}</span></div>
                 <div><span class="meta-label">Status</span> ${statusBadge(so.status)}</div>
                 <div><span class="meta-label">Fulfillment</span> <span class="text-xs font-semibold ${so.fulfillmentStatus === 'fulfilled' ? 'text-green-600' : so.fulfillmentStatus === 'partial' ? 'text-purple-600' : 'text-amber-600'}">${so.fulfillmentStatus.charAt(0).toUpperCase() + so.fulfillmentStatus.slice(1)}</span></div>
               </div>
@@ -1217,12 +1788,12 @@
             <div class="flex flex-wrap gap-2 mt-3">
               ${refChip('quotation', so.quotationReference)}
               ${refChip('pi', so.piReference)}
-              ${refChip('project', so.projectReference)}
+              ${refChip('project', so.projectReference, projectLabel)}
             </div>
 
-            ${so.notes ? `<div class="so-terms"><strong>Notes:</strong> ${so.notes}</div>` : ''}
+            ${so.notes ? `<div class="so-terms"><strong>Notes:</strong> ${esc(so.notes)}</div>` : ''}
             <div class="so-footer">
-              <p>This is a system generated sales order. | Payment Terms: ${so.paymentTerms}</p>
+              <p>This is a system generated sales order. | Payment Terms: ${esc(so.paymentTerms)}</p>
             </div>
           </div>
 
@@ -1239,7 +1810,7 @@
 
     function openAddSO() { openSOModal(null); }
 
-    function editSO(id) {
+    async function editSO(id) {
       var so = salesOrders.find(function(x) { return x.id === id; });
       if (!so) return;
       if (so.status === 'rejected') { showToast('A rejected order cannot be edited', 'error'); return; }
@@ -1247,6 +1818,7 @@
         showToast('Delivery has started on this order - it can no longer be edited', 'error');
         return;
       }
+      await enrichSOItems(so);            // product names for the line items
       openSOModal(so);
     }
 
@@ -1255,7 +1827,9 @@
         number: 'Auto-generated on save',
         date: new Date().toISOString().split('T')[0],
         expectedDelivery: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0],
-        customerId: customers[0].id,
+        clientId: '',
+        clientName: '',
+        deliveryLocation: '',
         paymentTerms: 'Net 15 days',
         status: 'pending',
         items: [],
@@ -1270,54 +1844,23 @@
       };
       var isEdit = !!existing;
 
-      // Line items
-      var lineItemsHtml = '';
-      if (e.items && e.items.length > 0) {
-        lineItemsHtml = e.items.map(function(item, idx) {
-          return `
-            <tr class="border-b border-gray-100 line-item-row">
-              <td class="px-2 py-1">
-                <select class="form-input text-[10px] item-select" data-idx="${idx}">
-                  ${items.map(function(it) { return '<option ' + (it.id === item.itemId ? 'selected' : '') + ' value="' + it.id + '">' + it.name + '</option>'; }).join('')}
-                </select>
-              </td>
-              <td class="px-2 py-1">
-                <input type="number" min="0" step="1" class="form-input text-[10px] item-qty" value="${item.qty}" data-idx="${idx}" placeholder="Qty" onchange="calcSOTotal()">
-              </td>
-              <td class="px-2 py-1">
-                <input type="number" min="0" step="0.01" class="form-input text-[10px] item-rate" value="${item.rate}" data-idx="${idx}" placeholder="Rate" onchange="calcSOTotal()">
-              </td>
-              <td class="px-2 py-1 text-center">
-                <button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
-              </td>
-            </tr>`;
-        }).join('');
-      }
-
-      // Reference field options
-      var quotationOptionsHtml = '<option value="">— None —</option>' + quotations.map(function(q) {
-        return '<option ' + (q.id === e.quotationReference ? 'selected' : '') + ' value="' + q.id + '">' + q.number + '</option>';
-      }).join('');
-
-      var piOptionsHtml = '<option value="">— None —</option>' + proformaInvoices.map(function(p) {
-        return '<option ' + (p.id === e.piReference ? 'selected' : '') + ' value="' + p.id + '">' + p.number + '</option>';
-      }).join('');
+      modalState = { autoDelivery: '' };
 
       var modalContent = `
-        ${modalHeader(isEdit ? 'Edit Sales Order' : 'New Sales Order', isEdit ? e.number : 'Create a new sales order for customer')}
+        ${modalHeader(isEdit ? 'Edit Sales Order' : 'New Sales Order', isEdit ? esc(e.number) : 'Create a new sales order for a client')}
 
         <div class="px-5 py-4 modal-scroll">
 
           <!-- Header Fields -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            ${fld('SO #', '<input type="text" class="form-input" id="f_number" value="' + e.number + '" disabled>')}
-            ${fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">')}
-            ${fld('Customer *', '<select id="f_customer" class="form-input" onchange="updateCustomerAddress()">' + customers.map(function(c) { return '<option ' + (c.id === e.customerId ? 'selected' : '') + ' value="' + c.id + '">' + c.name + '</option>'; }).join('') + '</select>')}
-            ${fld('Expected Delivery *', '<input type="date" class="form-input" id="f_delivery" value="' + e.expectedDelivery + '">')}
+            ${fld('SO #', '<input type="text" class="form-input" id="f_number" value="' + esc(e.number) + '" disabled>')}
+            ${fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + esc(e.date) + '">')}
+            ${fld('Client *', '<div id="f_client_host"></div>')}
+            ${fld('Expected Delivery *', '<input type="date" class="form-input" id="f_delivery" value="' + esc(e.expectedDelivery) + '">')}
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-            ${fld('Delivery Location', '<input type="text" class="form-input" id="f_deliveryLocation" value="' + (e.deliveryLocation || '') + '" placeholder="Delivery address">')}
+            ${fld('Delivery Location', '<input type="text" class="form-input" id="f_deliveryLocation" value="' + esc(e.deliveryLocation || '') + '" placeholder="Delivery address">')}
             ${fld('Payment Terms', '<select class="form-input" id="f_paymentTerms"><option ' + (e.paymentTerms === 'Net 7 days' ? 'selected' : '') + '>Net 7 days</option><option ' + (e.paymentTerms === 'Net 15 days' ? 'selected' : '') + '>Net 15 days</option><option ' + (e.paymentTerms === 'Net 30 days' ? 'selected' : '') + '>Net 30 days</option><option ' + (e.paymentTerms === 'Net 45 days' ? 'selected' : '') + '>Net 45 days</option><option ' + (e.paymentTerms === 'Advance Payment' ? 'selected' : '') + '>Advance Payment</option><option ' + (e.paymentTerms === 'Cash on Delivery' ? 'selected' : '') + '>Cash on Delivery</option></select>')}
             ${fld('Status', '<input type="text" class="form-input" id="f_statusView" value="' + (isEdit ? (e.status.charAt(0).toUpperCase() + e.status.slice(1)) : 'Pending') + '" disabled>', isEdit ? 'Use Approve / Reject in the list to change this' : 'New orders start as Pending')}
           </div>
@@ -1326,9 +1869,9 @@
           <div class="mt-3 pt-3 border-t border-gray-100">
             <label class="form-label mb-1.5" style="margin-bottom:6px;">Linked References</label>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-              ${fld('Quotation Reference', '<select class="form-input" id="f_quotationReference">' + quotationOptionsHtml + '</select>', 'Link the quotation this order was confirmed from')}
-              ${fld('PI Reference', '<select class="form-input" id="f_piReference">' + piOptionsHtml + '</select>', 'Link the proforma invoice for this order')}
-              ${fld('Project Reference', '<select class="form-input" id="f_projectReference" disabled><option value="">Coming soon</option></select>', 'Project module not available yet')}
+              ${fld('Quotation Reference', '<div id="f_quotation_host"></div>', 'Link the quotation this order was confirmed from')}
+              ${fld('PI Reference', '<div id="f_pi_host"></div>', 'Link the proforma invoice for this order')}
+              ${fld('Project Reference', '<div id="f_project_host"></div>', 'Link the project this order belongs to')}
             </div>
           </div>
 
@@ -1344,15 +1887,13 @@
               <table class="w-full text-xs" id="lineItemsTable">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-2 py-1.5 text-left font-semibold text-gray-600">Item</th>
+                    <th class="px-2 py-1.5 text-left font-semibold text-gray-600">Product</th>
                     <th class="px-2 py-1.5 text-center font-semibold text-gray-600">Qty</th>
                     <th class="px-2 py-1.5 text-center font-semibold text-gray-600">Rate</th>
                     <th class="px-2 py-1.5 text-center font-semibold text-gray-600" style="width:36px;">Action</th>
                   </tr>
                 </thead>
-                <tbody id="lineItemsBody">
-                  ${lineItemsHtml || '<tr><td colspan="4" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products/services.</td></tr>'}
-                </tbody>
+                <tbody id="lineItemsBody"></tbody>
               </table>
             </div>
           </div>
@@ -1365,61 +1906,126 @@
             ${fld('Fulfillment Status', '<input type="text" class="form-input" id="f_fulfillmentView" value="' + (e.fulfillmentStatus.charAt(0).toUpperCase() + e.fulfillmentStatus.slice(1)) + '" disabled>', 'Updated automatically from deliveries')}
           </div>
 
-          ${fld('Notes', '<textarea rows="2" class="form-input" id="f_notes" placeholder="Any additional notes">' + (e.notes || '') + '</textarea>')}
+          ${fld('Notes', '<textarea rows="2" class="form-input" id="f_notes" placeholder="Any additional notes">' + esc(e.notes || '') + '</textarea>')}
         </div>
         ${modalFooter(isEdit ? 'Update Sales Order' : 'Save Sales Order', 'onclick="saveSO(\'' + (isEdit ? e.id : '') + '\')"')}
       `;
 
       openModal(modalContent, { width: 'max-w-4xl' });
-      setTimeout(function() {
-        wireLineItemSelects();
-        calcSOTotal();
-      }, 100);
+      mountModalDropdowns(e);
+
+      if (e.items && e.items.length > 0) {
+        e.items.forEach(function(item) { addLineItem(item); });
+      } else {
+        showEmptyLineItems();
+      }
+      calcSOTotal();
+    }
+
+    // Client / Quotation / PI / Project dropdowns of the Add / Edit modal
+    function mountModalDropdowns(e) {
+      modalState.client = e.clientId ? { value: e.clientId, label: e.clientName || e.clientId } : null;
+
+      createSearchSelect({
+        host: document.getElementById('f_client_host'),
+        placeholder: 'Search & select client…',
+        searchPlaceholder: 'Search clients…',
+        selected: modalState.client,
+        fetchPage: fetchClients,
+        onChange: function(sel, raw) {
+          modalState.client = sel;
+          if (raw) autofillDeliveryLocation(raw);
+        }
+      });
+
+      modalState.quotation = e.quotationReference ? { value: e.quotationReference, label: e.quotationReference } : null;
+      createSearchSelect({
+        host: document.getElementById('f_quotation_host'),
+        allowClear: true,
+        clearLabel: '— None —',
+        placeholder: '— None —',
+        searchPlaceholder: 'Search quotations…',
+        selected: modalState.quotation,
+        fetchPage: fetchQuotes,
+        onChange: function(sel) { modalState.quotation = sel; }
+      });
+
+      modalState.pi = e.piReference ? { value: e.piReference, label: e.piReference } : null;
+      createSearchSelect({
+        host: document.getElementById('f_pi_host'),
+        allowClear: true,
+        clearLabel: '— None —',
+        placeholder: '— None —',
+        searchPlaceholder: 'Search proforma invoices…',
+        selected: modalState.pi,
+        fetchPage: fetchProformas,
+        onChange: function(sel) { modalState.pi = sel; }
+      });
+
+      modalState.project = e.projectReference ? { value: e.projectReference, label: e.projectReference } : null;
+      var projectSS = createSearchSelect({
+        host: document.getElementById('f_project_host'),
+        allowClear: true,
+        clearLabel: '— None —',
+        placeholder: '— None —',
+        searchPlaceholder: 'Search projects…',
+        selected: modalState.project,
+        fetchPage: fetchProjects,
+        onChange: function(sel) { modalState.project = sel; }
+      });
+      if (e.projectReference) {
+        // show the project name instead of the raw id when editing
+        getProjectLabel(e.projectReference).then(function(label) {
+          if (modalState.project && modalState.project.value === e.projectReference && ssRegistry[projectSS.id]) {
+            modalState.project = { value: e.projectReference, label: label };
+            ssSetSelected(projectSS, modalState.project);
+          }
+        });
+      }
+    }
+
+    // Default the delivery location to the client's shipping address, but never overwrite what the user typed
+    function autofillDeliveryLocation(rawClient) {
+      var addr = rawClient.clientShippingAddress || '';
+      var el = document.getElementById('f_deliveryLocation');
+      if (!addr || !el) return;
+      if (!el.value || el.value === modalState.autoDelivery) {
+        el.value = addr;
+        modalState.autoDelivery = addr;
+      }
     }
 
     // =============================================================
     // LINE ITEM FUNCTIONS
     // =============================================================
 
-    // Attaches the "auto-fill rate from item price" listener to every
-    // item-select currently in the line items table. Needed both for
-    // freshly-added rows and for rows that were pre-rendered when
-    // editing an existing sales order.
-    function wireLineItemSelects() {
-      document.querySelectorAll('#lineItemsBody .item-select').forEach(function(select) {
-        if (select.dataset.wired === 'true') return;
-        select.dataset.wired = 'true';
-        select.addEventListener('change', function() {
-          var selectedItem = items.find(function(it) { return it.id === this.value; }, this);
-          var rateInput = this.closest('tr').querySelector('.item-rate');
-          if (selectedItem && rateInput) {
-            rateInput.value = selectedItem.price;
-            calcSOTotal();
-          }
-        });
-      });
+    function showEmptyLineItems() {
+      var tbody = document.getElementById('lineItemsBody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products.</td></tr>';
     }
 
-    function addLineItem() {
+    // Adds one line. `prefill` ({ itemId, name, qty, rate }) is used when editing an existing order.
+    function addLineItem(prefill) {
       var tbody = document.getElementById('lineItemsBody');
       if (!tbody) return;
+      // called from the "Add Item" button the click event is passed in, so only accept a real item object
+      if (!prefill || typeof prefill !== 'object' || prefill.itemId === undefined) prefill = null;
+
       var emptyRow = tbody.querySelector('tr td[colspan]');
       if (emptyRow) tbody.innerHTML = '';
 
-      var idx = tbody.children.length;
       var row = document.createElement('tr');
       row.className = 'border-b border-gray-100 line-item-row';
+      row.dataset.itemId = prefill ? (prefill.itemId || '') : '';
       row.innerHTML = `
-        <td class="px-2 py-1">
-          <select class="form-input text-[10px] item-select" data-idx="${idx}">
-            ${items.map(function(it) { return '<option value="' + it.id + '">' + it.name + '</option>'; }).join('')}
-          </select>
+        <td class="px-2 py-1" style="min-width:240px;">
+          <div class="item-host"></div>
         </td>
         <td class="px-2 py-1">
-          <input type="number" min="0" step="1" class="form-input text-[10px] item-qty" value="1" data-idx="${idx}" placeholder="Qty" onchange="calcSOTotal()">
+          <input type="number" min="0" step="1" class="form-input text-[10px] item-qty" value="${prefill ? prefill.qty : 1}" placeholder="Qty" onchange="calcSOTotal()">
         </td>
         <td class="px-2 py-1">
-          <input type="number" min="0" step="0.01" class="form-input text-[10px] item-rate" value="0" data-idx="${idx}" placeholder="Rate" onchange="calcSOTotal()">
+          <input type="number" min="0" step="0.01" class="form-input text-[10px] item-rate" value="${prefill ? prefill.rate : 0}" placeholder="Rate" onchange="calcSOTotal()">
         </td>
         <td class="px-2 py-1 text-center">
           <button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
@@ -1427,26 +2033,35 @@
       `;
       tbody.appendChild(row);
 
-      wireLineItemSelects();
-      row.querySelector('.item-select').dispatchEvent(new Event('change'));
+      row._ss = createSearchSelect({
+        host: row.querySelector('.item-host'),
+        small: true,
+        placeholder: 'Search & select product…',
+        searchPlaceholder: 'Search products…',
+        selected: prefill && prefill.itemId ? { value: prefill.itemId, label: prefill.name || prefill.itemId } : null,
+        fetchPage: fetchProducts,
+        onChange: function(sel, raw) {
+          row.dataset.itemId = sel ? sel.value : '';
+          if (raw) {
+            // picking a product fills the rate with its selling price (same as before)
+            var price = Number(raw.productSellingPrice);
+            row.querySelector('.item-rate').value = isNaN(price) ? 0 : price;
+            productMetaCache[raw.productStrId] = raw;
+          }
+          calcSOTotal();
+        }
+      });
     }
 
     function removeLineItem(btn) {
       var row = btn.closest('tr');
-      if (row) row.remove();
+      if (row) {
+        if (row._ss) ssDestroy(row._ss);
+        row.remove();
+      }
       var tbody = document.getElementById('lineItemsBody');
-      if (tbody && tbody.children.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products/services.</td></tr>';
-      }
+      if (tbody && tbody.children.length === 0) showEmptyLineItems();
       calcSOTotal();
-    }
-
-    function updateCustomerAddress() {
-      var customerId = document.getElementById('f_customer').value;
-      var customer = customers.find(function(c) { return c.id === customerId; });
-      if (customer && customer.address) {
-        document.getElementById('f_deliveryLocation').value = customer.address;
-      }
     }
 
     function calcSOTotal() {
@@ -1482,46 +2097,49 @@
 
     async function saveSO(existingId) {
       var date = document.getElementById('f_date').value;
-      var customerId = document.getElementById('f_customer').value;
+      var clientId = modalState.client ? modalState.client.value : '';
       var deliveryLocation = document.getElementById('f_deliveryLocation').value || '';
       var expectedDelivery = document.getElementById('f_delivery').value;
       var paymentTerms = document.getElementById('f_paymentTerms').value;
       var discount = Math.min(100, Math.max(0, parseFloat(document.getElementById('f_discount').value) || 0));
       var tax = parseFloat(document.getElementById('f_tax').value) || 0;
       var notes = document.getElementById('f_notes').value || '';
-      var quotationReference = document.getElementById('f_quotationReference').value || null;
-      var piReference = document.getElementById('f_piReference').value || null;
+      var quotationReference = modalState.quotation ? modalState.quotation.value : null;
+      var piReference = modalState.pi ? modalState.pi.value : null;
+      var projectReference = modalState.project ? modalState.project.value : null;
 
-      if (!date || !customerId || !expectedDelivery) {
-        showToast('Please fill all required fields (Date, Customer, Expected Delivery)', 'error');
+      if (!date || !clientId || !expectedDelivery) {
+        showToast('Please fill all required fields (Date, Client, Expected Delivery)', 'error');
         return;
       }
 
       var itemsData = [];
       var seenItemIds = {};
       var hasDuplicate = false;
+      var missingProduct = false;
       var rows = document.querySelectorAll('#lineItemsBody .line-item-row');
       rows.forEach(function(row) {
-        var itemId = row.querySelector('.item-select').value;
+        var itemId = row.dataset.itemId || '';
         var qty = Math.max(0, Math.floor(parseFloat(row.querySelector('.item-qty').value) || 0));
         var rate = Math.max(0, parseFloat(row.querySelector('.item-rate').value) || 0);
         if (qty > 0) {
+          if (!itemId) {
+            missingProduct = true;
+            return;
+          }
           if (seenItemIds[itemId]) {
             hasDuplicate = true;
             return;
           }
           seenItemIds[itemId] = true;
-          var item = items.find(function(it) { return it.id === itemId; });
-          itemsData.push({
-            itemId: itemId,
-            name: item ? item.name : '',
-            qty: qty,
-            rate: rate,
-            gst: item ? item.gst : 18,
-            unit: item ? item.unit : 'Pcs'
-          });
+          itemsData.push({ itemId: itemId, qty: qty, rate: rate });
         }
       });
+
+      if (missingProduct) {
+        showToast('Select a product for every line item', 'error');
+        return;
+      }
 
       if (hasDuplicate) {
         showToast('Each item can only appear once — merge duplicate line items', 'error');
@@ -1533,8 +2151,6 @@
         return;
       }
 
-      var customer = customers.find(function(c) { return c.id === customerId; });
-
       if (expectedDelivery < date) {
         showToast('Expected delivery cannot be before the order date', 'error');
         return;
@@ -1543,23 +2159,22 @@
       // Only what the user controls. Number, status, fulfilment, subtotal and total are set by the server.
       var payload = {
         date: date,
-        customerId: customerId,
-        deliveryLocation: deliveryLocation || (customer ? customer.address : ''),
+        clientId: clientId,
+        deliveryLocation: deliveryLocation,
         expectedDelivery: expectedDelivery,
         paymentTerms: paymentTerms,
-        items: itemsData.map(function(it) { return { itemId: it.itemId, qty: it.qty, rate: it.rate }; }),
+        items: itemsData,
         discount: discount,
         tax: tax,
         notes: notes,
         quotationReference: quotationReference,
-        piReference: piReference
+        piReference: piReference,
+        projectReference: projectReference
       };
 
       try {
         if (existingId) {
-          console.log('PUT ' + API_BASE + API.update + existingId, payload);
           var updated = await apiRequest(API.update + encodeURIComponent(existingId), 'PUT', payload);
-          console.log('PUT response:', updated);
           var saved = normalizeSO(Object.assign({}, updated, { id: existingId }));
           var idx = salesOrders.findIndex(function(x) { return x.id === existingId; });
           if (idx !== -1) salesOrders[idx] = saved;
@@ -1586,9 +2201,9 @@
       if (!so) return;
 
       var modalContent = `
-        ${modalHeader('Delete Sales Order', so.number)}
+        ${modalHeader('Delete Sales Order', esc(so.number))}
         <div class="px-5 py-4 text-sm text-gray-600">
-          <p>Are you sure you want to permanently delete <b class="text-gray-800">${so.number}</b>?</p>
+          <p>Are you sure you want to permanently delete <b class="text-gray-800">${esc(so.number)}</b>?</p>
           <p class="text-gray-400 text-[11px] mt-1">This action cannot be undone. Orders with deliveries against them cannot be deleted.</p>
           <p class="text-amber-600 text-[11px] mt-2">Total Value: ${money(so.total)}</p>
         </div>
@@ -1612,10 +2227,29 @@
     }
 
     // =============================================================
-    // ACTIONS
+    // ACTIONS  (approve / reject - both ask for confirmation first)
     // =============================================================
 
-    async function approveSO(id) {
+    function approveSO(id) {
+      var so = salesOrders.find(function(x) { return x.id === id; });
+      if (!so) return;
+
+      var modalContent = `
+        ${modalHeader('Approve Sales Order', esc(so.number))}
+        <div class="px-5 py-4 text-sm text-gray-600">
+          <p>Are you sure you want to approve <b class="text-gray-800">${esc(so.number)}</b> for <b class="text-gray-800">${esc(so.clientName)}</b>?</p>
+          <p class="text-gray-400 text-[11px] mt-1">Once approved, this order can be used for delivery and can no longer be rejected.</p>
+          <p class="text-primary-dark text-[11px] mt-2 font-semibold">Total Value: ${money(so.total)}</p>
+        </div>
+        <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+          <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
+          <button onclick="confirmApproveSO('${esc(id)}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm">Approve Order</button>
+        </div>
+      `;
+      openModal(modalContent, { width: 'max-w-md' });
+    }
+
+    async function confirmApproveSO(id) {
       var so = salesOrders.find(function(x) { return x.id === id; });
       if (!so) return;
       try {
@@ -1631,6 +2265,7 @@
         showToast('Approve failed: ' + err.message, 'error');
         return;
       }
+      closeModal();
       renderSalesOrders();
       showToast('Sales Order ' + so.number + ' approved!', 'success');
     }
@@ -1640,14 +2275,14 @@
       if (!so) return;
 
       var modalContent = `
-        ${modalHeader('Reject Sales Order', so.number)}
+        ${modalHeader('Reject Sales Order', esc(so.number))}
         <div class="px-5 py-4 text-sm text-gray-600">
-          <p>Are you sure you want to reject <b class="text-gray-800">${so.number}</b> for <b class="text-gray-800">${so.customerName}</b>?</p>
+          <p>Are you sure you want to reject <b class="text-gray-800">${esc(so.number)}</b> for <b class="text-gray-800">${esc(so.clientName)}</b>?</p>
           <p class="text-gray-400 text-[11px] mt-1">A rejected order is closed and cannot be edited or approved later.</p>
         </div>
         <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
           <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
-          <button onclick="confirmRejectSO('${id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition shadow-sm">Reject Order</button>
+          <button onclick="confirmRejectSO('${esc(id)}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition shadow-sm">Reject Order</button>
         </div>
       `;
       openModal(modalContent, { width: 'max-w-md' });
@@ -1684,7 +2319,7 @@
         var searchHtml = `
           <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
-            <input type="text" id="searchInput" placeholder="Search sales orders by number, customer…"
+            <input type="text" id="searchInput" placeholder="Search sales orders by number, client…"
               onkeyup="filterSalesOrders()"
               class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
           </div>
@@ -1704,16 +2339,9 @@
     // INIT
     // =============================================================
 
-    // Company details for SO preview
-    var company = {
-      name: 'Kunash Media Pvt. Ltd.',
-      address: '401, Creative Hub, BKC, Bandra East, Mumbai - 400051',
-      gstin: '27AABCU1234D1ZP',
-      phone: '+91-9876543210'
-    };
-
     renderSalesOrders();
-    loadSalesOrders();     
+    loadCompany();
+    loadSalesOrders();
 
     console.log('📄 Sales Orders Module Loaded Successfully');
     console.log('🌐 API Base:', API_BASE);

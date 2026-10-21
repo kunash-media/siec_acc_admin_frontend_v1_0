@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+<link rel="manifest" href="/favicon_io/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Reports — SIEC</title>
+
+<script>
+  (function () {
+    try {
+      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+    } catch (e) {
+      document.documentElement.classList.add("sidebar-expanded");
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
+          secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<style>
+  body {
+    font-size: 12px;
+    background: #f3f4f6;
+  }
+
+  .form-input {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    color: #1a1a2e;
+  }
+  .form-input:focus {
+    border-color: #6da84c;
+    box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.12);
+    background: #ffffff;
+  }
+  .form-input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+
+  .form-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #374151;
+    display: block;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .form-label .required { color: #ef4444; margin-left: 2px; }
+  .form-hint { font-size: 9.5px; color: #9ca3af; margin-top: 2px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .badge-dot-green { background: #22c55e; }
+  .badge-dot-amber { background: #f59e0b; }
+  .badge-dot-red { background: #ef4444; }
+  .badge-dot-gray { background: #94a3b8; }
+  .badge-dot-blue { background: #3b82f6; }
+  .badge-dot-purple { background: #8b5cf6; }
+
+  .stat-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 10px 14px !important;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+  .stat-card .stat-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+  }
+  .stat-card .stat-value {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-top: 2px;
+  }
+
+  .table-row-hover:hover {
+    background: #f8fafc;
+  }
+
+  .btn-icon-action {
+    transition: all 0.15s ease;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-icon-action:hover {
+    background: #f1f5f9;
+    color: #6da84c;
+  }
+  .btn-icon-action.danger:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+  .btn-icon-action.primary:hover {
+    background: #eef5e8;
+    color: #6da84c;
+  }
+
+  .toast {
+    animation: fadeIn 0.2s ease;
+    font-size: 12px;
+  }
+  .toast-success { background: #16a34a; }
+  .toast-error { background: #dc2626; }
+  .toast-warning { background: #f59e0b; }
+  .toast-info { background: #6da84c; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-modal { animation: modalIn 0.18s ease; }
+
+  .modal-scroll {
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+  .modal-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .modal-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
+  .empty-icon-svg {
+    opacity: 0.2;
+    width: 40px;
+    height: 40px;
+    color: #94a3b8;
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .page-subtitle {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .page-breadcrumb {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6da84c;
+  }
+
+  table th {
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    padding: 8px 12px;
+  }
+  table td {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  table td .font-mono {
+    font-size: 11px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .modal-subtitle {
+    font-size: 11px;
+    color: #6b7280;
+  }
+
+  .filter-btn {
+    font-size: 11px;
+    padding: 5px 12px;
+  }
+  .filter-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Report type cards */
+  .report-type-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: #ffffff;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    cursor: pointer;
+    text-align: center;
+  }
+  .report-type-card:hover {
+    border-color: #6da84c;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+  }
+  .report-type-card.active {
+    border-color: #6da84c;
+    background: #eef5e8;
+  }
+  .report-type-card .rt-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef5e8;
+    color: #6da84c;
+    margin-bottom: 8px;
+  }
+  .report-type-card .rt-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+  .report-type-card .rt-desc {
+    font-size: 10px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+
+  /* Report table */
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .report-table th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .report-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .report-table .text-right { text-align: right; }
+  .report-table .text-center { text-align: center; }
+  .report-table .group-header {
+    background: #f1f5f9;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  .report-table .total-row {
+    border-top: 2px solid #e5e7eb;
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 700;
+    background: #f8fafc;
+  }
+  .report-table .grand-total {
+    font-weight: 700;
+    color: #6da84c;
+    background: #eef5e8;
+  }
+
+  /* Date range quick selectors */
+  .date-chip {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .date-chip:hover {
+    border-color: #6da84c;
+    color: #6da84c;
+  }
+  .date-chip.active {
+    background: #6da84c;
+    color: white;
+    border-color: #6da84c;
+  }
+</style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased text-sm">
+
+  <div class="flex min-h-screen">
+    <div id="sidebar-root"></div>
+
+    <div class="app-main flex-1 flex flex-col min-w-0">
+      <div id="topbar-root"></div>
+
+      <main class="p-3 sm:p-4 lg:p-5">
+
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+          <!-- ===== PAGE HEADER ===== -->
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <div class="page-breadcrumb">Finance</div>
+              <h1 class="page-title text-gray-900">Reports</h1>
+              <p class="page-subtitle mt-0.5">Operational, financial, tax and project reporting across all modules.</p>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <button onclick="downloadCurrentReport()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <path d="M7 10l5 5 5-5"/>
+                  <path d="M12 15V3"/>
+                </svg>
+                Download
+              </button>
+              <button onclick="printCurrentReport()" class="inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-[11px] font-semibold px-3 py-2 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 9V2h12v7"/>
+                  <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                  <path d="M6 14h12v8H6z"/>
+                </svg>
+                Print
+              </button>
+            </div>
+          </div>
+
+          <!-- ===== REPORT TYPE CARDS ===== -->
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 mb-4" id="reportTypesGrid"></div>
+
+          <!-- ===== FILTERS + DATE RANGE ===== -->
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 mb-4">
+            <div class="flex flex-wrap items-center gap-3 justify-between">
+              <div class="flex flex-wrap items-center gap-3">
+                <div>
+                  <label class="form-label mb-1">From Date</label>
+                  <input type="date" class="form-input" id="reportFromDate" value="2026-01-01" onchange="refreshReport()">
+                </div>
+                <div>
+                  <label class="form-label mb-1">To Date</label>
+                  <input type="date" class="form-input" id="reportToDate" value="2026-02-28" onchange="refreshReport()">
+                </div>
+                <div>
+                  <label class="form-label mb-1">Group By</label>
+                  <select class="form-input" id="reportGroupBy" onchange="refreshReport()">
+                    <option value="date">Date</option>
+                    <option value="customer">Customer</option>
+                    <option value="item">Item</option>
+                    <option value="category">Category</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] text-gray-400 mr-1">Quick:</span>
+                <button class="date-chip" onclick="setQuickRange(7)">7 Days</button>
+                <button class="date-chip" onclick="setQuickRange(30)">30 Days</button>
+                <button class="date-chip active" onclick="setQuickRange(60)">60 Days</button>
+                <button class="date-chip" onclick="setQuickRange(90)">90 Days</button>
+                <button class="date-chip" onclick="setQuickRange(365)">1 Year</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== REPORT CONTENT ===== -->
+          <div id="reportContent"></div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- SCRIPTS -->
+  <!-- ========================================================== -->
+
+  <script src="/assets/js/nav-sidebar.js"></script>
+  <script>
+    // =============================================================
+    // NAV-SIDEBAR INIT
+    // =============================================================
+    NavSidebar.init({
+      basePath: "",
+      activePage: "reports",
+      pageTitle: "Reports",
+      user: {
+        name: "Admin",
+        role: "Super Admin",
+        avatarUrl: "",
+      },
+    });
+
+    // =============================================================
+    // SVG ICONS
+    // =============================================================
+    function iconSales() {
+      return `<svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>`;
+    }
+    function iconPurchase() {
+      return `<svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16l-1.5 9a2 2 0 0 1-2 1.7H7.5a2 2 0 0 1-2-1.7L4 7z"></path><path d="M8 7V5a4 4 0 0 1 8 0v2"></path></svg>`;
+    }
+    function iconStock() {
+      return `<svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg>`;
+    }
+    function iconTax() {
+      return `<svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z"></path><path d="M9 12l2 2 4-4"></path></svg>`;
+    }
+    function iconReceivable() {
+      return `<svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V10M10 21V10M14 21V10M19 21V10"></path><path d="M2 10l10-6 10 6"></path></svg>`;
+    }
+    function iconPayable() {
+      return `<svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A2.5 2.5 0 016.5 2H20v18H6.5A2.5 2.5 0 014 17.5v-13z"></path><path d="M4 17.5A2.5 2.5 0 016.5 20H20"></path></svg>`;
+    }
+    function iconProject() {
+      return `<svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path></svg>`;
+    }
+    function iconAccount() {
+      return `<svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A2.5 2.5 0 016.5 2H20v18H6.5A2.5 2.5 0 014 17.5v-13z"></path><path d="M4 17.5A2.5 2.5 0 016.5 20H20"></path></svg>`;
+    }
+    function iconChart() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>`;
+    }
+    function iconSearch() {
+      return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
+    }
+    function iconDownload() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>`;
+    }
+    function iconInfo() {
+      return `<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>`;
+    }
+
+    // =============================================================
+    // TOAST
+    // =============================================================
+    function showToast(message, kind) {
+      kind = kind || 'success';
+      var wrap = document.getElementById('toastWrap');
+      var colors = {
+        success: 'bg-green-600',
+        info: 'bg-primary',
+        warning: 'bg-amber-600',
+        error: 'bg-red-600'
+      };
+      var el = document.createElement('div');
+      el.className = 'toast ' + colors[kind] + ' text-white font-semibold px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
+      el.innerHTML = '<span>' + message + '</span>';
+      wrap.appendChild(el);
+      setTimeout(function() {
+        el.style.transition = 'opacity .3s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 300);
+      }, 2600);
+    }
+
+    // =============================================================
+    // HELPERS
+    // =============================================================
+    function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+
+    function formatDate(d) {
+      var date = new Date(d);
+      var options = { day: '2-digit', month: 'short', year: 'numeric' };
+      return date.toLocaleDateString('en-IN', options);
+    }
+
+    function inDateRange(dateStr, from, to) {
+      return dateStr >= from && dateStr <= to;
+    }
+
+    // =============================================================
+    // REPORT TYPES
+    // =============================================================
+
+    var reportTypes = [
+      { id: 'sales', name: 'Sales Report', desc: 'Sales summary & details', icon: iconSales() },
+      { id: 'purchase', name: 'Purchase Report', desc: 'Vendor bills & purchases', icon: iconPurchase() },
+      { id: 'stock', name: 'Stock Report', desc: 'Inventory & valuation', icon: iconStock() },
+      { id: 'tax', name: 'GST / Tax Report', desc: 'GSTR-1, GSTR-3B summary', icon: iconTax() },
+      { id: 'receivable', name: 'Receivable Report', desc: 'Customer aging', icon: iconReceivable() },
+      { id: 'payable', name: 'Payable Report', desc: 'Vendor aging', icon: iconPayable() },
+      { id: 'project', name: 'Project Report', desc: 'Cost & profitability', icon: iconProject() },
+      { id: 'accounting', name: 'Accounting Report', desc: 'Trial balance, P&L, BS', icon: iconAccount() },
+    ];
+
+    var activeReportType = 'sales';
+
+    // =============================================================
+    // SAMPLE DATA
+    // =============================================================
+
+    var salesData = [
+      { id: 'INV-001', number: 'INV/25-26/001', date: '2026-01-15', customer: 'XYZ Retail Store', amount: 167029, tax: 25479, status: 'paid' },
+      { id: 'INV-002', number: 'INV/25-26/002', date: '2026-01-20', customer: 'ABC Enterprises', amount: 141865, tax: 21640, status: 'partial' },
+      { id: 'INV-003', number: 'INV/25-26/003', date: '2026-01-28', customer: 'Rahul Sharma', amount: 63700, tax: 9720, status: 'paid' },
+      { id: 'INV-004', number: 'INV/25-26/004', date: '2026-02-01', customer: 'Tech Solutions Inc.', amount: 3172, tax: 522, status: 'overdue' },
+      { id: 'INV-005', number: 'INV/25-26/005', date: '2026-02-05', customer: 'Priya Patel', amount: 38350, tax: 5850, status: 'sent' },
+      { id: 'INV-006', number: 'INV/25-26/006', date: '2026-02-10', customer: 'Global Exports Ltd.', amount: 3799, tax: 579.6, status: 'paid' },
+    ];
+
+    var purchaseData = [
+      { id: 'PUR-001', number: 'PUR/25-26/001', date: '2026-01-15', vendor: 'Global Imports Inc.', amount: 118000, tax: 21240, status: 'received' },
+      { id: 'PUR-002', number: 'PUR/25-26/002', date: '2026-01-20', vendor: 'Local Supplier Co.', amount: 95800, tax: 17244, status: 'partial' },
+      { id: 'PUR-003', number: 'PUR/25-26/003', date: '2026-01-25', vendor: 'ABC Distributors', amount: 49560, tax: 8921, status: 'paid' },
+      { id: 'PUR-004', number: 'PUR/25-26/004', date: '2026-02-01', vendor: 'Tech Components Ltd.', amount: 105000, tax: 18900, status: 'overdue' },
+      { id: 'PUR-005', number: 'PUR/25-26/005', date: '2026-02-05', vendor: 'Premium Raw Materials', amount: 218500, tax: 39330, status: 'received' },
+    ];
+
+    var stockData = [
+      { id: 'INV-001', item: 'Centrifugal Blower — 5HP', sku: 'BLW-5HP-001', category: 'Blowers', warehouse: 'Main Warehouse', stock: 48, unit: 'Pcs', price: 42000, value: 2016000, status: 'green' },
+      { id: 'INV-002', item: 'Dual Media Filter Vessel — 500L', sku: 'FIL-500L-002', category: 'Filtration', warehouse: 'Main Warehouse', stock: 12, unit: 'Pcs', price: 118000, value: 1416000, status: 'green' },
+      { id: 'INV-003', item: 'Activated Carbon Media', sku: 'AC-25KG-003', category: 'Consumables', warehouse: 'Branch Warehouse', stock: 6, unit: 'Kg', price: 6500, value: 39000, status: 'amber' },
+      { id: 'INV-004', item: 'PVC Pressure Pipe — 6"', sku: 'PVC-6IN-004', category: 'Piping', warehouse: 'Storage - Bhiwandi', stock: 210, unit: 'Mtr', price: 850, value: 178500, status: 'green' },
+      { id: 'INV-005', item: 'Chemical Dosing Pump — 50LPH', sku: 'DOSE-50-005', category: 'Equipment', warehouse: 'Main Warehouse', stock: 3, unit: 'Pcs', price: 28000, value: 84000, status: 'red' },
+      { id: 'INV-006', item: 'MS Pipe Fittings — Assorted', sku: 'MS-FIT-006', category: 'Piping', warehouse: 'Storage - Bhiwandi', stock: 340, unit: 'Pcs', price: 120, value: 40800, status: 'green' },
+      { id: 'INV-007', item: 'Digital pH Meter — Industrial', sku: 'PH-MTR-007', category: 'Electronics', warehouse: 'Main Warehouse', stock: 8, unit: 'Pcs', price: 12500, value: 100000, status: 'green' },
+      { id: 'INV-008', item: 'Sodium Hypochlorite — 10% Solution', sku: 'SH-10%-008', category: 'Chemicals', warehouse: 'Branch Warehouse', stock: 0, unit: 'Ltr', price: 180, value: 0, status: 'red' },
+    ];
+
+    var taxData = [
+      { month: 'January 2026', taxableSales: 372594, outputTax: 67069, taxablePurchase: 263360, inputTax: 47405, netGST: 19664 },
+      { month: 'February 2026', taxableSales: 45321, outputTax: 8158, taxablePurchase: 323500, inputTax: 58230, netGST: -50072 },
+    ];
+
+    var receivableData = [
+      { customer: 'XYZ Retail Store', invoice: 'INV/25-26/001', date: '2026-01-15', dueDate: '2026-01-30', amount: 167029, paid: 100000, balance: 67029, aging: '1-30 days', status: 'partial' },
+      { customer: 'ABC Enterprises', invoice: 'INV/25-26/002', date: '2026-01-20', dueDate: '2026-02-19', amount: 141865, paid: 0, balance: 141865, aging: '1-30 days', status: 'overdue' },
+      { customer: 'Rahul Sharma', invoice: 'INV/25-26/003', date: '2026-01-28', dueDate: '2026-02-27', amount: 63700, paid: 63700, balance: 0, aging: 'Paid', status: 'paid' },
+      { customer: 'Tech Solutions Inc.', invoice: 'INV/25-26/004', date: '2026-02-01', dueDate: '2026-02-15', amount: 3172, paid: 0, balance: 3172, aging: 'Overdue', status: 'overdue' },
+      { customer: 'Priya Patel', invoice: 'INV/25-26/005', date: '2026-02-05', dueDate: '2026-03-07', amount: 38350, paid: 0, balance: 38350, aging: '1-30 days', status: 'sent' },
+    ];
+
+    var payableData = [
+      { vendor: 'Global Imports Inc.', bill: 'PUR/25-26/001', date: '2026-01-15', dueDate: '2026-02-14', amount: 118000, paid: 50000, balance: 68000, aging: '1-30 days', status: 'partial' },
+      { vendor: 'Local Supplier Co.', bill: 'PUR/25-26/002', date: '2026-01-20', dueDate: '2026-02-19', amount: 95800, paid: 0, balance: 95800, aging: '1-30 days', status: 'received' },
+      { vendor: 'ABC Distributors', bill: 'PUR/25-26/003', date: '2026-01-25', dueDate: '2026-02-24', amount: 49560, paid: 49560, balance: 0, aging: 'Paid', status: 'paid' },
+      { vendor: 'Tech Components Ltd.', bill: 'PUR/25-26/004', date: '2026-02-01', dueDate: '2026-03-03', amount: 105000, paid: 0, balance: 105000, aging: 'Overdue', status: 'overdue' },
+    ];
+
+    var projectData = [
+      { project: 'Operation & Supervision — WHE', code: '26LW069', customer: 'Sustro Speciality Oils', budget: 500000, revenue: 450000, cost: 310000, profit: 140000, margin: 31.1 },
+      { project: 'Odor Control Unit — Retrofit', code: '26LW070', customer: 'XYZ Technologies', budget: 350000, revenue: 200000, cost: 120000, profit: 80000, margin: 40.0 },
+      { project: 'Dual Media Filter — Phase II', code: '26LW071', customer: 'ABC Distributor Group', budget: 750000, revenue: 950000, cost: 720000, profit: 230000, margin: 24.2 },
+      { project: 'Site Survey & Consulting', code: '26LW072', customer: 'Global Exports Ltd.', budget: 150000, revenue: 0, cost: 25000, profit: -25000, margin: -100 },
+    ];
+
+    // =============================================================
+    // RENDER REPORT TYPE CARDS
+    // =============================================================
+
+    function renderReportTypes() {
+      var html = reportTypes.map(function(rt) {
+        return `
+          <div class="report-type-card ${rt.id === activeReportType ? 'active' : ''}" onclick="selectReportType('${rt.id}')">
+            <div class="rt-icon">${rt.icon}</div>
+            <div class="rt-name">${rt.name}</div>
+            <div class="rt-desc">${rt.desc}</div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('reportTypesGrid').innerHTML = html;
+    }
+
+    function selectReportType(id) {
+      activeReportType = id;
+      renderReportTypes();
+      refreshReport();
+    }
+
+    // =============================================================
+    // DATE RANGE QUICK SELECT
+    // =============================================================
+
+    function setQuickRange(days) {
+      var to = new Date();
+      var from = new Date();
+      from.setDate(to.getDate() - days);
+
+      document.getElementById('reportFromDate').value = from.toISOString().split('T')[0];
+      document.getElementById('reportToDate').value = to.toISOString().split('T')[0];
+
+      // Update active chip
+      document.querySelectorAll('.date-chip').forEach(function(c) { c.classList.remove('active'); });
+      event.target.classList.add('active');
+
+      refreshReport();
+    }
+
+    // =============================================================
+    // REPORT RENDERING
+    // =============================================================
+
+    function refreshReport() {
+      var from = document.getElementById('reportFromDate').value;
+      var to = document.getElementById('reportToDate').value;
+
+      var html = '';
+      switch(activeReportType) {
+        case 'sales': html = renderSalesReport(from, to); break;
+        case 'purchase': html = renderPurchaseReport(from, to); break;
+        case 'stock': html = renderStockReport(from, to); break;
+        case 'tax': html = renderTaxReport(from, to); break;
+        case 'receivable': html = renderReceivableReport(from, to); break;
+        case 'payable': html = renderPayableReport(from, to); break;
+        case 'project': html = renderProjectReport(from, to); break;
+        case 'accounting': html = renderAccountingReport(from, to); break;
+        default: html = '<div class="text-center py-10 text-gray-400">Select a report type</div>';
+      }
+
+      document.getElementById('reportContent').innerHTML = html;
+    }
+
+    // =============================================================
+    // SALES REPORT
+    // =============================================================
+
+    function renderSalesReport(from, to) {
+      var filtered = salesData.filter(function(s) { return inDateRange(s.date, from, to); });
+      var totalAmount = filtered.reduce(function(sum, s) { return sum + s.amount; }, 0);
+      var totalTax = filtered.reduce(function(sum, s) { return sum + s.tax; }, 0);
+      var paidAmount = filtered.filter(function(s) { return s.status === 'paid'; }).reduce(function(sum, s) { return sum + s.amount; }, 0);
+      var dueAmount = totalAmount - paidAmount;
+
+      var rowsHtml = filtered.map(function(s) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-3 py-2.5 text-sm font-semibold">${s.number}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500">${formatDate(s.date)}</td>
+            <td class="px-3 py-2.5 text-sm text-gray-700">${s.customer}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right">${money(s.amount)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right text-gray-500">${money(s.tax)}</td>
+            <td class="px-3 py-2.5 text-center">${statusBadgeSmall(s.status)}</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Invoices</div>
+            <div class="stat-value">${filtered.length}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Sales</div>
+            <div class="stat-value text-primary">${money(totalAmount)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">GST Collected</div>
+            <div class="stat-value text-amber-600">${money(totalTax)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Due Amount</div>
+            <div class="stat-value text-red-600">${money(dueAmount)}</div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800">Sales Report — ${formatDate(from)} to ${formatDate(to)}</div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Invoice #</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Date</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Customer</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Amount</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Tax</th>
+                  <th class="text-center font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml || '<tr><td colspan="6" class="text-center py-6 text-gray-400 text-sm">No sales in this date range</td></tr>'}
+                <tr class="total-row">
+                  <td colspan="3" class="text-right font-semibold px-3 py-2.5">TOTAL</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-primary">${money(totalAmount)}</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-amber-600">${money(totalTax)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================================
+    // PURCHASE REPORT
+    // =============================================================
+
+    function renderPurchaseReport(from, to) {
+      var filtered = purchaseData.filter(function(p) { return inDateRange(p.date, from, to); });
+      var totalAmount = filtered.reduce(function(sum, p) { return sum + p.amount; }, 0);
+      var totalTax = filtered.reduce(function(sum, p) { return sum + p.tax; }, 0);
+
+      var rowsHtml = filtered.map(function(p) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-3 py-2.5 text-sm font-semibold">${p.number}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500">${formatDate(p.date)}</td>
+            <td class="px-3 py-2.5 text-sm text-gray-700">${p.vendor}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right">${money(p.amount)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right text-gray-500">${money(p.tax)}</td>
+            <td class="px-3 py-2.5 text-center">${statusBadgeSmall(p.status)}</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Bills</div>
+            <div class="stat-value">${filtered.length}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Purchases</div>
+            <div class="stat-value text-primary">${money(totalAmount)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Input GST</div>
+            <div class="stat-value text-amber-600">${money(totalTax)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Vendors</div>
+            <div class="stat-value">${new Set(filtered.map(function(p) { return p.vendor; })).size}</div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800">Purchase Report — ${formatDate(from)} to ${formatDate(to)}</div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Bill #</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Date</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Vendor</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Amount</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Tax</th>
+                  <th class="text-center font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml || '<tr><td colspan="6" class="text-center py-6 text-gray-400 text-sm">No purchases in this date range</td></tr>'}
+                <tr class="total-row">
+                  <td colspan="3" class="text-right font-semibold px-3 py-2.5">TOTAL</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-primary">${money(totalAmount)}</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-amber-600">${money(totalTax)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================================
+    // STOCK REPORT
+    // =============================================================
+
+    function renderStockReport(from, to) {
+      var totalValue = stockData.reduce(function(sum, s) { return sum + s.value; }, 0);
+      var lowStock = stockData.filter(function(s) { return s.status === 'amber'; }).length;
+      var outStock = stockData.filter(function(s) { return s.status === 'red'; }).length;
+
+      var rowsHtml = stockData.map(function(s) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-3 py-2.5 text-sm font-semibold">${s.item}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500 font-mono">${s.sku}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500">${s.category}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">${s.warehouse}</td>
+            <td class="px-3 py-2.5 text-center font-mono font-semibold">${s.stock} ${s.unit}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right">${money(s.price)}</td>
+            <td class="px-3 py-2.5 font-mono font-semibold text-sm text-right text-primary">${money(s.value)}</td>
+            <td class="px-3 py-2.5 text-center">${stockBadgeSmall(s.status)}</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total SKUs</div>
+            <div class="stat-value">${stockData.length}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Stock Value</div>
+            <div class="stat-value text-primary">${money(totalValue)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Low Stock</div>
+            <div class="stat-value text-amber-600">${lowStock}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Out of Stock</div>
+            <div class="stat-value text-red-600">${outStock}</div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800">Stock Report — As of ${formatDate(to)}</div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Item</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">SKU</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Category</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Warehouse</th>
+                  <th class="text-center font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Stock</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Unit Price</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Value</th>
+                  <th class="text-center font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+                <tr class="total-row">
+                  <td colspan="6" class="text-right font-semibold px-3 py-2.5">TOTAL STOCK VALUE</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-primary">${money(totalValue)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================================
+    // TAX REPORT
+    // =============================================================
+
+    function renderTaxReport(from, to) {
+      var totalOutput = taxData.reduce(function(sum, t) { return sum + t.outputTax; }, 0);
+      var totalInput = taxData.reduce(function(sum, t) { return sum + t.inputTax; }, 0);
+      var netGST = totalOutput - totalInput;
+
+      var rowsHtml = taxData.map(function(t) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-3 py-2.5 text-sm font-semibold">${t.month}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right">${money(t.taxableSales)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right text-amber-600">${money(t.outputTax)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right">${money(t.taxablePurchase)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right text-blue-600">${money(t.inputTax)}</td>
+            <td class="px-3 py-2.5 font-mono font-semibold text-sm text-right ${t.netGST >= 0 ? 'text-red-600' : 'text-green-600'}">${money(Math.abs(t.netGST))}</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Output Tax</div>
+            <div class="stat-value text-red-600">${money(totalOutput)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Input Tax</div>
+            <div class="stat-value text-blue-600">${money(totalInput)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Net GST Payable</div>
+            <div class="stat-value ${netGST >= 0 ? 'text-amber-600' : 'text-green-600'}">${money(Math.abs(netGST))}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Period</div>
+            <div class="stat-value text-sm">${taxData.length} months</div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800">GST Report — ${formatDate(from)} to ${formatDate(to)}</div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Period</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Taxable Sales</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Output Tax</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Taxable Purchase</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Input Tax</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Net GST</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+                <tr class="total-row">
+                  <td class="font-semibold px-3 py-2.5">TOTAL</td>
+                  <td></td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-amber-600">${money(totalOutput)}</td>
+                  <td></td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-blue-600">${money(totalInput)}</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 ${netGST >= 0 ? 'text-red-600' : 'text-green-600'}">${money(Math.abs(netGST))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================================
+    // RECEIVABLE REPORT
+    // =============================================================
+
+    function renderReceivableReport(from, to) {
+      var filtered = receivableData.filter(function(r) { return inDateRange(r.date, from, to); });
+      var totalBalance = filtered.reduce(function(sum, r) { return sum + r.balance; }, 0);
+      var overdue = filtered.filter(function(r) { return r.status === 'overdue'; }).reduce(function(sum, r) { return sum + r.balance; }, 0);
+
+      var rowsHtml = filtered.map(function(r) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-3 py-2.5 text-sm font-semibold">${r.customer}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500">${r.invoice}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500">${formatDate(r.date)}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500">${formatDate(r.dueDate)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right">${money(r.amount)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right text-green-600">${money(r.paid)}</td>
+            <td class="px-3 py-2.5 font-mono font-semibold text-sm text-right text-amber-600">${money(r.balance)}</td>
+            <td class="px-3 py-2.5 text-center text-xs">${r.aging}</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Invoices</div>
+            <div class="stat-value">${filtered.length}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Balance</div>
+            <div class="stat-value text-amber-600">${money(totalBalance)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Overdue</div>
+            <div class="stat-value text-red-600">${money(overdue)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Customers</div>
+            <div class="stat-value">${new Set(filtered.map(function(r) { return r.customer; })).size}</div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800">Receivable Report — ${formatDate(from)} to ${formatDate(to)}</div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Customer</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Invoice</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Date</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Due Date</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Amount</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Paid</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Balance</th>
+                  <th class="text-center font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Aging</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml || '<tr><td colspan="8" class="text-center py-6 text-gray-400 text-sm">No receivables in this date range</td></tr>'}
+                <tr class="total-row">
+                  <td colspan="6" class="text-right font-semibold px-3 py-2.5">TOTAL BALANCE</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-amber-600">${money(totalBalance)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================================
+    // PAYABLE REPORT
+    // =============================================================
+
+    function renderPayableReport(from, to) {
+      var filtered = payableData.filter(function(p) { return inDateRange(p.date, from, to); });
+      var totalBalance = filtered.reduce(function(sum, p) { return sum + p.balance; }, 0);
+      var overdue = filtered.filter(function(p) { return p.status === 'overdue'; }).reduce(function(sum, p) { return sum + p.balance; }, 0);
+
+      var rowsHtml = filtered.map(function(p) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-3 py-2.5 text-sm font-semibold">${p.vendor}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500">${p.bill}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500">${formatDate(p.date)}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-500">${formatDate(p.dueDate)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right">${money(p.amount)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right text-green-600">${money(p.paid)}</td>
+            <td class="px-3 py-2.5 font-mono font-semibold text-sm text-right text-red-600">${money(p.balance)}</td>
+            <td class="px-3 py-2.5 text-center text-xs">${p.aging}</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Bills</div>
+            <div class="stat-value">${filtered.length}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Payable</div>
+            <div class="stat-value text-red-600">${money(totalBalance)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Overdue</div>
+            <div class="stat-value text-red-600">${money(overdue)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Vendors</div>
+            <div class="stat-value">${new Set(filtered.map(function(p) { return p.vendor; })).size}</div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800">Payable Report — ${formatDate(from)} to ${formatDate(to)}</div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Vendor</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Bill</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Date</th>
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Due Date</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Amount</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Paid</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Balance</th>
+                  <th class="text-center font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Aging</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml || '<tr><td colspan="8" class="text-center py-6 text-gray-400 text-sm">No payables in this date range</td></tr>'}
+                <tr class="total-row">
+                  <td colspan="6" class="text-right font-semibold px-3 py-2.5">TOTAL PAYABLE</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-red-600">${money(totalBalance)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================================
+    // PROJECT REPORT
+    // =============================================================
+
+    function renderProjectReport(from, to) {
+      var totalRevenue = projectData.reduce(function(sum, p) { return sum + p.revenue; }, 0);
+      var totalCost = projectData.reduce(function(sum, p) { return sum + p.cost; }, 0);
+      var totalProfit = totalRevenue - totalCost;
+
+      var rowsHtml = projectData.map(function(p) {
+        return `
+          <tr class="border-b border-gray-100 table-row-hover">
+            <td class="px-3 py-2.5">
+              <div class="text-sm font-semibold">${p.project}</div>
+              <div class="text-[10px] text-gray-400">${p.code} · ${p.customer}</div>
+            </td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right">${money(p.budget)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right text-primary">${money(p.revenue)}</td>
+            <td class="px-3 py-2.5 font-mono text-sm text-right text-red-600">${money(p.cost)}</td>
+            <td class="px-3 py-2.5 font-mono font-semibold text-sm text-right ${p.profit >= 0 ? 'text-green-600' : 'text-red-600'}">${money(p.profit)}</td>
+            <td class="px-3 py-2.5 text-right text-xs font-semibold ${p.margin >= 0 ? 'text-green-600' : 'text-red-600'}">${p.margin}%</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Projects</div>
+            <div class="stat-value">${projectData.length}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value text-primary">${money(totalRevenue)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Total Cost</div>
+            <div class="stat-value text-red-600">${money(totalCost)}</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card">
+            <div class="stat-label">Net Profit</div>
+            <div class="stat-value ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}">${money(totalProfit)}</div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+            <div class="font-semibold text-sm text-gray-800">Project Report — ${formatDate(from)} to ${formatDate(to)}</div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                  <th class="text-left font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Project</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Budget</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Revenue</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Cost</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Profit</th>
+                  <th class="text-right font-semibold whitespace-nowrap px-3 py-2.5 text-[9.5px] uppercase tracking-wide text-gray-500">Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+                <tr class="total-row">
+                  <td class="text-right font-semibold px-3 py-2.5">TOTAL</td>
+                  <td></td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-primary">${money(totalRevenue)}</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 text-red-600">${money(totalCost)}</td>
+                  <td class="font-mono font-bold text-right px-3 py-2.5 ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}">${money(totalProfit)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================================
+    // ACCOUNTING REPORT
+    // =============================================================
+
+    function renderAccountingReport(from, to) {
+      return `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+              <div class="font-semibold text-sm text-gray-800">Profit & Loss Summary</div>
+            </div>
+            <table class="report-table">
+              <tbody>
+                <tr class="group-header"><td>INCOME</td><td class="text-right">Amount (₹)</td></tr>
+                <tr><td class="indent-1">Product Sales</td><td class="text-right font-mono">42,50,000</td></tr>
+                <tr><td class="indent-1">Service Income</td><td class="text-right font-mono">8,50,000</td></tr>
+                <tr><td class="indent-1">Other Income</td><td class="text-right font-mono">1,25,000</td></tr>
+                <tr class="total-row"><td class="text-right">Total Income</td><td class="text-right font-mono font-bold text-green-600">52,25,000</td></tr>
+
+                <tr class="group-header"><td>EXPENSES</td><td class="text-right">Amount (₹)</td></tr>
+                <tr><td class="indent-1">Cost of Goods Sold</td><td class="text-right font-mono">18,20,000</td></tr>
+                <tr><td class="indent-1">Staff Salaries</td><td class="text-right font-mono">7,20,000</td></tr>
+                <tr><td class="indent-1">Office Rent</td><td class="text-right font-mono">85,000</td></tr>
+                <tr><td class="indent-1">Other Expenses</td><td class="text-right font-mono">74,950</td></tr>
+                <tr class="total-row"><td class="text-right">Total Expenses</td><td class="text-right font-mono font-bold text-red-600">26,99,950</td></tr>
+
+                <tr class="grand-total"><td class="text-right font-bold">NET PROFIT</td><td class="text-right font-mono font-bold text-primary">25,25,050</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-gray-100">
+              <div class="font-semibold text-sm text-gray-800">Balance Sheet Summary</div>
+            </div>
+            <table class="report-table">
+              <tbody>
+                <tr class="group-header"><td>ASSETS</td><td class="text-right">Amount (₹)</td></tr>
+                <tr><td class="indent-1">Cash & Bank</td><td class="text-right font-mono">12,60,000</td></tr>
+                <tr><td class="indent-1">Accounts Receivable</td><td class="text-right font-mono">3,72,580</td></tr>
+                <tr><td class="indent-1">Inventory</td><td class="text-right font-mono">8,00,000</td></tr>
+                <tr><td class="indent-1">Fixed Assets</td><td class="text-right font-mono">7,00,000</td></tr>
+                <tr class="total-row"><td class="text-right">Total Assets</td><td class="text-right font-mono font-bold text-primary">31,32,580</td></tr>
+
+                <tr class="group-header"><td>LIABILITIES + EQUITY</td><td class="text-right">Amount (₹)</td></tr>
+                <tr><td class="indent-1">Accounts Payable</td><td class="text-right font-mono">2,49,849</td></tr>
+                <tr><td class="indent-1">GST Payable</td><td class="text-right font-mono">3,15,000</td></tr>
+                <tr><td class="indent-1">Loans</td><td class="text-right font-mono">5,00,000</td></tr>
+                <tr><td class="indent-1">Owner's Capital</td><td class="text-right font-mono">15,00,000</td></tr>
+                <tr><td class="indent-1">Retained Earnings</td><td class="text-right font-mono">5,67,731</td></tr>
+                <tr class="total-row"><td class="text-right">Total Liabilities + Equity</td><td class="text-right font-mono font-bold text-primary">31,32,580</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================================
+    // SMALL BADGES
+    // =============================================================
+
+    function statusBadgeSmall(status) {
+      var map = {
+        paid: 'badge-green', sent: 'badge-blue', partial: 'badge-amber', overdue: 'badge-red',
+        received: 'badge-green', draft: 'badge-gray'
+      };
+      var dot = {
+        paid: 'badge-dot-green', sent: 'badge-dot-blue', partial: 'badge-dot-amber', overdue: 'badge-dot-red',
+        received: 'badge-dot-green', draft: 'badge-dot-gray'
+      };
+      var label = status.charAt(0).toUpperCase() + status.slice(1);
+      return '<span class="badge ' + (map[status] || 'badge-gray') + '"><span class="badge-dot ' + (dot[status] || 'badge-dot-gray') + '"></span>' + label + '</span>';
+    }
+
+    function stockBadgeSmall(status) {
+      var map = { green: 'badge-green', amber: 'badge-amber', red: 'badge-red' };
+      var dot = { green: 'badge-dot-green', amber: 'badge-dot-amber', red: 'badge-dot-red' };
+      var label = status === 'green' ? 'In Stock' : status === 'amber' ? 'Low Stock' : 'Out of Stock';
+      return '<span class="badge ' + map[status] + '"><span class="badge-dot ' + dot[status] + '"></span>' + label + '</span>';
+    }
+
+    // =============================================================
+    // ACTIONS
+    // =============================================================
+
+    function downloadCurrentReport() {
+      showToast('Generating report... Download will start shortly.', 'info');
+      setTimeout(function() {
+        showToast('Report downloaded successfully!', 'success');
+      }, 1200);
+    }
+
+    function printCurrentReport() {
+      showToast('Opening print dialog...', 'info');
+      setTimeout(function() { window.print(); }, 500);
+    }
+
+    // =============================================================
+    // INIT
+    // =============================================================
+
+    renderReportTypes();
+    refreshReport();
+
+    console.log('📊 Reports Module Loaded Successfully');
+    console.log('📋 Report Types:', reportTypes.length);
+    console.log('📈 Active Report:', activeReportType);
+
+  </script>
+
+</body>
+</html>

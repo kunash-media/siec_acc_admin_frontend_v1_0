@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+<link rel="manifest" href="/favicon_io/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>Activity & Logs - SIEC</title>
+<!--
+  ANTI-FLICKER SCRIPT — must be the first thing in <head>, before any
+  stylesheet. It reads the saved collapse state synchronously and sets
+  it on <html> so the sidebar is the correct width on the very first
+  paint. Copy this exact block, unchanged, to the top of every admin page.
+-->
+<script>
+  (function () {
+    try {
+      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+    } catch (e) {
+      document.documentElement.classList.add("sidebar-expanded");
+    }
+  })();
+</script>
+
+<!-- Tailwind (utility classes for page content) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: "#6da84c", dark: "#5c9140", soft: "#eef5e8" },
+          secondary: { DEFAULT: "#1985bf", soft: "#e7f3fa" },
+        },
+      },
+    },
+  };
+</script>
+
+<!-- Shell styling (sidebar / topbar / overlays) — source of truth, loads after Tailwind -->
+<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+
+<style>
+  body { font-size: 12px; background: #f3f4f6; }
+
+  .page-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .page-subtitle { font-size: 12px; color: #6b7280; }
+  .page-breadcrumb {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #6da84c;
+  }
+
+  .form-input {
+    width: 100%; border: 1px solid #e5e7eb; border-radius: 6px;
+    padding: 5px 10px; font-size: 11px; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa; color: #1a1a2e;
+  }
+  .form-input:focus {
+    border-color: #6da84c; box-shadow: 0 0 0 3px rgba(109, 168, 76, 0.12); background: #fff;
+  }
+
+  table th {
+    font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #6b7280; padding: 8px 12px;
+  }
+  table td { font-size: 12px; padding: 8px 12px; }
+  .table-row-hover:hover { background: #f8fafc; }
+
+  .toast { animation: fadeIn 0.2s ease; font-size: 12px; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased text-sm">
+
+  <div class="flex min-h-screen">
+    <!-- Sidebar gets injected here by nav-sidebar.js -->
+    <div id="sidebar-root"></div>
+
+    <div class="app-main flex-1 flex flex-col min-w-0">
+      <!-- Top bar gets injected here -->
+      <div id="topbar-root"></div>
+
+      <!-- ============= PAGE CONTENT STARTS HERE ============= -->
+            <main class="p-3 sm:p-4 lg:p-5">
+
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+          <!-- ===== PAGE HEADER ===== -->
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <div class="page-breadcrumb">System</div>
+              <h1 class="page-title text-gray-900">Activity &amp; Logs</h1>
+              <p class="page-subtitle mt-0.5">Track user actions and system events across the application.</p>
+            </div>
+            <div class="flex gap-2 flex-wrap" id="activityActions"></div>
+          </div>
+
+          <!-- ===== ACTIVITY PANEL ===== -->
+          <div id="activityPanel">
+            <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
+              <div class="px-4 py-2.5 border-b border-gray-100 font-semibold text-sm text-gray-800">
+                All Activity
+              </div>
+              <div class="text-center py-10 text-sm text-gray-400">No activity to show yet.</div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+      <!-- ============= PAGE CONTENT ENDS HERE ============= -->
+    </div>
+  </div>
+
+  <script src="/assets/js/nav-sidebar.js"></script>
+  <script>
+    NavSidebar.init({
+      basePath: "",
+      activePage: "activity",
+      pageTitle: "Activity & Logs",
+     user: {
+        name: "Admin",
+        role: "Super Admin",
+        avatarUrl: "",
+      },
+    });
+
+    // Once auth.js exists, override the default redirect, e.g.:
+    // NavSidebar.onLogoutConfirmed = function () { Auth.logout(); };
+  </script>
+</body>
+</html>

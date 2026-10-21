@@ -720,8 +720,8 @@ function renderTable(key) {
       </div></td></tr>`;
   }).join("");
   panel.innerHTML = `
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden"><div class="overflow-x-auto">
-      <table class="w-full text-xs"><thead><tr class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wide border-b border-gray-200">
+    <div class="bg-white border border-[#6da84c] rounded-md shadow-sm overflow-hidden"><div class="overflow-auto">
+      <table class="w-full text-xs"><thead><tr class="bg-gray-200 text-gray-500 uppercase text-[10px] tracking-wide border-b border-[#6da84c]">
         ${M.cols.map(([h]) => `<th class="px-3 py-2 text-left">${h}</th>`).join("")}<th class="px-3 py-2 text-left">Actions</th>
       </tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }

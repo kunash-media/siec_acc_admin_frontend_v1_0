@@ -43,11 +43,19 @@
 
   var STORAGE_KEY = "sidebarCollapsed";
   var AUTH_STORAGE_KEY = "adminAuth";
+     // API field name -> localStorage key name
+  var ORG_STORAGE_KEYS = {
+    companyName: "companyName",
+    legalName: "legalName",
+    organizationId: "siec_organization_id",
+  };
 
   // ---- API config ----
-  var API_BASE_URL = "http://localhost:9091";
+  var API_BASE_URL = "http://localhost:9093";
   var LOGIN_URL = API_BASE_URL + "/api/admin/auth/login";
   var LOGOUT_URL = API_BASE_URL + "/api/admin/auth/logout";
+  var ORG_URL = API_BASE_URL + "/api/organization/get-org";
+  var ME_URL = API_BASE_URL + "/api/admin/auth/me";
 
   /* ====================================================================
    * Auth — login/logout/session module
@@ -75,12 +83,69 @@
           .then(function (errorBody) {
             throw new Error(errorBody.message || "Invalid mobile number or password.");
           });
-      }).then(function (adminInfo) {
+          }).then(function (adminInfo) {
         Auth._storeAdmin(adminInfo);
-        return adminInfo;
+        // Org fetch failure should never block login.
+        return Auth.fetchAndStoreOrg()
+          .catch(function (err) {
+            console.warn("[auth] org fetch failed (continuing login):", err);
+          })
+          .then(function () {
+            return adminInfo;
+          });
       });
     },
 
+    /**
+     * Fetches organization details and saves each field as its own
+     * localStorage key (same key name as the field name).
+     */
+    fetchAndStoreOrg: function () {
+      return fetch(ORG_URL, {
+        method: "GET",
+        credentials: "include",
+      }).then(function (response) {
+        if (!response.ok) {
+          throw new Error("Org fetch failed with status " + response.status);
+        }
+        return response.json();
+      }).then(function (org) {
+              Auth._storeOrg(org);
+        return org;
+      });
+    },
+
+    /**
+     * Verifies the http-only cookie session against the server.
+     * Resolves true  -> session valid (or server unreachable / 5xx: don't log out)
+     * Resolves false -> server explicitly rejected the cookie (401/403)
+     * Also refreshes the cached org keys when the call succeeds.
+     */
+       verifySession: function () {
+      return fetch(ME_URL, {
+        method: "GET",
+        credentials: "include",
+      }).then(function (response) {
+        if (response.status === 401 || response.status === 403) return false;
+        if (response.redirected) return false; // bounced to a login page
+        if (response.ok) {
+          return response.json()
+            .then(function (admin) {
+              // Cookie is valid: rebuild local cache from server truth.
+              Auth._storeAdmin(admin);
+              return Auth.fetchAndStoreOrg()
+                .catch(function () { /* org failure shouldn't affect session */ })
+                .then(function () { return true; });
+            })
+            .catch(function () { return true; });
+        }
+        return true;
+      }).catch(function (err) {
+        console.warn("[auth] session check failed (network), keeping session:", err);
+        return true;
+      });
+    },
+    
     /**
      * Attempts to invalidate the session server-side, then always clears
      * local state and redirects to login — even if the server call fails,
@@ -135,17 +200,42 @@
       }
     },
 
+         _storeOrg: function (org) {
+      if (!org) return;
+      try {
+        Object.keys(ORG_STORAGE_KEYS).forEach(function (field) {
+          if (org[field] !== undefined && org[field] !== null) {
+            localStorage.setItem(ORG_STORAGE_KEYS[field], org[field]);
+          }
+        });
+      } catch (e) {
+        console.warn("[auth] could not persist org info to localStorage:", e);
+      }
+    },
+
+    _clearOrg: function () {
+      try {
+        Object.keys(ORG_STORAGE_KEYS).forEach(function (field) {
+          localStorage.removeItem(ORG_STORAGE_KEYS[field]);
+        });
+        localStorage.removeItem("organizationId"); // legacy key cleanup
+      } catch (e) {
+        /* ignore */
+      }
+    },
+
     _clearAdmin: function () {
       try {
         localStorage.removeItem(AUTH_STORAGE_KEY);
       } catch (e) {
         /* ignore */
       }
+      Auth._clearOrg();
     },
 
     _loginPath: function () {
-      var basePath = (window.NavSidebar && window.NavSidebar._config && window.NavSidebar._config.basePath) || "";
-      return basePath + "admin-login.html";
+      // var basePath = (window.NavSidebar && window.NavSidebar._config && window.NavSidebar._config.basePath) || "";
+      return "/admin-login.html";
     },
   };
 
@@ -487,10 +577,33 @@
       //=================================================//
       //====uncomment to login check with token =======//
       //=================================================//
-      // if (!Auth.requireAuth()) {
-      //   return;
-      // }
+           var self = this;
 
+      // Cookie is the source of truth. If local cache is missing, check
+      // the cookie first (rebuilds the cache) before deciding to redirect.
+      if (!Auth.isLoggedIn()) {
+        Auth.verifySession().then(function (valid) {
+          if (valid && Auth.isLoggedIn()) {
+            self._start();
+          } else {
+            Auth._clearAdmin();
+            window.location.href = Auth._loginPath();
+          }
+        });
+        return;
+      }
+
+      // Local cache present: render immediately, verify cookie in background.
+      Auth.verifySession().then(function (valid) {
+        if (!valid) {
+          Auth._clearAdmin();
+          window.location.href = Auth._loginPath();
+        }
+      });
+      this._start();
+    },
+
+    _start: function () {
       // Injecting the markup is the one step that must succeed for
       // anything else to make sense — if it fails, bail out entirely.
       try {

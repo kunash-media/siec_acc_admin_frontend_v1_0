@@ -421,9 +421,9 @@
           <!-- ===== PAGE HEADER ===== -->
           <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
             <div>
-              <div class="text-[11px] font-semibold tracking-wide text-primary mb-1">Overview</div>
-              <h1 class="text-[22px] sm:text-[26px] font-bold tracking-tight text-gray-900">Dashboard</h1>
-              <p class="text-[12.5px] text-gray-500 mt-1">Real-time snapshot of your business performance</p>
+              <div class="text-[11px] font-semibold tracking-wide uppercase text-primary">Overview</div>
+              <h1 class="text-[16px] sm:text-[22px] font-bold tracking-tight text-gray-900">Dashboard</h1>
+              <p class="text-[12.5px] text-gray-500">Real-time snapshot of your business performance</p>
             </div>
             <div class="flex gap-2.5 flex-wrap">
               <button onclick="showToast('Export started...', 'info')"
@@ -439,77 +439,7 @@
             </div>
           </div>
 
-          <!-- ===== HERO: PROJECT LIFECYCLE (WHE) — COMMENTED OUT ===== -->
-          <!--
-          <div class="hero-gradient mb-5">
-            <div class="flex flex-wrap justify-between items-start gap-3 mb-4 relative z-10">
-              <div>
-                <h3 class="text-[15px] sm:text-[16px] font-semibold">Operation &amp; Supervision Contract — WHE</h3>
-                <p class="text-[11.5px] text-primary-soft/70 mt-0.5">Sustro Speciality Oils Pvt Ltd · Project Code 26LW069</p>
-              </div>
-              <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">
-                <span class="w-[6px] h-[6px] rounded-full bg-amber-500"></span>In Progress
-              </span>
-            </div>
-
-            <div class="pipeline">
-              <div class="pipeline-step pipe-complete">
-                <div class="line"></div>
-                <div class="circle">✓</div>
-                <div class="label">Enquiry</div>
-              </div>
-              <div class="pipeline-step pipe-complete">
-                <div class="line"></div>
-                <div class="circle">✓</div>
-                <div class="label">Proposal</div>
-              </div>
-              <div class="pipeline-step pipe-complete">
-                <div class="line"></div>
-                <div class="circle">✓</div>
-                <div class="label">Onboarding</div>
-              </div>
-              <div class="pipeline-step pipe-complete">
-                <div class="line"></div>
-                <div class="circle">✓</div>
-                <div class="label">Budget</div>
-              </div>
-              <div class="pipeline-step pipe-complete">
-                <div class="line"></div>
-                <div class="circle">✓</div>
-                <div class="label">Purchase</div>
-              </div>
-              <div class="pipeline-step pipe-current">
-                <div class="line"></div>
-                <div class="circle">6</div>
-                <div class="label text-white font-semibold">Timesheet</div>
-              </div>
-              <div class="pipeline-step pipe-pending">
-                <div class="line"></div>
-                <div class="circle">7</div>
-                <div class="label">Invoice</div>
-              </div>
-              <div class="pipeline-step pipe-pending">
-                <div class="line"></div>
-                <div class="circle">8</div>
-                <div class="label">Payment</div>
-              </div>
-              <div class="pipeline-step pipe-pending">
-                <div class="line"></div>
-                <div class="circle">9</div>
-                <div class="label">Reconcile</div>
-              </div>
-              <div class="pipeline-step pipe-pending">
-                <div class="line"></div>
-                <div class="circle">10</div>
-                <div class="label">GST Filing</div>
-              </div>
-              <div class="pipeline-step pipe-pending">
-                <div class="circle">11</div>
-                <div class="label">Profitability</div>
-              </div>
-            </div>
-          </div>
-          -->
+        
 
           <!-- ===== STAT CARDS ===== -->
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 mb-5">
@@ -674,86 +604,7 @@
             </div>
           </div>
 
-          <!-- ===== CASH FLOW — COMMENTED OUT ===== -->
-          <!--
-          <div class="card mb-5">
-            <div class="card-header">
-              <div class="card-title-row">
-                <span class="card-title-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-water"></i></span>
-                <div>
-                  <div class="card-title">Cash Flow</div>
-                  <div class="card-sub">Last 6 months · Net cash position</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 flex-wrap">
-                <div class="lc-legend">
-                  <span><span class="dot" style="background:#22c55e;"></span>Inflow</span>
-                  <span><span class="dot" style="background:#ef4444;"></span>Outflow</span>
-                </div>
-                <div class="period-dropdown" id="cashFlowPeriod">
-                  <button class="period-dropdown-btn" onclick="togglePeriodDropdown('cashFlowPeriod')" type="button">
-                    <span class="pd-label">This Fiscal Year</span> <i class="fa-solid fa-chevron-down"></i>
-                  </button>
-                  <div class="period-dropdown-menu">
-                    <div class="period-dropdown-item active" onclick="selectPeriod(this,'cashFlowPeriod')">This Fiscal Year</div>
-                    <div class="period-dropdown-item" onclick="selectPeriod(this,'cashFlowPeriod')">Previous Fiscal Year</div>
-                    <div class="period-dropdown-item" onclick="selectPeriod(this,'cashFlowPeriod')">Last 12 Months</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="line-chart-wrap">
-                <svg class="line-chart-svg" viewBox="0 0 600 165" preserveAspectRatio="none" role="img" aria-label="Cash inflow and outflow trend over the last 6 months">
-                  <line class="lc-grid-line" x1="50" y1="35" x2="550" y2="35"></line>
-                  <line class="lc-grid-line" x1="50" y1="75" x2="550" y2="75"></line>
-                  <line class="lc-grid-line" x1="50" y1="115" x2="550" y2="115"></line>
-                  <line class="lc-grid-line" x1="50" y1="150" x2="550" y2="150"></line>
-
-                  <defs>
-                    <linearGradient id="inFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.20"></stop>
-                      <stop offset="100%" stop-color="#22c55e" stop-opacity="0"></stop>
-                    </linearGradient>
-                    <linearGradient id="outFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#f87171" stop-opacity="0.14"></stop>
-                      <stop offset="100%" stop-color="#f87171" stop-opacity="0"></stop>
-                    </linearGradient>
-                  </defs>
-
-                  <path d="M50,88.4 L150,75.6 L250,50.8 L350,63.6 L450,38 L550,55.2 L550,150 L50,150 Z" fill="url(#inFill)"></path>
-                  <path d="M50,113.8 L150,101 L250,94.6 L350,81.8 L450,72.2 L550,62.6 L550,150 L50,150 Z" fill="url(#outFill)"></path>
-
-                  <polyline points="50,88.4 150,75.6 250,50.8 350,63.6 450,38 550,55.2" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                  <polyline points="50,113.8 150,101 250,94.6 350,81.8 450,72.2 550,62.6" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
-
-                  <g class="lc-point-group"><circle class="lc-dot" cx="50" cy="88.4" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Jan" data-value="₹1,16,907" data-color="#22c55e"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="150" cy="75.6" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Feb" data-value="₹1,36,388" data-color="#22c55e"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="250" cy="50.8" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Mar" data-value="₹1,75,364" data-color="#22c55e"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="350" cy="63.6" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Apr" data-value="₹1,55,876" data-color="#22c55e"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="450" cy="38" r="4.2" fill="#22c55e" data-series="Inflow" data-month="May" data-value="₹1,94,876" data-color="#22c55e"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="550" cy="55.2" r="4.2" fill="#22c55e" data-series="Inflow" data-month="Jun" data-value="₹1,65,589" data-color="#22c55e"></circle></g>
-
-                  <g class="lc-point-group"><circle class="lc-dot" cx="50" cy="113.8" r="4.2" fill="#f87171" data-series="Outflow" data-month="Jan" data-value="₹64,221" data-color="#f87171"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="150" cy="101" r="4.2" fill="#f87171" data-series="Outflow" data-month="Feb" data-value="₹80,276" data-color="#f87171"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="250" cy="94.6" r="4.2" fill="#f87171" data-series="Outflow" data-month="Mar" data-value="₹88,303" data-color="#f87171"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="350" cy="81.8" r="4.2" fill="#f87171" data-series="Outflow" data-month="Apr" data-value="₹1,04,359" data-color="#f87171"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="450" cy="72.2" r="4.2" fill="#f87171" data-series="Outflow" data-month="May" data-value="₹1,16,400" data-color="#f87171"></circle></g>
-                  <g class="lc-point-group"><circle class="lc-dot" cx="550" cy="62.6" r="4.2" fill="#f87171" data-series="Outflow" data-month="Jun" data-value="₹1,28,441" data-color="#f87171"></circle></g>
-                </svg>
-                <div class="lc-axis-labels">
-                  <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
-                </div>
-              </div>
-              <div class="lc-summary-row">
-                <span>Total Inflow: <b>₹9,45,000</b></span>
-                <span>Total Outflow: <b>₹5,82,000</b></span>
-                <span class="text-emerald-600 font-semibold">Net Cash Flow: +₹3,63,000</span>
-                <span>Ending Balance: <b>₹12,60,000</b></span>
-              </div>
-            </div>
-          </div>
-          -->
+         
 
           <!-- ===== RECEIVABLES / PAYABLES ===== -->
           <div class="grid lg:grid-cols-2 gap-4 mb-5">
@@ -869,56 +720,7 @@
               </div>
             </div>
 
-            <!-- Bank Accounts — COMMENTED OUT -->
-            <!--
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title-row">
-                  <span class="card-title-icon bg-secondary-soft text-secondary"><i class="fa-solid fa-building-columns"></i></span>
-                  <div class="card-title">Bank Accounts</div>
-                </div>
-                <a href="/banking/banking.html" class="card-link">View All →</a>
-              </div>
-              <div class="divide-y divide-gray-100">
-                <div class="flex items-center justify-between px-4 py-3.5 table-row-hover">
-                  <div class="flex items-center gap-2.5 text-[13px] font-semibold">
-                    <span class="w-[30px] h-[30px] rounded-lg bg-primary-soft text-primary-dark flex items-center justify-center">
-                      <i class="fa-solid fa-building-columns"></i>
-                    </span>
-                    HDFC Bank — Current
-                  </div>
-                  <div class="font-mono text-[12.5px] font-semibold text-primary">₹8,40,000</div>
-                </div>
-                <div class="flex items-center justify-between px-4 py-3.5 table-row-hover">
-                  <div class="flex items-center gap-2.5 text-[13px] font-semibold">
-                    <span class="w-[30px] h-[30px] rounded-lg bg-primary-soft text-primary-dark flex items-center justify-center">
-                      <i class="fa-solid fa-building-columns"></i>
-                    </span>
-                    ICICI Bank — Current
-                  </div>
-                  <div class="font-mono text-[12.5px] font-semibold text-primary">₹3,60,000</div>
-                </div>
-                <div class="flex items-center justify-between px-4 py-3.5 table-row-hover">
-                  <div class="flex items-center gap-2.5 text-[13px] font-semibold">
-                    <span class="w-[30px] h-[30px] rounded-lg bg-primary-soft text-primary-dark flex items-center justify-center">
-                      <i class="fa-solid fa-money-bill-wave"></i>
-                    </span>
-                    Petty Cash
-                  </div>
-                  <div class="font-mono text-[12.5px] font-semibold text-primary">₹60,000</div>
-                </div>
-                <div class="flex items-center justify-between px-4 py-3.5 table-row-hover">
-                  <div class="flex items-center gap-2.5 text-[13px] font-semibold">
-                    <span class="w-[30px] h-[30px] rounded-lg bg-primary-soft text-primary-dark flex items-center justify-center">
-                      <i class="fa-solid fa-money-check"></i>
-                    </span>
-                    Payment Clearing
-                  </div>
-                  <div class="font-mono text-[12.5px] font-semibold text-primary">₹1,04,822</div>
-                </div>
-              </div>
-            </div>
-            -->
+        
           </div>
 
           <!-- ===== ALERTS & QUICK ACTIONS ===== -->

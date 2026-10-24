@@ -284,126 +284,77 @@
     color: #fff;
   }
 
-  /* SO Preview */
+  /* ---------- Sales Order document (on-screen + PDF) ---------- */
   .so-preview {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 24px 28px;
-    max-width: 820px;
-    margin: 0 auto;
-    font-family: 'Inter', system-ui, sans-serif;
+    background: #fff; max-width: 794px; margin: 0 auto; color: #111827;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+    font-size: 11.5px; line-height: 1.45; border: 1px solid #94a3b8;
   }
-  .so-preview .so-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    border-bottom: 2px solid #6da84c;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-  }
-  .so-preview .so-company-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1a1a2e;
-  }
-  .so-preview .so-company-details {
-    font-size: 11px;
-    color: #6b7280;
-    line-height: 1.5;
-    margin-top: 4px;
-  }
-  .so-preview .so-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: #6da84c;
-    letter-spacing: 0.04em;
-  }
-  .so-preview .so-meta {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
-    font-size: 12px;
-  }
-  .so-preview .so-meta .meta-label {
-    font-weight: 600;
-    color: #6b7280;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .so-preview .so-meta .meta-value {
-    font-weight: 600;
-    color: #1a1a2e;
-  }
-  .so-preview .so-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 12px 0;
-    font-size: 12px;
-  }
-  .so-preview .so-table th {
-    background: #f8fafc;
-    text-align: left;
-    padding: 8px 10px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #6b7280;
-    border-bottom: 2px solid #e5e7eb;
-  }
-  .so-preview .so-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid #f1f5f9;
-  }
-  .so-preview .so-totals {
-    margin-top: 12px;
-    border-top: 2px solid #e5e7eb;
-    padding-top: 12px;
-    text-align: right;
-    font-size: 13px;
-  }
-  .so-preview .so-totals .total-row {
-    display: flex;
-    justify-content: flex-end;
-    gap: 30px;
-    padding: 3px 0;
-  }
-  .so-preview .so-totals .total-row .label {
-    color: #6b7280;
-    font-weight: 500;
-  }
-  .so-preview .so-totals .total-row .value {
-    font-weight: 600;
-    min-width: 120px;
-    text-align: right;
-  }
-  .so-preview .so-totals .grand-total {
-    font-size: 16px;
-    font-weight: 700;
-    color: #6da84c;
-    border-top: 2px solid #6da84c;
-    padding-top: 8px;
-    margin-top: 4px;
-  }
-  .so-preview .so-footer {
-    margin-top: 20px;
-    font-size: 11px;
-    color: #6b7280;
-    border-top: 1px solid #e5e7eb;
-    padding-top: 12px;
-    text-align: center;
-  }
-  .so-preview .so-terms {
-    font-size: 11px;
-    color: #6b7280;
-    margin-top: 8px;
-    padding: 10px 14px;
-    background: #f8fafc;
-    border-radius: 6px;
-  }
+  .so-preview table { border-collapse: collapse; width: 100%; table-layout: auto; }
+  .so-preview td, .so-preview th { padding: 0; font-size: inherit; text-transform: none; letter-spacing: 0; color: inherit; font-weight: normal; text-align: left; }
+  .so-preview .c { text-align: center !important; }
+  .so-preview .r { text-align: right !important; }
+  .so-preview .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .so-preview .sd-title { background: #6da84c; color: #fff; text-align: center; font-size: 16px; font-weight: 700; letter-spacing: .2em; padding: 7px 0; }
+
+  .so-preview .sd-head { border-bottom: 1px solid #94a3b8; }
+  .so-preview .sd-head > tbody > tr > td { vertical-align: top; padding: 12px 14px; }
+  .so-preview .sd-co { width: 58%; border-right: 1px solid #94a3b8; }
+  .so-preview .sd-co-name { font-size: 17px; font-weight: 700; color: #14532d; margin-bottom: 3px; }
+  .so-preview .sd-logo-top { padding: 10px 14px; border-bottom: 1px solid #94a3b8; text-align: left; }
+  .so-preview .sd-logo-top .sd-co-logo { display: block; max-height: 70px; max-width: 260px; width: auto; height: auto; object-fit: contain; }
+  .so-preview .sd-logo-top .sd-co-name { margin: 0; }
+  .so-preview .sd-co-line { color: #374151; font-size: 11px; }
+  .so-preview .sd-kv td { padding: 2px 0; font-size: 11px; vertical-align: middle; }
+  .so-preview .sd-kv td:first-child { color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 9.5px; letter-spacing: .04em; width: 46%; }
+  .so-preview .sd-kv td:last-child { font-weight: 600; text-align: right; }
+
+  .so-preview .sd-strip th { background: #eef5e8; color: #3f6b27; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 5px 10px; border-right: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; }
+  .so-preview .sd-strip td { padding: 5px 10px; font-weight: 600; border-right: 1px solid #cbd5e1; border-bottom: 1px solid #94a3b8; }
+  .so-preview .sd-strip th:last-child, .so-preview .sd-strip td:last-child { border-right: 0; }
+
+  .so-preview .sd-party th { background: #6da84c; color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 5px 10px; }
+  .so-preview .sd-party td { width: 50%; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid #94a3b8; }
+  .so-preview .sd-party td:first-child, .so-preview .sd-party th:first-child { border-right: 1px solid #94a3b8; }
+  .so-preview .sd-pname { font-weight: 700; font-size: 12.5px; }
+  .so-preview .sd-pline { color: #374151; font-size: 11px; }
+  .so-preview .sd-pline b { color: #6b7280; font-weight: 600; }
+
+  .so-preview .sd-items th { background: #eef5e8; color: #3f6b27; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 6px 6px; border-right: 1px solid #cbd5e1; border-bottom: 1px solid #94a3b8; }
+  .so-preview .sd-items td { padding: 6px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; vertical-align: top; word-wrap: break-word; }
+  .so-preview .sd-items th:last-child, .so-preview .sd-items td:last-child { border-right: 0; }
+  .so-preview .sd-items .sd-fill td { height: 24px; }
+  .so-preview .sd-sub { color: #9ca3af; font-size: 9.5px; }
+  .so-preview .w-sn { width: 34px; } .so-preview .w-hsn { width: 70px; } .so-preview .w-qty { width: 56px; }
+  .so-preview .w-unit { width: 52px; } .so-preview .w-rate { width: 88px; } .so-preview .w-tax { width: 50px; } .so-preview .w-amt { width: 98px; }
+
+  .so-preview .sd-bottom { border-top: 1px solid #94a3b8; }
+  .so-preview .sd-bottom > tbody > tr > td { vertical-align: top; }
+  .so-preview .sd-bl { padding: 10px 14px; border-right: 1px solid #94a3b8; }
+  .so-preview .sd-br { width: 280px; }
+  .so-preview .sd-words { font-weight: 600; margin-bottom: 8px; }
+  .so-preview .sd-words span { color: #6b7280; font-weight: 600; }
+  .so-preview .sd-taxsum { margin: 6px 0 8px; }
+  .so-preview .sd-taxsum th, .so-preview .sd-taxsum td { border: 1px solid #cbd5e1; padding: 3px 6px; font-size: 10px; text-align: right; }
+  .so-preview .sd-taxsum th { background: #f8fafc; color: #6b7280; font-weight: 600; }
+  .so-preview .sd-notes { font-size: 10.5px; color: #374151; }
+  .so-preview .sd-tot td { padding: 4px 12px; }
+  .so-preview .sd-tot td:first-child { color: #4b5563; }
+  .so-preview .sd-tot td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .so-preview .sd-tot .grand td { background: #6da84c; color: #fff !important; font-weight: 700; font-size: 13px; padding: 8px 12px; }
+
+  .so-preview .sd-foot { border-top: 1px solid #94a3b8; }
+  .so-preview .sd-foot > tbody > tr > td { vertical-align: top; padding: 10px 14px; }
+  .so-preview .sd-terms { border-right: 1px solid #94a3b8; font-size: 10px; color: #374151; }
+  .so-preview .sd-terms h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #3f6b27; margin: 0 0 3px; }
+  .so-preview .sd-terms ol { margin: 0 0 8px 14px; padding: 0; }
+  .so-preview .sd-bank { font-size: 10px; line-height: 1.5; }
+  .so-preview .sd-sign { width: 240px; text-align: center; }
+  .so-preview .sd-sign .for { font-weight: 700; }
+  .so-preview .sd-sign .sig-space { height: 56px; }
+  .so-preview .sd-sign .sig-line { border-top: 1px solid #6b7280; padding-top: 3px; font-size: 10.5px; color: #4b5563; }
+  .so-preview .sd-end { text-align: center; color: #6b7280; font-size: 10px; padding: 6px; border-top: 1px solid #cbd5e1; }
 
   /* Status colors */
   .status-pending { background: #fef3c7; color: #92400e; }
@@ -507,11 +458,22 @@
   .ss-state { padding: 10px; text-align: center; font-size: 10.5px; color: #9ca3af; }
   .ss-state button { color: #6da84c; font-weight: 600; text-decoration: underline; }
 
+  /* ---------- PDF / Print ---------- */
+  #printRoot { display: none; }
   @media print {
-    body * { visibility: hidden; }
-    #printArea, #printArea * { visibility: visible; }
-    #printArea { position: absolute; top: 0; left: 0; width: 100%; }
-    .so-preview { border: none; box-shadow: none; }
+    @page { size: A4; margin: 0; }            /* margin 0 also removes the browser's date / title header & footer */
+    html, body { background: #fff !important; height: auto !important; overflow: visible !important; margin: 0 !important; }
+    body > *:not(#printRoot) { display: none !important; }
+    #printRoot { display: block !important; padding: 0 12mm; }
+    #printRoot .pg { width: 100%; border-collapse: collapse; }
+    #printRoot .pg-gap { height: 10mm; padding: 0; }
+    #printRoot .pg thead { display: table-header-group; }   /* repeats the top spacing on every page */
+    #printRoot .pg tfoot { display: table-footer-group; }   /* repeats the bottom spacing on every page */
+    #printRoot .so-preview { max-width: none; width: 100%; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .so-preview .sd-items thead { display: table-header-group; }
+    .so-preview .sd-items tr, .so-preview .sd-head, .so-preview .sd-strip, .so-preview .sd-party,
+    .so-preview .sd-bottom, .so-preview .sd-foot { break-inside: avoid; page-break-inside: avoid; }
   }
 </style>
 </head>
@@ -568,7 +530,7 @@
             </div>
             <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm stat-card">
               <div class="stat-label">Total Value</div>
-              <div class="stat-value text-primary" id="totalValue">₹0</div>
+              <div class="stat-value text-primary" id="totalValue">₹0.00</div>
             </div>
           </div>
 
@@ -606,6 +568,21 @@
     // Single place to change host / port for every call made from this page.
     var API_ORIGIN = 'http://localhost:9093';
     var API_BASE = API_ORIGIN + '/api/sales-orders';
+
+    // Company logo shown at the top of the Sales Order PDF.
+    // Path is relative to this page; if the image lives elsewhere (e.g. '/assets/images/company-logo.png') change only this line.
+    var COMPANY_LOGO = '/assets/Images/company-logo.png';
+
+    // Rounds to 2 decimals (paise level) - used for every money calculation so the document always adds up
+    function round2(n) { return Math.round(((Number(n) || 0) + Number.EPSILON) * 100) / 100; }
+
+    // If the logo cannot be loaded, show the company name instead so the header is never empty
+    function logoFallback(img) {
+      var d = document.createElement('div');
+      d.className = 'sd-co-name';
+      d.textContent = company.name || 'Company Name';
+      img.replaceWith(d);
+    }
 
     var API = {
       create:  '/create-sales-order',
@@ -1168,7 +1145,7 @@
       };
       var el = document.createElement('div');
       el.className = 'toast ' + colors[kind] + ' text-white font-semibold px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 max-w-xs';
-      el.innerHTML = '<span>' + message + '</span>';
+      el.innerHTML = '<span>' + esc(message) + '</span>';
       wrap.appendChild(el);
       setTimeout(function() {
         el.style.transition = 'opacity .3s';
@@ -1217,7 +1194,6 @@
         <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
           <div>${extraBtns || ''}</div>
           <div class="flex gap-2">
-            <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
             <button ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
               ${iconSave()} ${saveLabel}
             </button>
@@ -1239,9 +1215,39 @@
     // =============================================================
     // HELPERS
     // =============================================================
-    function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+
+    // Every amount in the app (list, stats, preview, PDF) uses the same Indian format: ₹1,23,456.00
+    function money(n) {
+      return '₹' + (Number(n) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function qtyFmt(n) { return (Number(n) || 0).toLocaleString('en-IN', { maximumFractionDigits: 3 }); }
+    function dash(v) { return (v === null || v === undefined || String(v).trim() === '') ? '—' : v; }
+
+    function amountInWords(n) {
+      var a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+      var b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+      function two(x) { return x < 20 ? a[x] : b[Math.floor(x / 10)] + (x % 10 ? ' ' + a[x % 10] : ''); }
+      function three(x) {
+        var h = Math.floor(x / 100), r = x % 100;
+        return (h ? a[h] + ' Hundred' + (r ? ' ' : '') : '') + (r ? two(r) : '');
+      }
+      n = Number(n) || 0;
+      var rup = Math.floor(n), pai = Math.round((n - rup) * 100);
+      if (pai === 100) { rup++; pai = 0; }
+      var parts = [];
+      var cr = Math.floor(rup / 10000000), lk = Math.floor(rup / 100000) % 100,
+          th = Math.floor(rup / 1000) % 100, rest = rup % 1000;
+      if (cr) parts.push(three(cr) + ' Crore');
+      if (lk) parts.push(two(lk) + ' Lakh');
+      if (th) parts.push(two(th) + ' Thousand');
+      if (rest) parts.push(three(rest));
+      return 'Rupees ' + (parts.join(' ') || 'Zero') + (pai ? ' and ' + two(pai) + ' Paise' : '') + ' Only';
+    }
+
+    function map_has(s) { return ['pending', 'approved', 'rejected', 'partial', 'fulfilled'].indexOf(s) !== -1; }
 
     function statusBadge(status) {
+      status = map_has(status) ? status : 'pending';
       var map = {
         pending: 'badge-amber',
         approved: 'badge-blue',
@@ -1298,10 +1304,10 @@
         return '<th class="text-left font-semibold whitespace-nowrap">' + c + '</th>';
       }).join('');
       return `
-        <div class="overflow-x-auto">
+        <div class="overflow-auto">
           <table class="w-full">
             <thead>
-              <tr class="bg-gray-50 border-b border-gray-200">${colHeaders}</tr>
+              <tr class="bg-gray-200 border border-[#6da84c]">${colHeaders}</tr>
             </thead>
             <tbody id="tbody-anchor">${rowsHtml}</tbody>
           </table>
@@ -1431,9 +1437,10 @@
       var discount = Number(so.discount) || 0;
       var tax = so.tax != null ? Number(so.tax) : 18;
 
-      var subtotal = soItems.reduce(function(sum, it) { return sum + (it.qty * it.rate); }, 0);
-      var afterDiscount = subtotal - subtotal * (discount / 100);
-      var computedTotal = afterDiscount + afterDiscount * (tax / 100);
+      // same formula as the document + the form: item-wise amount -> discount -> tax, rounded to paise at each step
+      var subtotal = round2(soItems.reduce(function(sum, it) { return sum + round2(it.qty * it.rate); }, 0));
+      var taxable = round2(subtotal - round2(subtotal * (discount / 100)));
+      var computedTotal = round2(taxable + round2(taxable * (tax / 100)));
       var total = (so.total != null && Number(so.total) > 0) ? Number(so.total) : computedTotal;
 
       return Object.assign({}, so, {
@@ -1471,31 +1478,70 @@
       }
     }
 
-    // Company details for the sales order preview come from the Organization module
+    // Number without the rupee sign, for table cells: 1,23,456.00
+    function num(n) {
+      return (Number(n) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Reads the first non-empty primitive field whose key matches one of the patterns (in priority order).
+    // Backend field names differ between modules, so this keeps the document filled in either way.
+    function findField(obj, patterns) {
+      if (!obj || typeof obj !== 'object') return '';
+      var keys = Object.keys(obj);
+      for (var p = 0; p < patterns.length; p++) {
+        for (var i = 0; i < keys.length; i++) {
+          var v = obj[keys[i]];
+          if (patterns[p].test(keys[i]) && v !== null && v !== undefined && typeof v !== 'object' && String(v).trim() !== '') {
+            return String(v).trim();
+          }
+        }
+      }
+      return '';
+    }
+
+    // Company details for the sales order document come from the Organization module
     async function loadCompany() {
       try {
         var orgs = await httpJson(API_ORIGIN + LOOKUP_API.organization, 'GET');
         var org = Array.isArray(orgs) ? orgs[0] : orgs;
+        if (org && org.data && typeof org.data === 'object') org = Array.isArray(org.data) ? org.data[0] : org.data;
         if (!org) return;
+        var state = findField(org, [/^state$/i, /state/i]);
         company = {
-          name: org.companyName || org.legalName || '',
-          address: [org.address, org.city, org.state, org.pincode].filter(Boolean).join(', '),
-          gstin: org.gstNumber || '',
-          phone: org.phone || ''
+          name: findField(org, [/^company.?name$/i, /^legal.?name$/i, /^organi[sz]ation.?name$/i, /^name$/i, /^(?!bank|account|contact|owner)\w*name$/i]),
+          address: [
+            findField(org, [/^address$/i, /address.?line.?1/i, /^address/i, /street/i]),
+            findField(org, [/^city$/i, /city/i]),
+            state,
+            findField(org, [/pin.?code/i, /zip/i, /postal/i])
+          ].filter(Boolean).join(', '),
+          gstin: findField(org, [/^gst.?number$/i, /gstin/i, /gst/i]),
+          pan: findField(org, [/^pan/i]),
+          phone: findField(org, [/^phone/i, /phone/i, /mobile/i]),
+          email: findField(org, [/^email/i, /e.?mail/i]),
+          state: state,
+          bank: {
+            holder: findField(org, [/account.?holder/i, /account.?name/i]),
+            name: findField(org, [/^bank.?name$/i, /bank.?name/i]),
+            account: findField(org, [/account.?(no|number)/i]),
+            ifsc: findField(org, [/ifsc/i]),
+            branch: findField(org, [/branch/i])
+          }
         };
       } catch (err) {
         console.error('Could not load company details:', err);
       }
     }
 
-    // Product name / unit for an item id (cached). Sales order rows only carry the item id,
-    // so the product API is the source of truth for anything the order response leaves blank.
+    // Product record for an item id (cached). Sales order rows only carry the item id,
+    // so the product API is the source of truth for name / unit / HSN.
     async function getProductMeta(itemId) {
       if (!itemId) return null;
       if (productMetaCache[itemId] !== undefined) return productMetaCache[itemId];
       try {
         var res = await apiGet(LOOKUP_API.productGet + encodeURIComponent(itemId));
-        productMetaCache[itemId] = (res && res.data) ? res.data : null;
+        var p = (res && res.data && typeof res.data === 'object') ? res.data : (res && typeof res === 'object' ? res : null);
+        productMetaCache[itemId] = p;
       } catch (err) {
         console.error('Could not load product ' + itemId + ':', err);
         return null;                          // not cached, will be retried next time
@@ -1507,8 +1553,9 @@
       await Promise.all((so.items || []).map(async function(it) {
         var p = await getProductMeta(it.itemId);
         if (!p) return;
-        if (!it.name) it.name = p.productName || '';
-        if (!it.unit) it.unit = p.productUnit || '';
+        if (!it.name) it.name = findField(p, [/^productName$/i, /product.?name/i, /^name$/i]);
+        if (!it.unit) it.unit = findField(p, [/^productUnit$/i, /unit$/i, /unit/i]);
+        if (!it.hsn) it.hsn = findField(p, [/hsn/i, /sac/i]);
       }));
     }
 
@@ -1517,12 +1564,27 @@
       if (clientInfoCache[clientId] !== undefined) return clientInfoCache[clientId];
       try {
         var res = await apiGet(LOOKUP_API.clientGet + encodeURIComponent(clientId));
-        clientInfoCache[clientId] = (res && res.data) ? res.data : null;
+        clientInfoCache[clientId] = (res && res.data && typeof res.data === 'object') ? res.data : (res && typeof res === 'object' ? res : null);
       } catch (err) {
         console.error('Could not load client ' + clientId + ':', err);
         return null;
       }
       return clientInfoCache[clientId];
+    }
+
+    // Normalised client block for the document (works with whatever field names the client module returns)
+    function readClient(ci, so) {
+      ci = ci || {};
+      return {
+        name: findField(ci, [/^clientName$/i, /client.?name$/i, /^name$/i]) || so.clientName || so.clientId || '',
+        company: findField(ci, [/company.?name/i, /^company$/i, /organi[sz]ation/i]),
+        billing: findField(ci, [/bill.*address/i, /^address$/i, /client.?address/i]),
+        shipping: findField(ci, [/ship.*address/i, /deliver.*address/i]),
+        gstin: findField(ci, [/gst/i, /tax.?id/i]),
+        phone: findField(ci, [/phone/i, /mobile/i, /contact.?(no|number)/i]),
+        email: findField(ci, [/e.?mail/i]),
+        state: findField(ci, [/bill.*state/i, /^(client)?state$/i, /state/i])
+      };
     }
 
     // Project reference is stored as the project id; the name is looked up for display
@@ -1548,14 +1610,13 @@
       var pending = salesOrders.filter(function(so) { return so.status === 'pending'; }).length;
       var approved = salesOrders.filter(function(so) { return so.status === 'approved'; }).length;
       var fulfilled = salesOrders.filter(function(so) { return so.fulfillmentStatus === 'fulfilled'; }).length;
-      var totalVal = salesOrders.reduce(function(sum, so) { return sum + so.total; }, 0);
+      var totalVal = round2(salesOrders.reduce(function(sum, so) { return sum + so.total; }, 0));
 
       document.getElementById('totalOrders').textContent = total;
       document.getElementById('pendingOrders').textContent = pending;
       document.getElementById('approvedOrders').textContent = approved;
       document.getElementById('fulfilledOrders').textContent = fulfilled;
       document.getElementById('totalValue').textContent = money(totalVal);
-
     }
 
     function getFilteredSalesOrders() {
@@ -1677,6 +1738,15 @@
     // VIEW SALES ORDER
     // =============================================================
 
+    // Default terms printed on every sales order - edit this list to change the wording
+    var SO_TERMS = [
+      'Goods / services will be supplied as per the items and quantities listed in this order.',
+      'Delivery is subject to the expected delivery date mentioned above and timely payment as per the payment terms.',
+      'All prices are in Indian Rupees (INR). GST is charged as applicable.',
+      'Please quote the Sales Order number in all correspondence and payments.',
+      'Any dispute is subject to the jurisdiction of the seller\'s registered office.'
+    ];
+
     async function viewSO(id) {
       var so = salesOrders.find(function(x) { return x.id === id; });
 
@@ -1697,111 +1767,238 @@
       }
       if (!so) return;
 
-      // Product names / units, client address and project name are looked up from their own modules
+      if (!company.name) await loadCompany();          // retry once if the first load failed or was still running
+
+      // Product names / units / HSN, client details and project name are looked up from their own modules
       var results = await Promise.all([
         enrichSOItems(so),
         getClientInfo(so.clientId),
         getProjectLabel(so.projectReference)
       ]);
-      var clientInfo = results[1] || {};
+      var c = readClient(results[1], so);
       var projectLabel = results[2] || '';
+      var shipTo = so.deliveryLocation || c.shipping || '';
 
-      var itemsHtml = so.items.map(function(item) {
-        var amount = item.qty * item.rate;
-        return `
-          <tr>
-            <td class="px-2 py-1.5 text-xs">${esc(item.name || item.itemId)}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${item.qty}</td>
-            <td class="px-2 py-1.5 text-xs text-center">${esc(item.unit || '—')}</td>
-            <td class="px-2 py-1.5 text-xs font-mono text-right">${money(item.rate)}</td>
-            <td class="px-2 py-1.5 text-xs font-mono text-right">${money(amount)}</td>
-          </tr>`;
+      // ---------- figures (single source of truth, every step rounded to paise) ----------
+      var subtotal    = round2(so.items.reduce(function(s, it) { return s + round2(it.qty * it.rate); }, 0));
+      var discountAmt = round2(subtotal * (so.discount / 100));
+      var taxable     = round2(subtotal - discountAmt);
+      var taxAmt      = round2(taxable * (so.tax / 100));
+      var computed    = round2(taxable + taxAmt);
+
+      // Use the backend total only when it is within Rs.1 of the calculated one (backend rounding),
+      // otherwise trust the calculation so the document always adds up.
+      var grand = computed;
+      if (so.total > 0 && Math.abs(so.total - computed) < 1) grand = round2(so.total);
+      var roundOff = round2(grand - computed);
+
+      // CGST + SGST when both states are known and equal, IGST when they differ, plain GST when unknown
+      var cs = String(company.state || '').toLowerCase().trim();
+      var ks = String(c.state || '').toLowerCase().trim();
+      var gstMode = (cs && ks) ? (cs === ks ? 'intra' : 'inter') : 'plain';
+      var cg = round2(taxAmt / 2);
+      var sg = round2(taxAmt - cg);       // CGST + SGST always equals the total tax
+      var taxRows = '', taxHead = '', taxCells = '';
+      if (gstMode === 'intra') {
+        taxRows = '<tr><td>CGST (' + so.tax / 2 + '%)</td><td>' + money(cg) + '</td></tr>' +
+                  '<tr><td>SGST (' + so.tax / 2 + '%)</td><td>' + money(sg) + '</td></tr>';
+        taxHead = '<th>CGST</th><th>SGST</th>';
+        taxCells = '<td>' + num(cg) + '</td><td>' + num(sg) + '</td>';
+      } else if (gstMode === 'inter') {
+        taxRows = '<tr><td>IGST (' + so.tax + '%)</td><td>' + money(taxAmt) + '</td></tr>';
+        taxHead = '<th>IGST</th>';
+        taxCells = '<td>' + num(taxAmt) + '</td>';
+      } else {
+        taxRows = '<tr><td>GST (' + so.tax + '%)</td><td>' + money(taxAmt) + '</td></tr>';
+        taxHead = '<th>GST</th>';
+        taxCells = '<td>' + num(taxAmt) + '</td>';
+      }
+
+      // ---------- item rows (padded to 8 rows so short orders still look like a proper form) ----------
+      var hasHsn = so.items.some(function(it) { return it.hsn; });
+      var colCount = hasHsn ? 8 : 7;
+      var itemsHtml = so.items.map(function(item, i) {
+        var showId = item.name && item.itemId && item.name !== item.itemId;
+        return '<tr>' +
+          '<td class="c">' + (i + 1) + '</td>' +
+          '<td>' + esc(item.name || item.itemId) + (showId ? '<div class="sd-sub">' + esc(item.itemId) + '</div>' : '') + '</td>' +
+          (hasHsn ? '<td class="c">' + esc(dash(item.hsn)) + '</td>' : '') +
+          '<td class="c num">' + qtyFmt(item.qty) + '</td>' +
+          '<td class="c">' + esc(dash(item.unit)) + '</td>' +
+          '<td class="r num">' + num(item.rate) + '</td>' +
+          '<td class="c num">' + so.tax + '%</td>' +
+          '<td class="r num">' + num(round2(item.qty * item.rate)) + '</td>' +
+        '</tr>';
       }).join('');
+      for (var f = so.items.length; f < 8; f++) {
+        itemsHtml += '<tr class="sd-fill">' + new Array(colCount + 1).join('<td>&nbsp;</td>') + '</tr>';
+      }
 
-      var subtotal = so.items.reduce(function(sum, item) { return sum + (item.qty * item.rate); }, 0);
-      var discountAmt = subtotal * (so.discount / 100);
-      var afterDiscount = subtotal - discountAmt;
-      var taxAmt = afterDiscount * (so.tax / 100);
+      function pline(label, value) { return value ? '<div class="sd-pline"><b>' + label + ':</b> ' + esc(value) + '</div>' : ''; }
 
-      var companyLines = [];
-      if (company.address) companyLines.push(esc(company.address));
-      var companyContact = [];
-      if (company.gstin) companyContact.push('GSTIN: ' + esc(company.gstin));
-      if (company.phone) companyContact.push('Phone: ' + esc(company.phone));
-      if (companyContact.length) companyLines.push(companyContact.join(' | '));
+      var coContact = [];
+      if (company.gstin) coContact.push('GSTIN: ' + esc(company.gstin));
+      if (company.pan) coContact.push('PAN: ' + esc(company.pan));
+      var coContact2 = [];
+      if (company.phone) coContact2.push('Phone: ' + esc(company.phone));
+      if (company.email) coContact2.push('Email: ' + esc(company.email));
 
-      var clientCompany = clientInfo.companyName && clientInfo.companyName !== so.clientName ? clientInfo.companyName : '';
+      var fulfilColor = so.fulfillmentStatus === 'fulfilled' ? '#16a34a' : so.fulfillmentStatus === 'partial' ? '#7c3aed' : '#d97706';
+      var fulfilLabel = so.fulfillmentStatus.charAt(0).toUpperCase() + so.fulfillmentStatus.slice(1);
+
+      var bank = company.bank || {};
+      var bankHtml = bank.account ? (
+        '<h4>Bank Details</h4><div class="sd-bank">' +
+          (bank.holder ? 'A/c Name: ' + esc(bank.holder) + '<br>' : '') +
+          (bank.name ? 'Bank: ' + esc(bank.name) + '<br>' : '') +
+          'A/c No: ' + esc(bank.account) + '<br>' +
+          (bank.ifsc ? 'IFSC: ' + esc(bank.ifsc) + '<br>' : '') +
+          (bank.branch ? 'Branch: ' + esc(bank.branch) : '') +
+        '</div>') : '';
+
+      window._printName = ('Sales-Order-' + (so.number || so.id)).replace(/[\\\/:*?"<>|\s]+/g, '-');
 
       var modalContent = `
         ${modalHeader('Sales Order Details — ' + esc(so.number), esc(so.id))}
         <div class="px-5 py-4 modal-scroll" id="printArea">
-
           <div class="so-preview">
-            <div class="so-header">
-              <div>
-                <div class="so-company-name">${esc(company.name)}</div>
-                <div class="so-company-details">
-                  ${companyLines.join('<br>')}
-                </div>
-              </div>
-              <div style="text-align:right;">
-                <div class="so-title">SALES ORDER</div>
-              </div>
+
+            <div class="sd-logo-top">
+              <img class="sd-co-logo" src="${esc(COMPANY_LOGO)}" alt="${esc(company.name || 'Company Logo')}" onerror="logoFallback(this)">
             </div>
 
-            <div class="so-meta">
-              <div>
-                <div class="meta-label">Client</div>
-                <div class="meta-value">${esc(so.clientName)}</div>
-                ${clientCompany ? '<div class="text-xs text-gray-500">' + esc(clientCompany) + '</div>' : ''}
-                <div class="text-xs text-gray-500">${esc(clientInfo.billingAddress || '')}</div>
-              </div>
-              <div style="text-align:right;">
-                <div><span class="meta-label">SO #</span> <span class="meta-value">${esc(so.number)}</span></div>
-                <div><span class="meta-label">Date</span> <span class="meta-value">${esc(so.date)}</span></div>
-                <div><span class="meta-label">Expected Delivery</span> <span class="meta-value">${esc(so.expectedDelivery)}</span></div>
-                <div><span class="meta-label">Status</span> ${statusBadge(so.status)}</div>
-                <div><span class="meta-label">Fulfillment</span> <span class="text-xs font-semibold ${so.fulfillmentStatus === 'fulfilled' ? 'text-green-600' : so.fulfillmentStatus === 'partial' ? 'text-purple-600' : 'text-amber-600'}">${so.fulfillmentStatus.charAt(0).toUpperCase() + so.fulfillmentStatus.slice(1)}</span></div>
-              </div>
-            </div>
+            <div class="sd-title">SALES ORDER</div>
 
-            <table class="so-table">
+            <table class="sd-head"><tbody><tr>
+              <td class="sd-co">
+                ${company.address ? '<div class="sd-co-line">' + esc(company.address) + '</div>' : ''}
+                ${coContact.length ? '<div class="sd-co-line">' + coContact.join(' &nbsp;|&nbsp; ') + '</div>' : ''}
+                ${coContact2.length ? '<div class="sd-co-line">' + coContact2.join(' &nbsp;|&nbsp; ') + '</div>' : ''}
+              </td>
+              <td>
+                <table class="sd-kv"><tbody>
+                  <tr><td>SO No.</td><td>${esc(dash(so.number))}</td></tr>
+                  <tr><td>Date</td><td>${esc(dash(so.date))}</td></tr>
+                  <tr><td>Expected Delivery</td><td>${esc(dash(so.expectedDelivery))}</td></tr>
+                  <tr><td>Status</td><td>${statusBadge(so.status)}</td></tr>
+                  <tr><td>Fulfillment</td><td style="color:${fulfilColor};">${fulfilLabel}</td></tr>
+                </tbody></table>
+              </td>
+            </tr></tbody></table>
+
+            <table class="sd-strip"><tbody>
+              <tr><th>Quotation Ref.</th><th>PI Ref.</th><th>Project</th><th>Payment Terms</th></tr>
+              <tr>
+                <td>${esc(dash(so.quotationReference))}</td>
+                <td>${esc(dash(so.piReference))}</td>
+                <td>${esc(dash(projectLabel || so.projectReference))}</td>
+                <td>${esc(dash(so.paymentTerms))}</td>
+              </tr>
+            </tbody></table>
+
+            <table class="sd-party"><tbody>
+              <tr><th>Bill To</th><th>Ship To / Delivery Location</th></tr>
+              <tr>
+                <td>
+                  <div class="sd-pname">${esc(dash(c.name))}</div>
+                  ${c.company && c.company !== c.name ? '<div class="sd-pline">' + esc(c.company) + '</div>' : ''}
+                  <div class="sd-pline">${esc(dash(c.billing))}</div>
+                  ${pline('GSTIN', c.gstin)}${pline('Phone', c.phone)}${pline('Email', c.email)}
+                </td>
+                <td>
+                  <div class="sd-pname">${esc(dash(c.name))}</div>
+                  <div class="sd-pline">${esc(dash(shipTo))}</div>
+                  ${pline('Phone', c.phone)}
+                </td>
+              </tr>
+            </tbody></table>
+
+            <table class="sd-items">
               <thead>
                 <tr>
-                  <th>Description</th>
-                  <th class="text-center">Qty</th>
-                  <th class="text-center">Unit</th>
-                  <th class="text-right">Rate</th>
-                  <th class="text-right">Amount</th>
+                  <th class="c w-sn">Sr.</th>
+                  <th>Item Description</th>
+                  ${hasHsn ? '<th class="c w-hsn">HSN / SAC</th>' : ''}
+                  <th class="c w-qty">Qty</th>
+                  <th class="c w-unit">Unit</th>
+                  <th class="r w-rate">Rate (₹)</th>
+                  <th class="c w-tax">GST %</th>
+                  <th class="r w-amt">Amount (₹)</th>
                 </tr>
               </thead>
               <tbody>${itemsHtml}</tbody>
             </table>
 
-            <div class="so-totals">
-              <div class="total-row"><span class="label">Subtotal</span><span class="value">${money(subtotal)}</span></div>
-              ${so.discount > 0 ? `<div class="total-row"><span class="label">Discount (${so.discount}%)</span><span class="value" style="color:#dc2626;">-${money(discountAmt)}</span></div>` : ''}
-              <div class="total-row"><span class="label">Tax (${so.tax}%)</span><span class="value">${money(taxAmt)}</span></div>
-              <div class="grand-total total-row"><span class="label">Grand Total</span><span class="value">${money(so.total)}</span></div>
-            </div>
+            <table class="sd-bottom"><tbody><tr>
+              <td class="sd-bl">
+                <div class="sd-words"><span>Amount in words:</span><br>${amountInWords(grand)}</div>
+                <table class="sd-taxsum"><tbody>
+                  <tr><th>Taxable Value</th>${taxHead}<th>Total Tax</th></tr>
+                  <tr><td>${num(taxable)}</td>${taxCells}<td>${num(taxAmt)}</td></tr>
+                </tbody></table>
+                ${so.notes ? '<div class="sd-notes"><b>Notes:</b> ' + esc(so.notes) + '</div>' : ''}
+              </td>
+              <td class="sd-br">
+                <table class="sd-tot"><tbody>
+                  <tr><td>Subtotal</td><td>${money(subtotal)}</td></tr>
+                  ${so.discount > 0 ? '<tr><td>Discount (' + so.discount + '%)</td><td style="color:#dc2626;">− ' + money(discountAmt) + '</td></tr>' : ''}
+                  <tr><td>Taxable Value</td><td>${money(taxable)}</td></tr>
+                  ${taxRows}
+                  ${roundOff !== 0 ? '<tr><td>Round Off</td><td>' + (roundOff > 0 ? '+ ' : '− ') + money(Math.abs(roundOff)) + '</td></tr>' : ''}
+                  <tr class="grand"><td>Grand Total</td><td>${money(grand)}</td></tr>
+                </tbody></table>
+              </td>
+            </tr></tbody></table>
 
-            <div class="flex flex-wrap gap-2 mt-3">
-              ${refChip('quotation', so.quotationReference)}
-              ${refChip('pi', so.piReference)}
-              ${refChip('project', so.projectReference, projectLabel)}
-            </div>
+            <table class="sd-foot"><tbody><tr>
+              <td class="sd-terms">
+                <h4>Terms &amp; Conditions</h4>
+                <ol>${SO_TERMS.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('')}</ol>
+                ${bankHtml}
+              </td>
+              <td class="sd-sign">
+                <div class="for">For ${esc(company.name || 'Company Name')}</div>
+                <div class="sig-space"></div>
+                <div class="sig-line">Authorised Signatory</div>
+              </td>
+            </tr></tbody></table>
 
-            ${so.notes ? `<div class="so-terms"><strong>Notes:</strong> ${esc(so.notes)}</div>` : ''}
-            <div class="so-footer">
-              <p>This is a system generated sales order. | Payment Terms: ${esc(so.paymentTerms)}</p>
-            </div>
+            <div class="sd-end">This is a computer generated sales order.</div>
           </div>
-
         </div>
-        ${modalFooter('Close', 'onclick="closeModal()"', '<button onclick="window.print()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition flex items-center gap-1.5">' + iconPrint() + ' Print</button>')}
+        ${modalFooter('Close', 'onclick="closeModal()"', '<button onclick="printSO()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition flex items-center gap-1.5">' + iconPrint() + ' Print / Save PDF</button>')}
       `;
 
       openModal(modalContent, { width: 'max-w-4xl' });
+    }
+
+    // Prints a clean copy of the document outside the modal, so nothing is clipped by the scroll area.
+    // The wrapper table repeats a top / bottom gap on every page (the page margin itself is 0).
+    function printSO() {
+      var src = document.querySelector('#printArea .so-preview');
+      if (!src) return;
+      var old = document.getElementById('printRoot');
+      if (old) old.remove();
+
+      var root = document.createElement('div');
+      root.id = 'printRoot';
+      root.innerHTML =
+        '<table class="pg"><thead><tr><td class="pg-gap"></td></tr></thead>' +
+        '<tfoot><tr><td class="pg-gap"></td></tr></tfoot>' +
+        '<tbody><tr><td class="pg-body"></td></tr></tbody></table>';
+      root.querySelector('.pg-body').appendChild(src.cloneNode(true));
+      document.body.appendChild(root);
+
+      var prevTitle = document.title;
+      document.title = window._printName || 'Sales Order';   // becomes the PDF filename
+
+      function cleanup() {
+        root.remove();
+        document.title = prevTitle;
+        window.removeEventListener('afterprint', cleanup);
+      }
+      window.addEventListener('afterprint', cleanup);
+      window.print();
     }
 
     // =============================================================
@@ -1902,7 +2099,7 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
             ${fld('Discount (%)', '<input type="number" min="0" max="100" step="0.01" class="form-input" id="f_discount" value="' + e.discount + '" placeholder="0" onchange="calcSOTotal()">')}
             ${fld('Tax Rate (%)', '<select class="form-input" id="f_tax" onchange="calcSOTotal()"><option ' + (e.tax == 0 ? 'selected' : '') + '>0</option><option ' + (e.tax == 5 ? 'selected' : '') + '>5</option><option ' + (e.tax == 12 ? 'selected' : '') + '>12</option><option ' + (e.tax == 18 ? 'selected' : '') + '>18</option><option ' + (e.tax == 28 ? 'selected' : '') + '>28</option></select>')}
-            ${fld('Total Amount', '<input type="text" class="form-input" id="f_total" value="' + (e.total ? money(e.total) : '₹0') + '" disabled style="font-weight:bold;color:#6da84c;">')}
+            ${fld('Total Amount', '<input type="text" class="form-input" id="f_total" value="' + money(e.total) + '" disabled style="font-weight:bold;color:#6da84c;">')}
             ${fld('Fulfillment Status', '<input type="text" class="form-input" id="f_fulfillmentView" value="' + (e.fulfillmentStatus.charAt(0).toUpperCase() + e.fulfillmentStatus.slice(1)) + '" disabled>', 'Updated automatically from deliveries')}
           </div>
 
@@ -2064,28 +2261,29 @@
       calcSOTotal();
     }
 
+    // Same formula as the document: item amount -> discount -> tax, each rounded to paise.
+    // Qty is a whole number here, exactly like at save time, so the form total always matches what gets saved.
     function calcSOTotal() {
       var rows = document.querySelectorAll('#lineItemsBody .line-item-row');
       var subtotal = 0;
       rows.forEach(function(row) {
         var qtyInput = row.querySelector('.item-qty');
         var rateInput = row.querySelector('.item-rate');
-        var qty = Math.max(0, parseFloat(qtyInput.value) || 0);
+        var qty = Math.max(0, Math.floor(parseFloat(qtyInput.value) || 0));
         var rate = Math.max(0, parseFloat(rateInput.value) || 0);
         qtyInput.value = qty;
         rateInput.value = rate;
-        subtotal += qty * rate;
+        subtotal += round2(qty * rate);
       });
+      subtotal = round2(subtotal);
 
       var discountInput = document.getElementById('f_discount');
       var discount = Math.min(100, Math.max(0, parseFloat(discountInput.value) || 0));
       discountInput.value = discount;
       var tax = parseFloat(document.getElementById('f_tax').value) || 0;
 
-      var discountAmt = subtotal * (discount / 100);
-      var afterDiscount = subtotal - discountAmt;
-      var taxAmt = afterDiscount * (tax / 100);
-      var total = afterDiscount + taxAmt;
+      var taxable = round2(subtotal - round2(subtotal * (discount / 100)));
+      var total = round2(taxable + round2(taxable * (tax / 100)));
 
       document.getElementById('f_total').value = money(total);
       return total;
@@ -2132,7 +2330,7 @@
             return;
           }
           seenItemIds[itemId] = true;
-          itemsData.push({ itemId: itemId, qty: qty, rate: rate });
+          itemsData.push({ itemId: itemId, qty: qty, rate: round2(rate) });
         }
       });
 

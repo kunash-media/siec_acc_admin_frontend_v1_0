@@ -6,7 +6,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
+<!-- <link rel="manifest" href="/favicon_io/site.webmanifest"> -->
 <title>Admin Login</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -181,7 +181,13 @@
 
     // Already logged in? Skip straight to the dashboard.
     if (Auth.isLoggedIn()) {
-      window.location.href = "/dashboard/dashboard.html";
+      Auth.verifySession().then(function (valid) {
+        if (valid) {
+          window.location.href = "/dashboard/dashboard.html";
+        } else {
+          Auth._clearAdmin(); // stale local cache, cookie is gone
+        }
+      });
     }
 
     var form = document.getElementById("login-form");
@@ -207,7 +213,7 @@
       Auth.login(mobile, password)
         .then(function () {
           Toastify({
-            text: "Login successful! Redirecting...",
+            text: "Login successful!",
             duration: 1600,
             gravity: "top",
             position: "right",

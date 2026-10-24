@@ -339,7 +339,7 @@
           <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
             <div>
               <div class="page-breadcrumb">Finance</div>
-              <h1 class="page-title text-gray-900">Expense Management</h1>
+              <h1 class="page-title text-[16px] sm:text-[22px] font-bold tracking-tight text-gray-900">Expense Management</h1>
               <p class="page-subtitle mt-0.5">Record operational expenses and optionally allocate them to projects.</p>
             </div>
             <div class="flex gap-2 flex-wrap">
@@ -389,9 +389,7 @@
                   </div>
                   <div class="mb-2">
                     <label class="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">Project</label>
-                    <select id="filterProject" onchange="filterExpenses()" class="form-input text-[10px]">
-                      <option value="all">All Projects</option>
-                    </select>
+                      <div id="filterProjectWrap"></div>
                   </div>
                   <button onclick="clearFilters()" class="text-[10px] text-primary font-semibold hover:underline">Clear Filters</button>
                 </div>
@@ -669,17 +667,137 @@
     ];
 
     // Project master — replace with a backend fetch later if you wire up the project module.
-    var projects = [
-      { id: 'PRJ-001', name: 'Operation & Supervision — WHE' },
-      { id: 'PRJ-002', name: 'Odor Control Unit — Retrofit' },
-      { id: 'PRJ-003', name: 'Dual Media Filter — Phase II' },
-    ];
+       // ---- Project dropdown (API-driven, searchable, paginated) ----
+    var PROJECT_API = 'http://localhost:9093/api/projects/v1/project-list';
+    var projectCache = {};   // projectStrId -> project object
+    var ppState = {};        // per-picker paging state
+    var ppTimers = {};       // per-picker debounce timers
+
+    function ppEsc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function projectLabel(p) { return p.projectName + ' (' + p.projectCode + ')'; }
 
     function getProjectName(id) {
       if (!id) return '—';
-      var p = projects.find(function(x) { return x.id === id; });
-      return p ? p.name : id;
+      var p = projectCache[id];
+      return p ? projectLabel(p) : id;
     }
+
+    function fetchProjects(search, page, size) {
+      var qs = new URLSearchParams();
+      qs.set('page', page);
+      qs.set('size', size || 20);
+      if (search) qs.set('search', search);
+      return fetch(PROJECT_API + '?' + qs.toString()).then(function(res) {
+        if (!res.ok) throw new Error('Could not load projects (HTTP ' + res.status + ')');
+        return res.json();
+      }).then(function(data) {
+        (data.content || []).forEach(function(p) { projectCache[p.projectStrId] = p; });
+        return data;
+      });
+    }
+
+    function projectPickerHtml(id, value, emptyValue, emptyLabel) {
+      var val = value || emptyValue;
+      var label = val !== emptyValue ? getProjectName(val) : emptyLabel;
+      return '<div class="relative" data-pp="' + id + '" data-empty-value="' + emptyValue + '" data-empty-label="' + emptyLabel + '">' +
+        '<input type="hidden" id="' + id + '" value="' + ppEsc(val) + '">' +
+        '<button type="button" class="form-input text-left flex items-center justify-between gap-2" onclick="toggleProjectPicker(\'' + id + '\')">' +
+          '<span id="' + id + '_label" class="truncate">' + ppEsc(label) + '</span><span class="text-gray-400">▾</span>' +
+        '</button>' +
+        '<div id="' + id + '_panel" class="pp-panel hidden absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[60] p-2">' +
+          '<input type="text" id="' + id + '_search" class="form-input mb-1.5" placeholder="Search name or code…" autocomplete="off" oninput="debouncedProjectSearch(\'' + id + '\')">' +
+          '<div id="' + id + '_list" class="max-h-44 overflow-y-auto" onscroll="ppScroll(\'' + id + '\')"></div>' +
+        '</div></div>';
+    }
+
+    function closeProjectPickers() {
+      document.querySelectorAll('.pp-panel').forEach(function(p) { p.classList.add('hidden'); });
+    }
+
+    function toggleProjectPicker(id) {
+      var panel = document.getElementById(id + '_panel');
+      var willOpen = panel.classList.contains('hidden');
+      closeProjectPickers();
+      if (!willOpen) return;
+      panel.classList.remove('hidden');
+      var s = document.getElementById(id + '_search');
+      s.value = '';
+      s.focus();
+      loadProjectList(id, true);
+    }
+
+    function debouncedProjectSearch(id) {
+      clearTimeout(ppTimers[id]);
+      ppTimers[id] = setTimeout(function() { loadProjectList(id, true); }, 350);
+    }
+
+    function ppScroll(id) {
+      var list = document.getElementById(id + '_list');
+      if (list.scrollTop + list.clientHeight >= list.scrollHeight - 20) loadProjectList(id, false);
+    }
+
+    function ppRow(id, value, name, code) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'w-full text-left px-2 py-1.5 rounded hover:bg-primary-soft text-[11px] flex items-center justify-between gap-2';
+      var n = document.createElement('span');
+      n.className = 'truncate';
+      n.textContent = name;
+      b.appendChild(n);
+      if (code) {
+        var c = document.createElement('span');
+        c.className = 'font-mono text-[10px] text-gray-400 shrink-0';
+        c.textContent = code;
+        b.appendChild(c);
+      }
+      b.onclick = function() { selectProject(id, value, code ? name + ' (' + code + ')' : name); };
+      return b;
+    }
+
+    function selectProject(id, value, label) {
+      document.getElementById(id).value = value;
+      document.getElementById(id + '_label').textContent = label;
+      closeProjectPickers();
+      if (id === 'filterProject') filterExpenses();
+    }
+
+    function loadProjectList(id, reset) {
+      var st = reset ? (ppState[id] = { page: 0, totalPages: 1, loading: false }) : ppState[id];
+      if (!st || st.loading || st.page >= st.totalPages) return;
+      var list = document.getElementById(id + '_list');
+      var root = document.querySelector('[data-pp="' + id + '"]');
+      var search = document.getElementById(id + '_search').value.trim();
+      st.loading = true;
+      if (reset) {
+        list.innerHTML = '';
+        list.appendChild(ppRow(id, root.getAttribute('data-empty-value'), root.getAttribute('data-empty-label'), ''));
+      }
+      fetchProjects(search, st.page + 1).then(function(data) {
+        if (ppState[id] !== st) return; // stale response
+        var items = data.content || [];
+        st.page = data.pageNumber || (st.page + 1);
+        st.totalPages = data.totalPages || 1;
+        items.forEach(function(p) { list.appendChild(ppRow(id, p.projectStrId, p.projectName, p.projectCode)); });
+        if (reset && items.length === 0) {
+          var empty = document.createElement('div');
+          empty.className = 'text-center text-[10px] text-gray-400 py-2';
+          empty.textContent = 'No projects found';
+          list.appendChild(empty);
+        }
+      }).catch(function(err) {
+        st.page = st.totalPages; // stop further paging
+        showToast(err.message, 'error');
+      }).then(function() { st.loading = false; });
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('[data-pp]')) closeProjectPickers();
+    });
 
     // =============================================================
     // STATE
@@ -761,11 +879,7 @@
         expenseCategories.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
       filterCategory.value = curCat || 'all';
 
-      var filterProject = document.getElementById('filterProject');
-      var curProj = filterProject.value;
-      filterProject.innerHTML = '<option value="all">All Projects</option>' +
-        projects.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
-      filterProject.value = curProj || 'all';
+      
 
       updateFilterBadge();
     }
@@ -1238,7 +1352,10 @@
     function clearFilters() {
       document.getElementById('filterCategory').value = 'all';
       document.getElementById('filterStatus').value = 'all';
+      
       document.getElementById('filterProject').value = 'all';
+      document.getElementById('filterProject_label').textContent = 'All Projects';
+
       var dFrom = document.getElementById('filterDateFrom');
       var dTo = document.getElementById('filterDateTo');
       var qr = document.getElementById('filterQuickRange');
@@ -1294,7 +1411,7 @@
 
           ${detailSection(iconInfo(), 'Payee & Project')}
           <div class="grid grid-cols-2 gap-2.5">
-            ${detailCard('Vendor / Payee', e.vendor || '—')}
+            ${detailCard('Payee', e.vendor || '—')}
             ${detailCard('Payment Account', '<span class="font-semibold">' + (e.paymentAccount || '—') + '</span>')}
             ${detailCard('Project', getProjectName(e.projectId))}
             ${detailCard('Recorded On', e.createdAt || e.date)}
@@ -1375,11 +1492,13 @@
           </div>
           ${fld('Description *', '<input type="text" class="form-input" id="f_description" value="' + (e.description || '') + '" placeholder="Brief description">')}
           <div class="grid grid-cols-2 gap-3">
-            ${fld('Vendor / Payee', '<input type="text" class="form-input" id="f_vendor" value="' + (e.vendor || '') + '" placeholder="Vendor name">')}
+            ${fld('Payee', '<input type="text" class="form-input" id="f_vendor" value="' + (e.vendor || '') + '" placeholder="Payee name">')}
             ${fld('Payment Account', '<select class="form-input" id="f_account"><option ' + (e.paymentAccount === 'Bank' ? 'selected' : '') + '>Bank</option><option ' + (e.paymentAccount === 'Cash' ? 'selected' : '') + '>Cash</option><option ' + (e.paymentAccount === 'Credit Card' ? 'selected' : '') + '>Credit Card</option><option ' + (e.paymentAccount === 'UPI' ? 'selected' : '') + '>UPI</option></select>')}
           </div>
           <div class="grid grid-cols-2 gap-3">
-            ${fld('Project (Optional)', '<select class="form-input" id="f_project"><option value="">None</option>' + projects.map(function(p) { return '<option ' + (p.id === e.projectId ? 'selected' : '') + ' value="' + p.id + '">' + p.name + '</option>'; }).join('') + '</select>', 'Allocate expense to a project')}
+            
+            ${fld('Project', projectPickerHtml('f_project', e.projectId || '', '', 'None'), 'Allocate expense to a project')}
+            
             ${fld('Status', '<select class="form-input" id="f_status"><option ' + (e.status === 'pending' ? 'selected' : '') + ' value="pending">Pending</option><option ' + (e.status === 'approved' ? 'selected' : '') + ' value="approved">Approved</option><option ' + (e.status === 'rejected' ? 'selected' : '') + ' value="rejected">Rejected</option></select>')}
           </div>
           ${fld('Notes', '<textarea rows="2" class="form-input" id="f_notes" placeholder="Additional notes">' + (e.notes || '') + '</textarea>')}
@@ -1596,7 +1715,10 @@
     // =============================================================
     // INIT — first backend call
     // =============================================================
-    loadExpenses();
+    document.getElementById('filterProjectWrap').innerHTML = projectPickerHtml('filterProject', 'all', 'all', 'All Projects');
+
+    // Prefetch projects so table rows show "name (code)" instead of the raw ID
+    fetchProjects('', 1, 100).catch(function() {}).then(loadExpenses);
 
     console.log('💰 Expense Module Loaded — backend-driven');
     console.log('   API:', API_BASE);

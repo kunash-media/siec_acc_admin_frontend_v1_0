@@ -59,9 +59,9 @@
   .stat-card { transition: transform .15s ease, box-shadow .15s ease; padding: 10px 14px !important; border: 1px solid #6da84c !important; cursor: pointer; }
   .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,.06); }
   .stat-card.active { background: #eef5e8; box-shadow: 0 0 0 2px rgba(109,168,76,.25); }
-  .stat-card .stat-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #6b7280; }
+  .stat-card .stat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #212121; }
   .stat-card .stat-value { font-size: 17px; font-weight: 700; color: #1a1a2e; margin-top: 2px; }
-  .stat-card .stat-sub { font-size: 9.5px; color: #9ca3af; margin-top: 1px; }
+  .stat-card .stat-sub { font-size: 9.5px; font-weight: 600; color: #0b7f37; margin-top: 1px; }
 
   .btn-icon-action {
     transition: all .15s ease; width: 28px; height: 28px; border-radius: 6px;
@@ -79,7 +79,7 @@
 
   .record-card { transition: box-shadow .15s ease, transform .15s ease; border: 1px solid #d0d3d8; }
   .record-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.06); transform: translateY(-1px); border-color: #6da84c; }
-  .mod-icon { width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; border:1px solid #6da84c;}
+  .mod-icon { width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; border: 1px solid #6da84c; }
   .meta-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #9ca3af; }
   .meta-value { font-size: 11.5px; font-weight: 600; color: #1f2937; }
 
@@ -117,6 +117,53 @@
   .invoice-preview .invoice-footer { margin-top: 20px; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; text-align: center; }
   .invoice-preview .invoice-terms { font-size: 11px; color: #6b7280; margin-top: 8px; padding: 10px 14px; background: #f8fafc; border-radius: 6px; }
   .invoice-preview .invoice-gst-breakup { font-size: 11px; color: #6b7280; margin-top: 4px; display: flex; justify-content: flex-end; gap: 20px; }
+
+  /* Sales Order document (so-preview / sd-*) */
+  .so-preview { background: #fff; border: 1px solid #e5e7eb; max-width: 820px; margin: 0 auto; padding: 18px 22px; font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #111; line-height: 1.4; }
+  .so-preview table { width: 100%; border-collapse: collapse; }
+  .so-preview .c { text-align: center; } .so-preview .r { text-align: right; } .so-preview .num { font-variant-numeric: tabular-nums; }
+  .so-preview .sd-logo-top { text-align: center; margin-bottom: 6px; }
+  .so-preview .sd-co-logo { max-height: 64px; max-width: 240px; object-fit: contain; }
+  .so-preview .sd-co-name { font-size: 18px; font-weight: 700; }
+  .so-preview .sd-title { text-align: center; font-size: 16px; font-weight: 700; letter-spacing: .14em; padding: 6px 0; border: 1px solid #333; background: #f1f5f9; }
+  .so-preview .sd-head > tbody > tr > td { border: 1px solid #333; border-top: none; padding: 6px 8px; vertical-align: top; }
+  .so-preview .sd-head > tbody > tr > td:first-child { width: 56%; }
+  .so-preview .sd-co-line { font-size: 10.5px; line-height: 1.55; }
+  .so-preview .sd-kv td { border: none; border-bottom: 1px solid #e5e7eb; padding: 3px 2px; font-size: 11px; }
+  .so-preview .sd-kv tr:last-child td { border-bottom: none; }
+  .so-preview .sd-kv td:first-child { font-weight: 700; width: 42%; }
+  .so-preview .sd-strip, .so-preview .sd-party, .so-preview .sd-items { margin-top: -1px; }
+  .so-preview .sd-strip th, .so-preview .sd-party th, .so-preview .sd-taxsum th { background: #f1f5f9; font-size: 9.5px; text-transform: uppercase; letter-spacing: .04em; padding: 4px 6px; border: 1px solid #333; text-align: left; }
+  .so-preview .sd-strip th, .so-preview .sd-strip td, .so-preview .sd-taxsum th { text-align: center; }
+  .so-preview .sd-strip td, .so-preview .sd-party td { border: 1px solid #333; padding: 5px 8px; vertical-align: top; }
+  .so-preview .sd-pname { font-weight: 700; font-size: 12px; }
+  .so-preview .sd-pline { font-size: 10.5px; line-height: 1.5; }
+  .so-preview .sd-items th, .so-preview .sd-items td { border: 1px solid #333; padding: 4px 6px; font-size: 10.5px; vertical-align: top; }
+  .so-preview .sd-items th { background: #e5e7eb; font-size: 10px; font-weight: 700; text-align: left; }
+  .so-preview .sd-items th.c { text-align: center; } .so-preview .sd-items th.r { text-align: right; }
+  .so-preview .w-sn { width: 38px; } .so-preview .w-hsn { width: 72px; } .so-preview .w-qty { width: 56px; } .so-preview .w-unit { width: 52px; }
+  .so-preview .w-rate { width: 92px; } .so-preview .w-tax { width: 52px; } .so-preview .w-amt { width: 104px; }
+  .so-preview .sd-sub { font-size: 9px; color: #6b7280; }
+  .so-preview .sd-fill td { height: 20px; }
+  .so-preview .sd-items tr { page-break-inside: avoid; }
+  .so-preview .sd-bottom > tbody > tr > td { border: 1px solid #333; border-top: none; vertical-align: top; padding: 0; }
+  .so-preview .sd-bl { width: 58%; padding: 8px !important; }
+  .so-preview .sd-words { font-size: 10.5px; margin-bottom: 8px; } .so-preview .sd-words span { font-weight: 700; }
+  .so-preview .sd-taxsum td { border: 1px solid #333; padding: 3px 6px; text-align: center; font-size: 10px; }
+  .so-preview .sd-notes { margin-top: 8px; font-size: 10px; }
+  .so-preview .sd-tot td { padding: 4px 8px; font-size: 11px; border-bottom: 1px solid #e5e7eb; }
+  .so-preview .sd-tot td:last-child { text-align: right; font-weight: 600; }
+  .so-preview .sd-tot .grand td { font-weight: 700; font-size: 12.5px; border-top: 2px solid #111; border-bottom: none; background: #f1f5f9; }
+  .so-preview .sd-foot > tbody > tr > td { border: 1px solid #333; border-top: none; vertical-align: top; padding: 8px; }
+  .so-preview .sd-terms { width: 64%; }
+  .so-preview .sd-terms h4 { font-size: 10.5px; font-weight: 700; text-transform: uppercase; margin: 0 0 4px; }
+  .so-preview .sd-terms ol { margin: 0 0 8px; padding-left: 16px; font-size: 9.5px; list-style: decimal; }
+  .so-preview .sd-bank { font-size: 10px; line-height: 1.5; }
+  .so-preview .sd-sign { text-align: center; width: 36%; }
+  .so-preview .sd-sign .for { font-weight: 700; font-size: 10.5px; }
+  .so-preview .sd-sign .sig-space { height: 60px; }
+  .so-preview .sd-sign .sig-line { border-top: 1px solid #333; padding-top: 4px; font-size: 10px; }
+  .so-preview .sd-end { text-align: center; font-size: 9px; color: #6b7280; margin-top: 8px; }
 </style>
 </head>
 
@@ -139,7 +186,7 @@
           <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
             <div>
               <div class="page-breadcrumb">System</div>
-              <h1 class="page-title text-gray-900">Activity &amp; Logs</h1>
+              <h1 class="page-title text-[16px] sm:text-[22px] font-bold tracking-tight text-gray-900">Activity &amp; Logs</h1>
               <p class="page-subtitle mt-0.5">Single-eye view of Quotations, Sales Orders, Delivery Challans and Invoices.</p>
             </div>
           </div>
@@ -187,9 +234,6 @@
 var API_BASE = 'http://localhost:9093';
 var ORG_STORAGE_KEY = 'siec_organization_id';
 var DEFAULT_TEMPLATE = 'tpl-modern';
-// Module pages used for Edit (deep link: <page>?edit=<document number>). Adjust file names if yours differ.
-var PAGES = { quotes: 'quotations.html', orders: 'sales-orders.html', challans: 'delivery-challan.html', invoices: 'invoices.html' };
-
 NavSidebar.init({ basePath: "", activePage: "activity", pageTitle: "Activity & Logs", user: { name: "Admin", role: "Super Admin", avatarUrl: "" } });
 
 var MODS = {
@@ -222,7 +266,13 @@ function stateCodeFor(state, gstin) {
   if (/^\d{2}/.test(gstin || '')) return gstin.slice(0, 2);
   return STATE_CODES[String(state || '').trim().toLowerCase()] || '';
 }
-var currencyMeta = { INR: { symbol: '₹' }, USD: { symbol: '$' }, AED: { symbol: 'د.إ' }, EUR: { symbol: '€' }, OMR: { symbol: '﷼' } };
+var currencyMeta = {
+  INR: { symbol: '₹', label: 'India', countries: ['India'], rate: 1 },
+  USD: { symbol: '$', label: 'America', countries: ['America', 'USA', 'United States'], rate: 83.5 },
+  AED: { symbol: 'د.إ', label: 'Dubai', countries: ['Dubai', 'UAE', 'United Arab Emirates'], rate: 22.7 },
+  EUR: { symbol: '€', label: 'Europe', countries: ['Europe', 'Germany', 'France'], rate: 90.2 },
+  OMR: { symbol: '﷼', label: 'Oman', countries: ['Oman'], rate: 217.5 }
+};
 function getCurrencySymbol(c) { return (currencyMeta[c] && currencyMeta[c].symbol) || '₹'; }
 function money(n, c) { return getCurrencySymbol(c || 'INR') + Number(n || 0).toLocaleString('en-IN'); }
 function formatCurrency(a, c) { return getCurrencySymbol(c) + Number(a || 0).toLocaleString('en-IN'); }
@@ -312,7 +362,7 @@ function openModal(innerHtml, width) {
     '<div class="relative bg-white rounded-xl shadow-2xl w-full ' + (width || 'max-w-md') + ' max-h-[92vh] overflow-hidden animate-modal">' + innerHtml + '</div></div>';
   document.body.style.overflow = 'hidden';
 }
-function closeModal() { document.getElementById('modalRoot').innerHTML = ''; document.body.style.overflow = ''; }
+function closeModal() { viewTok++; closePicker(); document.getElementById('modalRoot').innerHTML = ''; document.body.style.overflow = ''; }
 function modalHeader(title, subtitle) {
   return '<div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100 sticky top-0 bg-white z-10">' +
     '<div><h3 class="modal-title text-gray-900">' + title + '</h3>' + (subtitle ? '<p class="modal-subtitle mt-0.5">' + subtitle + '</p>' : '') + '</div>' +
@@ -581,7 +631,7 @@ function buildDocumentInnerHtml(inv, templateId) {
 function normalizeSO(so) {
   so = so || {};
   var items = (so.items || []).map(function (it) {
-    return { itemId: it.itemId, name: it.name || '', qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || '' };
+    return { itemId: it.itemId, name: it.name || '', qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, unit: it.unit || '', hsn: it.hsn || '' };
   });
   var discount = Number(so.discount) || 0, tax = so.tax != null ? Number(so.tax) : 18;
   var sub = items.reduce(function (s, it) { return s + it.qty * it.rate; }, 0), after = sub - sub * (discount / 100), computed = after + after * (tax / 100);
@@ -608,44 +658,210 @@ async function loadSoFull(id) {
   var res = await Promise.all([
     Promise.all(so.items.map(async function (it) {
       var p = await cachedGet(cacheProd, it.itemId, '/api/products/v1/get-product/', function (r) { return r && r.data ? r.data : null; });
-      if (p) { if (!it.name) it.name = p.productName || ''; if (!it.unit) it.unit = p.productUnit || ''; }
+      if (p) { if (!it.name) it.name = p.productName || ''; if (!it.unit) it.unit = p.productUnit || ''; if (!it.hsn) it.hsn = p.productHsnCode || ''; }
     })),
     cachedGet(cacheClient, so.clientId, '/api/clients/v1/get-client/', function (r) { return r && r.data ? r.data : null; }),
     cachedGet(cacheProj, so.projectReference, '/api/projects/v1/get-project/', function (r) { return r && r.data && r.data.name ? r.data.name : null; })
   ]);
   return { so: so, ci: res[1] || {}, pl: res[2] || so.projectReference || '' };
 }
+// ============================================================= SALES ORDER DOCUMENT (A4 form layout)
+// Default terms printed on every sales order - edit this list to change the wording
+var SO_TERMS = [
+  'Goods / services will be supplied as per the items and quantities listed in this order.',
+  'Delivery is subject to the expected delivery date mentioned above and timely payment as per the payment terms.',
+  'All prices are in Indian Rupees (INR). GST is charged as applicable.',
+  'Please quote the Sales Order number in all correspondence and payments.',
+  'Any dispute is subject to the jurisdiction of the seller\'s registered office.'
+];
+function esc(v) { return escH(v); }
+function round2(n) { return Math.round((Number(n) + Number.EPSILON) * 100) / 100; }
+function num(n) { return Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function qtyFmt(q) { q = Number(q || 0); return Number.isInteger(q) ? String(q) : q.toFixed(2); }
+function dash(v) { return (v === null || v === undefined || String(v).trim() === '') ? '—' : v; }
+function rupee(n) { return '₹' + num(n); }
+// get-client / client-list use different field names, so every field tries both
+function readClient(ci, so) {
+  ci = ci || {};
+  var p = function () { for (var i = 0; i < arguments.length; i++) { if (ci[arguments[i]]) return ci[arguments[i]]; } return ''; };
+  return { name: p('clientName', 'name', 'contactName') || so.clientName || '', company: p('clientCompanyName', 'companyName'),
+    billing: p('clientBillingAddress', 'billingAddress', 'address'), shipping: p('clientShippingAddress', 'shippingAddress'),
+    gstin: p('clientGstin', 'gstin', 'gstNumber'), phone: p('clientPhone', 'phone', 'mobile'), email: p('clientEmail', 'email'), state: p('clientState', 'state') };
+}
+function logoFallback(img) {
+  var d = document.createElement('div'); d.className = 'sd-co-name'; d.textContent = company.name || '';
+  if (img.parentNode) img.parentNode.replaceChild(d, img);
+}
 function buildSoHtml(so, ci, pl) {
-  var rows = so.items.map(function (i) {
-    return '<tr><td class="px-2 py-1.5 text-xs">' + escH(i.name || i.itemId) + '</td><td class="px-2 py-1.5 text-xs text-center">' + i.qty + '</td>' +
-      '<td class="px-2 py-1.5 text-xs text-center">' + escH(i.unit || '—') + '</td><td class="px-2 py-1.5 text-xs font-mono text-right">' + money(i.rate, 'INR') + '</td>' +
-      '<td class="px-2 py-1.5 text-xs font-mono text-right">' + money(i.qty * i.rate, 'INR') + '</td></tr>';
+  var c = readClient(ci, so), projectLabel = pl || '', shipTo = so.deliveryLocation || c.shipping || '';
+
+  // ---------- figures (every step rounded to paise) ----------
+  var subtotal    = round2(so.items.reduce(function (s, it) { return s + round2(it.qty * it.rate); }, 0));
+  var discountAmt = round2(subtotal * (so.discount / 100));
+  var taxable     = round2(subtotal - discountAmt);
+  var taxAmt      = round2(taxable * (so.tax / 100));
+  var computed    = round2(taxable + taxAmt);
+  // backend total is used only when within Rs.1 of the calculation (backend rounding)
+  var grand = computed;
+  if (so.total > 0 && Math.abs(so.total - computed) < 1) grand = round2(so.total);
+  var roundOff = round2(grand - computed);
+
+  // CGST + SGST when both states are known and equal, IGST when they differ, plain GST when unknown
+  var cs = String(company.state || '').toLowerCase().trim(), ks = String(c.state || '').toLowerCase().trim();
+  var gstMode = (cs && ks) ? (cs === ks ? 'intra' : 'inter') : 'plain';
+  var cg = round2(taxAmt / 2), sg = round2(taxAmt - cg);
+  var taxRows = '', taxHead = '', taxCells = '';
+  if (gstMode === 'intra') {
+    taxRows = '<tr><td>CGST (' + so.tax / 2 + '%)</td><td>' + rupee(cg) + '</td></tr><tr><td>SGST (' + so.tax / 2 + '%)</td><td>' + rupee(sg) + '</td></tr>';
+    taxHead = '<th>CGST</th><th>SGST</th>'; taxCells = '<td>' + num(cg) + '</td><td>' + num(sg) + '</td>';
+  } else if (gstMode === 'inter') {
+    taxRows = '<tr><td>IGST (' + so.tax + '%)</td><td>' + rupee(taxAmt) + '</td></tr>';
+    taxHead = '<th>IGST</th>'; taxCells = '<td>' + num(taxAmt) + '</td>';
+  } else {
+    taxRows = '<tr><td>GST (' + so.tax + '%)</td><td>' + rupee(taxAmt) + '</td></tr>';
+    taxHead = '<th>GST</th>'; taxCells = '<td>' + num(taxAmt) + '</td>';
+  }
+
+  // ---------- item rows (padded to 8 so short orders still look like a proper form) ----------
+  var hasHsn = so.items.some(function (it) { return it.hsn; });
+  var colCount = hasHsn ? 8 : 7;
+  var itemsHtml = so.items.map(function (item, i) {
+    var showId = item.name && item.itemId && item.name !== item.itemId;
+    return '<tr><td class="c">' + (i + 1) + '</td>' +
+      '<td>' + esc(item.name || item.itemId) + (showId ? '<div class="sd-sub">' + esc(item.itemId) + '</div>' : '') + '</td>' +
+      (hasHsn ? '<td class="c">' + esc(dash(item.hsn)) + '</td>' : '') +
+      '<td class="c num">' + qtyFmt(item.qty) + '</td><td class="c">' + esc(dash(item.unit)) + '</td>' +
+      '<td class="r num">' + num(item.rate) + '</td><td class="c num">' + so.tax + '%</td>' +
+      '<td class="r num">' + num(round2(item.qty * item.rate)) + '</td></tr>';
   }).join('');
-  var sub = so.items.reduce(function (s, i) { return s + i.qty * i.rate; }, 0), da = sub * (so.discount / 100), ta = (sub - da) * (so.tax / 100);
-  var lines = []; if (company.address) lines.push(escH(company.address));
-  var cc = []; if (company.gstin) cc.push('GSTIN: ' + escH(company.gstin)); if (company.phone) cc.push('Phone: ' + escH(company.phone)); if (cc.length) lines.push(cc.join(' | '));
-  var cco = ci.companyName && ci.companyName !== so.clientName ? ci.companyName : '';
-  var chip = function (l, v, bg, col) { return v ? '<span style="display:inline-block;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:8px;background:' + bg + ';color:' + col + ';margin-right:6px">' + l + ': ' + escH(v) + '</span>' : ''; };
-  var fl = so.fulfillmentStatus, flc = fl === 'fulfilled' ? '#16a34a' : fl === 'partial' ? '#9333ea' : '#d97706';
-  var stl = ST.orders[so.status.toUpperCase()] || [so.status, 'badge-gray'];
-  return '<div class="invoice-preview">' +
-    '<div class="invoice-header"><div><div class="invoice-company-name">' + escH(company.name) + '</div><div class="invoice-company-details">' + lines.join('<br>') + '</div></div>' +
-    '<div style="text-align:right;"><div class="invoice-title">SALES ORDER</div></div></div>' +
-    '<div class="invoice-meta"><div><div class="meta-label">Client</div><div class="meta-value">' + escH(so.clientName) + '</div>' +
-    (cco ? '<div class="text-xs text-gray-500">' + escH(cco) + '</div>' : '') + '<div class="text-xs text-gray-500">' + escH(ci.billingAddress || '') + '</div></div>' +
-    '<div style="text-align:right;"><div><span class="meta-label">SO #</span> <span class="meta-value">' + escH(so.number) + '</span></div>' +
-    '<div><span class="meta-label">Date</span> <span class="meta-value">' + fd(so.date) + '</span></div>' +
-    '<div><span class="meta-label">Expected Delivery</span> <span class="meta-value">' + fd(so.expectedDelivery) + '</span></div>' +
-    '<div><span class="meta-label">Status</span> <span class="badge ' + stl[1] + '">' + stl[0] + '</span></div>' +
-    '<div><span class="meta-label">Fulfillment</span> <span style="font-size:11px;font-weight:600;color:' + flc + '">' + label(fl) + '</span></div></div></div>' +
-    '<table class="invoice-table"><thead><tr><th>Description</th><th class="text-center">Qty</th><th class="text-center">Unit</th><th class="text-right">Rate</th><th class="text-right">Amount</th></tr></thead><tbody>' + rows + '</tbody></table>' +
-    '<div class="invoice-totals"><div class="total-row"><span class="label">Subtotal</span><span class="value">' + money(sub, 'INR') + '</span></div>' +
-    (so.discount > 0 ? '<div class="total-row"><span class="label">Discount (' + so.discount + '%)</span><span class="value" style="color:#dc2626;">-' + money(da, 'INR') + '</span></div>' : '') +
-    '<div class="total-row"><span class="label">Tax (' + so.tax + '%)</span><span class="value">' + money(ta, 'INR') + '</span></div>' +
-    '<div class="grand-total total-row"><span class="label">Grand Total</span><span class="value">' + money(so.total, 'INR') + '</span></div></div>' +
-    '<div style="margin-top:12px">' + chip('Quotation', so.quotationReference, '#dbeafe', '#1e40af') + chip('PI', so.piReference, '#ede9fe', '#5b21b6') + chip('Project', pl, '#f1f5f9', '#475569') + '</div>' +
-    (so.notes ? '<div class="invoice-terms"><strong>Notes:</strong> ' + escH(so.notes) + '</div>' : '') +
-    '<div class="invoice-footer"><p>This is a system generated sales order. | Payment Terms: ' + escH(so.paymentTerms) + '</p></div></div>';
+  for (var f = so.items.length; f < 8; f++) itemsHtml += '<tr class="sd-fill">' + new Array(colCount + 1).join('<td>&nbsp;</td>') + '</tr>';
+
+  function pline(lab, value) { return value ? '<div class="sd-pline"><b>' + lab + ':</b> ' + esc(value) + '</div>' : ''; }
+  var coContact = [], coContact2 = [];
+  if (company.gstin) coContact.push('GSTIN: ' + esc(company.gstin));
+  if (company.pan) coContact.push('PAN: ' + esc(company.pan));
+  if (company.phone) coContact2.push('Phone: ' + esc(company.phone));
+  if (company.email) coContact2.push('Email: ' + esc(company.email));
+
+  var fulfilColor = so.fulfillmentStatus === 'fulfilled' ? '#16a34a' : so.fulfillmentStatus === 'partial' ? '#7c3aed' : '#d97706';
+  var stl = ST.orders[so.status.toUpperCase()] || [label(so.status), 'badge-gray'];
+  var statusHtml = '<span class="badge ' + stl[1] + '"><span class="badge-dot"></span>' + stl[0] + '</span>';
+
+  var bank = company.bank || {};
+  var bankHtml = bank.account ? (
+    '<h4>Bank Details</h4><div class="sd-bank">' +
+      ((bank.holder || bank.beneficiary) ? 'A/c Name: ' + esc(bank.holder || bank.beneficiary) + '<br>' : '') +
+      (bank.name ? 'Bank: ' + esc(bank.name) + '<br>' : '') + 'A/c No: ' + esc(bank.account) + '<br>' +
+      (bank.ifsc ? 'IFSC: ' + esc(bank.ifsc) + '<br>' : '') + (bank.branch ? 'Branch: ' + esc(bank.branch) : '') + '</div>') : '';
+
+  var logoSrc = company.logoData || company.logoUrl;
+  var logoHtml = logoSrc
+    ? '<img class="sd-co-logo" src="' + esc(logoSrc) + '" alt="' + esc(company.name || 'Company Logo') + '" crossorigin="anonymous" onerror="logoFallback(this)">'
+    : '<div class="sd-co-name">' + esc(company.name) + '</div>';
+
+  return `
+    <div class="so-preview">
+
+      <div class="sd-logo-top">${logoHtml}</div>
+
+      <div class="sd-title">SALES ORDER</div>
+
+      <table class="sd-head"><tbody><tr>
+        <td class="sd-co">
+          ${company.address ? '<div class="sd-co-line">' + esc(company.address) + '</div>' : ''}
+          ${coContact.length ? '<div class="sd-co-line">' + coContact.join(' &nbsp;|&nbsp; ') + '</div>' : ''}
+          ${coContact2.length ? '<div class="sd-co-line">' + coContact2.join(' &nbsp;|&nbsp; ') + '</div>' : ''}
+        </td>
+        <td>
+          <table class="sd-kv"><tbody>
+            <tr><td>SO No.</td><td>${esc(dash(so.number))}</td></tr>
+            <tr><td>Date</td><td>${esc(dash(so.date))}</td></tr>
+            <tr><td>Expected Delivery</td><td>${esc(dash(so.expectedDelivery))}</td></tr>
+            <tr><td>Status</td><td>${statusHtml}</td></tr>
+            <tr><td>Fulfillment</td><td style="color:${fulfilColor};">${label(so.fulfillmentStatus)}</td></tr>
+          </tbody></table>
+        </td>
+      </tr></tbody></table>
+
+      <table class="sd-strip"><tbody>
+        <tr><th>Quotation Ref.</th><th>PI Ref.</th><th>Project</th><th>Payment Terms</th></tr>
+        <tr>
+          <td>${esc(dash(so.quotationReference))}</td>
+          <td>${esc(dash(so.piReference))}</td>
+          <td>${esc(dash(projectLabel || so.projectReference))}</td>
+          <td>${esc(dash(so.paymentTerms))}</td>
+        </tr>
+      </tbody></table>
+
+      <table class="sd-party"><tbody>
+        <tr><th>Bill To</th><th>Ship To / Delivery Location</th></tr>
+        <tr>
+          <td>
+            <div class="sd-pname">${esc(dash(c.name))}</div>
+            ${c.company && c.company !== c.name ? '<div class="sd-pline">' + esc(c.company) + '</div>' : ''}
+            <div class="sd-pline">${esc(dash(c.billing))}</div>
+            ${pline('GSTIN', c.gstin)}${pline('Phone', c.phone)}${pline('Email', c.email)}
+          </td>
+          <td>
+            <div class="sd-pname">${esc(dash(c.name))}</div>
+            <div class="sd-pline">${esc(dash(shipTo))}</div>
+            ${pline('Phone', c.phone)}
+          </td>
+        </tr>
+      </tbody></table>
+
+      <table class="sd-items">
+        <thead>
+          <tr>
+            <th class="c w-sn">Sr.</th>
+            <th>Item Description</th>
+            ${hasHsn ? '<th class="c w-hsn">HSN / SAC</th>' : ''}
+            <th class="c w-qty">Qty</th>
+            <th class="c w-unit">Unit</th>
+            <th class="r w-rate">Rate (₹)</th>
+            <th class="c w-tax">GST %</th>
+            <th class="r w-amt">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+
+      <table class="sd-bottom"><tbody><tr>
+        <td class="sd-bl">
+          <div class="sd-words"><span>Amount in words:</span><br>${amountInWords(grand, 'INR')}</div>
+          <table class="sd-taxsum"><tbody>
+            <tr><th>Taxable Value</th>${taxHead}<th>Total Tax</th></tr>
+            <tr><td>${num(taxable)}</td>${taxCells}<td>${num(taxAmt)}</td></tr>
+          </tbody></table>
+          ${so.notes ? '<div class="sd-notes"><b>Notes:</b> ' + esc(so.notes) + '</div>' : ''}
+        </td>
+        <td class="sd-br">
+          <table class="sd-tot"><tbody>
+            <tr><td>Subtotal</td><td>${rupee(subtotal)}</td></tr>
+            ${so.discount > 0 ? '<tr><td>Discount (' + so.discount + '%)</td><td style="color:#dc2626;">− ' + rupee(discountAmt) + '</td></tr>' : ''}
+            <tr><td>Taxable Value</td><td>${rupee(taxable)}</td></tr>
+            ${taxRows}
+            ${roundOff !== 0 ? '<tr><td>Round Off</td><td>' + (roundOff > 0 ? '+ ' : '− ') + rupee(Math.abs(roundOff)) + '</td></tr>' : ''}
+            <tr class="grand"><td>Grand Total</td><td>${rupee(grand)}</td></tr>
+          </tbody></table>
+        </td>
+      </tr></tbody></table>
+
+      <table class="sd-foot"><tbody><tr>
+        <td class="sd-terms">
+          <h4>Terms &amp; Conditions</h4>
+          <ol>${SO_TERMS.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('')}</ol>
+          ${bankHtml}
+        </td>
+        <td class="sd-sign">
+          <div class="for">For ${esc(company.name || 'Company Name')}</div>
+          <div class="sig-space"></div>
+          <div class="sig-line">Authorised Signatory</div>
+        </td>
+      </tr></tbody></table>
+
+      <div class="sd-end">This is a computer generated sales order.</div>
+    </div>`;
 }
 
 // ============================================================= SOURCES (endpoint + card mapping per record kind)
@@ -698,14 +914,19 @@ function orderCard(so) {
 
 // ============================================================= STATE
 var state = { module: 'quotes', sub: 'invoice', page: 1, size: 10, search: '', status: 'all', customer: 'all' };
-var customers = [], cards = [], cnt = {}, allOrders = [], tok = 0, searchTimer;
+var customers = [], cards = [], cnt = {}, allOrders = [], tok = 0, searchTimer, ordersLoaded = false, viewTok = 0;
 function curKey() { return state.module === 'invoices' && state.sub === 'proforma' ? 'proformas' : state.module; }
 
 async function loadCustomers() {
   try {
-    var data = await apiFetch('/api/clients/v1/client-list');
+    var data = await apiFetch('/api/clients/v1/client-list?page=0&size=500');
     customers = (Array.isArray(data.content) ? data.content : []).map(function (c) {
-      return { id: c.clientPrimeId, strId: c.clientStrId || '', name: c.clientCompanyName || c.clientName };
+      var gst = c.clientGstin || '', isIndia = (c.clientCountry || '') === 'India';
+      return { id: c.clientPrimeId, strId: c.clientStrId || '', name: c.clientCompanyName || c.clientName, contactName: c.clientName, gst: gst, country: c.clientCountry,
+        state: c.clientState || '', stateCode: c.clientStateCode || (isIndia ? stateCodeFor(c.clientState, gst) : ''),
+        address: c.clientBillingAddress || [c.clientShippingAddress, c.clientState, c.clientPincode].filter(Boolean).join(', '),
+        invAddress: [c.clientShippingAddress, c.clientState, c.clientPincode].filter(Boolean).join(', '),
+        shipAddress: c.clientShippingAddress || '', email: c.clientEmail, phone: c.clientPhone };
     });
   } catch (e) { customers = []; showToast(e.message || 'Could not load clients', 'error'); }
 }
@@ -715,7 +936,7 @@ async function loadStats() {
   await Promise.all(['quotes', 'challans', 'invoices', 'proformas'].map(async function (k) {
     try { var s = await apiFetch(SRC[k].stats, { method: 'GET' }); cnt[k] = s.totalCount; } catch (e) { cnt[k] = null; }
   }));
-  try { allOrders = ((await apiFetch('/api/sales-orders/get-all-sales-orders', { method: 'GET' })) || []).map(normalizeSO); cnt.orders = allOrders.length; }
+  try { allOrders = ((await apiFetch('/api/sales-orders/get-all-sales-orders', { method: 'GET' })) || []).map(normalizeSO); cnt.orders = allOrders.length; ordersLoaded = true; }
   catch (e) { cnt.orders = null; }
   renderStats();
 }
@@ -725,7 +946,7 @@ function renderStats() {
     var sub = k === 'invoices' && cnt.proformas != null ? '<div class="stat-sub">+ ' + cnt.proformas + ' proforma</div>' : '';
     return '<div class="bg-white rounded-xl shadow-sm stat-card ' + (state.module === k ? 'active' : '') + '" onclick="switchModule(\'' + k + '\')">' +
       '<div class="flex items-center justify-between"><div><div class="stat-label">Total ' + m.label + '</div><div class="stat-value">' + v + '</div>' + sub + '</div>' +
-      '<span class="mod-icon border border-[#6da84c] ' + m.tint + '"><i class="fa-solid ' + m.icon + '"></i></span></div></div>';
+      '<span class="mod-icon ' + m.tint + '"><i class="fa-solid ' + m.icon + '"></i></span></div></div>';
   }).join('');
 }
 
@@ -755,16 +976,18 @@ function switchModule(k) {
   if (state.module === k) return;
   state.module = k; state.sub = 'invoice'; state.status = 'all'; state.page = 1;
   try { history.replaceState(null, '', '#' + k); } catch (e) {}
-  renderTabs(); renderStats(); buildStatusOptions(); load();
+  renderTabs(); renderStats(); buildStatusOptions(); load(true);
 }
-function switchSub(s) { state.sub = s; state.status = 'all'; state.page = 1; renderTabs(); buildStatusOptions(); load(); }
+function switchSub(s) { state.sub = s; state.status = 'all'; state.page = 1; renderTabs(); buildStatusOptions(); load(true); }
 function goToPage(p) { state.page = p; load(); }
 
 // ============================================================= LIST
-async function fetchKey(key) {
+async function fetchKey(key, force) {
   if (key === 'orders') {
-    var res = await apiFetch('/api/sales-orders/get-all-sales-orders', { method: 'GET' });
-    allOrders = (Array.isArray(res) ? res : []).map(normalizeSO); cnt.orders = allOrders.length; renderStats();
+    if (force || !ordersLoaded) {
+      var res = await apiFetch('/api/sales-orders/get-all-sales-orders', { method: 'GET' });
+      allOrders = (Array.isArray(res) ? res : []).map(normalizeSO); ordersLoaded = true; cnt.orders = allOrders.length; renderStats();
+    }
     var q = state.search.toLowerCase(), cu = customers.find(function (c) { return String(c.id) === String(state.customer); });
     var rows = allOrders.filter(function (so) {
       var mSearch = !q || so.number.toLowerCase().indexOf(q) !== -1 || so.clientName.toLowerCase().indexOf(q) !== -1 || so.id.toLowerCase().indexOf(q) !== -1;
@@ -796,10 +1019,10 @@ function cardHtml(c, i) {
     '<div class="flex items-center justify-between mt-3 pt-2.5 border-t border-gray-100"><div><div class="meta-label">Total</div>' +
     '<div class="font-mono font-bold text-[14px] text-primary-dark">' + fm(c.total, c.currency) + '</div></div><div class="flex gap-0.5">' + acts + '</div></div></div>';
 }
-async function load() {
+async function load(force) {
   var my = ++tok, grid = document.getElementById('recordsGrid'), key = curKey(), res;
   grid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400 text-xs"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading…</div>';
-  try { res = await fetchKey(key); }
+  try { res = await fetchKey(key, force); }
   catch (e) {
     if (my !== tok) return;
     cards = []; document.getElementById('pager').innerHTML = '';
@@ -828,6 +1051,8 @@ function doAct(kind, i) {
   else if (kind === 'delete') askDelete(i);
 }
 async function viewCard(c, i) {
+  openModal(modalHeader(SINGLE[c.key], escH(c.number)) + '<div class="px-5 py-10 text-center text-gray-400 text-xs"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading…</div>', 'max-w-4xl');
+  var vt = viewTok;
   await orgReady;
   var html, sub = escH(c.number);
   try {
@@ -835,14 +1060,538 @@ async function viewCard(c, i) {
     else if (c.key === 'quotes') html = buildQuoteHtml(c.raw);
     else if (c.key === 'challans') { html = buildDcHtml(c.raw); if (c.raw.warehouseName) sub += ' · Warehouse: ' + escH(c.raw.warehouseName) + (c.raw.destName ? ' → ' + escH(c.raw.destName) : ''); }
     else html = buildDocumentInnerHtml(c.raw, c.raw.templateId);
-  } catch (e) { showToast(e.message || 'Could not load the document', 'error'); return; }
+  } catch (e) { if (vt === viewTok) closeModal(); showToast(e.message || 'Could not load the document', 'error'); return; }
+  if (vt !== viewTok) return;
   openModal(modalHeader(SINGLE[c.key], sub) + '<div class="px-5 py-4 modal-scroll">' + html + '</div>' +
     modalFooter('<button onclick="doAct(\'download\',' + i + ')" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1"><i class="fa-solid fa-download"></i> Download PDF</button>', BTN_CANCEL), 'max-w-4xl');
 }
+// ============================================================= EDIT (in-page overlay: same fields, rules and payloads as the module pages)
+var ED = null, SOM = {}, _editCust = null, warehouses = [], soList = [];
+var SPIN = '<i class="fa-solid fa-spinner fa-spin"></i>';
+var PRODUCT_API = '/api/products/v1/get-product-list', PROJECT_LIST_API = '/api/projects/v1/get-project-list',
+    WAREHOUSE_API = '/api/warehouses/v1/get-all-warehouses', SO_LIST_API = '/api/sales-orders/sales-order-list';
+var JSON_H = { 'Content-Type': 'application/json' };
+
+function toTitle(s) { return String(s || '').toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
+function stateNameFor(code) { var k = Object.keys(STATE_CODES).find(function (n) { return STATE_CODES[n] === code; }); return k ? toTitle(k) : ''; }
+function currencyForCountry(country) { for (var code in currencyMeta) if (currencyMeta[code].countries.indexOf(country) !== -1) return code; return 'INR'; }
+function getCurrencyRate(c) { return (currencyMeta[c] && currencyMeta[c].rate) || 1; }
+function stateOptions(pos) { return Object.keys(STATE_CODES).map(function (s) { var nm = toTitle(s); return '<option ' + (nm.toLowerCase() === String(pos || '').toLowerCase() ? 'selected' : '') + '>' + nm + '</option>'; }).join(''); }
+function currencyOptions(cur) { return Object.keys(currencyMeta).map(function (c) { return '<option ' + (c === cur ? 'selected' : '') + ' value="' + c + '">' + currencyMeta[c].label + ' — ' + c + ' (' + currencyMeta[c].symbol + ')</option>'; }).join(''); }
+function fld(lab, inputHtml, hint) { return '<div class="mb-2"><label class="form-label">' + lab + '</label>' + inputHtml + (hint ? '<div class="form-hint">' + hint + '</div>' : '') + '</div>'; }
+function edRecalc() { if (ED && ED.recalc) ED.recalc(); }
+function edFooter(lbl) {
+  return modalFooter('', '<button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>' +
+    '<button id="modalSaveBtn" onclick="saveEdit()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-floppy-disk"></i> ' + lbl + '</button>');
+}
+function beginEdit(title, sub) {
+  openModal(modalHeader(title, sub) + '<div class="px-5 py-10 text-center text-gray-400 text-xs">' + SPIN + ' Loading…</div>', 'max-w-5xl');
+  return viewTok;
+}
+function showEdit(title, sub, body, btnLabel) { openModal(modalHeader(title, sub) + '<div class="px-5 py-4 modal-scroll">' + body + '</div>' + edFooter(btnLabel), 'max-w-5xl'); }
+function busyBtn(txt) { var b = document.getElementById('modalSaveBtn'), o = b ? b.innerHTML : ''; if (b) { b.disabled = true; b.innerHTML = SPIN + ' ' + txt; } return function () { if (b) { b.disabled = false; b.innerHTML = o; } }; }
+function finishEdit() { closeModal(); loadStats(); load(true); }
+function g(id) { return document.getElementById(id).value; }
+async function uploadPdfHtml(path, html, name) {
+  var blob = await html2pdf().from('<div style="background:#fff;width:100%">' + html + '</div>', 'string').set({
+    margin: 8, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 }, jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+  }).outputPdf('blob');
+  var f = new FormData(); f.append('file', blob, name);
+  await apiFetch(path, { method: 'POST', body: f });
+}
+
+// ---------- searchable picker (debounce + scroll pagination) ----------
+function closePicker() { var b = document.getElementById('pickerBox'); if (b) b.remove(); document.removeEventListener('mousedown', pickerOutside); }
+function pickerOutside(e) { var b = document.getElementById('pickerBox'); if (b && !b.contains(e.target)) closePicker(); }
+function openPicker(anchor, cfg) {
+  closePicker();
+  var r = anchor.getBoundingClientRect(), box = document.createElement('div');
+  box.id = 'pickerBox';
+  box.style.cssText = 'position:fixed;z-index:300;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);width:' + Math.max(r.width, 320) + 'px;left:' + r.left + 'px;top:' + (r.bottom + 4) + 'px;';
+  box.innerHTML = '<input class="form-input" placeholder="Type 2+ letters to search…" style="margin:6px;width:calc(100% - 12px)"><div style="max-height:220px;overflow-y:auto"></div>';
+  document.body.appendChild(box);
+  var inp = box.firstChild, list = box.lastChild, page = 0, more = true, busy = false, q = '', tk = 0, t;
+  async function loadP(reset) {
+    if (reset) { tk++; page = 0; more = true; busy = false; list.innerHTML = ''; }
+    if (busy || !more) return;
+    busy = true; var my = tk;
+    var ld = document.createElement('div'); ld.textContent = 'Loading…'; ld.style.cssText = 'padding:8px;font-size:11px;color:#9ca3af'; list.appendChild(ld);
+    try {
+      var res = await cfg.fetchPage(q, page);
+      if (my !== tk) return;
+      ld.remove(); more = !!res.hasNext; page = res.nextPage != null ? res.nextPage : page + 1;
+      res.items.forEach(function (it) {
+        var d = document.createElement('div');
+        d.style.cssText = 'padding:7px 10px;font-size:11px;cursor:pointer;border-top:1px solid #f3f4f6';
+        d.innerHTML = cfg.render(it);
+        d.onmouseenter = function () { d.style.background = '#f8fafc'; }; d.onmouseleave = function () { d.style.background = ''; };
+        d.onclick = function () { cfg.onPick(it); closePicker(); };
+        list.appendChild(d);
+      });
+      if (!list.children.length) list.innerHTML = '<div style="padding:8px;font-size:11px;color:#9ca3af">No results</div>';
+    } catch (e) { if (my === tk) { ld.remove(); more = false; showToast(e.message || 'Could not load', 'error'); } }
+    finally { if (my === tk) busy = false; }
+  }
+  list.onscroll = function () { if (list.scrollTop + list.clientHeight >= list.scrollHeight - 24) loadP(false); };
+  inp.oninput = function () { clearTimeout(t); t = setTimeout(function () { var v = inp.value.trim(); if (v.length === 1 || v === q) return; q = v; loadP(true); }, 400); };
+  setTimeout(function () { document.addEventListener('mousedown', pickerOutside); }, 0);
+  inp.focus(); loadP(true);
+}
+async function fetchProductPage(q, page) {
+  var r = await apiFetch(PRODUCT_API + '?page=' + (page || 0) + '&size=20' + (q ? '&search=' + encodeURIComponent(q) : ''), { method: 'GET' });
+  var d = r.data || r, out = [];
+  (d.content || []).forEach(function (p) {
+    var base = { hsn: p.productHsnCode || '', gst: p.productGstRate != null ? Number(p.productGstRate) : null, pid: p.productPrimeId, strId: p.productStrId };
+    if (!p.variants || !p.variants.length) out.push(Object.assign({}, base, { vid: null, name: p.productName, unit: p.productUnit, price: p.productSellingPrice, sub: p.productStrId }));
+    else p.variants.forEach(function (v) {
+      out.push(Object.assign({}, base, { vid: v.variantPrimeId, name: p.productName + ' — ' + v.variantName, unit: v.variantUnit || p.productUnit,
+        price: v.variantSellingPrice != null ? v.variantSellingPrice : p.productSellingPrice, sub: v.variantSku || v.variantStrId }));
+    });
+  });
+  return { items: out, hasNext: !!d.hasNext, nextPage: d.nextPage };
+}
+function productRender(o) { return '<div style="font-weight:600">' + escH(o.name) + '</div><div style="color:#9ca3af;font-size:10px">' + escH(o.sub || '') + ' · ' + Number(o.price || 0).toLocaleString('en-IN') + ' / ' + escH(o.unit || '') + '</div>'; }
+async function fetchProjects(q) {
+  var r = await apiFetch(PROJECT_LIST_API + (q ? '?search=' + encodeURIComponent(q) : ''), { method: 'GET' });
+  var arr = Array.isArray(r) ? r : ((r.data && r.data.content) || r.content || r.data || []);
+  return { items: Array.isArray(arr) ? arr : [], hasNext: false };
+}
+function pickProject(btn) {
+  openPicker(btn, { fetchPage: fetchProjects, render: function (p) { return escH(p.projectName) + ' (' + escH(p.projectCode) + ')'; },
+    onPick: function (p) { btn.dataset.code = p.projectCode; btn.textContent = p.projectName + ' (' + p.projectCode + ')'; } });
+}
+function projectField(code) {
+  return '<div style="display:flex;gap:4px"><button type="button" id="f_projectBtn" class="form-input text-left" data-code="' + escH(code || '') + '" onclick="pickProject(this)">' + (code ? escH(code) : 'Select project…') + '</button>' +
+    '<button type="button" onclick="clearProject()" class="text-gray-400 hover:text-red-500" title="Clear"><i class="fa-solid fa-xmark"></i></button></div>';
+}
+function clearProject() { var b = document.getElementById('f_projectBtn'); b.dataset.code = ''; b.textContent = 'Select project…'; }
+
+// ---------- line items (quotation / challan / invoice / proforma) ----------
+function emptyRow(n) { return '<tr><td colspan="' + n + '" class="text-center py-3 text-gray-400 text-xs">No items added. Click "Add Item" to add products.</td></tr>'; }
+function lineRowHtml(it) {
+  it = it || {}; var o = ED.cols;
+  return '<tr class="border-b border-gray-100 line-item-row" data-pid="' + (it.pid || '') + '" data-vid="' + (it.vid || '') + '" data-name="' + escH(it.name || '') + '" data-unit="' + escH(it.unit || '') + '">' +
+    '<td class="px-2 py-1" style="min-width:190px"><button type="button" class="form-input text-left" onclick="pickProduct(this)">' + (it.name ? escH(it.name) : 'Select item…') + '</button></td>' +
+    (o.desc ? '<td class="px-2 py-1" style="min-width:200px"><textarea rows="2" class="form-input item-desc" placeholder="' + o.desc + '">' + escH(it.desc || '') + '</textarea></td>' : '') +
+    '<td class="px-2 py-1"><input class="form-input item-hsn" style="width:70px" value="' + escH(it.hsn || '') + '"></td>' +
+    '<td class="px-2 py-1"><input type="number" class="form-input item-qty" style="width:62px" value="' + (it.qty != null ? it.qty : 1) + '" onchange="edRecalc()"></td>' +
+    '<td class="px-2 py-1"><input type="number" class="form-input item-rate" style="width:92px" value="' + (it.rate != null ? it.rate : 0) + '" onchange="edRecalc()"></td>' +
+    '<td class="px-2 py-1"><input type="number" class="form-input item-gst" style="width:54px" value="' + (it.gst != null ? it.gst : 0) + '" onchange="edRecalc()"></td>' +
+    (o.serial ? '<td class="px-2 py-1"><input class="form-input item-serial" style="width:110px" placeholder="Internal only" value="' + escH(it.serial || '') + '"></td>' : '') +
+    '<td class="px-2 py-1 text-center"><button type="button" onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition"><i class="fa-solid fa-xmark"></i></button></td></tr>';
+}
+function lineTable(items) {
+  var o = ED.cols, n = 6 + (o.desc ? 1 : 0) + (o.serial ? 1 : 0), th = function (t, c) { return '<th class="px-2 py-1.5 ' + (c || 'text-left') + '">' + t + '</th>'; };
+  return '<div class="mt-3"><div class="flex items-center justify-between mb-1.5"><label class="form-label mb-0">Line Items</label>' +
+    '<button type="button" onclick="addLineItem()" class="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1"><i class="fa-solid fa-plus"></i> Add Item</button></div>' +
+    '<div class="border border-gray-200 rounded-lg overflow-x-auto"><table class="w-full text-xs"><thead class="bg-gray-50"><tr>' + th('Item') + (o.desc ? th(o.descLabel) : '') + th('HSN') +
+    th('Qty', 'text-center') + th('Rate', 'text-center') + th('GST %', 'text-center') + (o.serial ? th('Serial / Batch') : '') + '<th style="width:36px"></th></tr></thead>' +
+    '<tbody id="lineItemsBody" data-n="' + n + '">' + (items.length ? items.map(function (i) { return lineRowHtml(i); }).join('') : emptyRow(n)) + '</tbody></table></div></div>';
+}
+function addLineItem() {
+  var tb = document.getElementById('lineItemsBody'); if (!tb) return;
+  if (tb.querySelector('td[colspan]')) tb.innerHTML = '';
+  tb.insertAdjacentHTML('beforeend', ED.key === 'orders' ? soRowHtml() : lineRowHtml()); edRecalc();
+}
+function removeLineItem(b) {
+  var row = b.closest('tr'); if (row) row.remove();
+  var tb = document.getElementById('lineItemsBody'); if (tb && !tb.children.length) tb.innerHTML = emptyRow(Number(tb.dataset.n) || 6);
+  edRecalc();
+}
+function readItems() {
+  var out = [], v = function (r, s) { var e = r.querySelector(s); return e ? e.value : ''; };
+  document.querySelectorAll('#lineItemsBody .line-item-row').forEach(function (r) {
+    out.push({ pid: r.dataset.pid ? Number(r.dataset.pid) : null, vid: r.dataset.vid ? Number(r.dataset.vid) : null, name: r.dataset.name, unit: r.dataset.unit,
+      desc: v(r, '.item-desc').trim(), hsn: v(r, '.item-hsn'), qty: parseFloat(v(r, '.item-qty')) || 0, rate: parseFloat(v(r, '.item-rate')) || 0,
+      gst: parseFloat(v(r, '.item-gst')) || 0, serial: v(r, '.item-serial').trim() });
+  });
+  return out;
+}
+function pickProduct(btn) {
+  if (ED.key === 'orders') return pickSoProduct(btn);
+  openPicker(btn, { fetchPage: fetchProductPage, render: productRender, onPick: function (o) {
+    var r = btn.closest('tr'); r.dataset.pid = o.pid || ''; r.dataset.vid = o.vid || ''; r.dataset.name = o.name; r.dataset.unit = o.unit || '';
+    btn.textContent = o.name;
+    r.querySelector('.item-rate').value = o.price != null ? o.price : 0;
+    r.querySelector('.item-hsn').value = o.hsn;
+    r.querySelector('.item-gst').value = o.gst != null ? o.gst : 0;
+    var tax = document.getElementById('f_tax');
+    if (ED.syncTax && tax && o.gst != null && [].some.call(tax.options, function (op) { return op.value === String(o.gst); })) tax.value = String(o.gst);
+    edRecalc();
+  } });
+}
+function pickClient(btn) {
+  openPicker(btn, {
+    fetchPage: async function (q) { var s = (q || '').toLowerCase(); return { items: customers.filter(function (c) { return !s || (c.name + ' ' + (c.contactName || '')).toLowerCase().indexOf(s) !== -1; }), hasNext: false }; },
+    render: function (c) { return '<div style="font-weight:600">' + escH(c.name) + '</div><div style="color:#9ca3af;font-size:10px">' + escH(c.contactName || '') + ' · ' + escH(c.gst || 'No GSTIN') + '</div>'; },
+    onPick: function (c) {
+      btn.dataset.id = c.id; btn.textContent = c.name; _editCust = null;
+      document.getElementById('f_pos').value = stateNameFor(c.stateCode) || toTitle(c.state);
+      document.getElementById('f_shipTo').value = (ED.key === 'challans' ? (c.shipAddress || c.address) : c.shipAddress) || '';
+      if (ED.key === 'quotes') { document.getElementById('f_currency').value = currencyForCountry(c.country); updateCurrency(); }
+      else { refreshSoOptions(c, ''); edRecalc(); }
+    }
+  });
+}
+function custFromRecord(e) { return { id: e.customerId, name: e.customerName, contactName: e.contactName, gst: e.customerGST, email: e.customerEmail, state: e.customerState, stateCode: e.customerStateCode, country: e.customerCountry, address: e.customerAddress, shipAddress: e.shipTo }; }
+function updateCurrency() { document.getElementById('f_exchangeRate').value = getCurrencyRate(g('f_currency')); edRecalc(); }
+
 function editCard(c) {
   if (!c.canEdit) { showToast('This record can no longer be edited', 'warning'); return; }
-  window.location.href = PAGES[c.mod] + '?edit=' + encodeURIComponent(c.number) + (c.key === 'proformas' ? '&type=proforma' : '');
+  ({ quotes: openQuoteEdit, challans: openDcEdit, invoices: openInvoiceEdit, proformas: openInvoiceEdit, orders: openSoEdit })[c.key](c);
 }
+function saveEdit() { if (ED) ({ quotes: saveQuote, challans: saveDc, invoices: saveInvoice, proformas: saveInvoice, orders: saveSo })[ED.key](); }
+
+// ============================================================= QUOTATION
+async function openQuoteEdit(c) {
+  var e = c.raw, vt = beginEdit('Edit Quotation', escH(e.number));
+  await orgReady; if (vt !== viewTok) return;
+  ED = { key: 'quotes', card: c, recalc: calcQuoteTotal, cols: { desc: 'Description (one point per line)', descLabel: 'Description' } };
+  _editCust = custFromRecord(e);
+  showEdit('Edit Quotation', escH(e.number),
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+    fld('Quotation #', '<input class="form-input" value="' + escH(e.number) + '" disabled>') +
+    fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">') +
+    fld('Client *', '<button type="button" id="f_clientBtn" class="form-input text-left" data-id="' + (e.customerId || '') + '" onclick="pickClient(this)">' + escH(e.customerName) + '</button>') +
+    fld('Valid Till *', '<input type="date" class="form-input" id="f_validTill" value="' + e.validTill + '">') + '</div>' +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' +
+    fld('Currency', '<select id="f_currency" class="form-input" onchange="updateCurrency()">' + currencyOptions(e.currency) + '</select>') +
+    fld('Exchange Rate', '<input type="number" class="form-input" id="f_exchangeRate" step="0.01" value="' + e.exchangeRate + '" onchange="edRecalc()">') +
+    fld('INR Equivalent', '<input class="form-input" id="f_inr" disabled style="background:#f3f4f6;">') +
+    fld('Place of Supply *', '<select class="form-input" id="f_pos" onchange="edRecalc()"><option value=""></option>' + stateOptions(e.pos) + '</select>', 'Decides CGST+SGST vs IGST') + '</div>' +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' + fld('Reference No', '<input class="form-input" id="f_ref" value="' + escH(e.ref || '') + '">') +
+    '<div class="col-span-3">' + fld('Ship To', '<textarea rows="2" class="form-input" id="f_shipTo">' + escH(e.shipTo || '') + '</textarea>') + '</div></div>' +
+    lineTable(e.items) +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">' +
+    fld('Discount (%)', '<input type="number" class="form-input" id="f_discount" value="' + (e.discount || 0) + '" onchange="edRecalc()">') +
+    fld('Shipping', '<input type="number" class="form-input" id="f_shipping" value="' + (e.shipping || 0) + '" onchange="edRecalc()">') +
+    fld('Other Charges', '<input type="number" class="form-input" id="f_otherCharges" value="' + (e.otherCharges || 0) + '" onchange="edRecalc()">') +
+    fld('Total Amount', '<input class="form-input" id="f_total" disabled style="font-weight:bold;color:#6da84c;">', '<span id="f_taxInfo"></span>') + '</div>' +
+    fld('Customer Notes (printed under the table)', '<textarea rows="2" class="form-input" id="f_notes">' + escH(e.notes || '') + '</textarea>') +
+    fld('Terms & Conditions', '<textarea rows="3" class="form-input" id="f_terms">' + escH(e.terms || '') + '</textarea>'), 'Update Quotation');
+  setTimeout(calcQuoteTotal, 50);
+}
+function formQuote() {
+  var n = function (i) { return parseFloat(document.getElementById(i).value) || 0; }, pos = g('f_pos');
+  return { items: readItems().filter(function (i) { return i.name; }), discount: n('f_discount'), shipping: n('f_shipping'), otherCharges: n('f_otherCharges'),
+    pos: pos, posCode: STATE_CODES[String(pos).toLowerCase()] || '', currency: g('f_currency'), exchangeRate: n('f_exchangeRate') || 1 };
+}
+function calcQuoteTotal() {
+  var q = formQuote(), t = calcTotals(q);
+  document.getElementById('f_total').value = fm(t.total, q.currency);
+  document.getElementById('f_inr').value = money(t.total * q.exchangeRate, 'INR');
+  document.getElementById('f_taxInfo').textContent = (t.same ? 'CGST + SGST' : 'IGST') + ': ' + fm(t.tax, q.currency) + ' (company state ' + (company.stateCode || '?') + ' vs supply state ' + (q.posCode || '?') + ')';
+}
+async function saveQuote() {
+  var id = ED.card.id, cb = document.getElementById('f_clientBtn');
+  var cust = customers.find(function (c) { return String(c.id) === String(cb.dataset.id); }) || _editCust;
+  var q = formQuote(); q.items = q.items.filter(function (i) { return i.qty > 0 && i.rate >= 0; });
+  if (!g('f_date') || !g('f_validTill') || !cust) { showToast('Please fill Date, Client and Valid Till', 'error'); return; }
+  if (!q.items.length) { showToast('Please add at least one item', 'error'); return; }
+  if (!company.stateCode || !q.posCode) { showToast('Company state or Place of Supply is missing — needed to decide the GST type', 'error'); return; }
+  var dto = {
+    quoteDate: g('f_date'), quoteValidTill: g('f_validTill'), quoteClientPrimeId: Number(cust.id), quoteClientName: cust.contactName || cust.name,
+    quoteClientCompanyName: cust.name, quoteClientGstin: cust.gst, quoteClientEmail: cust.email, quoteClientState: cust.state, quoteClientStateCode: cust.stateCode,
+    quoteClientCountry: cust.country, quoteClientBillingAddress: cust.address, quoteShippingAddress: g('f_shipTo'), quoteCompanyStateCode: company.stateCode,
+    quotePlaceOfSupply: q.pos, quotePlaceOfSupplyStateCode: q.posCode, quoteCurrency: q.currency, quoteExchangeRate: q.exchangeRate, quoteDiscountPercent: q.discount,
+    quoteShippingCharges: q.shipping, quoteOtherCharges: q.otherCharges, quoteReferenceNumber: g('f_ref'), quoteCustomerNotes: g('f_notes'), quoteTerms: g('f_terms'),
+    quoteItems: q.items.map(function (i) { return { quoteItemProductId: i.pid, quoteItemVariantId: i.vid, quoteItemName: i.name, quoteItemDescription: i.desc,
+      quoteItemHsnCode: i.hsn, quoteItemUnit: i.unit, quoteItemQty: i.qty, quoteItemRate: i.rate, quoteItemGstPercent: i.gst }; })
+  };
+  var reset = busyBtn('Saving…');
+  try {
+    await apiFetch('/api/v1/quotes/update/' + id, { method: 'PUT', headers: JSON_H, body: JSON.stringify(dto) });
+    var row = { number: ED.card.number, date: dto.quoteDate, validTill: dto.quoteValidTill, customerName: cust.name, customerAddress: cust.address, customerCountry: cust.country,
+      customerGST: cust.gst, ref: dto.quoteReferenceNumber, pos: q.pos, posCode: q.posCode, currency: q.currency, items: q.items, discount: q.discount,
+      shipping: q.shipping, otherCharges: q.otherCharges, notes: dto.quoteCustomerNotes, terms: dto.quoteTerms };
+    try { await uploadPdfHtml('/api/v1/quotes/' + id + '/upload-pdf', buildQuoteHtml(row), 'quotation.pdf'); showToast('Quotation ' + ED.card.number + ' updated', 'success'); }
+    catch (e) { showToast('Saved, but PDF upload failed: ' + (e.message || ''), 'warning'); }
+    finishEdit();
+  } catch (err) { showToast(err.message || 'Could not save — please try again', 'error'); reset(); }
+}
+
+// ============================================================= DELIVERY CHALLAN
+async function ensureDcLookups() {
+  if (!warehouses.length) { try { var r = await apiFetch(WAREHOUSE_API, { method: 'GET' }), l = Array.isArray(r) ? r : (r.data || []); warehouses = l.filter(function (w) { return w.warehouseStatus === 'ACTIVE'; }); } catch (e) { showToast(e.message || 'Could not load warehouses', 'error'); } }
+  if (!soList.length) { try { var r2 = await apiFetch(SO_LIST_API, { method: 'GET' }); soList = Array.isArray(r2) ? r2 : (r2.data || r2.content || []); } catch (e) { showToast(e.message || 'Could not load sales orders', 'error'); } }
+}
+function refreshSoOptions(cust, selected) {
+  var sel = document.getElementById('f_so'); if (!sel) return;
+  var list = soList.filter(function (s) { return !cust || !cust.strId || s.clientId === cust.strId; });
+  var html = '<option value="">None</option>' + list.map(function (s) { return '<option value="' + escH(s.number) + '">' + escH(s.number) + '</option>'; }).join('');
+  if (selected && !list.some(function (s) { return s.number === selected; })) html += '<option value="' + escH(selected) + '">' + escH(selected) + '</option>';
+  sel.innerHTML = html; sel.value = selected || '';
+}
+function toggleDest() { document.getElementById('destWrap').style.display = g('f_type') === 'STOCK_TRANSFER' ? '' : 'none'; }
+async function openDcEdit(c) {
+  var e = c.raw, vt = beginEdit('Edit Delivery Challan', escH(e.number));
+  await Promise.all([orgReady, ensureDcLookups()]); if (vt !== viewTok) return;
+  ED = { key: 'challans', card: c, recalc: calcDcTotal, cols: { desc: 'Description', descLabel: 'Description', serial: true } };
+  _editCust = custFromRecord(e);
+  var whOpts = function (sel) { return warehouses.map(function (w) { return '<option value="' + w.warehouseStrId + '"' + (w.warehouseStrId === sel ? ' selected' : '') + '>' + escH(w.warehouseName) + '</option>'; }).join(''); };
+  var typeOpts = DC_TYPES.map(function (t) { return '<option value="' + t[0] + '"' + (t[0] === e.type ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('');
+  showEdit('Edit Delivery Challan', escH(e.number),
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+    fld('DC #', '<input class="form-input" value="' + escH(e.number) + '" disabled>') +
+    fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">') +
+    fld('Client *', '<button type="button" id="f_clientBtn" class="form-input text-left" data-id="' + (e.customerId || '') + '" onclick="pickClient(this)">' + escH(e.customerName) + '</button>') +
+    fld('Challan Type *', '<select class="form-input" id="f_type" onchange="toggleDest()">' + typeOpts + '</select>') + '</div>' +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' + fld('SO Reference', '<select class="form-input" id="f_so"></select>') +
+    fld('Reference No', '<input class="form-input" id="f_ref" value="' + escH(e.ref || '') + '">') + fld('Project Code', projectField(e.projectCode)) +
+    fld('Place of Supply *', '<select class="form-input" id="f_pos" onchange="edRecalc()"><option value=""></option>' + stateOptions(e.pos) + '</select>', 'Decides CGST+SGST vs IGST') + '</div>' +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' + fld('Warehouse *', '<select class="form-input" id="f_wh">' + whOpts(e.warehouseStrId) + '</select>', 'Stock reduces from here on dispatch') +
+    '<div id="destWrap" style="display:none">' + fld('Destination Warehouse *', '<select class="form-input" id="f_destWh"><option value="">Select…</option>' + whOpts(e.destStrId) + '</select>', 'Stock is added here on dispatch') + '</div>' +
+    '<div class="col-span-2">' + fld('Ship To', '<textarea rows="2" class="form-input" id="f_shipTo">' + escH(e.shipTo || '') + '</textarea>') + '</div></div>' +
+    lineTable(e.items) +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">' + fld('Total Amount', '<input class="form-input" id="f_total" disabled style="font-weight:bold;color:#6da84c;">', '<span id="f_taxInfo"></span>') + '</div>' +
+    fld('Notes', '<textarea rows="2" class="form-input" id="f_notes">' + escH(e.notes || '') + '</textarea>'), 'Update Delivery Challan');
+  refreshSoOptions(customers.find(function (x) { return String(x.id) === String(e.customerId); }), e.soNumber || '');
+  toggleDest(); setTimeout(calcDcTotal, 50);
+}
+function calcDcTotal() {
+  var pos = g('f_pos'), posCode = STATE_CODES[String(pos).toLowerCase()] || '', sub = 0, tax = 0;
+  readItems().filter(function (i) { return i.name; }).forEach(function (i) { var a = i.qty * i.rate; sub += a; tax += a * i.gst / 100; });
+  var same = !!company.stateCode && company.stateCode === posCode;
+  document.getElementById('f_total').value = fm(sub + tax, 'INR');
+  document.getElementById('f_taxInfo').textContent = (same ? 'CGST + SGST' : 'IGST') + ': ' + fm(tax, 'INR') + ' (company state ' + (company.stateCode || '?') + ' vs supply state ' + (posCode || '?') + ')';
+}
+async function saveDc() {
+  var id = ED.card.id, cb = document.getElementById('f_clientBtn');
+  var cust = customers.find(function (c) { return String(c.id) === String(cb.dataset.id); }) || _editCust;
+  var items = readItems().filter(function (i) { return i.name && i.qty > 0 && i.rate >= 0; });
+  var pos = g('f_pos'), posCode = STATE_CODES[String(pos).toLowerCase()] || '', type = g('f_type');
+  if (!g('f_date') || !cust) { showToast('Please fill Date and Client', 'error'); return; }
+  if (!items.length) { showToast('Please add at least one item', 'error'); return; }
+  if (items.some(function (i) { return !i.pid; })) { showToast('Every item must be selected from the product list', 'error'); return; }
+  if (!g('f_wh')) { showToast('Please select a warehouse', 'error'); return; }
+  if (type === 'STOCK_TRANSFER' && !g('f_destWh')) { showToast('Please select the destination warehouse', 'error'); return; }
+  if (!company.stateCode || !posCode) { showToast('Company state or Place of Supply is missing — needed to decide the GST type', 'error'); return; }
+  var dto = {
+    dcDate: g('f_date'), dcType: type, dcClientPrimeId: Number(cust.id), dcClientName: cust.contactName || cust.name, dcClientCompanyName: cust.name,
+    dcClientGstin: cust.gst, dcClientEmail: cust.email, dcClientState: cust.state, dcClientStateCode: cust.stateCode, dcClientCountry: cust.country,
+    dcClientBillingAddress: cust.address, dcShippingAddress: g('f_shipTo'), dcCompanyStateCode: company.stateCode, dcPlaceOfSupply: pos, dcPlaceOfSupplyStateCode: posCode,
+    dcSoNumber: g('f_so'), dcReferenceNumber: g('f_ref'), dcProjectCode: document.getElementById('f_projectBtn').dataset.code || '',
+    dcWarehouseStrId: g('f_wh'), dcDestWarehouseStrId: type === 'STOCK_TRANSFER' ? g('f_destWh') : null, dcNotes: g('f_notes'),
+    dcItems: items.map(function (i) { return { dcItemProductId: i.pid, dcItemVariantId: i.vid, dcItemName: i.name, dcItemDescription: i.desc, dcItemHsnCode: i.hsn, dcItemUnit: i.unit,
+      dcItemQty: i.qty, dcItemRate: i.rate, dcItemGstPercent: i.gst, dcItemSerial: i.serial }; })
+  };
+  var reset = busyBtn('Saving…');
+  try {
+    var saved = mapDc(await apiFetch('/api/v1/delivery-challans/update/' + id, { method: 'PUT', headers: JSON_H, body: JSON.stringify(dto) }));
+    try { await uploadPdfHtml('/api/v1/delivery-challans/' + id + '/upload-pdf', buildDcHtml(saved), 'delivery-challan.pdf'); showToast('Delivery challan ' + saved.number + ' updated', 'success'); }
+    catch (e) { showToast('Saved, but PDF upload failed: ' + (e.message || ''), 'warning'); }
+    finishEdit();
+  } catch (err) { showToast(err.message || 'Could not save — please try again', 'error'); reset(); }
+}
+
+// ============================================================= INVOICE / PROFORMA
+function selCustomer() { var v = g('f_customer'); return customers.find(function (c) { return String(c.id) === String(v); }) || _editCust; }
+function updateCustomerDetails() {
+  var c = selCustomer(); if (!c) return;
+  document.getElementById('f_placeSupply').value = c.state || c.country || '';
+  document.getElementById('f_shipTo').value = c.shipAddress || '';
+  document.getElementById('f_currency').value = currencyForCountry(c.country);
+  updateCurrency();
+}
+async function openInvoiceEdit(c) {
+  var e = c.raw, isPro = c.key === 'proformas', ttl = isPro ? 'Edit Proforma Invoice' : 'Edit Invoice', vt = beginEdit(ttl, escH(e.number));
+  await orgReady; if (vt !== viewTok) return;
+  ED = { key: c.key, card: c, recalc: calcInvoiceTotal, syncTax: true, cols: { desc: 'Line note (optional)', descLabel: 'Note' } };
+  _editCust = { id: e.customerId, name: e.customerName, gst: e.customerGST, email: e.customerEmail, state: e.customerState, stateCode: e.customerStateCode, address: e.customerAddress, shipAddress: e.shipTo, country: '' };
+  var items = e.items.map(function (i) { return { pid: i.itemId, vid: i.variantId, name: i.name, unit: i.unit, hsn: i.hsn, qty: i.qty, rate: i.rate, gst: i.gst, desc: i.note }; });
+  var custOpts = customers.map(function (x) { return '<option ' + (String(x.id) === String(e.customerId) ? 'selected' : '') + ' value="' + x.id + '">' + escH(x.name) + ' (' + escH(x.country) + ')</option>'; }).join('');
+  if (!customers.some(function (x) { return String(x.id) === String(e.customerId); })) custOpts = '<option selected value="' + escH(e.customerId) + '">' + escH(e.customerName) + '</option>' + custOpts;
+  var stOpts = Object.keys(ST[c.key]).map(function (v) { return '<option ' + (e.status === v ? 'selected' : '') + ' value="' + v + '">' + ST[c.key][v][0] + '</option>'; }).join('');
+  showEdit(ttl, escH(e.number),
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+    fld(isPro ? 'Proforma #' : 'Invoice #', '<input type="text" class="form-input" value="' + escH(e.number) + '" disabled>') +
+    fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">') +
+    fld('Customer *', '<select id="f_customer" class="form-input" onchange="updateCustomerDetails()">' + custOpts + '</select>') +
+    fld(isPro ? 'Valid Until *' : 'Due Date *', '<input type="date" class="form-input" id="f_dueDate" value="' + (isPro ? (e.validUntil || e.dueDate) : e.dueDate) + '">') + '</div>' +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' +
+    fld('Currency', '<select id="f_currency" class="form-input" onchange="updateCurrency()">' + currencyOptions(e.currency) + '</select>', "Auto-set from customer's country; override if needed") +
+    fld('Exchange Rate', '<input type="number" class="form-input" id="f_exchangeRate" value="' + e.exchangeRate + '" step="0.01" onchange="edRecalc()">') +
+    fld('INR Equivalent', '<input type="text" class="form-input" id="f_inrEquivalent" disabled style="background:#f3f4f6;">') +
+    fld('Place of Supply', '<input type="text" class="form-input" id="f_placeSupply" value="' + escH(e.placeOfSupply || '') + '">') + '</div>' +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' + fld('Project Code', projectField(e.projectCode)) +
+    fld('Reference No', '<input class="form-input" id="f_refNo" value="' + escH(e.refNo || '') + '">') +
+    '<div class="col-span-2">' + fld('Ship To', '<textarea rows="2" class="form-input" id="f_shipTo">' + escH(e.shipTo || '') + '</textarea>') + '</div></div>' +
+    lineTable(items) +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">' +
+    fld('Discount (%)', '<input type="number" class="form-input" id="f_discount" value="' + (e.discount || 0) + '" onchange="edRecalc()">') +
+    fld('Tax Rate (%)', '<select class="form-input" id="f_tax" onchange="edRecalc()">' + [0, 5, 12, 18, 28].map(function (n) { return '<option ' + (e.tax == n ? 'selected' : '') + '>' + n + '</option>'; }).join('') + '</select>') +
+    fld('Shipping', '<input type="number" class="form-input" id="f_shipping" value="' + (e.shipping || 0) + '" onchange="edRecalc()">') +
+    fld('Other Charges', '<input type="number" class="form-input" id="f_otherCharges" value="' + (e.otherCharges || 0) + '" onchange="edRecalc()">') + '</div>' +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' + fld('Status', '<select class="form-input" id="f_status">' + stOpts + '</select>') +
+    fld('Total Amount', '<input type="text" class="form-input" id="f_total" disabled style="font-weight:bold;color:#6da84c;">') + '</div>' +
+    fld('Terms & Conditions / Payment Terms', '<textarea rows="2" class="form-input" id="f_terms">' + escH(e.terms || '') + '</textarea>'), 'Update ' + (isPro ? 'Proforma' : 'Invoice'));
+  setTimeout(calcInvoiceTotal, 50);
+}
+function calcInvoiceTotal() {
+  var sub = 0;
+  readItems().forEach(function (i) { sub += i.qty * i.rate; });
+  var n = function (i) { return parseFloat(document.getElementById(i).value) || 0; };
+  var after = sub - sub * (n('f_discount') / 100), total = after + after * (n('f_tax') / 100) + n('f_shipping') + n('f_otherCharges');
+  document.getElementById('f_total').value = formatCurrency(total, g('f_currency'));
+  document.getElementById('f_inrEquivalent').value = money(total * (n('f_exchangeRate') || 1), 'INR');
+  return total;
+}
+async function saveInvoice() {
+  var isPro = ED.key === 'proformas', P = isPro ? 'proforma' : 'invoice', id = ED.card.id, raw = ED.card.raw, type = isPro ? 'proforma' : 'invoice';
+  var n = function (i) { return parseFloat(document.getElementById(i).value) || 0; };
+  var date = g('f_date'), due = g('f_dueDate'), cust = selCustomer(), cur = g('f_currency'), rate = n('f_exchangeRate') || 1;
+  var disc = n('f_discount'), tax = n('f_tax'), ship = n('f_shipping'), oth = n('f_otherCharges');
+  if (!date || !due || !cust) { showToast('Please fill Date, Customer and ' + (isPro ? 'Valid Until' : 'Due Date'), 'error'); return; }
+  var its = readItems().filter(function (i) { return i.qty > 0 && i.rate > 0 && i.name; }).map(function (i) {
+    return { itemId: i.pid, variantId: i.vid, name: i.name, hsn: i.hsn, qty: i.qty, rate: i.rate, gst: i.gst, unit: i.unit, note: i.desc };
+  });
+  if (!its.length) { showToast('Please add at least one item', 'error'); return; }
+  var sub = its.reduce(function (s, i) { return s + i.qty * i.rate; }, 0), after = sub - sub * disc / 100;
+  var total = after + after * tax / 100 + ship + oth, totalINR = total * rate;
+  var proj = document.getElementById('f_projectBtn').dataset.code || '', ref = g('f_refNo'), shipTo = g('f_shipTo'), pos = g('f_placeSupply') || cust.state || '', terms = g('f_terms');
+  var tpl = isPro ? null : (raw.templateId || DEFAULT_TEMPLATE), addr = cust.invAddress || cust.address;
+  var f = { Date: date, CustomerId: isNaN(Number(cust.id)) ? cust.id : Number(cust.id), CustomerName: cust.name, CustomerGst: cust.gst, CustomerEmail: cust.email,
+    CustomerState: cust.state, CustomerStateCode: cust.stateCode, CustomerAddress: addr, ShippingAddress: shipTo, Currency: cur, ExchangeRate: rate,
+    DiscountPercent: disc, TaxPercent: tax, ShippingCharges: ship, OtherCharges: oth, Status: g('f_status'), PlaceOfSupply: pos, Terms: terms, ReferenceNumber: ref, ProjectCode: proj };
+  f[isPro ? 'ValidUntil' : 'DueDate'] = due;
+  var dto = {}; Object.keys(f).forEach(function (k) { dto[P + k] = f[k]; });
+  dto[P + 'Items'] = its.map(function (i) {
+    var o = {}; o[P + 'ItemProductId'] = i.itemId; o[P + 'ItemVariantId'] = i.variantId; o[P + 'ItemName'] = i.name; o[P + 'ItemHsnCode'] = i.hsn;
+    o[P + 'ItemQty'] = i.qty; o[P + 'ItemRate'] = i.rate; o[P + 'ItemGstPercent'] = i.gst; o[P + 'ItemUnit'] = i.unit; o[P + 'ItemDescription'] = i.note; return o;
+  });
+  if (!isPro) dto.invoiceTemplateId = tpl;
+  var reset = busyBtn('Saving…');
+  try {
+    await apiFetch((isPro ? '/api/v1/proformas/update/' : '/api/v1/invoices/update/') + id, { method: 'PUT', headers: JSON_H, body: JSON.stringify(dto) });
+    var row = { invoiceType: type, number: ED.card.number, date: date, dueDate: due, validUntil: due, customerName: cust.name, customerGST: cust.gst, customerState: cust.state,
+      customerStateCode: cust.stateCode, customerAddress: addr, shipTo: shipTo, projectCode: proj, refNo: ref, currency: cur, exchangeRate: rate, items: its,
+      discount: disc, tax: tax, shipping: ship, otherCharges: oth, total: total, totalINR: totalINR, placeOfSupply: pos, terms: terms };
+    try { await uploadPdfHtml((isPro ? '/api/v1/proformas/' : '/api/v1/invoices/') + id + '/upload-pdf', buildDocumentInnerHtml(row, tpl), 'document.pdf'); showToast((isPro ? 'Proforma ' : 'Invoice ') + ED.card.number + ' updated', 'success'); }
+    catch (e) { showToast('Saved, but PDF upload failed: ' + (e.message || ''), 'warning'); }
+    finishEdit();
+  } catch (err) { showToast(err.message || 'Could not save — please try again', 'error'); reset(); }
+}
+
+// ============================================================= SALES ORDER
+var PAY_TERMS = ['Net 7 days', 'Net 15 days', 'Net 30 days', 'Net 45 days', 'Advance Payment', 'Cash on Delivery'];
+async function fetchRefPage(kind, q, page) {
+  var pn = page > 0 ? page : 1, enc = q ? '&search=' + encodeURIComponent(q) : '', r;
+  if (kind === 'client') {
+    r = await apiFetch('/api/clients/v1/client-list?page=' + (page || 0) + '&size=20' + enc, { method: 'GET' });
+    return { items: (r.content || []).map(function (c) { return { value: c.clientStrId, label: c.clientName || c.clientStrId, sub: [c.clientCompanyName, c.clientStrId].filter(Boolean).join(' · '), raw: c }; }), hasNext: !!r.hasNext, nextPage: r.nextPage };
+  }
+  if (kind === 'project') {
+    r = await apiFetch('/api/projects/v1/get-all-projects?status=all&page=' + pn + '&size=20' + enc, { method: 'GET' });
+    var d = (r && r.data) || {}, pg = d.pagination || {};
+    return { items: (d.projects || []).map(function (p) { return { value: p.id, label: p.name || p.id, sub: [p.code || p.id, p.customer].filter(Boolean).join(' · ') }; }), hasNext: !!pg.hasNext, nextPage: pn + 1 };
+  }
+  var pro = kind === 'pi';
+  r = await apiFetch((pro ? '/api/v1/proformas/get-all-proforma' : '/api/v1/quotes/get-all-quotes') + '?pageNumber=' + pn + '&pageSize=20' + enc, { method: 'GET' });
+  return { items: (r.content || []).map(function (x) {
+    var id = pro ? x.proformaStrId : x.quoteStrId;
+    return { value: id, label: id, sub: [pro ? x.proformaCustomerName : (x.quoteClientCompanyName || x.quoteClientName), pro ? x.proformaStatus : x.quoteStatus].filter(Boolean).join(' · ') };
+  }), hasNext: pn < (r.totalPages || 1), nextPage: pn + 1 };
+}
+function pickRef(kind, btn) {
+  openPicker(btn, {
+    fetchPage: function (q, page) { return fetchRefPage(kind, q, page); },
+    render: function (o) { return '<div style="font-weight:600">' + escH(o.label) + '</div>' + (o.sub ? '<div style="color:#9ca3af;font-size:10px">' + escH(o.sub) + '</div>' : ''); },
+    onPick: function (o) {
+      SOM[kind] = { value: o.value, label: o.label }; btn.textContent = o.label;
+      if (kind === 'client' && o.raw) { // default the delivery location to the client's shipping address, never overwrite what was typed
+        var addr = o.raw.clientShippingAddress || '', el = document.getElementById('f_deliveryLocation');
+        if (addr && el && (!el.value || el.value === SOM.autoDelivery)) { el.value = addr; SOM.autoDelivery = addr; }
+      }
+    }
+  });
+}
+function clearRef(kind) { SOM[kind] = null; document.getElementById('f_' + kind).textContent = '— None —'; }
+async function fetchSoProducts(q, page) {
+  var r = await apiFetch(PRODUCT_API + '?page=' + (page || 0) + '&size=20' + (q ? '&search=' + encodeURIComponent(q) : ''), { method: 'GET' }), d = (r && r.data) || {};
+  return { items: (d.content || []).map(function (p) { return { strId: p.productStrId, name: p.productName || p.productStrId, price: p.productSellingPrice, unit: p.productUnit, sub: p.productStrId }; }), hasNext: !!d.hasNext, nextPage: d.nextPage };
+}
+function pickSoProduct(btn) {
+  openPicker(btn, { fetchPage: fetchSoProducts, render: productRender, onPick: function (o) {
+    var r = btn.closest('tr'); r.dataset.itemid = o.strId; btn.textContent = o.name;
+    var price = Number(o.price); r.querySelector('.item-rate').value = isNaN(price) ? 0 : price; calcSOTotal();
+  } });
+}
+function soRowHtml(it) {
+  it = it || {};
+  return '<tr class="border-b border-gray-100 line-item-row" data-itemid="' + escH(it.itemId || '') + '">' +
+    '<td class="px-2 py-1" style="min-width:240px"><button type="button" class="form-input text-left" onclick="pickProduct(this)">' + (it.itemId ? escH(it.name || it.itemId) : 'Select product…') + '</button></td>' +
+    '<td class="px-2 py-1"><input type="number" min="0" step="1" class="form-input item-qty" value="' + (it.qty != null ? it.qty : 1) + '" onchange="edRecalc()"></td>' +
+    '<td class="px-2 py-1"><input type="number" min="0" step="0.01" class="form-input item-rate" value="' + (it.rate != null ? it.rate : 0) + '" onchange="edRecalc()"></td>' +
+    '<td class="px-2 py-1 text-center"><button type="button" onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition"><i class="fa-solid fa-xmark"></i></button></td></tr>';
+}
+function calcSOTotal() {
+  var sub = 0;
+  document.querySelectorAll('#lineItemsBody .line-item-row').forEach(function (r) {
+    var qi = r.querySelector('.item-qty'), ri = r.querySelector('.item-rate'), q = Math.max(0, parseFloat(qi.value) || 0), rt = Math.max(0, parseFloat(ri.value) || 0);
+    qi.value = q; ri.value = rt; sub += q * rt;
+  });
+  var di = document.getElementById('f_discount'), disc = Math.min(100, Math.max(0, parseFloat(di.value) || 0)); di.value = disc;
+  var after = sub - sub * disc / 100, total = after + after * ((parseFloat(g('f_tax')) || 0) / 100);
+  document.getElementById('f_total').value = money(total, 'INR'); return total;
+}
+async function openSoEdit(c) {
+  var vt = beginEdit('Edit Sales Order', escH(c.number)), f;
+  try { f = await loadSoFull(c.id); } catch (err) { if (vt === viewTok) closeModal(); showToast(err.message || 'Could not load the order', 'error'); return; }
+  if (vt !== viewTok) return;
+  var e = f.so;
+  ED = { key: 'orders', card: c, recalc: calcSOTotal };
+  SOM = { client: { value: e.clientId, label: e.clientName || e.clientId }, quotation: e.quotationReference ? { value: e.quotationReference, label: e.quotationReference } : null,
+    pi: e.piReference ? { value: e.piReference, label: e.piReference } : null, project: e.projectReference ? { value: e.projectReference, label: f.pl || e.projectReference } : null, autoDelivery: '' };
+  var refBtn = function (k, clearable) {
+    return '<div style="display:flex;gap:4px"><button type="button" id="f_' + k + '" class="form-input text-left" onclick="pickRef(\'' + k + '\',this)">' + escH(SOM[k] ? SOM[k].label : '— None —') + '</button>' +
+      (clearable ? '<button type="button" onclick="clearRef(\'' + k + '\')" class="text-gray-400 hover:text-red-500" title="Clear"><i class="fa-solid fa-xmark"></i></button>' : '') + '</div>';
+  };
+  showEdit('Edit Sales Order', escH(e.number),
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+    fld('SO #', '<input type="text" class="form-input" value="' + escH(e.number) + '" disabled>') +
+    fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + escH(e.date) + '">') +
+    fld('Client *', refBtn('client', false)) +
+    fld('Expected Delivery *', '<input type="date" class="form-input" id="f_delivery" value="' + escH(e.expectedDelivery) + '">') + '</div>' +
+    '<div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">' +
+    fld('Delivery Location', '<input type="text" class="form-input" id="f_deliveryLocation" value="' + escH(e.deliveryLocation || '') + '" placeholder="Delivery address">') +
+    fld('Payment Terms', '<select class="form-input" id="f_paymentTerms">' + PAY_TERMS.map(function (t) { return '<option ' + (e.paymentTerms === t ? 'selected' : '') + '>' + t + '</option>'; }).join('') + '</select>') +
+    fld('Status', '<input type="text" class="form-input" value="' + escH(label(e.status)) + '" disabled>', 'Use Approve / Reject on the Sales Orders page to change this') + '</div>' +
+    '<div class="mt-3 pt-3 border-t border-gray-100"><label class="form-label" style="margin-bottom:6px;">Linked References</label><div class="grid grid-cols-2 md:grid-cols-3 gap-3">' +
+    fld('Quotation Reference', refBtn('quotation', true)) + fld('PI Reference', refBtn('pi', true)) + fld('Project Reference', refBtn('project', true)) + '</div></div>' +
+    '<div class="mt-3"><div class="flex items-center justify-between mb-1.5"><label class="form-label mb-0">Line Items</label>' +
+    '<button type="button" onclick="addLineItem()" class="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1"><i class="fa-solid fa-plus"></i> Add Item</button></div>' +
+    '<div class="border border-gray-200 rounded-lg overflow-hidden"><table class="w-full text-xs"><thead class="bg-gray-50"><tr><th class="px-2 py-1.5 text-left">Product</th><th class="px-2 py-1.5 text-center">Qty</th><th class="px-2 py-1.5 text-center">Rate</th><th style="width:36px"></th></tr></thead>' +
+    '<tbody id="lineItemsBody" data-n="4">' + (e.items.length ? e.items.map(soRowHtml).join('') : emptyRow(4)) + '</tbody></table></div></div>' +
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">' +
+    fld('Discount (%)', '<input type="number" min="0" max="100" step="0.01" class="form-input" id="f_discount" value="' + e.discount + '" onchange="edRecalc()">') +
+    fld('Tax Rate (%)', '<select class="form-input" id="f_tax" onchange="edRecalc()">' + [0, 5, 12, 18, 28].map(function (n) { return '<option ' + (e.tax == n ? 'selected' : '') + '>' + n + '</option>'; }).join('') + '</select>') +
+    fld('Total Amount', '<input type="text" class="form-input" id="f_total" disabled style="font-weight:bold;color:#6da84c;">') +
+    fld('Fulfillment Status', '<input type="text" class="form-input" value="' + escH(label(e.fulfillmentStatus)) + '" disabled>', 'Updated automatically from deliveries') + '</div>' +
+    fld('Notes', '<textarea rows="2" class="form-input" id="f_notes" placeholder="Any additional notes">' + escH(e.notes || '') + '</textarea>'), 'Update Sales Order');
+  calcSOTotal();
+}
+async function saveSo() {
+  var id = ED.card.id, date = g('f_date'), clientId = SOM.client ? SOM.client.value : '', expectedDelivery = g('f_delivery');
+  if (!date || !clientId || !expectedDelivery) { showToast('Please fill all required fields (Date, Client, Expected Delivery)', 'error'); return; }
+  var items = [], seen = {}, dup = false, missing = false;
+  document.querySelectorAll('#lineItemsBody .line-item-row').forEach(function (r) {
+    var itemId = r.dataset.itemid || '', qty = Math.max(0, Math.floor(parseFloat(r.querySelector('.item-qty').value) || 0)), rate = Math.max(0, parseFloat(r.querySelector('.item-rate').value) || 0);
+    if (qty > 0) { if (!itemId) { missing = true; return; } if (seen[itemId]) { dup = true; return; } seen[itemId] = true; items.push({ itemId: itemId, qty: qty, rate: rate }); }
+  });
+  if (missing) { showToast('Select a product for every line item', 'error'); return; }
+  if (dup) { showToast('Each item can only appear once — merge duplicate line items', 'error'); return; }
+  if (!items.length) { showToast('Please add at least one item to the sales order', 'error'); return; }
+  if (expectedDelivery < date) { showToast('Expected delivery cannot be before the order date', 'error'); return; }
+  var payload = { date: date, clientId: clientId, deliveryLocation: g('f_deliveryLocation') || '', expectedDelivery: expectedDelivery, paymentTerms: g('f_paymentTerms'), items: items,
+    discount: Math.min(100, Math.max(0, parseFloat(g('f_discount')) || 0)), tax: parseFloat(g('f_tax')) || 0, notes: g('f_notes') || '',
+    quotationReference: SOM.quotation ? SOM.quotation.value : null, piReference: SOM.pi ? SOM.pi.value : null, projectReference: SOM.project ? SOM.project.value : null };
+  var reset = busyBtn('Saving…');
+  try {
+    await apiFetch('/api/sales-orders/update-sales-order/' + encodeURIComponent(id), { method: 'PUT', headers: JSON_H, body: JSON.stringify(payload) });
+    showToast('Sales Order ' + ED.card.number + ' updated', 'success'); finishEdit();
+  } catch (err) { showToast('Save failed: ' + err.message, 'error'); reset(); }
+}
+
 async function downloadCard(c) {
   if (c.key === 'orders') {
     // Sales Orders have no stored PDF, so it is generated here from the same preview
@@ -871,7 +1620,7 @@ async function confirmDelete(i) {
   var c = cards[i]; if (!c) return;
   try {
     await apiFetch(SRC[c.key].del + encodeURIComponent(c.id), { method: 'DELETE' });
-    closeModal(); showToast(SINGLE[c.key] + ' deleted', 'warning'); loadStats(); load();
+    closeModal(); showToast(SINGLE[c.key] + ' deleted', 'warning'); loadStats(); load(true);
   } catch (e) { closeModal(); showToast(e.message || 'Could not delete', 'error'); }
 }
 

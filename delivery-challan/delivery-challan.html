@@ -495,7 +495,7 @@
     var PRODUCT_API = '/api/products/v1/get-product-list';
     var WAREHOUSE_API = '/api/warehouses/v1/get-all-warehouses';
     var SO_API = '/api/sales-orders/sales-order-list';
-    var PROJECT_API = '';                                 // TODO: set your project list API path (same one used on invoices)
+    var PROJECT_API = '/api/projects/v1/project-list';                                 // TODO: set your project list API path (same one used on invoices)
     var ORG_STORAGE_KEY = 'siec_organization_id';
     var company = { name: '', address: '', gstin: '', phone: '', email: '', state: '', stateCode: '', logoUrl: '', logoData: '' };
     var DC_TYPES = [['JOB_WORK', 'Job Work'], ['SUPPLY_ON_APPROVAL', 'Supply on Approval'], ['STOCK_TRANSFER', 'Stock Transfer'],
@@ -603,7 +603,6 @@
     function modalFooter(saveLabel, onSaveAttr, extraBtns) {
       return '<div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">' +
         '<div>' + (extraBtns || '') + '</div><div class="flex gap-2">' +
-        '<button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>' +
         '<button id="modalSaveBtn" ' + onSaveAttr + ' class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">' + iconSave() + ' ' + saveLabel + '</button></div></div>';
     }
     function fld(label, inputHtml, hint) {

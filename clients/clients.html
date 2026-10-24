@@ -305,8 +305,8 @@
           <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
             <div>
               <div class="text-[11px] font-semibold tracking-wide uppercase text-primary">Masters</div>
-              <h1 class="text-[24px] sm:text-[28px] font-bold tracking-tight text-gray-900">Clients / Customers</h1>
-              <p class="text-[13px] text-gray-500 mt-1">Customer master with GST details, addresses, credit limits, transactions and statements.</p>
+              <h1 class="text-[16px] sm:text-[22px] font-bold tracking-tight text-gray-900">Clients / Customers</h1>
+              <p class="text-[13px] text-gray-500">Customer master with GST details, addresses, credit limits, transactions and statements.</p>
             </div>
             <div class="flex gap-2.5 flex-wrap">
               <!-- Add Customer Button -->
@@ -513,7 +513,6 @@
     <div class="flex items-center justify-between gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl shrink-0">
       <div>${extraBtns || ''}</div>
       <div class="flex gap-2 ml-auto">
-        <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
         <button ${onSaveAttr} class="px-4 py-2 rounded-lg text-sm font-semibold text-white ${btnClass} transition shadow-sm inline-flex items-center gap-1.5">
           ${iconSave()} ${saveLabel}
         </button>
@@ -644,11 +643,11 @@
       aligns = aligns || [];
       var colHeaders = cols.map(function(c, i) {
         var align = aligns[i] || 'left';
-        return '<th class="text-' + align + ' text-[11px] font-bold uppercase tracking-wide text-gray-500 px-4 py-3 whitespace-nowrap">' + c + '</th>';
+        return '<th class="text-' + align + ' text-[10px] font-semibold uppercase tracking-wide text-gray-500 px-4 py-3 whitespace-nowrap">' + c + '</th>';
       }).join('');
       return `
         <div class="overflow-x-auto">
-          <table class="w-full text-[13px]">
+          <table class="w-full text-[11px]">
             <thead>
               <tr class="bg-gray-200 border border-[#6da84c]">${colHeaders}</tr>
             </thead>
@@ -955,7 +954,7 @@
   // small helper so every row looks identical: bordered card + label + value
   function detailCard(label, valueHtml) {
     return `
-      <div class="border border-gray-200 rounded-lg bg-white px-3.5 py-2.5">
+      <div class="border border-gray-300 rounded-lg bg-white px-3.5 py-2.5">
         <div class="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500 mb-1">${label}</div>
         <div class="text-[13px] text-gray-800">${valueHtml}</div>
       </div>`;
@@ -987,7 +986,7 @@
     <div class="px-6 py-5 modal-scroll">
 
       <!-- Header card -->
-      <div class="flex items-center gap-4 mb-2 p-4 border border-gray-200 rounded-xl bg-gray-50">
+      <div class="flex items-center gap-4 mb-2 p-4 border border-gray-300 rounded-xl bg-gray-50">
         <div class="customer-avatar" style="background:${c.color}; width:52px; height:52px; font-size:20px;">${getInitials(c.name)}</div>
         <div class="min-w-0">
           <div class="text-lg font-bold text-gray-900 truncate">${c.name}</div>

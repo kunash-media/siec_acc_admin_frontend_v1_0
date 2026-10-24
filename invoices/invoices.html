@@ -572,7 +572,7 @@
   <script>
 // ============================================================= CONFIG
 var API_BASE = 'http://localhost:9093';
-var PROJECT_API = '/api/projects/v1/get-project-list'; // GET ?search=  -> [{projectName, projectPrimeId, projectCode}]
+var PROJECT_API = '/api/projects/v1/project-list'; // GET ?search=  -> [{projectName, projectPrimeId, projectCode}]
 var PRODUCT_API = '/api/products/v1/get-product-list'; // GET ?page=&size=&search=
 var DEFAULT_TEMPLATE = 'tpl-modern';
 var ORG_STORAGE_KEY = 'siec_organization_id';
@@ -692,7 +692,6 @@ function modalFooter(saveLabel, onSaveAttr, extraBtns) {
   return `<div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
     <div>${extraBtns || ''}</div>
     <div class="flex gap-2">
-      <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white transition">Cancel</button>
       <button id="modalSaveBtn" ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">${iconSave()} ${saveLabel}</button>
     </div></div>`;
 }

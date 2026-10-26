@@ -305,7 +305,7 @@ function amountInWords(total, cur) {
 async function apiFetch(path, options) {
   options = options || {};
   var res;
-  try { res = await fetch(API_BASE + path, options); }
+   try { res = await fetch(API_BASE + path, Object.assign({ credentials: 'include' }, options)); }
   catch (e) { throw new Error('Something went wrong! Check your connection.'); }
   var isJson = (res.headers.get('content-type') || '').indexOf('application/json') !== -1;
   if (!res.ok) {
@@ -1068,7 +1068,7 @@ async function viewCard(c, i) {
 // ============================================================= EDIT (in-page overlay: same fields, rules and payloads as the module pages)
 var ED = null, SOM = {}, _editCust = null, warehouses = [], soList = [];
 var SPIN = '<i class="fa-solid fa-spinner fa-spin"></i>';
-var PRODUCT_API = '/api/products/v1/get-product-list', PROJECT_LIST_API = '/api/projects/v1/get-project-list',
+var PRODUCT_API = '/api/products/v1/get-product-list', PROJECT_LIST_API = '/api/projects/v1/project-list',
     WAREHOUSE_API = '/api/warehouses/v1/get-all-warehouses', SO_LIST_API = '/api/sales-orders/sales-order-list';
 var JSON_H = { 'Content-Type': 'application/json' };
 

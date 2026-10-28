@@ -867,6 +867,11 @@
     }
 
     // ============================================================= LIST / STATS / FILTERS
+    function canDo(action) { return !window.NavSidebar || NavSidebar.can('quotations', action); }
+    function gateCreate() {
+      document.querySelectorAll('[onclick^="openAddQuotation"]').forEach(function (el) { el.style.display = canDo('CREATE') ? '' : 'none'; });
+    
+    }
     function filterQuotations() { currentPage = 1; clearTimeout(searchTimer); searchTimer = setTimeout(renderQuotations, 350); }
     function goToPage(p) { currentPage = p; renderQuotations(); }
     function changePageSize(v) { pageSize = parseInt(v, 10) || 25; currentPage = 1; renderQuotations(); }
@@ -908,11 +913,13 @@
       var btn = function (fn, title, ico, cls) { return '<button onclick="' + fn + '" class="btn-icon-action ' + (cls || '') + '" title="' + title + '">' + ico + '</button>'; };
       var rows = quotes.length ? quotes.map(function (q) {
         var a = btn("viewQuotation('" + q.id + "')", 'View', iconEye());
-        if (q.status === 'DRAFT' || q.status === 'SENT') a += btn("openSendOverlay('" + q.id + "')", 'Send', iconSend(), 'primary');        if (q.status === 'SENT') a += btn("setStatus('" + q.id + "','ACCEPTED')", 'Mark Accepted', iconCheck(), 'primary') + btn("setStatus('" + q.id + "','DECLINED')", 'Mark Declined', iconBan(), 'danger');
-        if (q.status === 'ACCEPTED' && !q.converted) a += btn("convertToSO('" + q.id + "')", 'Convert to Sales Order', iconConvert(), 'primary');
+        if (canDo('EDIT') && (q.status === 'DRAFT' || q.status === 'SENT')) a += btn("openSendOverlay('" + q.id + "')", 'Send', iconSend(), 'primary');        
+        if (canDo('EDIT') && q.status === 'SENT') a += btn("setStatus('" + q.id + "','ACCEPTED')", 'Mark Accepted', iconCheck(), 'primary') + btn("setStatus('" + q.id + "','DECLINED')", 'Mark Declined', iconBan(), 'danger');
+        if (canDo('EDIT') && q.status === 'ACCEPTED' && !q.converted) a += btn("convertToSO('" + q.id + "')", 'Convert to Sales Order', iconConvert(), 'primary');
         a += btn("downloadQuotation('" + q.id + "')", 'Download PDF', iconDownload(), 'primary');
-        if (!q.converted) a += btn("editQuotation('" + q.id + "')", 'Edit', iconEdit());
-        a += btn("delQuotation('" + q.id + "')", 'Delete', iconTrash(), 'danger');
+        if (canDo('EDIT') && !q.converted) a += btn("editQuotation('" + q.id + "')", 'Edit', iconEdit());
+        
+        if (canDo('DELETE')) a += btn("delQuotation('" + q.id + "')", 'Delete', iconTrash(), 'danger');
         return '<tr class="border-b border-gray-100 table-row-hover">' +
           '<td class="px-3 py-2.5"><div class="font-semibold text-gray-800 text-sm">' + escH(q.number) + '</div><div class="text-[10px] text-gray-400 font-mono">#' + q.id + '</div></td>' +
           '<td class="px-3 py-2.5 text-xs">' + fd(q.date) + '</td><td class="px-3 py-2.5 text-sm text-gray-700">' + escH(q.customerName) + '</td>' +
@@ -936,6 +943,8 @@
         'All Quotations <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + totalElements + '</span>',
         tableHtml(['Quotation #', 'Date', 'Customer', 'Total', 'Valid Till', 'Status', 'Actions'], rows) + pag,
         '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select onchange="changePageSize(this.value)" class="text-[10px] border border-gray-300 rounded-lg px-2 py-1 bg-white outline-none">' + sizes + '</select></div>');
+      
+      gateCreate();
       loadStats();
     }
 
@@ -1021,7 +1030,12 @@
         modalFooter('Delete', 'onclick="confirmDeleteQuotation(\'' + id + '\')"', ''), { width: 'max-w-md' });
     }
     async function confirmDeleteQuotation(id) {
-      try { await apiFetch(QS + '/delete/' + id, { method: 'DELETE' }); closeModal(); showToast('Quotation deleted', 'warning'); renderQuotations(); }
+            try {
+        var r = await apiFetch(QS + '/delete/' + id, { method: 'DELETE' });
+        closeModal();
+        if (r && r.approvalRequired) { showToast('Delete request sent for approval', 'info'); return; }
+        showToast('Quotation deleted', 'warning'); renderQuotations();
+      }
       catch (e) { showToast(e.message || 'Could not delete', 'error'); }
     }
 
@@ -1212,6 +1226,7 @@
       if (i !== -1) { var end = html.indexOf('</div>', i) + 6; header.innerHTML = html.substring(0, end) + searchHtml + html.substring(end); }
     })();
 
+    document.addEventListener('siec:perms', function () { renderQuotations(); });
     (async function init() {
       await Promise.all([loadOrganization(), loadCustomers()]);
       renderQuotations();

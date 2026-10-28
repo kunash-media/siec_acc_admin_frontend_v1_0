@@ -1006,11 +1006,15 @@ async function fetchKey(key, force) {
   var r = await apiFetch(S.list + '?' + p.toString(), { method: 'GET' });
   return { cards: (r.content || []).map(S.card), totalPages: r.totalPages || 1, total: r.totalElements || 0 };
 }
+
+
+var MOD_KEY = { quotes: 'quotations', orders: 'sales-orders', challans: 'delivery-challan', invoices: 'invoices', proformas: 'invoices' };
+function allow(c, action) { return !window.NavSidebar || NavSidebar.can(MOD_KEY[c.key], action); }
 function cardHtml(c, i) {
   var M = MODS[c.mod], st = ST[c.key][c.status] || [c.status, 'badge-gray'];
   var meta = c.meta.map(function (x) { return '<div class="min-w-0"><div class="meta-label">' + x[0] + '</div><div class="meta-value truncate">' + escH(x[1]) + '</div></div>'; }).join('');
   var b = function (fn, t, ic, cls) { return '<button onclick="doAct(\'' + fn + '\',' + i + ')" class="btn-icon-action ' + (cls || '') + '" title="' + t + '"><i class="fa-solid ' + ic + '"></i></button>'; };
-  var acts = b('view', 'View', 'fa-eye') + (c.canEdit ? b('edit', 'Edit', 'fa-pen') : '') + b('download', 'Download PDF', 'fa-download') + (c.canDelete ? b('delete', 'Delete', 'fa-trash', 'danger') : '');
+  var acts = b('view', 'View', 'fa-eye') + (c.canEdit && allow(c, 'EDIT') ? b('edit', 'Edit', 'fa-pen') : '') + b('download', 'Download PDF', 'fa-download') + (c.canDelete && allow(c, 'DELETE') ? b('delete', 'Delete', 'fa-trash', 'danger') : '');
   return '<div class="record-card bg-white rounded-xl p-3.5">' +
     '<div class="flex items-start justify-between gap-2"><div class="flex items-center gap-2.5 min-w-0"><span class="mod-icon ' + M.tint + '"><i class="fa-solid ' + M.icon + '"></i></span>' +
     '<div class="min-w-0"><div class="font-bold text-[13px] text-gray-900 truncate">' + escH(c.number) + '</div><div class="text-[11px] text-gray-500 truncate">' + escH(c.customer) + '</div></div></div>' +
@@ -1619,7 +1623,8 @@ function askDelete(i) {
 async function confirmDelete(i) {
   var c = cards[i]; if (!c) return;
   try {
-    await apiFetch(SRC[c.key].del + encodeURIComponent(c.id), { method: 'DELETE' });
+    var r = await apiFetch(SRC[c.key].del + encodeURIComponent(c.id), { method: 'DELETE' });
+    if (r && r.approvalRequired) { closeModal(); showToast('Delete request sent for approval', 'info'); return; }
     closeModal(); showToast(SINGLE[c.key] + ' deleted', 'warning'); loadStats(); load(true);
   } catch (e) { closeModal(); showToast(e.message || 'Could not delete', 'error'); }
 }

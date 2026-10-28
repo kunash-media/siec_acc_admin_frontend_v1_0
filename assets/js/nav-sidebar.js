@@ -43,6 +43,8 @@
 
   var STORAGE_KEY = "sidebarCollapsed";
   var AUTH_STORAGE_KEY = "adminAuth";
+  var PERMS_STORAGE_KEY = "adminPerms";   // UX cache only; /me overwrites it on every page load
+
      // API field name -> localStorage key name
   var ORG_STORAGE_KEYS = {
     companyName: "companyName",
@@ -56,6 +58,20 @@
   var LOGOUT_URL = API_BASE_URL + "/api/admin/auth/logout";
   var ORG_URL = API_BASE_URL + "/api/organization/get-org";
   var ME_URL = API_BASE_URL + "/api/admin/auth/me";
+
+  // The server identifies the admin from the http-only cookie (permissions + activity log).
+  // Applied once here so module pages don't each need credentials: "include".
+  (function () {
+    if (window.__siecFetchPatched) return;
+    window.__siecFetchPatched = true;
+    var nativeFetch = window.fetch;
+    window.fetch = function (input, init) {
+      if (typeof input === "string" && input.indexOf(API_BASE_URL) === 0 && (!init || init.credentials === undefined)) {
+        init = Object.assign({}, init, { credentials: "include" });
+      }
+      return nativeFetch.call(window, input, init);
+    };
+  })();
 
   /* ====================================================================
    * Auth — login/logout/session module
@@ -89,6 +105,10 @@
         return Auth.fetchAndStoreOrg()
           .catch(function (err) {
             console.warn("[auth] org fetch failed (continuing login):", err);
+          })
+          
+          .then(function () {
+            return Auth.refreshPerms();
           })
           .then(function () {
             return adminInfo;
@@ -132,7 +152,9 @@
           return response.json()
             .then(function (admin) {
               // Cookie is valid: rebuild local cache from server truth.
+
               Auth._storeAdmin(admin);
+              Auth._storePerms(admin.permissions);
               return Auth.fetchAndStoreOrg()
                 .catch(function () { /* org failure shouldn't affect session */ })
                 .then(function () { return true; });
@@ -188,6 +210,27 @@
       return true;
     },
 
+       refreshPerms: function () {
+      return fetch(ME_URL, { method: "GET", credentials: "include" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (me) { if (me) Auth._storePerms(me.permissions); })
+        .catch(function () { /* never blocks login */ });
+    },
+
+    getStoredPerms: function () {
+      try {
+        var raw = localStorage.getItem(PERMS_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+
+    _storePerms: function (perms) {
+      if (!perms) return;
+      try { localStorage.setItem(PERMS_STORAGE_KEY, JSON.stringify(perms)); } catch (e) { /* ignore */ }
+    },
+
     _storeAdmin: function (adminInfo) {
       try {
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
@@ -227,6 +270,7 @@
     _clearAdmin: function () {
       try {
         localStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem(PERMS_STORAGE_KEY);
       } catch (e) {
         /* ignore */
       }
@@ -421,30 +465,7 @@
     '      <li class="sidebar-nav-divider" role="separator"></li>',
     '      <li class="sidebar-nav-heading"><span>Finance</span></li>',
 
-    // '      <li class="sidebar-nav-item">',
-    // '        <a href="/gst/gst-tax.html" class="sidebar-nav-link" data-page="gst-tax">',
-    // '          <span class="sidebar-nav-icon"><i class="fa-solid fa-shield-halved"></i></span>',
-    // '          <span class="sidebar-nav-label">GST / Tax</span>',
-    // '          <span class="sidebar-tooltip">GST / Tax</span>',
-    // '        </a>',
-    // '      </li>',
-
-    // '      <li class="sidebar-nav-item">',
-    // '        <a href="/banking/banking.html" class="sidebar-nav-link" data-page="banking">',
-    // '          <span class="sidebar-nav-icon"><i class="fa-solid fa-money-check"></i></span>',
-    // '          <span class="sidebar-nav-label">Banking</span>',
-    // '          <span class="sidebar-tooltip">Banking</span>',
-    // '        </a>',
-    // '      </li>',
-
-    // '      <li class="sidebar-nav-item">',
-    // '        <a href="/accounting/accounting.html" class="sidebar-nav-link" data-page="accounting">',
-    // '          <span class="sidebar-nav-icon"><i class="fa-solid fa-book"></i></span>',
-    // '          <span class="sidebar-nav-label">Accounting</span>',
-    // '          <span class="sidebar-tooltip">Accounting</span>',
-    // '        </a>',
-    // '      </li>',
-
+    
     '      <li class="sidebar-nav-item">',
     '        <a href="/reports/reports.html" class="sidebar-nav-link" data-page="reports">',
     '          <span class="sidebar-nav-icon"><i class="fa-solid fa-chart-line"></i></span>',
@@ -453,21 +474,6 @@
     '        </a>',
     '      </li>',
 
-    // '      <li class="sidebar-nav-item">',
-    // '        <a href="/documents/documents.html" class="sidebar-nav-link" data-page="documents">',
-    // '          <span class="sidebar-nav-icon"><i class="fa-solid fa-folder-open"></i></span>',
-    // '          <span class="sidebar-nav-label">Documents</span>',
-    // '          <span class="sidebar-tooltip">Documents</span>',
-    // '        </a>',
-    // '      </li>',
-
-    // '      <li class="sidebar-nav-item">',
-    // '        <a href="/filing-&-compliance/filing-&-compliance.html" class="sidebar-nav-link" data-page="filing">',
-    // '          <span class="sidebar-nav-icon"><i class="fa-solid fa-file-shield"></i></span>',
-    // '          <span class="sidebar-nav-label">Filing &amp; Compliance</span>',
-    // '          <span class="sidebar-tooltip">Filing &amp; Compliance</span>',
-    // '        </a>',
-    // '      </li>',
 
     /* ============ SYSTEM ============ */
     '      <li class="sidebar-nav-divider" role="separator"></li>',
@@ -577,7 +583,8 @@
       //=================================================//
       //====uncomment to login check with token =======//
       //=================================================//
-           var self = this;
+      
+    var self = this;
 
       // Cookie is the source of truth. If local cache is missing, check
       // the cookie first (rebuilds the cache) before deciding to redirect.
@@ -598,6 +605,8 @@
         if (!valid) {
           Auth._clearAdmin();
           window.location.href = Auth._loginPath();
+        } else {
+          self._applyPermissions();   // fresh /me permissions override the cached ones
         }
       });
       this._start();
@@ -622,6 +631,7 @@
       var steps = [
         "_applyUser",
         "_applyActiveLink",
+        "_applyPermissions",
         "_bindCollapseToggle",
         "_bindMobileNav",
         "_bindProfileMenu",
@@ -677,6 +687,83 @@
       if (backdrop) document.body.appendChild(backdrop);
       if (mobilePanel) document.body.appendChild(mobilePanel);
       if (logoutOverlay) document.body.appendChild(logoutOverlay);
+    },
+
+    /* ---------------------------------------------------------------- */
+    /* Role permissions (UX only — the server enforces every API call)    */
+    /* ---------------------------------------------------------------- */
+    can: function (moduleKey, action) {
+      var perms = Auth.getStoredPerms();
+      if (!perms) return true;                       // not loaded yet: don't flash-hide, the server still decides
+      var list = perms[moduleKey];
+      return !!list && list.indexOf(String(action || "VIEW").toUpperCase()) !== -1;
+    },
+
+    _moduleKeyOf: function (link) {
+      return String(link.getAttribute("data-page") || "").toLowerCase().replace(/\.html$/, "");
+    },
+
+    _applyPermissions: function () {
+      var self = this;
+      if (!Auth.getStoredPerms()) return;
+
+      document.querySelectorAll(".sidebar-nav-link[data-page]").forEach(function (link) {
+        var li = link.closest(".sidebar-nav-item");
+        if (li) li.style.display = self.can(self._moduleKeyOf(link), "VIEW") ? "" : "none";
+      });
+      this._hideEmptySections();
+
+           var active = document.querySelector(".sidebar-nav-link.active");
+      if (active && !this.can(this._moduleKeyOf(active), "VIEW")) this._showNoAccess();
+      else this._clearNoAccess();
+
+      // Tell the page only when permissions actually changed (cached -> fresh /me), so it can re-render its buttons
+      var sig = JSON.stringify(Auth.getStoredPerms());
+      if (this._permsSig && this._permsSig !== sig) document.dispatchEvent(new CustomEvent("siec:perms"));
+      this._permsSig = sig;
+    },
+
+    _hideEmptySections: function () {
+      var items = Array.prototype.slice.call(document.querySelectorAll("#app-sidebar .sidebar-nav-list > li"));
+      var i = 0;
+      while (i < items.length) {
+        if (items[i].classList.contains("sidebar-nav-heading")) {
+          var divider = (i > 0 && items[i - 1].classList.contains("sidebar-nav-divider")) ? items[i - 1] : null;
+          var j = i + 1, anyVisible = false;
+          while (j < items.length &&
+                 !items[j].classList.contains("sidebar-nav-divider") &&
+                 !items[j].classList.contains("sidebar-nav-heading")) {
+            if (items[j].style.display !== "none") anyVisible = true;
+            j++;
+          }
+          items[i].style.display = anyVisible ? "" : "none";
+          if (divider) divider.style.display = anyVisible ? "" : "none";
+          i = j;
+        } else {
+          i++;
+        }
+      }
+    },
+
+    _showNoAccess: function () {
+      var main = document.querySelector("main");
+      if (!main || document.getElementById("no-access-panel")) return;
+      main.style.display = "none";
+      var panel = document.createElement("div");
+      panel.id = "no-access-panel";
+      panel.style.cssText = "max-width:420px;margin:80px auto;text-align:center;padding:0 16px";
+      panel.innerHTML =
+        '<div style="font-size:32px;color:#d1d5db;margin-bottom:10px"><i class="fa-solid fa-lock"></i></div>' +
+        '<h2 style="font-size:16px;font-weight:700;color:#1f2937">You don\'t have access to this page</h2>' +
+        '<p style="font-size:12px;color:#6b7280;margin-top:6px">Ask your administrator to grant you permission for this module.</p>';
+      main.parentNode.insertBefore(panel, main);
+    },
+
+    _clearNoAccess: function () {
+      var panel = document.getElementById("no-access-panel");
+      if (panel) panel.remove();
+      var main = document.querySelector("main");
+      if (main) main.style.display = "";
     },
 
     _paintReady: function () {

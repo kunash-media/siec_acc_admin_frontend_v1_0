@@ -753,8 +753,9 @@ function rowActionsHtml(editFn, delFn, viewFn, sendFn, downloadFn) {
   if (viewFn) h += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
   if (sendFn) h += '<button onclick="' + sendFn + '" class="btn-icon-action primary" title="Send">' + iconSend() + '</button>';
   if (downloadFn) h += '<button onclick="' + downloadFn + '" class="btn-icon-action primary" title="Download PDF">' + iconDownload() + '</button>';
-  h += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
-  h += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button></div>';
+  if (canDo('EDIT')) h += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+  if (canDo('DELETE')) h += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+  h += '</div>';
   return h;
 }
 function panelWrap(titleHtml, bodyHtml, extraHead) {
@@ -867,6 +868,20 @@ async function loadStats() {
   fc.innerHTML = '<option value="all">All Customers</option>' + customers.map(function (c) { return '<option value="' + c.id + '">' + escH(c.name) + '</option>'; }).join('');
   fc.value = cur;
 }
+function canDo(action) { return !window.NavSidebar || NavSidebar.can('invoices', action); }
+
+function gateCreate() {
+  document.querySelectorAll('[onclick^="openAddInvoice"],[onclick^="openAddProforma"]').forEach(function (el) { el.style.display = canDo('CREATE') ? '' : 'none'; });
+}
+
+function proformaActionButtons(inv) {
+  if (inv.status !== 'OPEN') return '';
+  var h = '';
+  if (canDo('CREATE')) h += '<button onclick="askProformaAction(\'convert\', \'' + inv.id + '\')" class="btn-icon-action primary" title="Convert to Invoice"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></button>';
+  if (canDo('EDIT')) h += '<button onclick="askProformaAction(\'decline\', \'' + inv.id + '\')" class="btn-icon-action danger" title="Decline"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></button>';
+  return h;
+}
+
 function changePageSize(v) { pageSize = parseInt(v, 10) || 25; currentPage = 1; renderInvoices(); }
 function goToPage(p) { currentPage = p; renderInvoices(); }
 var searchTimer;
@@ -909,10 +924,7 @@ async function renderInvoices() {
     rowsHtml = invoices.map(function (inv) {
       var canSend = isPro ? inv.status === 'OPEN' : (inv.status === 'UNPAID' || inv.status === 'PARTIAL' || inv.status === 'OVERDUE');
       var extra = '';
-      if (isPro && inv.status === 'OPEN') {
-        extra = '<button onclick="askProformaAction(\'convert\', \'' + inv.id + '\')" class="btn-icon-action primary" title="Convert to Invoice"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></button>' +
-          '<button onclick="askProformaAction(\'decline\', \'' + inv.id + '\')" class="btn-icon-action danger" title="Decline"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></button>';
-      }
+          if (isPro) extra = proformaActionButtons(inv);
       return `<tr class="border-b border-gray-100 table-row-hover">
         <td class="px-3 py-2.5"><div class="font-semibold text-gray-800 text-sm">${escH(inv.number)}</div><div class="text-[10px] text-gray-400 font-mono">#${inv.id}</div></td>
         <td class="px-3 py-2.5 text-xs">${fd(inv.date)}</td>
@@ -941,6 +953,7 @@ async function renderInvoices() {
     (isPro ? 'All Proforma Invoices' : 'All Invoices') + ' <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full ml-1">' + totalElements + '</span>',
     tableHtml(['Invoice #', 'Date', 'Customer', 'Total', 'Due Date', 'Status', 'Actions'], rowsHtml) + pagination,
     '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">Show:</span><select id="pageSizeSelect" onchange="changePageSize(this.value)" class="text-[10px] border border-gray-300 rounded-lg px-2 py-1 bg-white outline-none">' + sizeOptions + '</select></div>');
+  gateCreate();
   loadStats();
 }
 
@@ -1371,7 +1384,8 @@ function delInvoice(id) {
 async function confirmDeleteInvoice(id) {
   var inv = invoices.find(function (x) { return String(x.id) === String(id); }), pro = inv && inv.invoiceType === 'proforma';
   try {
-    await apiFetch(pro ? '/api/v1/proformas/delete/' + id : '/api/v1/invoices/delete/' + id, { method: 'DELETE' });
+    var r = await apiFetch(pro ? '/api/v1/proformas/delete/' + id : '/api/v1/invoices/delete/' + id, { method: 'DELETE' });
+    if (r && r.approvalRequired) { closeModal(); showToast('Delete request sent for approval', 'info'); return; }
     closeModal(); renderInvoices(); showToast('Deleted successfully', 'warning');
   } catch (err) { showToast(err.message || 'Could not delete this record', 'error'); }
 }
@@ -1488,12 +1502,13 @@ function saveTemplateChoice(id) {
   if (i !== -1) { var end = html.indexOf('</div>', i) + 6; header.innerHTML = html.substring(0, end) + searchHtml + html.substring(end); }
 })();
 
+document.addEventListener('siec:perms', function () { renderInvoices(); });
 (async function init() {
   buildStatusFilterOptions();
   await Promise.all([loadOrganization(), loadCustomers()]);
   renderInvoices();
 })();
-  </script>
+</script>
 
 </body>
 </html>

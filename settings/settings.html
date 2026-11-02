@@ -838,6 +838,12 @@
       },
     });
 
+    function canDo(a) { return !window.NavSidebar || NavSidebar.can('settings', a); }
+    function gateUi() {
+      // saving is a create (first setup) or an edit; the server decides which one applies
+      document.querySelectorAll('[onclick^="saveCompany"]').forEach(function (el) { el.style.display = (canDo('EDIT') || canDo('CREATE')) ? '' : 'none'; });
+      document.querySelectorAll('[onclick^="openAddDocumentModal"]').forEach(function (el) { el.style.display = canDo('CREATE') ? '' : 'none'; });
+    }
     function iconEdit() {
       return `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
     }
@@ -1345,8 +1351,8 @@
         '<td><span class="badge badge-green"><span class="badge-dot badge-dot-green"></span>' + escapeOrganizationHtml(org.organizationStatus || 'Active') + '</span></td>' +
         '<td><div class="organization-actions">' +
           '<button class="organization-action" title="View" onclick="viewOrganization()">' + iconEye() + '</button>' +
-          '<button class="organization-action" title="Edit" onclick="editOrganization()">' + iconEdit() + '</button>' +
-          '<button class="organization-action delete" title="Delete" onclick="deleteOrganization()">' + iconTrash() + '</button>' +
+          (canDo('EDIT') ? '<button class="organization-action" title="Edit" onclick="editOrganization()">' + iconEdit() + '</button>' : '') +          
+                   (canDo('DELETE') ? '<button class="organization-action delete" title="Delete" onclick="deleteOrganization()">' + iconTrash() + '</button>' : '') +
           '<button class="organization-action" title="Documents" onclick="openOrganizationDocumentsOverlay()"><i class="fa-regular fa-folder-open"></i></button>' +
         '</div></td>' +
       '</tr>';
@@ -1804,8 +1810,7 @@
             <div class="document-card-actions">
               <button onclick="viewDocument('${escapeDocumentHtml(doc.documentId)}')" class="document-card-view"><i class="fa-regular fa-eye mr-1"></i>View</button>
               <button onclick="downloadDocument('${escapeDocumentHtml(doc.documentId)}', '${escapeDocumentHtml(doc.originalFileName || doc.documentName)}')" class="document-card-download"><i class="fa-solid fa-download mr-1"></i>Download</button>
-              <button onclick="deleteDocument('${escapeDocumentHtml(doc.documentId)}')" class="document-card-delete" title="Delete document"><i class="fa-regular fa-trash-can"></i></button>
-            </div>
+              ${canDo('DELETE') ? `<button onclick="deleteDocument('${escapeDocumentHtml(doc.documentId)}')" class="document-card-delete" title="Delete document"><i class="fa-regular fa-trash-can"></i></button>` : ''}            </div>
           </div>`;
       }).join('') + '</div>';
     }
@@ -1856,8 +1861,7 @@
             '<td><div class="documents-table-actions">' +
               '<button onclick="viewDocument(\'' + escapeDocumentHtml(doc.documentId) + '\')" class="documents-table-action"><i class="fa-regular fa-eye mr-1"></i>View</button>' +
               '<button onclick="downloadDocument(\'' + escapeDocumentHtml(doc.documentId) + '\', \'' + escapeDocumentHtml(doc.originalFileName || doc.documentName) + '\')" class="documents-table-action"><i class="fa-solid fa-download mr-1"></i>Download</button>' +
-              '<button onclick="deleteDocument(\'' + escapeDocumentHtml(doc.documentId) + '\')" class="documents-table-action delete"><i class="fa-regular fa-trash-can"></i></button>' +
-            '</div></td>' +
+              (canDo('DELETE') ? '<button onclick="deleteDocument(\'' + escapeDocumentHtml(doc.documentId) + '\')" class="documents-table-action delete"><i class="fa-regular fa-trash-can"></i></button>' : '') +            '</div></td>' +
           '</tr>';
         }).join('');
         content += '</tbody></table></div>';
@@ -2099,6 +2103,8 @@
     });
 
     loadOrganization();
+    gateUi();
+    document.addEventListener('siec:perms', function () { renderOrganizationTable(currentOrganization); renderDocuments(); gateUi(); });
     console.log('Units of Measurement:', unitsData.length, '(Inline CRUD — no modal for add/edit)');
 
   </script>

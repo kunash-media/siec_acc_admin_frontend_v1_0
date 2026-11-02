@@ -125,7 +125,7 @@ var isSuper = me.role === 'SUPER_ADMIN';   // UX only: every API call is checked
 var users = [], roles = [], mods = [];
 var ap = { page: 1, status: 'PENDING', pages: 1 }, au = { page: 1, pages: 1 };
 var ACTIONS = ['view', 'create', 'edit', 'delete', 'approve'];
-var AUDIT_ACTIONS = ['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'CONVERT', 'APPROVAL_REQUESTED', 'APPROVAL_CANCELLED', 'LOGIN', 'LOGIN_FAILED', 'DENIED', 'WOULD_DENY'];
+var AUDIT_ACTIONS = ['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'CONVERT', 'STOCK_IN', 'STOCK_OUT', 'STOCK_ADJUST', 'APPROVAL_REQUESTED', 'APPROVAL_CANCELLED', 'LOGIN', 'LOGIN_FAILED', 'DENIED', 'WOULD_DENY'];
 
 // ---------- helpers ----------
 function $(id) { return document.getElementById(id); }
@@ -344,7 +344,7 @@ async function saveRule(id, review) {
 }
 
 // ---------- audit trail ----------
-var ACLR = { DELETE: 'badge-red', DENIED: 'badge-red', LOGIN_FAILED: 'badge-red', WOULD_DENY: 'badge-amber', APPROVAL_REQUESTED: 'badge-amber', APPROVE: 'badge-green', CREATE: 'badge-green', LOGIN: 'badge-blue', REJECT: 'badge-red' };
+var ACLR = { STOCK_IN: 'badge-green', STOCK_OUT: 'badge-red', STOCK_ADJUST: 'badge-amber', DELETE: 'badge-red', DENIED: 'badge-red', LOGIN_FAILED: 'badge-red', WOULD_DENY: 'badge-amber', APPROVAL_REQUESTED: 'badge-amber', APPROVE: 'badge-green', CREATE: 'badge-green', LOGIN: 'badge-blue', REJECT: 'badge-red' };
 function auditShell() {
   $('tAudit').innerHTML = '<div class="flex flex-wrap gap-2 mb-3"><input class="form-input" style="width:180px" id="a_q" placeholder="Search summary / number / person" onkeyup="if(event.key===\'Enter\')auditGo(1)">' +
     '<select class="form-input" style="width:150px" id="a_adm" onchange="auditGo(1)"><option value="">All admins</option>' + users.map(function (u) { return '<option value="' + esc(u.adminId) + '">' + esc(((u.adminFirstName || '') + ' ' + (u.adminLastName || '')).trim() || u.adminId) + '</option>'; }).join('') + '</select>' +

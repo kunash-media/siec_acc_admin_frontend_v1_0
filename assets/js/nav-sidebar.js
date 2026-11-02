@@ -45,7 +45,7 @@
   var AUTH_STORAGE_KEY = "adminAuth";
   var PERMS_STORAGE_KEY = "adminPerms";   // UX cache only; /me overwrites it on every page load
 
-     // API field name -> localStorage key name
+  // API field name -> localStorage key name
   var ORG_STORAGE_KEYS = {
     companyName: "companyName",
     legalName: "legalName",
@@ -53,7 +53,7 @@
   };
 
   // ---- API config ----
-  var API_BASE_URL = "http://localhost:9093";
+  var API_BASE_URL = "http://" + window.location.hostname + ":9093";
   var LOGIN_URL = API_BASE_URL + "/api/admin/auth/login";
   var LOGOUT_URL = API_BASE_URL + "/api/admin/auth/logout";
   var ORG_URL = API_BASE_URL + "/api/organization/get-org";

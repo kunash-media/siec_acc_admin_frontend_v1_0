@@ -635,7 +635,7 @@
   function loadAll() {
     return Promise.all([
       apiFetch('/api/warehouses/v1/get-all-warehouses'),
-      apiFetch('/api/products/v1/get-all-products'),
+      Promise.resolve([]),
       apiFetch('/api/inventory/v1/get-all-inventory')
     ]).then(function(r) {
       warehouses = (r[0] || []).map(function(w) {
@@ -658,20 +658,16 @@ function itemPicker(prefix) {
 
 // swap this one function for a server call when you have a search endpoint
 function searchItems(q) {
-  q = q.toLowerCase();
-  var out = [];
-  products.forEach(function(p) {
-    var hay = (p.productName + ' ' + (p.productSku || '') + ' ' + p.productStrId).toLowerCase();
-    if (hay.indexOf(q) !== -1) out.push({ value: 'P:' + p.productStrId, label: p.productName + ' (' + (p.productSku || '-') + ')' });
+  return apiFetch('/api/products/v1/get-product-list?page=0&size=20&search=' + encodeURIComponent(q)).then(function(d) {
+    var out = [];
+    ((d && d.content) || []).forEach(function(p) {
+      out.push({ value: 'P:' + p.productStrId, label: p.productName + ' (' + (p.productSku || '-') + ')' });
+      (p.variants || []).forEach(function(v) {
+        out.push({ value: 'V:' + v.variantStrId, label: p.productName + ' — ' + (v.variantName || v.variantStrId) + ' (' + (v.variantSku || '-') + ')' });
+      });
+    });
+    return out;
   });
-  var seen = {};
-  inventoryItems.forEach(function(i) {
-    if (!i.isVariant || seen[i.itemId]) return;
-    seen[i.itemId] = 1;
-    var hay = (i.name + ' ' + i.sku + ' ' + i.itemId).toLowerCase();
-    if (hay.indexOf(q) !== -1) out.push({ value: 'V:' + i.itemId, label: i.name + ' (' + i.sku + ')' });
-  });
-  return Promise.resolve(out.slice(0, 30));
 }
 
 function onPickerInput(prefix) {
@@ -820,9 +816,17 @@ function pickItem(prefix, el) {
       );
 
       document.getElementById('inventoryPanel').innerHTML = panelHtml;
+      gateUi();
       renderStats();
     }
 
+    function canDo(a) { return !window.NavSidebar || NavSidebar.can('inventory', a); }
+    function gateUi() {
+      document.querySelectorAll('[onclick^="openAddStock"],[onclick^="openAdjustStock"]').forEach(function (el) {
+        el.style.display = canDo('EDIT') ? '' : 'none';
+      });
+    }
+    document.addEventListener('siec:perms', function () { renderInventory(); });
     function filterInventory() { renderInventory(); }
 
     function clearFilters() {

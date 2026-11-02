@@ -610,13 +610,19 @@
       return '<span class="badge ' + map[color] + '"><span class="badge-dot ' + dot[color] + '"></span>' + esc(text) + '</span>';
     }
 
+    function canDo(a) { return !window.NavSidebar || NavSidebar.can('products', a); }
+    function canIn(moduleKey, a) { return !window.NavSidebar || NavSidebar.can(moduleKey, a); }
+    function gateCreate() {
+      document.querySelectorAll('[onclick^="openAddItem"]').forEach(function (el) { el.style.display = canDo('CREATE') ? '' : 'none'; });
+      document.querySelectorAll('[onclick^="openVendorPurchase"]').forEach(function (el) { el.style.display = (canDo('CREATE') || canIn('inventory', 'EDIT')) ? '' : 'none'; });
+    }
     function rowActionsHtml(editFn, delFn, viewFn) {
       var html = '<div class="flex gap-1">';
       if (viewFn) {
         html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
       }
-      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
-      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      if (canDo('EDIT')) html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      if (canDo('DELETE')) html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
       html += '</div>';
       return html;
     }
@@ -877,6 +883,7 @@
       );
 
       document.getElementById('itemsPanel').innerHTML = panelHtml;
+      gateCreate();
       renderStats();
     }
 
@@ -1329,6 +1336,9 @@
       if (variantPickerRef) modalPickers.push(variantPickerRef);
 
       // tab switching
+            if (!canDo('CREATE')) { var vt = document.querySelector('#modalTabs [data-tab="tab-variant"]'); if (vt) vt.style.display = 'none'; }
+
+      // tab switching
       var tabs = document.querySelectorAll('#modalTabs .modal-tab-btn');
       tabs.forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -1738,7 +1748,8 @@
         </div>
         ${modalFooter('Proceed', 'onclick="proceedVendorPurchase()"')}
       `;
-      openModal(modalContent, { width: 'max-w-lg' });
+        openModal(modalContent, { width: 'max-w-lg' });
+      if (!canIn('vendors', 'CREATE')) document.querySelectorAll('#modalRoot [onclick^="toggleAddVendorForm"]').forEach(function (el) { el.style.display = 'none'; });
 
       vpPicker = createProductPicker({
         inputId: 'vpExistingSearch',
@@ -2002,6 +2013,7 @@
     // INIT
     // =============================================================
     renderItems();
+    document.addEventListener('siec:perms', function () { renderItems(); });
     Promise.all([loadWarehouses(), loadItems()]);
 </script>
 

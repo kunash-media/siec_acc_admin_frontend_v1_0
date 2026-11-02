@@ -1001,9 +1001,15 @@
     async function loadClients() {
       if (clientsCache) return clientsCache;
       try {
-        var body = await apiRequest(CLIENT_API + '/get-all-clients');
-        clientsCache = ((body.data && body.data.customers) || []).map(function(c) { return { id: c.id, label: c.companyName || c.name }; });
-        return clientsCache;
+            var all = [], page = 0, guard = 0;
+            while (guard++ < 50) {
+              var body = await apiRequest(CLIENT_API + '/client-list?page=' + page + '&size=100');
+              (body.content || []).forEach(function(c) { all.push({ id: c.clientStrId, label: c.clientCompanyName || c.clientName }); });
+              if (!body.hasNext) break;
+              page = body.nextPage != null ? Number(body.nextPage) : page + 1;
+            }
+            clientsCache = all;
+            return clientsCache;
       } catch (e) {
         showToast('Could not load customers: ' + e.message, 'warning');
         return [];
@@ -1125,6 +1131,29 @@
       showToast('Exporting project report...', 'info');
       await downloadFromApi('/api/projects/v1/export', 'projects.csv');
     }
+
+        function canDo(a) { return !window.NavSidebar || NavSidebar.can('projects', a); }
+    function gateUi() {
+      var rules = [
+        ['openAddProject', 'CREATE'], ['editProjectFromList', 'EDIT'], ['editSelectedProject', 'EDIT'],
+        ['deleteProjectFromList', 'DELETE'], ['deleteSelectedProject', 'DELETE'],
+        ['openLinkInvoice', 'EDIT'], ['openLinkBill', 'EDIT'], ['askUnlinkSale', 'EDIT'], ['askUnlinkPurchase', 'EDIT'],
+        ['openUploadDocument', 'EDIT'], ['askDeleteDocument', 'EDIT']
+      ];
+      rules.forEach(function (r) {
+        document.querySelectorAll('[onclick^="' + r[0] + '"]').forEach(function (el) { el.style.display = canDo(r[1]) ? '' : 'none'; });
+      });
+    }
+    ['renderProjects', 'renderDetailHeader', 'renderSales', 'renderPurchases', 'renderDocuments'].forEach(function (name) {
+      var fn = window[name];
+      if (typeof fn !== 'function') return;
+      window[name] = function () { var r = fn.apply(this, arguments); gateUi(); return r; };
+    });
+    document.addEventListener('siec:perms', function () {
+      if (selectedProject) { renderSales(); renderPurchases(); renderDocuments(); }
+      renderProjects();
+      gateUi();
+    });
 
     // ---------- Init ----------
     loadProjects();

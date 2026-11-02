@@ -622,8 +622,8 @@
       if (viewFn) {
         html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
       }
-      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
-      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      if (canDo('EDIT')) html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      if (canDo('DELETE')) html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
       html += '</div>';
       return html;
     }
@@ -877,6 +877,7 @@
       );
 
       document.getElementById('customersPanel').innerHTML = panelHtml;
+      gateCreate();
 
       // restore filter/page-size selections after re-render
       var st = document.getElementById('filterStatus'); if (st) st.value = activeFilters.status;
@@ -935,6 +936,10 @@
     // ADD / EDIT CUSTOMER
     // =============================================================
 
+    function canDo(a) { return !window.NavSidebar || NavSidebar.can('clients', a); }
+    function gateCreate() {
+      document.querySelectorAll('[onclick^="openAddCustomer"]').forEach(function (el) { el.style.display = canDo('CREATE') ? '' : 'none'; });
+    }
     function openAddCustomer() { openCustomerModal(null); }
 
     function editCustomer(id) {
@@ -1354,12 +1359,10 @@
     // =============================================================
     // INIT
     // =============================================================
-
     loadClientTypes().then(loadCustomers);
+    document.addEventListener('siec:perms', function () { renderCustomers(); });
 
     console.log('Clients Module Loaded - API:', API_BASE, '| backend-driven pagination');
-
   </script>
-
 </body>
 </html>

@@ -632,9 +632,9 @@
     function rowActionsHtml(editFn, delFn, viewFn, approveFn, rejectFn) {
       var html = '<div class="flex gap-1">';
       if (viewFn) html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
-      if (approveFn) html += '<button onclick="' + approveFn + '" class="btn-icon-action primary" title="Approve">' + iconApprove() + '</button>';
-      if (rejectFn) html += '<button onclick="' + rejectFn + '" class="btn-icon-action danger" title="Reject">' + iconReject() + '</button>';
-      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      if (approveFn && canDo('APPROVE')) html += '<button onclick="' + approveFn + '" class="btn-icon-action primary" title="Approve">' + iconApprove() + '</button>';
+      if (rejectFn && canDo('APPROVE')) html += '<button onclick="' + rejectFn + '" class="btn-icon-action danger" title="Reject">' + iconReject() + '</button>';
+      if (canDo('EDIT')) html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
       html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
       html += '</div>';
       return html;
@@ -1311,6 +1311,7 @@
         </div>`;
 
       document.getElementById('expensesPanel').innerHTML = panelHtml;
+      gateUi();
       renderStats();
       updateSelectAllCheckbox();
       updateBulkBar();
@@ -1456,7 +1457,23 @@
     // =============================================================
     // ADD / EDIT
     // =============================================================
+    function canDo(a) { return !window.NavSidebar || NavSidebar.can('expenses', a); }
+    function gateUi() {
+      document.querySelectorAll('[onclick^="openAddExpense"]').forEach(function (el) { el.style.display = canDo('CREATE') ? '' : 'none'; });
+      document.querySelectorAll('[onclick^="bulkApprove"],[onclick^="bulkReject"]').forEach(function (el) { el.style.display = canDo('APPROVE') ? '' : 'none'; });
+      document.querySelectorAll('[onclick^="bulkDelete"]').forEach(function (el) { el.style.display = canDo('DELETE') ? '' : 'none'; });
+    }
     function openAddExpense() { openExpenseModal(null); }
+    // Users without Approve can't pick Approved / Rejected for a new status (the server enforces it too)
+    var _openExpenseModal = openExpenseModal;
+    openExpenseModal = function (e) {
+      _openExpenseModal(e);
+      if (!canDo('APPROVE')) {
+        var s = document.getElementById('f_status');
+        if (s) [].forEach.call(s.options, function (o) { if (o.value !== s.value && o.value !== 'pending') o.disabled = true; });
+      }
+    };
+    document.addEventListener('siec:perms', function () { renderExpenses(); });
 
     function editExpense(id) {
       api('GET', '/get-expense/' + encodeURIComponent(id))

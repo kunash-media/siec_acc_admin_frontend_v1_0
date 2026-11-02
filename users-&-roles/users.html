@@ -29,27 +29,35 @@
   .form-input:disabled{background:#f3f4f6;cursor:not-allowed}
   .form-label{font-size:10px;font-weight:600;color:#374151;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
   .badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px}
-  .badge-green{background:#dcfce7;color:#166534}.badge-amber{background:#fef3c7;color:#92400e}.badge-red{background:#fee2e2;color:#991b1b}
-  .badge-gray{background:#f1f5f9;color:#475569}.badge-blue{background:#dbeafe;color:#1e40af}.badge-purple{background:#ede9fe;color:#5b21b6}
-  .stat-card{padding:10px 14px;transition:transform .15s,box-shadow .15s}.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.06)}
+  .badge-green{background:#dcfce7;color:#166534}
+  .badge-amber{background:#fef3c7;color:#92400e}
+  .badge-red{background:#fee2e2;color:#991b1b}
+  .badge-gray{background:#f1f5f9;color:#475569}.badge-blue{background:#dbeafe;color:#1e40af}
+  .badge-purple{background:#ede9fe;color:#5b21b6}
+  .stat-card{padding:10px 14px; border:1px solid #6da84c; transition:transform .15s,box-shadow .15s}
+  .stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.06)}
   .stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6b7280}
   .stat-value{font-size:17px;font-weight:700;color:#1a1a2e;margin-top:2px}
   .btn-icon-action{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#94a3b8;background:transparent;border:none;cursor:pointer;transition:all .15s}
   .btn-icon-action:hover{background:#f1f5f9;color:#6da84c}.btn-icon-action.danger:hover{background:#fee2e2;color:#ef4444}
   .page-title{font-size:20px;font-weight:700;letter-spacing:-.02em}.page-subtitle{font-size:12px;color:#6b7280}
   .page-breadcrumb{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#6da84c}
-  table th{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;padding:8px 12px;text-align:left;white-space:nowrap}
-  table td{font-size:12px;padding:8px 12px}
+   table th{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;padding:8px 12px;text-align:left;white-space:nowrap}
+   table td{font-size:12px;padding:8px 12px}
   .tab-btn{padding:8px 14px;font-size:11px;font-weight:500;border-bottom:2px solid transparent;color:#6b7280;cursor:pointer;background:transparent;white-space:nowrap}
-  .tab-btn.active{color:#6da84c;border-bottom-color:#6da84c;font-weight:600}.tab-btn:hover:not(.active){color:#1f2937}
-  .tab-panel{display:none}.tab-panel.active{display:block}
+  .tab-btn.active{color:#6da84c;border-bottom-color:#6da84c;font-weight:600}
+  .tab-btn:hover:not(.active){color:#1f2937}
+ 
+  .tab-panel{display:none; padding: 8px; border: 1px solid #6da84c; border-radius: 10px;}
+  .tab-panel.active{display:block}
+  
   .avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
-  .role-card{border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;background:#fff;transition:border-color .2s,box-shadow .2s}
+  .role-card{border:1px solid #bcbec2;border-radius:10px;padding:14px 16px;background:#fff;transition:border-color .2s,box-shadow .2s}
   .role-card:hover{border-color:#6da84c;box-shadow:0 4px 16px rgba(0,0,0,.06)}
   .perm-table td,.perm-table th{padding:6px 10px;border-bottom:1px solid #f1f5f9;text-align:center}
   .perm-table th{background:#f8fafc;border-bottom:2px solid #e5e7eb}.perm-table td:first-child,.perm-table th:first-child{text-align:left}
   .perm-cb{width:15px;height:15px;cursor:pointer;accent-color:#6da84c}
-  .audit-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9}.audit-item:last-child{border-bottom:none}
+  .audit-item{display:flex;gap:12px; padding:10px 0;border-bottom:1px solid #86898d}.audit-item:last-child{border-bottom:none}
   .audit-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef5e8;color:#6da84c;flex-shrink:0;font-size:11px}
   .toast{animation:fadeIn .2s ease;font-size:12px}
   @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
@@ -81,15 +89,15 @@
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5 mb-4">
-          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Total Users</div><div class="stat-value" id="sUsers">—</div></div>
-          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Active</div><div class="stat-value text-green-600" id="sActive">—</div></div>
-          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Roles</div><div class="stat-value text-blue-600" id="sRoles">—</div></div>
-          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Pending Approvals</div><div class="stat-value text-amber-600" id="sPending">—</div></div>
-          <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card"><div class="stat-label">Audit Events</div><div class="stat-value text-gray-700" id="sAudit">—</div></div>
+          <div class="bg-white rounded-xl shadow-sm stat-card"><div class="stat-label">Total Users</div><div class="stat-value" id="sUsers">—</div></div>
+          <div class="bg-white rounded-xl shadow-sm stat-card"><div class="stat-label">Active</div><div class="stat-value text-green-600" id="sActive">—</div></div>
+          <div class="bg-white rounded-xl shadow-sm stat-card"><div class="stat-label">Roles</div><div class="stat-value text-blue-600" id="sRoles">—</div></div>
+          <div class="bg-white rounded-xl shadow-sm stat-card"><div class="stat-label">Pending Approvals</div><div class="stat-value text-amber-600" id="sPending">—</div></div>
+          <div class="bg-white rounded-xl shadow-sm stat-card"><div class="stat-label">Audit Events</div><div class="stat-value text-gray-700" id="sAudit">—</div></div>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          <div class="flex overflow-x-auto border-b border-gray-200 px-4 pt-2 gap-1" id="tabs">
+        <div class="bg-white border border-[#6da84c] rounded-xl shadow-sm overflow-hidden">
+          <div class="flex overflow-auto max-h-48 border-b border-[#6da84c] px-4 pt-2 gap-1" id="tabs">
             <button class="tab-btn active" data-tab="tUsers" data-super="1"><i class="fa-solid fa-users mr-1.5"></i>Users</button>
             <button class="tab-btn" data-tab="tRoles" data-super="1"><i class="fa-solid fa-shield-halved mr-1.5"></i>Roles &amp; Permissions</button>
             <button class="tab-btn" data-tab="tAppr"><i class="fa-solid fa-circle-check mr-1.5"></i>Approvals</button>
@@ -142,7 +150,7 @@ async function api(path, o) {
 function modal(title, sub, body, foot, w) {
   $('modalRoot').innerHTML = '<div class="fixed inset-0 z-[100] flex items-center justify-center p-3"><div class="absolute inset-0 bg-black/40" onclick="closeModal()"></div>' +
     '<div class="relative bg-white rounded-xl shadow-2xl w-full ' + (w || 'max-w-lg') + ' max-h-[92vh] overflow-hidden animate-modal">' +
-    '<div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-100"><div><h3 class="text-base font-bold text-gray-900">' + title + '</h3>' + (sub ? '<p class="text-[11px] text-gray-500 mt-0.5">' + sub + '</p>' : '') + '</div>' +
+    '<div class="flex items-start justify-between px-5 py-3.5 border-b border-gray-300"><div><h3 class="text-base font-bold text-gray-900">' + title + '</h3>' + (sub ? '<p class="text-[11px] text-gray-500 mt-0.5">' + sub + '</p>' : '') + '</div>' +
     '<button onclick="closeModal()" class="w-7 h-7 rounded-lg hover:bg-gray-100 text-gray-400"><i class="fa-solid fa-xmark"></i></button></div>' +
     '<div class="px-5 py-4 modal-scroll">' + body + '</div>' +
     '<div class="flex justify-end gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50"><button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-white">Cancel</button>' + (foot || '') + '</div></div></div>';
@@ -160,7 +168,7 @@ function pager(prefix, page, pages) {
     '<button ' + (page >= pages ? 'disabled' : '') + ' onclick="' + prefix + 'Go(' + (page + 1) + ')" class="px-2 py-1 border border-gray-200 rounded disabled:opacity-40">Next</button></div>';
 }
 function empty(msg) { return '<div class="text-center py-10 text-gray-400 text-sm">' + msg + '</div>'; }
-function card(head, body) { return '<div class="border border-gray-200 rounded-xl overflow-hidden"><div class="px-4 py-2.5 border-b border-gray-100 font-semibold text-sm text-gray-800 flex items-center justify-between gap-2 flex-wrap">' + head + '</div>' + body + '</div>'; }
+function card(head, body) { return '<div class="overflow-hidden"><div class="px-4 py-2.5 rounded-sm  font-semibold text-sm text-gray-800 flex items-center justify-between gap-2 flex-wrap">' + head + '</div>' + body + '</div>'; }
 
 // ---------- tabs ----------
 document.querySelectorAll('#tabs .tab-btn').forEach(function (b) {
@@ -189,14 +197,14 @@ function renderUsers() {
   var rows = users.map(function (u) {
     var name = ((u.adminFirstName || '') + ' ' + (u.adminLastName || '')).trim() || u.adminId, self = u.adminId === me.adminId;
     var st = u.adminIsLocked ? '<span class="badge badge-red">Locked</span>' : (u.adminIsActive === false ? '<span class="badge badge-gray">Inactive</span>' : '<span class="badge badge-green">Active</span>');
-    return '<tr class="border-b border-gray-100 hover:bg-gray-50"><td><div class="flex items-center gap-3"><div class="avatar" style="background:' + color(name) + '">' + esc(initials(name)) + '</div><div><div class="font-semibold text-gray-800">' + esc(name) + (self ? ' <span class="text-[9px] text-primary">(you)</span>' : '') + '</div><div class="text-[10px] text-gray-400 font-mono">' + esc(u.adminId) + '</div></div></div></td>' +
+    return '<tr class="border-b  border-gray-100 hover:bg-gray-50"><td><div class="flex items-center gap-3"><div class="avatar" style="background:' + color(name) + '">' + esc(initials(name)) + '</div><div><div class="font-semibold text-gray-800">' + esc(name) + (self ? ' <span class="text-[9px] text-primary">(you)</span>' : '') + '</div><div class="text-[10px] text-gray-400 font-mono">' + esc(u.adminId) + '</div></div></div></td>' +
       '<td class="text-gray-600">' + esc(u.adminEmail || '—') + '</td><td class="text-gray-600">' + esc(u.adminMobileNumber || '—') + '</td>' +
       '<td><span class="badge badge-blue">' + esc(roleName(u.adminRole)) + '</span></td><td>' + st + '</td><td class="text-[10px] text-gray-500">' + fdt(u.adminLastLoginAt) + '</td>' +
       '<td class="whitespace-nowrap"><button class="btn-icon-action" title="Edit" onclick="openUser(\'' + esc(u.adminId) + '\')"><i class="fa-solid fa-pen"></i></button>' +
       (self ? '' : '<button class="btn-icon-action" title="' + (u.adminIsActive === false ? 'Activate' : 'Deactivate') + '" onclick="toggleUser(\'' + esc(u.adminId) + '\')"><i class="fa-solid fa-power-off"></i></button><button class="btn-icon-action danger" title="Delete" onclick="askDeleteUser(\'' + esc(u.adminId) + '\')"><i class="fa-solid fa-trash"></i></button>') + '</td></tr>';
   }).join('');
   $('tUsers').innerHTML = card('All Users <span class="text-[10px] font-bold bg-primary-soft text-primary-dark px-2 py-0.5 rounded-full">' + users.length + '</span>',
-    users.length ? '<div class="overflow-x-auto"><table class="w-full"><thead><tr class="bg-gray-50 border-b border-gray-200"><th>User</th><th>Email</th><th>Mobile</th><th>Role</th><th>Status</th><th>Last login</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : empty('No users yet. Add the first user.'));
+    users.length ? '<div class="overflow-x-auto max-h-68"><table class="w-full"><thead><tr class="bg-gray-200 border border-[#6da84c]"><th>User</th><th>Email</th><th>Mobile</th><th>Role</th><th>Status</th><th>Last login</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : empty('No users yet. Add the first user.'));
 }
 function openUser(id) {
   var u = id ? users.find(function (x) { return x.adminId === id; }) : null; u = u || {};
@@ -296,13 +304,13 @@ async function loadApprovals() {
     var mine = a.requestedByAdminId === me.adminId, act = '';
     if (a.canDecide) act += '<button class="btn-icon-action" title="Approve" onclick="decide(' + a.id + ',\'approve\')"><i class="fa-solid fa-check"></i></button><button class="btn-icon-action danger" title="Reject" onclick="decide(' + a.id + ',\'reject\')"><i class="fa-solid fa-xmark"></i></button>';
     if (mine && a.status === 'PENDING') act += '<button class="text-[10px] text-gray-500 hover:underline ml-1" onclick="cancelReq(' + a.id + ')">Cancel</button>';
-    return '<tr class="border-b border-gray-100"><td><div class="font-semibold text-gray-800">' + esc(a.description || a.entityType) + '</div><div class="text-[10px] text-gray-400">' + esc(a.requestType === 'REVIEW' ? 'Review (already saved)' : 'Delete request') + ' · ' + esc(a.moduleKey) + '</div></td>' +
+    return '<tr class="border-b border-gray-300"><td><div class="font-semibold text-gray-800">' + esc(a.description || a.entityType) + '</div><div class="text-[10px] text-gray-400">' + esc(a.requestType === 'REVIEW' ? 'Review (already saved)' : 'Delete request') + ' · ' + esc(a.moduleKey) + '</div></td>' +
       '<td class="font-mono text-xs">' + (a.amount != null ? '₹' + Number(a.amount).toLocaleString('en-IN') : '—') + '</td><td>' + esc(a.requestedByName || a.requestedByAdminId) + '</td><td class="text-[10px] text-gray-500">' + fdt(a.requestedAt) + '</td>' +
       '<td><span class="badge ' + (STB[a.status] || 'badge-gray') + '">' + esc(a.status.toLowerCase()) + '</span>' + (a.decisionNote ? '<div class="text-[10px] text-gray-400 mt-0.5">' + esc(a.decidedByName || '') + ': ' + esc(a.decisionNote) + '</div>' : '') + '</td><td class="whitespace-nowrap">' + (act || '<span class="text-gray-300">—</span>') + '</td></tr>';
   }).join('');
   var sel = ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'ALL'].map(function (s) { return '<option value="' + s + '"' + (ap.status === s ? ' selected' : '') + '>' + s.charAt(0) + s.slice(1).toLowerCase() + '</option>'; }).join('');
   $('tAppr').innerHTML = card('Approvals <select class="form-input" style="width:auto" onchange="ap.status=this.value;ap.page=1;loadApprovals()">' + sel + '</select>',
-    (d.content || []).length ? '<div class="overflow-x-auto"><table class="w-full"><thead><tr class="bg-gray-50 border-b border-gray-200"><th>Request</th><th>Amount</th><th>Requested by</th><th>When</th><th>Status</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : empty('Nothing here.')) + pager('ap', ap.page, ap.pages) + '<div id="rulesBox" class="mt-5"></div>';
+    (d.content || []).length ? '<div class="overflow-x-auto"><table class="w-full"><thead><tr class="bg-gray-200 border border-[#6da84c]"><th>Request</th><th>Amount</th><th>Requested by</th><th>When</th><th>Status</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : empty('Nothing here for approval.')) + pager('ap', ap.page, ap.pages) + '<div id="rulesBox" class="mt-5"></div>';
   if (isSuper) loadRules();
 }
 function apGo(p) { ap.page = p; loadApprovals(); }
@@ -323,7 +331,7 @@ async function loadRules() {
   try {
     var rs = await api('/api/admin/approval-rules');
     box.innerHTML = card('Approval rules <span class="text-[10px] font-normal text-gray-500">Gate = blocked until approved · Review = saved, then flagged for review</span>',
-      '<table class="w-full"><thead><tr class="bg-gray-50 border-b border-gray-200"><th>Applies to</th><th>Action</th><th>Mode</th><th>From amount (₹)</th><th>On</th><th></th></tr></thead><tbody>' + rs.map(function (r) {
+      '<table class="w-full"><thead><tr class="bg-gray-200 border border-[#6da84c]"><th>Applies to</th><th>Action</th><th>Mode</th><th>From amount (₹)</th><th>On</th><th></th></tr></thead><tbody>' + rs.map(function (r) {
         return '<tr class="border-b border-gray-100"><td class="font-semibold">' + esc(r.entityType.toLowerCase().replace(/_/g, ' ')) + '</td><td>' + esc(r.action.toLowerCase()) + '</td><td>' + esc(r.mode.toLowerCase()) + '</td>' +
           '<td>' + (r.mode === 'REVIEW' ? '<input type="number" min="0" class="form-input" style="width:110px" id="ra' + r.id + '" value="' + (r.minAmount == null ? '' : r.minAmount) + '">' : '<span class="text-gray-300">any</span>') + '</td>' +
           '<td><input type="checkbox" class="perm-cb" id="rc' + r.id + '"' + (r.active ? ' checked' : '') + '></td><td><button class="text-[10px] text-primary font-semibold hover:underline" onclick="saveRule(' + r.id + ',' + (r.mode === 'REVIEW') + ')">Save</button></td></tr>';
@@ -339,15 +347,16 @@ async function saveRule(id, review) {
 var ACLR = { DELETE: 'badge-red', DENIED: 'badge-red', LOGIN_FAILED: 'badge-red', WOULD_DENY: 'badge-amber', APPROVAL_REQUESTED: 'badge-amber', APPROVE: 'badge-green', CREATE: 'badge-green', LOGIN: 'badge-blue', REJECT: 'badge-red' };
 function auditShell() {
   $('tAudit').innerHTML = '<div class="flex flex-wrap gap-2 mb-3"><input class="form-input" style="width:180px" id="a_q" placeholder="Search summary / number / person" onkeyup="if(event.key===\'Enter\')auditGo(1)">' +
+    '<select class="form-input" style="width:150px" id="a_adm" onchange="auditGo(1)"><option value="">All admins</option>' + users.map(function (u) { return '<option value="' + esc(u.adminId) + '">' + esc(((u.adminFirstName || '') + ' ' + (u.adminLastName || '')).trim() || u.adminId) + '</option>'; }).join('') + '</select>' +
     '<select class="form-input" style="width:150px" id="a_mod" onchange="auditGo(1)"><option value="">All modules</option>' + mods.map(function (m) { return '<option value="' + esc(m.key) + '">' + esc(m.label) + '</option>'; }).join('') + '</select>' +
     '<select class="form-input" style="width:170px" id="a_act" onchange="auditGo(1)"><option value="">All actions</option>' + AUDIT_ACTIONS.map(function (a) { return '<option>' + a + '</option>'; }).join('') + '</select>' +
     '<input type="date" class="form-input" style="width:130px" id="a_from" onchange="auditGo(1)"><input type="date" class="form-input" style="width:130px" id="a_to" onchange="auditGo(1)">' +
-    '<button class="text-[11px] text-primary font-semibold hover:underline" onclick="auditGo(1)">Search</button></div><div id="auditList"></div><div id="auditPager"></div>';
+    '<button class="text-[11px] text-primary font-semibold hover:underline" onclick="auditGo(1)">Search</button><button id="a_exp" class="ml-auto text-[11px] font-semibold text-gray-600 border border-gray-200 rounded-lg px-2.5 py-1 hover:bg-gray-50" onclick="exportAudit()"><i class="fa-solid fa-download mr-1"></i>Export CSV</button></div><div id="auditList" class="overflow-auto max-h-48" ></div><div id="auditPager"></div>';
 }
 async function loadAudit() {
   if (!$('auditList')) auditShell();
   var p = new URLSearchParams({ pageNumber: au.page, pageSize: 20 });
-  [['search', 'a_q'], ['module', 'a_mod'], ['action', 'a_act'], ['from', 'a_from'], ['to', 'a_to']].forEach(function (x) { if (v(x[1])) p.set(x[0], v(x[1])); });
+  [['search', 'a_q'], ['adminId', 'a_adm'], ['module', 'a_mod'], ['action', 'a_act'], ['from', 'a_from'], ['to', 'a_to']].forEach(function (x) { if (v(x[1])) p.set(x[0], v(x[1])); });
   try {
     var d = await api('/api/admin/audit?' + p.toString()); au.pages = d.totalPages || 1; $('sAudit').textContent = d.totalElements;
     $('auditList').innerHTML = (d.content || []).length ? (d.content || []).map(function (e) {
@@ -358,6 +367,34 @@ async function loadAudit() {
     $('auditPager').innerHTML = pager('au', au.page, au.pages);
   } catch (e) { $('auditList').innerHTML = empty(esc(e.message)); }
 }
+async function exportAudit() {
+  var btn = $('a_exp'), MAX = 5000, rows = [], page = 1, pages = 1, total = 0;
+  var q = new URLSearchParams({ pageSize: 100 });
+  [['search', 'a_q'], ['adminId', 'a_adm'], ['module', 'a_mod'], ['action', 'a_act'], ['from', 'a_from'], ['to', 'a_to']].forEach(function (x) { if (v(x[1])) q.set(x[0], v(x[1])); });
+  btn.disabled = true; btn.textContent = 'Preparing…';
+  try {
+    do {
+      q.set('pageNumber', page);
+      var d = await api('/api/admin/audit?' + q.toString());
+      rows = rows.concat(d.content || []); pages = d.totalPages || 1; total = d.totalElements || 0; page++;
+    } while (page <= pages && rows.length < MAX);
+    rows = rows.slice(0, MAX);
+    if (!rows.length) { toast('Nothing to export for these filters', 'info'); return; }
+    // cells starting with = + - @ are prefixed so Excel never runs them as formulas
+    var cell = function (x) { var s = String(x == null ? '' : x); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };
+    var head = ['Time', 'Admin ID', 'Admin', 'Role', 'Module', 'Action', 'Type', 'Record ID', 'Reference', 'Summary', 'Method', 'Path', 'Status', 'IP'];
+    var lines = [head.join(',')].concat(rows.map(function (e) {
+      return [e.createdAt, e.adminId, e.adminName, e.role, e.moduleKey, e.action, e.entityType, e.entityId, e.entityRef, e.summary, e.httpMethod, e.path, e.statusCode, e.ipAddress].map(cell).join(',');
+    }));
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'audit-trail-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    toast('Exported ' + rows.length + ' rows' + (total > rows.length ? ' of ' + total + ' (limit reached, narrow the filters for the rest)' : ''), 'success');
+  } catch (e) { toast(e.message, 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-download mr-1"></i>Export CSV'; }
+}
+
 function auditGo(p) { au.page = p; loadAudit(); }
 function auGo(p) { auditGo(p); }
 
@@ -365,7 +402,8 @@ function auGo(p) { auditGo(p); }
 (async function init() {
   if (!isSuper) { $('headBtns').style.display = 'none'; showTab('tAppr'); loadApprovals(); refreshStats(); return; }
   await loadRoles();
-  await Promise.all([loadUsers(), loadApprovals(), loadAudit()]);
+  await loadUsers();
+  await Promise.all([loadApprovals(), loadAudit()]);
 })();
 document.addEventListener('siec:perms', function () { refreshStats(); });
 </script>

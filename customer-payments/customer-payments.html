@@ -661,7 +661,8 @@
       return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return String(b.lastPaymentDate||'').localeCompare(String(a.lastPaymentDate||''));});
     }
 
-    function renderAll(){renderStats();renderCustomerOptions();renderSummaryTable();}
+    function renderAll(){renderStats();renderCustomerOptions();renderSummaryTable();gateCreate();}
+    
     function filterPayments(){renderSummaryTable();}
     function clearFilters(){document.getElementById('searchInput').value='';document.getElementById('filterCustomer').value='all';document.getElementById('filterMode').value='all';renderSummaryTable();}
 
@@ -706,7 +707,11 @@
     function modalFooter(label,saveAttr){return '<div class="payment-modal-footer flex items-center justify-end gap-2 px-5 py-3 bg-white"><button onclick="closePaymentChild()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50">Cancel</button><button '+saveAttr+' class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark shadow-sm flex items-center gap-1.5">'+iconSave()+esc(label)+'</button></div>';}
     function fld(label,inputHtml){return '<div class="mb-2"><label class="form-label">'+esc(label)+'</label>'+inputHtml+'</div>';}
 
+    function canDo(a){return !window.NavSidebar||NavSidebar.can('customer-payments',a);}
+    function gateCreate(){document.querySelectorAll('[onclick^="openAddPayment"]').forEach(function(el){el.style.display=canDo('CREATE')?'':'none';});}
     function openAddPayment(){currentHistoryCustomer='';openPaymentModal(null);}
+
+  
     function editPayment(id){var p=payments.find(function(x){return x.id===id;});if(p)openPaymentModal(p);}
 
     function openPaymentModal(existing){
@@ -807,7 +812,7 @@
 
     function historyRows(list){
       if(!list.length)return '<div class="text-center py-8 text-sm text-gray-400">No payment history found.</div>';
-      return list.map(function(p){return '<div class="history-item"><div class="history-item-top"><div class="history-credit">+ CREDIT · <span>'+money(p.amount)+'</span></div><div class="history-date">'+esc(formatHistoryDateTime(p))+'</div></div><div class="history-item-bottom"><div><b>Mode:</b> '+esc(p.mode||'—')+'</div><div><b>Note:</b> <span class="history-note">'+esc(p.notes||'no note')+'</span></div></div><div class="flex justify-end gap-1 mt-2"><button onclick="viewReceipt(\''+esc(p.id)+'\')" class="btn-icon-action" title="View">'+iconEye()+'</button><button onclick="printReceipt(\''+esc(p.id)+'\')" class="btn-icon-action primary" title="Print">'+iconPrint()+'</button><button onclick="editPayment(\''+esc(p.id)+'\')" class="btn-icon-action" title="Edit">'+iconEdit()+'</button><button onclick="delPayment(\''+esc(p.id)+'\')" class="btn-icon-action danger" title="Delete">'+iconTrash()+'</button></div></div>';}).join('');
+      return list.map(function(p){return '<div class="history-item"><div class="history-item-top"><div class="history-credit">+ CREDIT · <span>'+money(p.amount)+'</span></div><div class="history-date">'+esc(formatHistoryDateTime(p))+'</div></div><div class="history-item-bottom"><div><b>Mode:</b> '+esc(p.mode||'—')+'</div><div><b>Note:</b> <span class="history-note">'+esc(p.notes||'no note')+'</span></div></div><div class="flex justify-end gap-1 mt-2"><button onclick="viewReceipt(\''+esc(p.id)+'\')" class="btn-icon-action" title="View">'+iconEye()+'</button><button onclick="printReceipt(\''+esc(p.id)+'\')" class="btn-icon-action primary" title="Print">'+iconPrint()+'</button>'+(canDo('EDIT')?'<button onclick="editPayment(\''+esc(p.id)+'\')" class="btn-icon-action" title="Edit">'+iconEdit()+'</button>':'')+(canDo('DELETE')?'<button onclick="delPayment(\''+esc(p.id)+'\')" class="btn-icon-action danger" title="Delete">'+iconTrash()+'</button>':'')+'</div></div>';}).join('');
     }
 
     function filterHistoryList(){
@@ -869,6 +874,7 @@
       catch(error){payments=[];summaries=[];renderAll();showToast(error.message||'Unable to load Customer Payments.','error');}
     }
 
+    document.addEventListener('siec:perms',function(){renderAll();});
     initializeModule();
   </script>
 </body>

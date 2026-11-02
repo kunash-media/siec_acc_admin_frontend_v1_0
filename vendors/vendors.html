@@ -640,10 +640,6 @@
     </div>
   </div>
 
-  <!-- ========================================================== -->
-  <!-- SCRIPTS -->
-  <!-- ========================================================== -->
-
   <!-- Shell JS -->
   <script src="/assets/js/nav-sidebar.js"></script>
 
@@ -797,8 +793,8 @@
       if (viewFn) {
         html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
       }
-      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
-      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      if (canDo('EDIT')) html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      if (canDo('DELETE')) html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
       html += '</div>';
       return html;
     }
@@ -1502,6 +1498,7 @@
       );
 
       document.getElementById('vendorsPanel').innerHTML = panelHtml;
+      gateCreate();
       renderStats();
     }
 
@@ -1525,6 +1522,11 @@
     // ADD / EDIT VENDOR
     // =============================================================
 
+    function canDo(a) { return !window.NavSidebar || NavSidebar.can('vendors', a); }
+    function gateCreate() {
+      document.querySelectorAll('[onclick^="openAddVendor"]').forEach(function (el) { el.style.display = canDo('CREATE') ? '' : 'none'; });
+      document.querySelectorAll('[onclick^="openVendorCategoryManageOverlay"]').forEach(function (el) { el.style.display = canDo('EDIT') ? '' : 'none'; });
+    }
     function openAddVendor() { openVendorModal(null); }
 
     async function editVendor(id) {
@@ -1959,18 +1961,18 @@
           </div>
           <div id="tab-documents" class="modal-tab-panel">
 
-  <div class="mb-4">
-    <div class="text-sm font-bold text-gray-800 mb-1">
-      Vendor Documents
-    </div>
+        <div class="mb-4">
+          <div class="text-sm font-bold text-gray-800 mb-1">
+            Vendor Documents
+          </div>
 
-    <div class="text-[11px] text-gray-500">
-      Upload vendor-related documents such as GST Certificate,
-      PAN Card, Bank Proof or Agreement.
-    </div>
-  </div>
+          <div class="text-[11px] text-gray-500">
+            Upload vendor-related documents such as GST Certificate,
+            PAN Card, Bank Proof or Agreement.
+          </div>
+        </div>
 
-  <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
+        <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
 
     ${fld(
         'Document Type',
@@ -1989,40 +1991,28 @@
       )}
 
     <div class="flex justify-end mt-3">
-
       <button
         type="button"
         onclick="addVendorDocumentFromForm()"
         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition">
-
         ${iconUpload()}
-
         Add Document
-
       </button>
-
     </div>
-
   </div>
 
   <div class="mt-4">
-
     <div class="text-[12px] font-bold text-gray-700 mb-2">
       Uploaded Documents
     </div>
-
     <div id="vendorFormDocumentsList"
-         class="space-y-2">
-
-      <div class="text-[11px] text-gray-400">
-        No documents added yet.
+            class="space-y-2">
+          <div class="text-[11px] text-gray-400">
+            No documents added yet.
+          </div>
+        </div>
       </div>
-
     </div>
-
-  </div>
-
-</div>
         </div>
         ${modalFooter(isEdit ? 'Update Vendor' : 'Save Vendor', 'onclick="saveVendor(\'' + (isEdit ? e.id : '') + '\')"')}
       `;
@@ -2302,18 +2292,9 @@
       await loadVendorsFromApi();
       renderVendors();
       populateVendorTypeFilter();
-
-      console.log('🏢 Vendors Module Loaded Successfully');
-      console.log('📊 Total Vendors:', vendors.length);
-      console.log('✅ Active Vendors:', vendors.filter(function (v) { return v.status === 'active'; }).length);
-      console.log('💰 Total Payable:', vendors.reduce(function (sum, v) { return sum + v.outstanding; }, 0));
-      console.log('🏷️ Vendor Categories:', vendorCategories.length);
     }
-
+    document.addEventListener('siec:perms', function () { renderVendors(); });
     initVendorsPage();
-
   </script>
-
 </body>
-
 </html>

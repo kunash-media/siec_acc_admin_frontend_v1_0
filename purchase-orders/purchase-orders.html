@@ -385,7 +385,23 @@ const ST = {
 const txt = (f) => (r) => E(r[f] || "-");
 const dt = (f) => (r) => formatDate(r[f]);
 const cur = (f) => (r) => formatCurrency(r[f]);
-const ab = (cls, fn, title, icon) => `<button onclick="${fn}" class="btn-icon-action ${cls}" title="${title}"><i class="${icon}"></i></button>`;
+
+const canDo = (a) => !window.NavSidebar || NavSidebar.can("purchase-orders", a);
+// which permission each action button needs (view buttons need none)
+const needFor = (fn) => {
+  if (/^openAdd\(/.test(fn)) return "EDIT";
+  if (/^deleteRecord\(/.test(fn)) return "DELETE";
+  if (/^(approvePR|openRejectPR)\(/.test(fn)) return "APPROVE";
+  if (/^patchPOStatus\(.*'approved'/.test(fn)) return "APPROVE";
+  if (/^patchPOStatus\(/.test(fn)) return "EDIT";
+  if (/^(convertPRtoPO|receiveGoodsForPO|billForPO|openRecordPaymentPB)\(/.test(fn)) return "CREATE";
+  return null;
+};
+const ab = (cls, fn, title, icon) => {
+  const need = needFor(fn);
+  return need && !canDo(need) ? "" : `<button onclick="${fn}" class="btn-icon-action ${cls}" title="${title}"><i class="${icon}"></i></button>`;
+};
+
 const itemsSummary = (r) => {
   const it = r.items || [];
   return it.length ? `${E(it[0].name)}${it.length > 1 ? ` <span class="text-gray-400">+${it.length - 1} more</span>` : ""}` : "-";
@@ -816,7 +832,14 @@ function switchModuleTab(module) {
   document.querySelectorAll(".module-tab-panel").forEach((p) => p.classList.toggle("hidden", p.dataset.module !== module));
   if (ST[module] && ST[module].all.length === 0 && !ST[module].loading) loadModule(module);
 }
-document.addEventListener("DOMContentLoaded", () => { loadModule("pr"); loadVendors(); });
+
+function gateCreate() {
+  document.querySelectorAll('[onclick^="openAddPR"],[onclick^="openAddPO"],[onclick^="openAddPB"],[onclick^="openAddGRN"]')
+    .forEach((el) => { el.style.display = canDo("CREATE") ? "" : "none"; });
+}
+document.addEventListener("siec:perms", () => { Object.keys(MODULES).forEach(renderTable); gateCreate(); });
+document.addEventListener("DOMContentLoaded", () => { loadModule("pr"); loadVendors(); gateCreate(); });
+
 
 /* =========================================================================
    PR: approve / reject / convert to PO
@@ -975,10 +998,12 @@ function openPaymentsPB(id) {
     <div class="flex items-center justify-between gap-3 py-2 border-b border-gray-50">
       <div><div class="font-semibold text-gray-800">${formatCurrency(p.amount)}</div>
         <div class="text-gray-400">${formatDate(p.date)} · ${E((p.mode || "-").replace("_", " "))}${p.ref ? " · " + E(p.ref) : ""}</div></div>
-      <button class="btn-icon-action danger" title="Delete payment" onclick="deletePaymentPB('${id}', ${Number(p.paymentId)})"><i class="fa-regular fa-trash-can"></i></button>
+      ${canDo("DELETE") ? `<button class="btn-icon-action danger" title="Delete payment" onclick="deletePaymentPB('${id}', ${Number(p.paymentId)})"><i class="fa-regular fa-trash-can"></i></button>` : ""}
     </div>`).join("");
   showModal(`Payments — ${b.pbNumber || ""}`, `<div class="p-5 text-xs">${rows || '<p class="text-gray-400">No payments recorded.</p>'}</div>`, "max-w-sm");
 }
+
+
 async function deletePaymentPB(id, paymentId) {
   if (!confirm("Delete this payment? The bill balance will go up again.")) return;
   try {

@@ -626,8 +626,8 @@
       var html = '<div class="flex gap-1">';
       if (viewFn) html += '<button onclick="' + viewFn + '" class="btn-icon-action" title="View">' + iconEye() + '</button>';
       if (printFn) html += '<button onclick="' + printFn + '" class="btn-icon-action" title="Print">' + iconPrint() + '</button>';
-      html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
-      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      if (canDo('EDIT')) html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
+      if (canDo('DELETE')) html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
       html += '</div>';
       return html;
     }
@@ -842,6 +842,7 @@
       );
 
       document.getElementById('paymentsPanel').innerHTML = panelHtml;
+      gateCreate();
     }
 
     // =============================================================
@@ -971,6 +972,10 @@
     // ADD / EDIT PAYMENT
     // =============================================================
 
+    function canDo(a) { return !window.NavSidebar || NavSidebar.can('vendor-payments', a); }
+    function gateCreate() {
+      document.querySelectorAll('[onclick^="openAddPayment"]').forEach(function (el) { el.style.display = canDo('CREATE') ? '' : 'none'; });
+    }
     function openAddPayment() { openPaymentModal(null); }
 
     function editPayment(id) {
@@ -1332,6 +1337,7 @@
     // =============================================================
     // INIT
     // =============================================================
+    document.addEventListener('siec:perms', function () { renderPayments(); });
     (async function init() {
       renderPayments(); // shows "Loading…"
       try { await loadVendors(); }

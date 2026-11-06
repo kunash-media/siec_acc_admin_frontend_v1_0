@@ -806,7 +806,8 @@
         customerAddress: d.quoteClientBillingAddress, shipTo: d.quoteShippingAddress, pos: d.quotePlaceOfSupply, posCode: d.quotePlaceOfSupplyStateCode,
         currency: d.quoteCurrency, exchangeRate: d.quoteExchangeRate, discount: d.quoteDiscountPercent, shipping: d.quoteShippingCharges,
         otherCharges: d.quoteOtherCharges, status: String(d.quoteStatus || 'DRAFT').toUpperCase(), total: d.quoteTotalAmount, totalINR: d.quoteTotalAmountInr, ref: d.quoteReferenceNumber,
-        notes: d.quoteCustomerNotes, terms: d.quoteTerms, converted: d.quoteConvertedToSo, pdfUrl: d.quotePdfUrl,
+        notes: d.quoteCustomerNotes, terms: d.quoteTerms, 
+        converted: d.quoteConvertedToSo, soId: d.quoteSalesOrderId, pdfUrl: d.quotePdfUrl,
         items: (d.quoteItems || []).map(function (i) {
           return { pid: i.quoteItemProductId, vid: i.quoteItemVariantId, name: i.quoteItemName, desc: i.quoteItemDescription, hsn: i.quoteItemHsnCode,
             unit: i.quoteItemUnit, qty: i.quoteItemQty, rate: i.quoteItemRate, gst: i.quoteItemGstPercent };
@@ -937,7 +938,7 @@
           '<td class="px-3 py-2.5"><div class="font-semibold text-gray-800 text-sm">' + escH(q.number) + '</div><div class="text-[10px] text-gray-400 font-mono">#' + q.id + '</div></td>' +
           '<td class="px-3 py-2.5 text-xs">' + fd(q.date) + '</td><td class="px-3 py-2.5 text-sm text-gray-700">' + escH(q.customerName) + '</td>' +
           '<td class="px-3 py-2.5 font-mono font-semibold text-sm">' + fm(q.total, q.currency) + '</td><td class="px-3 py-2.5 text-xs">' + fd(q.validTill) + '</td>' +
-          '<td class="px-3 py-2.5">' + statusBadge(q.status) + (q.converted ? ' <span class="badge badge-purple">SO</span>' : '') + '</td>' +
+          '<td class="px-3 py-2.5">' + statusBadge(q.status) + (q.converted ? ' <span class="badge badge-purple" title="Sales Order">' + escH(q.soId || 'SO') + '</span>' : '') + '</td>' +
           '<td class="px-3 py-2.5"><div class="flex gap-1">' + a + '</div></td></tr>';
       }).join('') :
         '<tr><td colspan="7" class="text-center py-10 text-gray-400 text-sm"><div class="flex justify-center mb-2 empty-icon-svg">' + iconDocument() + '</div>No quotations found. Try adjusting your filters or ' +
@@ -1042,9 +1043,13 @@
       try { await apiFetch(QS + '/patch-status/' + id + '?status=' + status, { method: 'PATCH' }); showToast('Quotation marked ' + status.toLowerCase(), 'success'); renderQuotations(); }
       catch (e) { showToast(e.message || 'Could not update status', 'error'); }
     }
+    
     async function convertToSO(id) {
-      try { await apiFetch(QS + '/patch/' + id + '/convert-to-so', { method: 'PATCH' }); showToast('Marked as converted to Sales Order', 'success'); renderQuotations(); }
-      catch (e) { showToast(e.message || 'Could not convert', 'error'); }
+      try {
+        var r = await apiFetch(QS + '/patch/' + id + '/convert-to-so', { method: 'PATCH' });
+        showToast('Sales Order ' + ((r && r.quoteSalesOrderId) || '') + ' created from quotation', 'success');
+        renderQuotations();
+      } catch (e) { showToast(e.message || 'Could not convert', 'error'); }
     }
 
         // ============================================================= MANUAL STATUS CHANGE

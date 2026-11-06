@@ -64,12 +64,40 @@
   (function () {
     if (window.__siecFetchPatched) return;
     window.__siecFetchPatched = true;
-    var nativeFetch = window.fetch;
-    window.fetch = function (input, init) {
-      if (typeof input === "string" && input.indexOf(API_BASE_URL) === 0 && (!init || init.credentials === undefined)) {
-        init = Object.assign({}, init, { credentials: "include" });
+        var nativeFetch = window.fetch;
+    var refreshing = null;
+    var NO_RETRY = ["/api/admin/auth/login", "/api/admin/auth/refresh", "/api/admin/auth/logout"];
+
+    function isApi(input) { return typeof input === "string" && input.indexOf(API_BASE_URL) === 0; }
+    function noRetry(input) { return NO_RETRY.some(function (p) { return input.indexOf(API_BASE_URL + p) === 0; }); }
+
+    // one refresh at a time, shared by every request that hit 401 together
+    function refreshOnce() {
+      if (!refreshing) {
+        refreshing = nativeFetch(API_BASE_URL + "/api/admin/auth/refresh", { method: "POST", credentials: "include" })
+          .then(function (r) { return r.ok; })
+          .catch(function () { return false; })
+          .then(function (ok) { setTimeout(function () { refreshing = null; }, 0); return ok; });
       }
-      return nativeFetch.call(window, input, init);
+      return refreshing;
+    }
+
+    function sessionExpired() {
+      if (/admin-login\.html$/.test(window.location.pathname)) return;
+      try { if (window.Auth) window.Auth._clearAdmin(); } catch (e) { /* ignore */ }
+      window.location.href = "/admin-login.html";
+    }
+
+    window.fetch = function (input, init) {
+      if (!isApi(input)) return nativeFetch.call(window, input, init);
+      if (!init || init.credentials === undefined) init = Object.assign({}, init, { credentials: "include" });
+      return nativeFetch.call(window, input, init).then(function (res) {
+        if (res.status !== 401 || noRetry(input)) return res;
+        return refreshOnce().then(function (ok) {
+          if (!ok) { sessionExpired(); return res; }
+          return nativeFetch.call(window, input, init);
+        });
+      });
     };
   })();
 

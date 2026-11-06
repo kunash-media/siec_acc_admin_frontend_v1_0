@@ -635,7 +635,7 @@
       if (approveFn && canDo('APPROVE')) html += '<button onclick="' + approveFn + '" class="btn-icon-action primary" title="Approve">' + iconApprove() + '</button>';
       if (rejectFn && canDo('APPROVE')) html += '<button onclick="' + rejectFn + '" class="btn-icon-action danger" title="Reject">' + iconReject() + '</button>';
       if (canDo('EDIT')) html += '<button onclick="' + editFn + '" class="btn-icon-action" title="Edit">' + iconEdit() + '</button>';
-      html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
+      if (canDo('DELETE')) html += '<button onclick="' + delFn + '" class="btn-icon-action danger" title="Delete">' + iconTrash() + '</button>';
       html += '</div>';
       return html;
     }

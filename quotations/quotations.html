@@ -458,7 +458,15 @@
               <h1 class="page-title text-[16px] sm:text-[22px] font-bold tracking-tight text-gray-900">Quotations</h1>
               <p class="page-subtitle mt-0.5">Formal price offers to customers before confirmation. Convert to Sales Order.</p>
             </div>
-            <div class="flex gap-2 flex-wrap">
+             <div class="flex gap-2 flex-wrap items-center">
+              <div class="relative">
+                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-magnifying-glass text-[10px]"></i></span>
+                <input type="text" id="searchInput" oninput="onSearchInput()" placeholder="Search number, client… (min 3 letters)"
+                  class="w-56 sm:w-64 border border-gray-200 bg-white rounded-lg pl-7 pr-3 py-2 text-[11px] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+              </div>
+              <button onclick="resetAll()" title="Reset search & filters" class="filter-btn inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition">
+                <i class="fa-solid fa-rotate-left text-[10px]"></i> Reset
+              </button>
               <div class="relative inline-block" data-dd-trigger>
                 <button onclick="toggleFilterDD()" class="filter-btn inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition">
                   <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -620,6 +628,7 @@
     function iconConvert() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>'; }
     function iconCheck() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>'; }
     function iconBan() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>'; }
+    function iconStatus() { return '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h13"/><path d="M14 4l3 3-3 3"/><path d="M20 17H7"/><path d="M10 14l-3 3 3 3"/></svg>'; }
     var SPINNER = '<svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M22 12a10 10 0 00-10-10"/></svg>';
 
     // ============================================================= CURRENCY
@@ -796,7 +805,7 @@
         customerState: d.quoteClientState, customerStateCode: d.quoteClientStateCode, customerCountry: d.quoteClientCountry,
         customerAddress: d.quoteClientBillingAddress, shipTo: d.quoteShippingAddress, pos: d.quotePlaceOfSupply, posCode: d.quotePlaceOfSupplyStateCode,
         currency: d.quoteCurrency, exchangeRate: d.quoteExchangeRate, discount: d.quoteDiscountPercent, shipping: d.quoteShippingCharges,
-        otherCharges: d.quoteOtherCharges, status: d.quoteStatus, total: d.quoteTotalAmount, totalINR: d.quoteTotalAmountInr, ref: d.quoteReferenceNumber,
+        otherCharges: d.quoteOtherCharges, status: String(d.quoteStatus || 'DRAFT').toUpperCase(), total: d.quoteTotalAmount, totalINR: d.quoteTotalAmountInr, ref: d.quoteReferenceNumber,
         notes: d.quoteCustomerNotes, terms: d.quoteTerms, converted: d.quoteConvertedToSo, pdfUrl: d.quotePdfUrl,
         items: (d.quoteItems || []).map(function (i) {
           return { pid: i.quoteItemProductId, vid: i.quoteItemVariantId, name: i.quoteItemName, desc: i.quoteItemDescription, hsn: i.quoteItemHsnCode,
@@ -877,7 +886,7 @@
     function changePageSize(v) { pageSize = parseInt(v, 10) || 25; currentPage = 1; renderQuotations(); }
     function clearFilters() {
       document.getElementById('filterStatus').value = 'all'; document.getElementById('filterCustomer').value = 'all';
-      var si = document.getElementById('searchInput'); if (si) si.value = '';
+      var si = document.getElementById('searchInput'); if (si) si.value = ''; _lastSearch = ''; clearTimeout(searchTimer);
       currentPage = 1; renderQuotations(); toggleFilterDD();
     }
     async function loadStats() {
@@ -898,7 +907,10 @@
       var st = document.getElementById('filterStatus').value, cid = document.getElementById('filterCustomer').value;
       if (st && st !== 'all') p.set('status', st.toUpperCase());
       if (cid && cid !== 'all') p.set('clientPrimeId', cid);
-      if (si && si.value.trim()) p.set('search', si.value.trim());
+       var term = si ? si.value.trim() : '';
+      if (term.length >= 3) p.set('search', term);
+      var fb = document.getElementById('filterBadge'), fn = (st !== 'all' ? 1 : 0) + (cid !== 'all' ? 1 : 0);
+      if (fb) { fb.textContent = fn; fb.classList.toggle('hidden', !fn); }
       p.set('pageNumber', currentPage); p.set('pageSize', pageSize);
       var res;
       try { res = await apiFetch(QS + '/get-all-quotes?' + p.toString(), { method: 'GET' }); }
@@ -908,7 +920,7 @@
         return;
       }
       quotes = (res.content || []).map(mapQuote); totalPages = res.totalPages || 1; totalElements = res.totalElements || 0;
-      if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+      if (currentPage > totalPages) { currentPage = Math.max(1, totalPages); return renderQuotations(); }
 
       var btn = function (fn, title, ico, cls) { return '<button onclick="' + fn + '" class="btn-icon-action ' + (cls || '') + '" title="' + title + '">' + ico + '</button>'; };
       var rows = quotes.length ? quotes.map(function (q) {
@@ -916,6 +928,7 @@
         if (canDo('EDIT') && (q.status === 'DRAFT' || q.status === 'SENT')) a += btn("openSendOverlay('" + q.id + "')", 'Send', iconSend(), 'primary');        
         if (canDo('EDIT') && q.status === 'SENT') a += btn("setStatus('" + q.id + "','ACCEPTED')", 'Mark Accepted', iconCheck(), 'primary') + btn("setStatus('" + q.id + "','DECLINED')", 'Mark Declined', iconBan(), 'danger');
         if (canDo('EDIT') && q.status === 'ACCEPTED' && !q.converted) a += btn("convertToSO('" + q.id + "')", 'Convert to Sales Order', iconConvert(), 'primary');
+         if (canDo('EDIT') && !q.converted) a += btn("openStatusModal('" + q.id + "')", 'Change Status', iconStatus(), 'primary');
         a += btn("downloadQuotation('" + q.id + "')", 'Download PDF', iconDownload(), 'primary');
         if (canDo('EDIT') && !q.converted) a += btn("editQuotation('" + q.id + "')", 'Edit', iconEdit());
         
@@ -971,7 +984,9 @@
         '<svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.02c-.25.68-1.44 1.31-1.98 1.35-.5.05-1.14.07-1.84-.12-.42-.11-.96-.31-1.66-.6-2.92-1.26-4.82-4.2-4.97-4.4-.15-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.65.5.24.58.83 2 .9 2.15.07.15.12.32.02.52-.1.2-.15.32-.29.49-.15.17-.31.38-.44.51-.15.15-.3.31-.13.61.17.3.75 1.24 1.61 2 1.11.99 2.04 1.3 2.34 1.45.3.15.48.12.65-.07.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.35.07.13.07.75-.18 1.43z"/></svg><span class="text-xs font-semibold text-gray-700">WhatsApp</span></button>' +
         '</div></div>', { width: 'max-w-sm' });
     }
+
     function isValidEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+    
     function openSendEmail(id) {
       var q = quotes.find(function (x) { return String(x.id) === String(id); }); if (!q) return;
       var cu = customers.find(function (c) { return String(c.id) === String(q.customerId); });
@@ -986,10 +1001,19 @@
         '<button id="emailSendBtn" onclick="sendViaEmail(\'' + id + '\')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">' + iconSend() + ' Send Email</button></div>',
         { width: 'max-w-sm' });
     }
+
     async function markSentIfDraft(q) {
-      if (q.status !== 'DRAFT') return;
-      try { await apiFetch(QS + '/patch-status/' + q.id + '?status=SENT', { method: 'PATCH' }); } catch (e) { console.warn('mark-sent failed', e); }
+      if (q.status !== 'DRAFT') return true;
+      try {
+        await apiFetch(QS + '/patch-status/' + q.id + '?status=SENT', { method: 'PATCH' });
+        return true;
+      } catch (e) {
+        console.error('mark-sent failed', e);
+        showToast('Sent, but status could not be updated to SENT: ' + (e.message || 'request failed'), 'warning');
+        return false;
+      }
     }
+
     async function sendViaEmail(id) {
       var q = quotes.find(function (x) { return String(x.id) === String(id); }); if (!q) return;
       var inp = document.getElementById('f_sendEmail'), err = document.getElementById('emailSendError'), email = (inp.value || '').trim();
@@ -1022,6 +1046,32 @@
       try { await apiFetch(QS + '/patch/' + id + '/convert-to-so', { method: 'PATCH' }); showToast('Marked as converted to Sales Order', 'success'); renderQuotations(); }
       catch (e) { showToast(e.message || 'Could not convert', 'error'); }
     }
+
+        // ============================================================= MANUAL STATUS CHANGE
+    var ALL_STATUSES = ['DRAFT', 'SENT', 'ACCEPTED', 'DECLINED', 'EXPIRED'];
+    function openStatusModal(id) {
+      var q = quotes.find(function (x) { return String(x.id) === String(id); }); if (!q) return;
+      var opts = ALL_STATUSES.map(function (s) {
+        var cur = s === q.status;
+        return '<button ' + (cur ? 'disabled' : 'onclick="applyManualStatus(\'' + q.id + '\',\'' + s + '\')"') +
+          ' class="flex items-center justify-between w-full px-3 py-2 rounded-lg border text-left transition ' +
+          (cur ? 'border-primary bg-primary-soft opacity-70 cursor-not-allowed' : 'border-gray-200 hover:border-primary hover:bg-primary-soft') + '">' +
+          statusBadge(s) + '<span class="text-[10px] text-gray-400">' + (cur ? 'Current' : 'Set as ' + s.charAt(0) + s.slice(1).toLowerCase()) + '</span></button>';
+      }).join('');
+      openModal(modalHeader('Change Status', escH(q.number)) +
+        '<div class="px-5 py-4"><p class="text-xs text-gray-500 mb-3">Select the new status for this quotation.</p>' +
+        '<div class="flex flex-col gap-2">' + opts + '</div>' +
+        '<p class="text-[10px] text-amber-600 mt-3">Note: a Sent quotation past its Valid Till date is auto-marked Expired.</p></div>', { width: 'max-w-sm' });
+    }
+    async function applyManualStatus(id, status) {
+      try {
+        await apiFetch(QS + '/patch-status-manual/' + id + '?status=' + status, { method: 'PATCH' });
+        closeModal();
+        showToast('Quotation marked ' + status.toLowerCase(), 'success');
+        renderQuotations();
+      } catch (e) { showToast(e.message || 'Could not change status', 'error'); }
+    }
+
     function delQuotation(id) {
       var q = quotes.find(function (x) { return String(x.id) === String(id); }); if (!q) return;
       openModal(modalHeader('Delete Quotation', escH(q.number)) +
@@ -1110,7 +1160,8 @@
     function formQuote() {
       var g = function (i) { return parseFloat(document.getElementById(i).value) || 0; }, pos = document.getElementById('f_pos').value;
       return {
-        items: readItems().filter(function (i) { return i.name; }), discount: g('f_discount'), shipping: g('f_shipping'), otherCharges: g('f_otherCharges'),
+        items: readItems().filter(function (i) { return i.name; }), 
+       discount: Math.min(100, Math.max(0, g('f_discount'))), shipping: Math.max(0, g('f_shipping')), otherCharges: Math.max(0, g('f_otherCharges')),
         pos: pos, posCode: STATE_CODES[String(pos).toLowerCase()] || '', currency: document.getElementById('f_currency').value, exchangeRate: g('f_exchangeRate') || 1
       };
     }
@@ -1159,9 +1210,9 @@
         '<th class="px-2 py-1.5">Qty</th><th class="px-2 py-1.5">Rate</th><th class="px-2 py-1.5">GST %</th><th style="width:36px"></th></tr></thead>' +
         '<tbody id="lineItemsBody">' + (e.items.length ? e.items.map(lineRowHtml).join('') : EMPTY_ROW) + '</tbody></table></div></div>' +
         '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">' +
-        fld('Discount (%)', '<input type="number" class="form-input" id="f_discount" value="' + (e.discount || 0) + '" onchange="calcQuoteTotal()">') +
-        fld('Shipping', '<input type="number" class="form-input" id="f_shipping" value="' + (e.shipping || 0) + '" onchange="calcQuoteTotal()">') +
-        fld('Other Charges', '<input type="number" class="form-input" id="f_otherCharges" value="' + (e.otherCharges || 0) + '" onchange="calcQuoteTotal()">') +
+        fld('Discount (%)', '<input type="number" min="0" max="100" step="0.01" class="form-input" id="f_discount" value="' + (e.discount || 0) + '" onkeydown="blockBadKeys(event)" oninput="checkAmounts()" onchange="calcQuoteTotal()">', '<span id="f_discount_hint">0 – 100</span>') +
+        fld('Shipping', '<input type="number" min="0.01" step="0.01" class="form-input" id="f_shipping" value="' + (e.shipping > 0 ? e.shipping : '') + '" onkeydown="blockBadKeys(event)" oninput="checkAmounts()" onchange="calcQuoteTotal()">', '<span id="f_shipping_hint">Optional · must be greater than 0</span>') +
+        fld('Other Charges', '<input type="number" min="0.01" step="0.01" class="form-input" id="f_otherCharges" value="' + (e.otherCharges > 0 ? e.otherCharges : '') + '" onkeydown="blockBadKeys(event)" oninput="checkAmounts()" onchange="calcQuoteTotal()">', '<span id="f_otherCharges_hint">Optional · must be greater than 0</span>') +
         fld('Total Amount', '<input class="form-input" id="f_total" disabled style="font-weight:bold;color:#6da84c;">', '<span id="f_taxInfo"></span>') + '</div>' +
         fld('Customer Notes (printed under the table)', '<textarea rows="2" class="form-input" id="f_notes">' + escH(e.notes || '') + '</textarea>') +
         fld('Terms & Conditions', '<textarea rows="3" class="form-input" id="f_terms">' + escH(e.terms || '') + '</textarea>') + '</div>' +
@@ -1176,6 +1227,7 @@
       var q = formQuote(); q.items = q.items.filter(function (i) { return i.qty > 0 && i.rate >= 0; });
       if (!g('f_date') || !g('f_validTill') || !cust) { showToast('Please fill Date, Client and Valid Till', 'error'); return; }
       if (!q.items.length) { showToast('Please add at least one item', 'error'); return; }
+      if (!checkAmounts()) { showToast('Please fix Discount / Shipping / Other Charges', 'error'); return; }
       if (!company.stateCode || !q.posCode) { showToast('Company state or Place of Supply is missing — needed to decide the GST type', 'error'); return; }
 
       var dto = {
@@ -1183,7 +1235,8 @@
         quoteClientCompanyName: cust.name, quoteClientGstin: cust.gst, quoteClientEmail: cust.email, quoteClientState: cust.state, quoteClientStateCode: cust.stateCode,
         quoteClientCountry: cust.country, quoteClientBillingAddress: cust.address, quoteShippingAddress: g('f_shipTo'), quoteCompanyStateCode: company.stateCode,
         quotePlaceOfSupply: q.pos, quotePlaceOfSupplyStateCode: q.posCode, quoteCurrency: q.currency, quoteExchangeRate: q.exchangeRate, quoteDiscountPercent: q.discount,
-        quoteShippingCharges: q.shipping, quoteOtherCharges: q.otherCharges, quoteReferenceNumber: g('f_ref'), quoteCustomerNotes: g('f_notes'), quoteTerms: g('f_terms'),
+        quoteShippingCharges: q.shipping > 0 ? q.shipping : null, quoteOtherCharges: q.otherCharges > 0 ? q.otherCharges : null,
+        quoteReferenceNumber: g('f_ref'), quoteCustomerNotes: g('f_notes'), quoteTerms: g('f_terms'),
         quoteItems: q.items.map(function (i) {
           return { quoteItemProductId: i.pid, quoteItemVariantId: i.vid, quoteItemName: i.name, quoteItemDescription: i.desc,
             quoteItemHsnCode: i.hsn, quoteItemUnit: i.unit, quoteItemQty: i.qty, quoteItemRate: i.rate, quoteItemGstPercent: i.gst };
@@ -1215,16 +1268,53 @@
     }
 
     // ============================================================= SEARCH (topbar) + INIT
-    (function addSearchToTopbar() {
-      var header = document.querySelector('.app-main header');
-      if (!header) return;
-      var searchHtml = '<div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">' +
-        '<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">' + iconSearch() + '</span>' +
-        '<input type="text" id="searchInput" placeholder="Search quotations by number, client…" onkeyup="filterQuotations()" ' +
-        'class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400"></div>';
-      var html = header.innerHTML, i = html.indexOf('lg:hidden');
-      if (i !== -1) { var end = html.indexOf('</div>', i) + 6; header.innerHTML = html.substring(0, end) + searchHtml + html.substring(end); }
-    })();
+    // (function addSearchToTopbar() {
+    //   var header = document.querySelector('.app-main header');
+    //   if (!header) return;
+    //   var searchHtml = '<div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">' +
+    //     '<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">' + iconSearch() + '</span>' +
+    //     '<input type="text" id="searchInput" placeholder="Search quotations by number, client…" onkeyup="filterQuotations()" ' +
+    //     'class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400"></div>';
+    //   var html = header.innerHTML, i = html.indexOf('lg:hidden');
+    //   if (i !== -1) { var end = html.indexOf('</div>', i) + 6; header.innerHTML = html.substring(0, end) + searchHtml + html.substring(end); }
+    // })();
+
+        // ============================================================= SEARCH (3+ letters, debounced) / RESET / VALIDATION
+    var _lastSearch = '';
+    function onSearchInput() {
+      var v = document.getElementById('searchInput').value.trim();
+      var eff = v.length >= 3 ? v : '';
+      clearTimeout(searchTimer);
+      if (eff === _lastSearch) return;
+      searchTimer = setTimeout(function () { _lastSearch = eff; currentPage = 1; renderQuotations(); }, 400);
+    }
+    function resetAll() {
+      document.getElementById('filterStatus').value = 'all';
+      document.getElementById('filterCustomer').value = 'all';
+      document.getElementById('searchInput').value = '';
+      document.querySelectorAll('[data-dd-menu]').forEach(function (m) { m.classList.add('hidden'); });
+      clearTimeout(searchTimer); _lastSearch = ''; currentPage = 1;
+      renderQuotations();
+    }
+    function blockBadKeys(ev) { if (['-', '+', 'e', 'E'].indexOf(ev.key) !== -1) ev.preventDefault(); }
+    var AMT_RULES = {
+      f_discount:     { hint: '0 – 100', msg: 'Must be between 0 and 100', test: function (v) { return v >= 0 && v <= 100; } },
+      f_shipping:     { hint: 'Optional · must be greater than 0', msg: 'Must be greater than 0 (leave empty for none)', test: function (v) { return v > 0; } },
+      f_otherCharges: { hint: 'Optional · must be greater than 0', msg: 'Must be greater than 0 (leave empty for none)', test: function (v) { return v > 0; } }
+    };
+    function checkAmounts() {
+      var ok = true;
+      Object.keys(AMT_RULES).forEach(function (id) {
+        var el = document.getElementById(id), h = document.getElementById(id + '_hint'); if (!el || !h) return;
+        var raw = el.value.trim(), bad = false;
+        if (raw !== '') { var v = Number(raw); bad = isNaN(v) || !AMT_RULES[id].test(v); }
+        el.style.borderColor = bad ? '#f87171' : '';
+        h.textContent = bad ? AMT_RULES[id].msg : AMT_RULES[id].hint;
+        h.style.color = bad ? '#dc2626' : '';
+        if (bad) ok = false;
+      });
+      return ok;
+    }
 
     document.addEventListener('siec:perms', function () { renderQuotations(); });
     (async function init() {

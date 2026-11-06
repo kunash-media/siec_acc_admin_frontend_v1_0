@@ -822,9 +822,8 @@ function pickItem(prefix, el) {
 
     function canDo(a) { return !window.NavSidebar || NavSidebar.can('inventory', a); }
     function gateUi() {
-      document.querySelectorAll('[onclick^="openAddStock"],[onclick^="openAdjustStock"]').forEach(function (el) {
-        el.style.display = canDo('EDIT') ? '' : 'none';
-      });
+      document.querySelectorAll('[onclick^="openAddStock"]').forEach(function (el) { el.style.display = canDo('EDIT') ? '' : 'none'; });
+      document.querySelectorAll('[onclick^="openAdjustStock"]').forEach(function (el) { el.style.display = canDo('APPROVE') ? '' : 'none'; });
     }
     document.addEventListener('siec:perms', function () { renderInventory(); });
     function filterInventory() { renderInventory(); }

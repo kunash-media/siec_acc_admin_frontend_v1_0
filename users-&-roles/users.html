@@ -117,7 +117,7 @@
 
 <script src="/assets/js/nav-sidebar.js"></script>
 <script>
-var API = 'http://localhost:9093';
+var API = "http://" + window.location.hostname + ":9093";
 NavSidebar.init({ basePath: "", activePage: "users", pageTitle: "Users & Roles" });
 
 var me = {}; try { me = JSON.parse(localStorage.getItem('adminAuth') || '{}'); } catch (e) {}

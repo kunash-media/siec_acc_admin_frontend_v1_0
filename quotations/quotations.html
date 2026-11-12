@@ -545,7 +545,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
       // ============================================================= CONFIG
-    var API_BASE = 'http://localhost:9093';
+    var API_BASE = "http://" + window.location.hostname + ":9093";
         var QS = '/api/v1/quotes';
     var EMAIL_API = '/api/v1/emails/send-quote'; // body: { quotePrimeId, toEmail }
 

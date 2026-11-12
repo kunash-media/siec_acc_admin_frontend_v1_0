@@ -351,7 +351,7 @@
     // =============================================================
     // CONFIG  (only these 3 lines may need adjusting)
     // =============================================================
-    var API_BASE = 'http://localhost:9093';                 // e.g. 'http://localhost:9093' when the page is served from another origin
+    var API_BASE = "http://" + window.location.hostname + ":9093";                 // e.g. 'http://localhost:9093' when the page is served from another origin
     var AUTH_TOKEN_KEY = 'token';      // localStorage key holding the JWT
     var VENDOR_LIST_URL = '/api/vendor/vendor-list';          // e.g. '/api/vendor/get-all-vendors' once a vendor list endpoint exists
 

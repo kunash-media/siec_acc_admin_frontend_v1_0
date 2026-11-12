@@ -466,7 +466,7 @@
     // API CONFIG  (backend: Spring Boot, port 9093)
     // Set window.API_HOST once (e.g. in a shared js file) to change it everywhere.
     // =============================================================
-    var API_HOST = window.API_HOST || "http://localhost:9093";
+    var API_HOST = "http://" + window.location.hostname + ":9093";
     var VP_API = API_HOST + "/api/vendor-payments/v1";
     var VENDOR_API = API_HOST + "/api/vendor";
 

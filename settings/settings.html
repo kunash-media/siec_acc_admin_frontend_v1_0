@@ -1226,7 +1226,7 @@
       if (err) err.classList.toggle('hidden', !hasError);
     }
 
-    var ORGANIZATION_API = 'http://localhost:9093/api/organization';
+    var ORGANIZATION_API = "http://" + window.location.hostname + ":9093/api/organization";
     var currentOrganization = null;
     var ORGANIZATION_ID_KEY = 'siec_organization_id';
 

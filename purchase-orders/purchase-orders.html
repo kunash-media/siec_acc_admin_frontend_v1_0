@@ -195,7 +195,7 @@
    PurchaseBillRequestDto, PurchaseBillPaymentRequestDto, GoodsReceiptRequestDto).
    Vendors come from the vendor master: GET /api/vendor/vendor-list (raw array, not wrapped).
    ========================================================================= */
-const API_HOST = window.API_HOST || "http://localhost:9093"; // set window.API_HOST once (e.g. in shared-data.js) to change it everywhere
+const API_HOST = "http://" + window.location.hostname + ":9093"; // set window.API_HOST once (e.g. in shared-data.js) to change it everywhere
 const PR_API_BASE = `${API_HOST}/api/purchases/v1`;
 const PO_API_BASE = `${API_HOST}/api/purchase-orders/v1`;
 const PB_API_BASE = `${API_HOST}/api/purchase-bills/v1`;

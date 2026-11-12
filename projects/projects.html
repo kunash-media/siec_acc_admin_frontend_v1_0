@@ -271,7 +271,7 @@
     // Use '' (empty string) if this page is served by the same Spring Boot app.
     // You can also set  window.API_BASE = '...'  in a script above this one.
     // =====================================================================
-    var API_BASE = (typeof window.API_BASE === 'string') ? window.API_BASE : 'http://localhost:9093';
+    var API_BASE = "http://" + window.location.hostname + ":9093";
     var PROJECT_API = API_BASE + '/api/projects/v1';
     var CLIENT_API  = API_BASE + '/api/clients/v1';
     var INVOICE_API = API_BASE + '/api/v1/invoices';

@@ -668,7 +668,7 @@
 
     // Project master — replace with a backend fetch later if you wire up the project module.
        // ---- Project dropdown (API-driven, searchable, paginated) ----
-    var PROJECT_API = 'http://localhost:9093/api/projects/v1/project-list';
+    var PROJECT_API = "http://" + window.location.hostname + ":9093/api/projects/v1/project-list";
     var projectCache = {};   // projectStrId -> project object
     var ppState = {};        // per-picker paging state
     var ppTimers = {};       // per-picker debounce timers

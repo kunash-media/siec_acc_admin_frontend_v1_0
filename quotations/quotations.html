@@ -1148,7 +1148,8 @@
       });
     }
     function updateCurrency() {
-      document.getElementById('f_exchangeRate').value = getCurrencyRate(document.getElementById('f_currency').value);
+       document.getElementById('f_exchangeRate').value = getCurrencyRate(document.getElementById('f_currency').value);
+      checkAmounts();
       calcQuoteTotal();
     }
     function readItems() {
@@ -1167,7 +1168,7 @@
       return {
         items: readItems().filter(function (i) { return i.name; }), 
        discount: Math.min(100, Math.max(0, g('f_discount'))), shipping: Math.max(0, g('f_shipping')), otherCharges: Math.max(0, g('f_otherCharges')),
-        pos: pos, posCode: STATE_CODES[String(pos).toLowerCase()] || '', currency: document.getElementById('f_currency').value, exchangeRate: g('f_exchangeRate') || 1
+        pos: pos, posCode: STATE_CODES[String(pos).toLowerCase()] || '', currency: document.getElementById('f_currency').value, exchangeRate: g('f_exchangeRate') > 0 ? g('f_exchangeRate') : 1
       };
     }
     function calcQuoteTotal() {
@@ -1197,12 +1198,12 @@
         '<div class="px-5 py-4 modal-scroll">' +
         '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
         fld('Quotation #', '<input class="form-input" value="' + escH(e.number) + '" disabled>') +
-        fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '">') +
+        fld('Date *', '<input type="date" class="form-input" id="f_date" value="' + e.date + '" onchange="checkDates()">') +
         fld('Client *', '<button type="button" id="f_clientBtn" class="form-input text-left" data-id="' + cId + '" onclick="pickClient(this)">' + escH(cName) + '</button>') +
-        fld('Valid Till *', '<input type="date" class="form-input" id="f_validTill" value="' + e.validTill + '">') + '</div>' +
+        fld('Valid Till *', '<input type="date" class="form-input" id="f_validTill" value="' + e.validTill + '" min="' + e.date + '" onchange="checkDates()">', '<span id="f_validTill_hint">Must be on or after the quotation date</span>') + '</div>' +
         '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' +
         fld('Currency', '<select id="f_currency" class="form-input" onchange="updateCurrency()">' + curOpts + '</select>') +
-        fld('Exchange Rate', '<input type="number" class="form-input" id="f_exchangeRate" step="0.01" value="' + e.exchangeRate + '" onchange="calcQuoteTotal()">') +
+        fld('Exchange Rate', '<input type="number" min="0.01" step="0.01" class="form-input" id="f_exchangeRate" value="' + e.exchangeRate + '" onkeydown="blockBadKeys(event)" oninput="checkAmounts()" onchange="calcQuoteTotal()">', '<span id="f_exchangeRate_hint">Must be greater than 0</span>') +
         fld('INR Equivalent', '<input class="form-input" id="f_inr" disabled style="background:#f3f4f6;">') +
         fld('Place of Supply *', '<select class="form-input" id="f_pos" onchange="calcQuoteTotal()"><option value=""></option>' + states + '</select>', 'Decides CGST+SGST vs IGST') + '</div>' +
         '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">' +
@@ -1232,7 +1233,8 @@
       var q = formQuote(); q.items = q.items.filter(function (i) { return i.qty > 0 && i.rate >= 0; });
       if (!g('f_date') || !g('f_validTill') || !cust) { showToast('Please fill Date, Client and Valid Till', 'error'); return; }
       if (!q.items.length) { showToast('Please add at least one item', 'error'); return; }
-      if (!checkAmounts()) { showToast('Please fix Discount / Shipping / Other Charges', 'error'); return; }
+      if (!checkDates()) { showToast('Valid Till cannot be before the Quotation Date', 'error'); return; }
+      if (!checkAmounts()) { showToast('Please fix Exchange Rate / Discount / Shipping / Other Charges', 'error'); return; }
       if (!company.stateCode || !q.posCode) { showToast('Company state or Place of Supply is missing — needed to decide the GST type', 'error'); return; }
 
       var dto = {
@@ -1305,20 +1307,31 @@
     var AMT_RULES = {
       f_discount:     { hint: '0 – 100', msg: 'Must be between 0 and 100', test: function (v) { return v >= 0 && v <= 100; } },
       f_shipping:     { hint: 'Optional · must be greater than 0', msg: 'Must be greater than 0 (leave empty for none)', test: function (v) { return v > 0; } },
-      f_otherCharges: { hint: 'Optional · must be greater than 0', msg: 'Must be greater than 0 (leave empty for none)', test: function (v) { return v > 0; } }
+      f_otherCharges: { hint: 'Optional · must be greater than 0', msg: 'Must be greater than 0 (leave empty for none)', test: function (v) { return v > 0; } },
+      f_exchangeRate: { hint: 'Must be greater than 0', msg: 'Required, must be greater than 0', required: true, test: function (v) { return v > 0; } }
     };
     function checkAmounts() {
       var ok = true;
       Object.keys(AMT_RULES).forEach(function (id) {
         var el = document.getElementById(id), h = document.getElementById(id + '_hint'); if (!el || !h) return;
         var raw = el.value.trim(), bad = false;
-        if (raw !== '') { var v = Number(raw); bad = isNaN(v) || !AMT_RULES[id].test(v); }
+        if (raw !== '' || AMT_RULES[id].required) { var v = Number(raw); bad = isNaN(v) || !AMT_RULES[id].test(v); }
         el.style.borderColor = bad ? '#f87171' : '';
         h.textContent = bad ? AMT_RULES[id].msg : AMT_RULES[id].hint;
         h.style.color = bad ? '#dc2626' : '';
         if (bad) ok = false;
       });
       return ok;
+    }
+
+    function checkDates() {
+      var d = document.getElementById('f_date'), v = document.getElementById('f_validTill'), h = document.getElementById('f_validTill_hint');
+      if (!d || !v) return true;
+      v.min = d.value || '';
+      var bad = !!(d.value && v.value && v.value < d.value);
+      v.style.borderColor = bad ? '#f87171' : '';
+      if (h) { h.textContent = bad ? 'Valid Till cannot be before the Quotation Date' : 'Must be on or after the quotation date'; h.style.color = bad ? '#dc2626' : ''; }
+      return !bad;
     }
 
     document.addEventListener('siec:perms', function () { renderQuotations(); });

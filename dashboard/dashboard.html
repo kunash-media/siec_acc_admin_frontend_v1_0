@@ -431,7 +431,7 @@
                 <i class="fa-solid fa-download"></i>
                 Export
               </button>
-              <button onclick="showToast('Refreshing dashboard...', 'info')"
+              <button onclick="refreshDashboard()"
                 class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[12px] font-semibold px-3.5 py-2.5 rounded-lg transition shadow-sm">
                 <i class="fa-solid fa-rotate"></i>
                 Refresh
@@ -440,7 +440,6 @@
           </div>
 
         
-
           <!-- ===== STAT CARDS ===== -->
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 mb-5">
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-primary">
@@ -448,48 +447,48 @@
                 <span class="stat-label">Sales</span>
                 <span class="stat-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-cart-shopping"></i></span>
               </div>
-              <div class="stat-value">₹42.5L</div>
-              <div class="stat-trend text-emerald-600"><i class="fa-solid fa-arrow-up"></i> +12.4%</div>
+              <div class="stat-value" id="statSales">—</div>
+              <div class="stat-trend text-gray-400" id="statSalesTrend">&nbsp;</div>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-amber">
               <div class="flex items-center justify-between mb-2">
                 <span class="stat-label">Purchases</span>
                 <span class="stat-icon bg-amber-50 text-amber-600"><i class="fa-solid fa-truck-fast"></i></span>
               </div>
-              <div class="stat-value">₹18.2L</div>
-              <div class="stat-trend text-emerald-600"><i class="fa-solid fa-arrow-up"></i> +4.1%</div>
+              <div class="stat-value" id="statPurchases">—</div>
+              <div class="stat-trend text-gray-400" id="statPurchasesTrend">&nbsp;</div>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-amber2">
               <div class="flex items-center justify-between mb-2">
                 <span class="stat-label">Receivables</span>
                 <span class="stat-icon bg-amber-50 text-amber-700"><i class="fa-solid fa-hand-holding-dollar"></i></span>
               </div>
-              <div class="stat-value">₹9.8L</div>
-              <div class="stat-trend text-amber-600"><i class="fa-solid fa-triangle-exclamation"></i> 3 overdue</div>
+              <div class="stat-value" id="statReceivables">—</div>
+              <div class="stat-trend text-gray-400" id="statReceivablesTrend">&nbsp;</div>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-rose">
               <div class="flex items-center justify-between mb-2">
                 <span class="stat-label">Payables</span>
                 <span class="stat-icon bg-rose-50 text-rose-700"><i class="fa-solid fa-file-invoice-dollar"></i></span>
               </div>
-              <div class="stat-value">₹4.1L</div>
-              <div class="stat-trend text-rose-600">Due in 12 days</div>
+              <div class="stat-value" id="statPayables">—</div>
+              <div class="stat-trend text-gray-400" id="statPayablesTrend">&nbsp;</div>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-emerald">
               <div class="flex items-center justify-between mb-2">
                 <span class="stat-label">Bank Balance</span>
                 <span class="stat-icon bg-emerald-50 text-emerald-700"><i class="fa-solid fa-building-columns"></i></span>
               </div>
-              <div class="stat-value">₹12.6L</div>
-              <div class="stat-trend text-emerald-600">3 accounts</div>
+              <div class="stat-value" id="statBank">—</div>
+              <div class="stat-trend text-gray-400" id="statBankSub">&nbsp;</div>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-primary">
               <div class="flex items-center justify-between mb-2">
                 <span class="stat-label">GST Payable</span>
                 <span class="stat-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-shield-halved"></i></span>
               </div>
-              <div class="stat-value">₹3.15L</div>
-              <div class="stat-trend text-amber-600">Due 20th</div>
+              <div class="stat-value" id="statGst">—</div>
+              <div class="stat-trend text-gray-400" id="statGstSub">&nbsp;</div>
             </div>
           </div>
 
@@ -503,7 +502,7 @@
                   <span class="card-title-icon bg-primary-soft text-primary-dark"><i class="fa-solid fa-chart-line"></i></span>
                   <div>
                     <div class="card-title">Income &amp; Expense</div>
-                    <div class="card-sub">Last 6 months</div>
+                  <div class="card-sub" id="incExpSub">Last 6 months</div>  
                   </div>
                 </div>
                 <div class="period-dropdown" id="incomeExpPeriod">
@@ -520,9 +519,9 @@
               <div class="card-body">
                 <div id="incExpChart" style="width:100%;height:328px;margin-top:-28px;"></div>
                 <div class="lc-summary-row">
-                  <span>Total Income: <b>₹6,82,000</b></span>
-                  <span>Total Expense: <b>₹4,15,000</b></span>
-                  <span class="text-emerald-600 font-semibold">Net: +₹2,67,000</span>
+                 <span>Total Income: <b id="incExpIncome">—</b></span>
+                  <span>Total Expense: <b id="incExpExpense">—</b></span>
+                  <span id="incExpNet" class="text-emerald-600 font-semibold">Net: —</span>
                 </div>
               </div>
             </div>
@@ -597,7 +596,7 @@
                   </div>
                 </div>
                 <div class="lc-summary-row" style="margin-top:16px;">
-                  <span>Total Expenses: <b>₹2,55,450</b></span>
+                  <span>Total Expenses: <b id="topExpTotal">—</b></span>
                   <a href="/expenses/expenses.html" class="card-link">View All →</a>
                 </div>
               </div>
@@ -606,6 +605,7 @@
 
          
 
+          <!-- ===== RECEIVABLES / PAYABLES ===== -->
           <!-- ===== RECEIVABLES / PAYABLES ===== -->
           <div class="grid lg:grid-cols-2 gap-4 mb-5">
 
@@ -619,16 +619,16 @@
                 <a href="/customer-payments/customer-payments.html" class="card-link">View All →</a>
               </div>
               <div class="card-body">
-                <div class="text-[11.5px] text-gray-500 mb-2">Total Unpaid <b class="text-gray-800">₹3,72,580</b></div>
-                <div class="prog-bar mb-4"><div class="fill prog-amber" style="width:100%"></div></div>
+                <div class="text-[11.5px] text-gray-500 mb-2">Total Unpaid <b class="text-gray-800" id="recvTotal">—</b></div>
+                <div class="prog-bar mb-4"><div class="fill prog-amber" id="recvBar" style="width:0%"></div></div>
                 <div class="flex gap-2.5">
                   <a href="/sales-orders/sales-orders.html" class="flex-1 bg-gray-50 hover:bg-gray-100 transition rounded-lg px-3.5 py-2.5">
                     <div class="text-[10.5px] font-bold uppercase text-primary-dark">Current</div>
-                    <div class="text-[16px] font-semibold">₹0.00</div>
+                    <div class="text-[16px] font-semibold" id="recvCurrent">—</div>
                   </a>
                   <a href="/invoices/invoices.html" class="flex-1 bg-gray-50 hover:bg-gray-100 transition rounded-lg px-3.5 py-2.5">
                     <div class="text-[10.5px] font-bold uppercase text-amber-600">Overdue</div>
-                    <div class="text-[16px] font-semibold">₹3,72,580</div>
+                    <div class="text-[16px] font-semibold" id="recvOverdue">—</div>
                   </a>
                 </div>
               </div>
@@ -644,23 +644,22 @@
                 <a href="/vendor-payments/vendor-payments.html" class="card-link">View All →</a>
               </div>
               <div class="card-body">
-                <div class="text-[11.5px] text-gray-500 mb-2">Total Unpaid <b class="text-gray-800">₹2,49,849</b></div>
-                <div class="prog-bar mb-4">
-                  <div class="fill prog-amber" style="width:98%"></div>
-                </div>
+                <div class="text-[11.5px] text-gray-500 mb-2">Total Unpaid <b class="text-gray-800" id="payTotal">—</b></div>
+                <div class="prog-bar mb-4"><div class="fill prog-amber" id="payBar" style="width:0%"></div></div>
                 <div class="flex gap-2.5">
                   <a href="/purchaseBills/purchaseBills.html" class="flex-1 bg-gray-50 hover:bg-gray-100 transition rounded-lg px-3.5 py-2.5">
                     <div class="text-[10.5px] font-bold uppercase text-primary-dark">Current</div>
-                    <div class="text-[16px] font-semibold">₹5,837</div>
+                    <div class="text-[16px] font-semibold" id="payCurrent">—</div>
                   </a>
                   <a href="/purchaseBills/purchaseBills.html" class="flex-1 bg-gray-50 hover:bg-gray-100 transition rounded-lg px-3.5 py-2.5">
                     <div class="text-[10.5px] font-bold uppercase text-amber-600">Overdue</div>
-                    <div class="text-[16px] font-semibold">₹2,44,013</div>
+                    <div class="text-[16px] font-semibold" id="payOverdue">—</div>
                   </a>
                 </div>
               </div>
             </div>
           </div>
+
 
           <!-- ===== ACTIVE PROJECTS (Bank Accounts commented out → full width) ===== -->
           <div class="grid gap-4 mb-5">
@@ -1046,7 +1045,7 @@
       if (label) label.textContent = itemEl.textContent.trim();
       dropdown.classList.remove('open');
       showToast('Showing data for "' + itemEl.textContent.trim() + '"', 'info');
-      if (dropdownId === 'incomeExpPeriod' && window.replayIncExpChart) window.replayIncExpChart();
+     if (window.dashOnPeriodChange) window.dashOnPeriodChange(dropdownId, itemEl.textContent.trim());
     }
 
     document.addEventListener('click', function (evt) {
@@ -1055,136 +1054,500 @@
       }
     });
 
+       // INCOME & EXPENSE + ALL DASHBOARD WIDGETS — live data from /api/v1/dashboard/*
     // =============================================================
-    // INCOME & EXPENSE — Apache ECharts (mix-line-bar)
-    // =============================================================
-    function initIncExpChart() {
-      var dom = document.getElementById('incExpChart');
-      if (!dom) return;
-      if (typeof echarts === 'undefined') {
-        dom.innerHTML = '<div style="padding:60px 10px;text-align:center;color:#ef4444;font-size:12px;font-weight:600;">ECharts load zali nahi. Internet / ad-blocker tapasa (F12 → Console).</div>';
-        return;
-      }
-      try {
-        var existing = echarts.getInstanceByDom(dom);
-        if (existing) existing.dispose();
-        var chart = echarts.init(dom, null, {
-          width: dom.clientWidth || (dom.parentNode ? dom.parentNode.clientWidth : 600) || 600,
-          height: 328
+    var DASH_API_BASE =  "http://" + window.location.hostname + ":9093"; // same-origin by default; set to your API host if the frontend is served elsewhere
+    var PERIOD_CODES = { 'This Fiscal Year': 'THIS_FY', 'Previous Fiscal Year': 'PREV_FY', 'Last 12 Months': 'LAST_12M' };
+    var incExpPeriodCode = 'THIS_FY';
+    var topExpPeriodCode = 'THIS_FY';
+    var incExpChartInst = null, incExpDrawn = false, incExpObserving = false, incExpPending = null;
+    var incExpReq = 0, topExpReq = 0;
+    var PIE_COLORS = ['#6da84c', '#1985bf', '#d97706', '#059669', '#b45309'];
+    var PIE_CIRC = 2 * Math.PI * 70;
+    var ALERT_ICONS = { LOW_STOCK: 'fa-triangle-exclamation', INVOICE_OVERDUE: 'fa-clock', PO_APPROVAL: 'fa-check', PAYMENT_RECEIVED: 'fa-hand-holding-dollar', PROJECT_BUDGET: 'fa-bullseye' };
+
+    // ---------- small helpers ----------
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function setText(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+    function setValue(id, txt, title) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = txt;
+      if (title) el.title = title; else el.removeAttribute('title');
+    }
+    function setTrend(id, colorCls, iconCls, text, title) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.className = 'stat-trend ' + colorCls;
+      el.innerHTML = (iconCls ? '<i class="fa-solid ' + iconCls + '"></i> ' : '') + esc(text);
+      if (title) el.title = title; else el.removeAttribute('title');
+    }
+    function parseDashDate(v) {
+      if (!v) return null;
+      if (Array.isArray(v)) return new Date(v[0], v[1] - 1, v[2], v[3] || 0, v[4] || 0, v[5] || 0);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) { var p = v.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+      var d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    function isoDate(v) {
+      if (!v) return '—';
+      if (Array.isArray(v)) return v[0] + '-' + ('0' + v[1]).slice(-2) + '-' + ('0' + v[2]).slice(-2);
+      return String(v);
+    }
+    function fmtDay(v) {
+      var d = parseDashDate(v);
+      return d ? d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+    }
+    function timeAgo(d) {
+      if (!d) return '';
+      var s = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+      if (s < 60) return 'Just now';
+      var m = Math.floor(s / 60);
+      if (m < 60) return m + (m === 1 ? ' minute ago' : ' minutes ago');
+      var h = Math.floor(m / 60);
+      if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago');
+      var dd = Math.floor(h / 24);
+      return dd + (dd === 1 ? ' day ago' : ' days ago');
+    }
+    function cardPartByLink(href, selector) {
+      var a = document.querySelector('a.card-link[href="' + href + '"]');
+      var card = a ? a.closest('.card') : null;
+      return card ? card.querySelector(selector) : null;
+    }
+    function afterWindowLoad(fn) {
+      if (document.readyState === 'complete') fn(); else window.addEventListener('load', fn);
+    }
+
+    // ---------- API ----------
+    function dashFetch(path) {
+      return fetch(DASH_API_BASE + '/api/v1/dashboard' + path, { credentials: 'include', headers: { 'Accept': 'application/json' } })
+        .then(function (res) {
+          return res.json().catch(function () { return null; }).then(function (body) {
+            if (!res.ok || !body || body.status !== 'SUCCESS') {
+              var err = new Error(body && body.message ? body.message : 'Request failed (' + res.status + ')');
+              err.httpStatus = res.status;
+              throw err;
+            }
+            return body.data;
+          });
         });
-        var inr = function (v) { return '₹' + Number(v).toLocaleString('en-IN'); };
-        var short = function (v) { return '₹' + (v / 1000) + 'k'; };
+    }
+    // Runs one widget loader; never rejects. Resolves null on success, or the error message on failure.
+    function runWidget(fn, onFail) {
+      return fn().then(function () { return null; }, function (e) {
+        try { onFail(e); } catch (ignore) { /* keep the other widgets alive */ }
+        return e && e.message ? e.message : 'Request failed';
+      });
+    }
 
-        var option = {
-          color: ['#6da84c', '#ef4444', '#1985bf'],
-          animation: true,
-          animationDuration: 1200,
-          animationEasing: 'cubicOut',
-          animationDurationUpdate: 600,
-          tooltip: {
-            trigger: 'axis',
-            axisPointer: { type: 'cross', crossStyle: { color: '#999' } },
-            formatter: function (params) {
-              var out = params[0].axisValueLabel;
-              params.forEach(function (p) {
-                out += '<br/>' + p.marker + p.seriesName + ': <b>' + inr(p.value) + '</b>';
-              });
-              return out;
-            }
-          },
-          toolbox: {
-            top: 28,
-            feature: {
-              dataView: { show: true, readOnly: false, title: 'Data View' },
-              magicType: { show: true, type: ['line', 'bar'],
-                title: { line: 'Switch to Line Chart', bar: 'Switch to Bar Chart' } },
-              restore: { show: true, title: 'Restore' }
-            },
-            emphasis: {
-              iconStyle: {
-                textPosition: 'top',
-                textAlign: 'right',
-                textFill: '#ffffff',
-                textBackgroundColor: '#000000',
-                textPadding: [5, 9],
-                textBorderRadius: 4
-              }
-            }
-          },
-          legend: { data: ['Income', 'Expense', 'Net'], bottom: 0 },
-          grid: { left: 10, right: 10, top: 88, bottom: 40, containLabel: true },
-          xAxis: [{
-            type: 'category',
-            data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            axisPointer: { type: 'shadow' }
-          }],
-          yAxis: [
-            { type: 'value', name: 'Amount', min: 0, max: 150000, interval: 30000,
-              axisLabel: { formatter: short } },
-            { type: 'value', name: 'Net', min: 0, max: 75000, interval: 15000,
-              axisLabel: { formatter: short }, splitLine: { show: false } }
-          ],
-          series: [
-            { name: 'Income', type: 'bar', barMaxWidth: 26,
-              animationDuration: 1000,
-              animationDelay: function (i) { return i * 120; },
-              data: [96282, 112329, 123043, 104306, 128376, 117663] },
-            { name: 'Expense', type: 'bar', barMaxWidth: 26,
-              animationDuration: 1000,
-              animationDelay: function (i) { return 200 + i * 120; },
-              data: [51077, 59590, 68103, 76615, 72359, 87256] },
-            { name: 'Net', type: 'line', yAxisIndex: 1, symbolSize: 8,
-              animationDuration: 1800,
-              animationDelay: 900,
-              data: [45205, 52739, 54940, 27691, 56017, 30407] }
-          ]
-        };
-
-        // Chart pahilyanda screen var disla ki draw hoto (bars vadhtat, Net line kadhli jate)
-        var drawn = false;
-        function play() {
-          if (drawn) return;
-          drawn = true;
-          chart.resize({ width: dom.clientWidth || undefined, height: 328 });
-          chart.setOption(option, true);
-        }
-        window.replayIncExpChart = function () {
-          chart.clear();
-          chart.resize({ width: dom.clientWidth || undefined, height: 328 });
-          chart.setOption(option, true);
-        };
-
-        if ('IntersectionObserver' in window) {
-          var io = new IntersectionObserver(function (entries) {
-            if (entries[0].isIntersecting) { play(); io.disconnect(); }
-          }, { threshold: 0.25 });
-          io.observe(dom);
-          setTimeout(play, 1500); // fallback
-        } else {
-          play();
-        }
-
-        var fit = function () {
-          chart.resize({ width: dom.clientWidth || undefined, height: 328 });
-        };
-        window.addEventListener('resize', fit);
-        if (window.ResizeObserver) new ResizeObserver(fit).observe(dom);
-      } catch (err) {
-        console.error('Income & Expense chart error:', err);
-        dom.innerHTML = '<div style="padding:60px 10px;text-align:center;color:#ef4444;font-size:12px;">Chart error: ' + err.message + '</div>';
+    // ---------- SUMMARY (stat cards + receivables + payables) ----------
+    function trendFromMetric(id, m, cmp) {
+      var pct = m.trendPct == null ? null : Number(m.trendPct);
+      if (m.trendDirection === 'UP' && pct != null) setTrend(id, 'text-emerald-600', 'fa-arrow-up', '+' + pct.toFixed(1) + '%', cmp);
+      else if (m.trendDirection === 'DOWN' && pct != null) setTrend(id, 'text-rose-600', 'fa-arrow-down', pct.toFixed(1) + '%', cmp);
+      else if (m.trendDirection === 'NEW') setTrend(id, 'text-emerald-600', 'fa-arrow-up', 'New this month', cmp);
+      else setTrend(id, 'text-gray-500', 'fa-minus', 'No change', cmp);
+    }
+    function renderAging(prefix, a) {
+      setText(prefix + 'Total', a.totalUnpaidFull);
+      setText(prefix + 'Current', a.currentFull);
+      setText(prefix + 'Overdue', a.overdueFull);
+      var bar = document.getElementById(prefix + 'Bar');
+      if (bar) {
+        var pct = Math.max(0, Math.min(100, Number(a.overduePercent) || 0));
+        bar.style.width = pct + '%';
+        bar.className = 'fill ' + (pct > 0 ? 'prog-amber' : 'prog-green');
       }
     }
-    if (document.readyState === 'complete') initIncExpChart();
-    else window.addEventListener('load', initIncExpChart);
+    function renderSummary(s) {
+      setValue('statSales', s.sales.compact, s.sales.full + ' · ' + s.periodLabel);
+      trendFromMetric('statSalesTrend', s.sales, s.comparisonLabel);
+      setValue('statPurchases', s.purchases.compact, s.purchases.full + ' · ' + s.periodLabel);
+      trendFromMetric('statPurchasesTrend', s.purchases, s.comparisonLabel);
+
+      var r = s.receivables;
+      setValue('statReceivables', r.totalUnpaidCompact, r.totalUnpaidFull);
+      if (r.overdueCount > 0) setTrend('statReceivablesTrend', 'text-amber-600', 'fa-triangle-exclamation', r.overdueCount + ' overdue');
+      else setTrend('statReceivablesTrend', 'text-emerald-600', 'fa-check', 'None overdue');
+
+      var p = s.payables;
+      setValue('statPayables', p.totalUnpaidCompact, p.totalUnpaidFull);
+      if (p.overdueCount > 0) setTrend('statPayablesTrend', 'text-rose-600', 'fa-triangle-exclamation', p.overdueCount + ' overdue');
+      else if (p.nextDueInDays != null) setTrend('statPayablesTrend', 'text-rose-600', '', p.nextDueInDays === 0 ? 'Due today' : 'Due in ' + p.nextDueInDays + (p.nextDueInDays === 1 ? ' day' : ' days'));
+      else setTrend('statPayablesTrend', 'text-emerald-600', 'fa-check', 'Nothing due');
+
+      setValue('statBank', s.bank.compact, s.bank.full);
+      setTrend('statBankSub', 'text-emerald-600', '', 'Cash-flow basis', 'Opening balance + receipts - bill payments - approved expenses');
+
+      var g = s.gst;
+      setValue('statGst', g.compact, g.full + (g.direction === 'CREDIT' ? ' (input credit)' : ''));
+      if (g.direction === 'CREDIT') setTrend('statGstSub', 'text-emerald-600', '', 'Input credit');
+      else setTrend('statGstSub', 'text-amber-600', '', 'Due ' + fmtDay(g.dueDate));
+
+      renderAging('recv', r);
+      renderAging('pay', p);
+    }
+    function failSummary() {
+      ['statSales', 'statPurchases', 'statReceivables', 'statPayables', 'statBank', 'statGst'].forEach(function (id) { setValue(id, '—'); });
+      ['statSalesTrend', 'statPurchasesTrend', 'statReceivablesTrend', 'statPayablesTrend', 'statBankSub', 'statGstSub'].forEach(function (id) {
+        setTrend(id, 'text-gray-400', '', 'Unavailable');
+      });
+      ['recvTotal', 'recvCurrent', 'recvOverdue', 'payTotal', 'payCurrent', 'payOverdue'].forEach(function (id) { setText(id, '—'); });
+    }
+    function loadSummary() { return dashFetch('/summary').then(renderSummary); }
+
+    // ---------- INCOME & EXPENSE (Apache ECharts) ----------
+    function niceAxis(minV, maxV) {
+      var lo = Math.min(0, minV), hi = Math.max(0, maxV);
+      if (lo === 0 && hi === 0) return { min: 0, max: 1000, interval: 200 };
+      var raw = (hi - lo) / 5;
+      var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+      var norm = raw / mag;
+      var step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+      return { min: Math.floor(lo / step) * step, max: Math.ceil(hi / step) * step, interval: step };
+    }
+    function trimNum(n) { return String(Math.round(n * 100) / 100); }
+    function fmtAxis(v) {
+      var a = Math.abs(v), s = v < 0 ? '-' : '';
+      if (a >= 1e7) return s + '₹' + trimNum(a / 1e7) + 'Cr';
+      if (a >= 1e5) return s + '₹' + trimNum(a / 1e5) + 'L';
+      if (a >= 1e3) return s + '₹' + trimNum(a / 1e3) + 'k';
+      return s + '₹' + trimNum(a);
+    }
+    function inr(v) { return '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
+
+    function ensureIncExpChart() {
+      var dom = document.getElementById('incExpChart');
+      if (!dom) return null;
+      if (typeof echarts === 'undefined') {
+        dom.innerHTML = '<div style="padding:60px 10px;text-align:center;color:#ef4444;font-size:12px;font-weight:600;">ECharts load zali nahi. Internet / ad-blocker tapasa (F12 → Console).</div>';
+        return null;
+      }
+      if (incExpChartInst && !incExpChartInst.isDisposed()) return incExpChartInst;
+      var existing = echarts.getInstanceByDom(dom);
+      if (existing) existing.dispose();
+      incExpChartInst = echarts.init(dom, null, {
+        width: dom.clientWidth || (dom.parentNode ? dom.parentNode.clientWidth : 600) || 600,
+        height: 328
+      });
+      var fit = function () { if (incExpChartInst && !incExpChartInst.isDisposed()) incExpChartInst.resize({ width: dom.clientWidth || undefined, height: 328 }); };
+      window.addEventListener('resize', fit);
+      if (window.ResizeObserver) new ResizeObserver(fit).observe(dom);
+      return incExpChartInst;
+    }
+
+    function buildIncExpOption(d) {
+      var all = d.income.concat(d.expense, d.net).map(Number);
+      var ax = niceAxis(Math.min.apply(null, all), Math.max.apply(null, all));
+      return {
+        color: ['#6da84c', '#ef4444', '#1985bf'],
+        animation: true,
+        animationDuration: 1200,
+        animationEasing: 'cubicOut',
+        animationDurationUpdate: 600,
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'cross', crossStyle: { color: '#999' } },
+          formatter: function (params) {
+            var out = params[0].axisValueLabel;
+            params.forEach(function (p) {
+              out += '<br/>' + p.marker + p.seriesName + ': <b>' + inr(p.value) + '</b>';
+            });
+            return out;
+          }
+        },
+        toolbox: {
+          top: 28,
+          feature: {
+            dataView: { show: true, readOnly: false, title: 'Data View' },
+            magicType: { show: true, type: ['line', 'bar'], title: { line: 'Switch to Line Chart', bar: 'Switch to Bar Chart' } },
+            restore: { show: true, title: 'Restore' }
+          },
+          emphasis: {
+            iconStyle: {
+              textPosition: 'top', textAlign: 'right', textFill: '#ffffff',
+              textBackgroundColor: '#000000', textPadding: [5, 9], textBorderRadius: 4
+            }
+          }
+        },
+        legend: { data: ['Income', 'Expense', 'Net'], bottom: 0 },
+        grid: { left: 10, right: 10, top: 88, bottom: 40, containLabel: true },
+        xAxis: [{ type: 'category', data: d.months, axisPointer: { type: 'shadow' } }],
+        yAxis: [
+          { type: 'value', name: 'Amount', min: ax.min, max: ax.max, interval: ax.interval, axisLabel: { formatter: fmtAxis } },
+          { type: 'value', name: 'Net', min: ax.min, max: ax.max, interval: ax.interval, axisLabel: { formatter: fmtAxis }, splitLine: { show: false } }
+        ],
+        series: [
+          { name: 'Income', type: 'bar', barMaxWidth: 26, animationDuration: 1000,
+            animationDelay: function (i) { return i * 120; }, data: d.income.map(Number) },
+          { name: 'Expense', type: 'bar', barMaxWidth: 26, animationDuration: 1000,
+            animationDelay: function (i) { return 200 + i * 120; }, data: d.expense.map(Number) },
+          { name: 'Net', type: 'line', yAxisIndex: 1, symbolSize: 8, animationDuration: 1800,
+            animationDelay: 900, data: d.net.map(Number) }
+        ]
+      };
+    }
+
+    // First paint waits until the chart is on screen (same reveal animation as before); later paints replay at once.
+    function paintIncExp(option) {
+      var chart = ensureIncExpChart();
+      if (!chart) return;
+      var dom = document.getElementById('incExpChart');
+      incExpPending = option;
+      if (incExpDrawn) {
+        chart.clear();
+        chart.resize({ width: dom.clientWidth || undefined, height: 328 });
+        chart.setOption(option, true);
+        return;
+      }
+      function play() {
+        if (incExpDrawn || !incExpPending || !incExpChartInst) return;
+        incExpDrawn = true;
+        incExpChartInst.resize({ width: dom.clientWidth || undefined, height: 328 });
+        incExpChartInst.setOption(incExpPending, true);
+      }
+      if (incExpObserving) return;
+      incExpObserving = true;
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          if (entries[0].isIntersecting) { play(); io.disconnect(); }
+        }, { threshold: 0.25 });
+        io.observe(dom);
+        setTimeout(play, 1500); // fallback
+      } else {
+        play();
+      }
+    }
+
+    function renderIncomeExpense(d) {
+      setText('incExpSub', d.rangeLabel);
+      setText('incExpIncome', d.totalIncomeDisplay);
+      setText('incExpExpense', d.totalExpenseDisplay);
+      var net = document.getElementById('incExpNet');
+      if (net) {
+        net.textContent = 'Net: ' + d.totalNetDisplay;
+        net.className = (d.netPositive ? 'text-emerald-600' : 'text-rose-600') + ' font-semibold';
+      }
+      afterWindowLoad(function () { paintIncExp(buildIncExpOption(d)); });
+    }
+    function failIncomeExpense(e) {
+      var dom = document.getElementById('incExpChart');
+      if (incExpChartInst) { try { incExpChartInst.dispose(); } catch (ignore) {} }
+      incExpChartInst = null; incExpDrawn = false; incExpObserving = false; incExpPending = null;
+      if (dom) dom.innerHTML = '<div style="padding:60px 10px;text-align:center;color:#ef4444;font-size:12px;font-weight:600;">Chart data could not be loaded: ' + esc(e && e.message ? e.message : 'error') + '</div>';
+      setText('incExpIncome', '—'); setText('incExpExpense', '—'); setText('incExpNet', 'Net: —');
+    }
+    function loadIncomeExpense(code) {
+      var token = ++incExpReq;
+      return dashFetch('/income-expense?period=' + encodeURIComponent(code)).then(function (d) {
+        if (token === incExpReq) renderIncomeExpense(d); // ignore stale responses from fast dropdown switching
+      });
+    }
+
+    // ---------- TOP EXPENSES (donut) ----------
+    function renderTopExpenses(d) {
+      var g = document.querySelector('.pie-svg g');
+      var legend = document.querySelector('.pie-legend');
+      if (!g || !legend) return;
+      var items = d.items || [];
+      var total = Number(d.total) || 0;
+      var segs = '', leg = '', offset = 0;
+      if (!items.length || total <= 0) {
+        segs = '<circle cx="100" cy="100" r="70" fill="none" stroke="#E8EDED" stroke-width="34"></circle>';
+        leg = '<div class="text-[11.5px] text-gray-400">No approved expenses in this period</div>';
+      } else {
+        items.forEach(function (it, i) {
+          var color = PIE_COLORS[i % PIE_COLORS.length];
+          var len = (Number(it.amount) / total) * PIE_CIRC;
+          var pct = Number(it.percent).toFixed(1) + '%';
+          segs += '<circle class="pie-seg" id="pieSeg' + i + '" cx="100" cy="100" r="70" fill="none" stroke="' + color + '" stroke-width="34"'
+            + ' stroke-dasharray="' + len.toFixed(2) + ' ' + (PIE_CIRC - len).toFixed(2) + '" stroke-dashoffset="' + (-offset).toFixed(2) + '"'
+            + ' data-label="' + esc(it.label) + '" data-pct="' + pct + '" data-value="' + esc(it.amountDisplay) + '" data-color="' + color + '"></circle>';
+          leg += '<div class="pie-legend-item" data-seg="pieSeg' + i + '"><span class="pl-dot" style="background:' + color + ';"></span>'
+            + '<span class="pl-label">' + esc(it.label) + '</span><span class="pl-pct">' + pct + '</span></div>';
+          offset += len;
+        });
+      }
+      g.innerHTML = segs;
+      legend.innerHTML = leg;
+      setText('topExpTotal', d.totalDisplay);
+      bindPieDelegates();
+    }
+    function failTopExpenses(e) {
+      var g = document.querySelector('.pie-svg g');
+      var legend = document.querySelector('.pie-legend');
+      if (g) g.innerHTML = '<circle cx="100" cy="100" r="70" fill="none" stroke="#E8EDED" stroke-width="34"></circle>';
+      if (legend) legend.innerHTML = '<div class="text-[11.5px] text-rose-500">Could not load: ' + esc(e && e.message ? e.message : 'error') + '</div>';
+      setText('topExpTotal', '—');
+    }
+    function loadTopExpenses(code) {
+      var token = ++topExpReq;
+      return dashFetch('/top-expenses?period=' + encodeURIComponent(code)).then(function (d) {
+        if (token === topExpReq) renderTopExpenses(d);
+      });
+    }
+    // Segments are rebuilt on every load, so tooltip clicks are delegated (bound once).
+    function bindPieDelegates() {
+      var svg = document.querySelector('.pie-svg');
+      var legend = document.querySelector('.pie-legend');
+      var tip = document.getElementById('chartTooltip');
+      if (!svg || !legend || !tip || svg.getAttribute('data-bound') === '1') return;
+      svg.setAttribute('data-bound', '1');
+      var pinned = null;
+      function clearActive() {
+        document.querySelectorAll('.pie-seg-active').forEach(function (el) { el.classList.remove('pie-seg-active'); });
+      }
+      function activate(seg, x, y) {
+        if (tip.classList.contains('show') && pinned === seg) {
+          tip.classList.remove('show'); pinned = null; clearActive(); return;
+        }
+        pinned = seg;
+        var sw = document.createElement('span'); sw.className = 'ct-swatch'; sw.style.background = seg.getAttribute('data-color');
+        var lb = document.createElement('span'); lb.className = 'ct-month'; lb.textContent = seg.getAttribute('data-label');
+        tip.innerHTML = '';
+        tip.appendChild(sw); tip.appendChild(lb);
+        tip.appendChild(document.createTextNode(seg.getAttribute('data-value') + ' (' + seg.getAttribute('data-pct') + ')'));
+        tip.style.left = x + 'px'; tip.style.top = y + 'px';
+        tip.classList.add('show');
+        clearActive();
+        seg.classList.add('pie-seg-active');
+        var row = document.querySelector('.pie-legend-item[data-seg="' + seg.id + '"]');
+        if (row) row.classList.add('pie-seg-active');
+      }
+      svg.addEventListener('click', function (evt) {
+        var seg = evt.target.closest ? evt.target.closest('.pie-seg') : null;
+        if (!seg) return;
+        evt.stopPropagation();
+        activate(seg, evt.clientX, evt.clientY - 10);
+      });
+      legend.addEventListener('click', function (evt) {
+        var row = evt.target.closest ? evt.target.closest('.pie-legend-item') : null;
+        if (!row) return;
+        var seg = document.getElementById(row.getAttribute('data-seg'));
+        if (!seg) return;
+        evt.stopPropagation();
+        var rect = row.getBoundingClientRect();
+        activate(seg, rect.left + 14, rect.top + rect.height / 2 - 10);
+      });
+    }
+
+    // ---------- ACTIVE PROJECTS ----------
+    function projectRow(p) {
+      var pct = Math.max(0, Math.min(100, Number(p.progress) || 0));
+      var good = pct >= 50;
+      var stroke = good ? '#6da84c' : '#d97706';
+      var txt = good ? 'text-primary-dark' : 'text-amber-600';
+      var bar = good ? 'prog-green' : 'prog-amber';
+      var off = (106.81 * (1 - pct / 100)).toFixed(2);
+      return '<a href="/projects/projects.html?project=' + encodeURIComponent(p.id) + '" data-project-id="' + esc(p.id) + '" class="flex items-center gap-3.5 px-4 py-3.5 table-row-hover cursor-pointer" title="Open project">'
+        + '<div class="ring-wrap"><svg viewBox="0 0 40 40" class="w-11 h-11">'
+        + '<circle cx="20" cy="20" r="17" fill="none" stroke="#E8EDED" stroke-width="4" />'
+        + '<circle cx="20" cy="20" r="17" fill="none" stroke="' + stroke + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="106.81" stroke-dashoffset="' + off + '" />'
+        + '</svg><div class="ring-center ' + txt + '">' + pct + '%</div></div>'
+        + '<div class="min-w-0 flex-1"><div class="text-[12.8px] font-semibold text-gray-800 truncate">' + esc(p.name) + '</div>'
+        + '<div class="text-[11px] text-gray-400">' + esc(p.customer) + '</div>'
+        + '<div class="prog-bar"><div class="fill ' + bar + '" style="width:' + pct + '%"></div></div></div></a>';
+    }
+    function renderActiveProjects(list) {
+      var host = cardPartByLink('/projects/projects.html', '.divide-y');
+      if (!host) return;
+      DASH_PROJECTS = {};
+      (list || []).forEach(function (p) {
+        // The modal concatenates these into innerHTML, so strings are escaped here.
+        DASH_PROJECTS[p.id] = {
+          name: esc(p.name), code: esc(p.code), customer: esc(p.customer || '—'), status: p.status || 'active',
+          pm: esc(p.projectManager || '—'), startDate: esc(isoDate(p.startDate)), endDate: esc(isoDate(p.endDate)),
+          progress: Math.max(0, Math.min(100, Number(p.progress) || 0)),
+          budget: p.budget, actualCost: p.actualCost, revenue: p.revenue, profit: p.profit,
+          description: esc(p.description || '—')
+        };
+      });
+      host.innerHTML = (list && list.length)
+        ? list.map(projectRow).join('')
+        : '<div class="px-4 py-6 text-center text-[12px] text-gray-400">No active projects</div>';
+      if (host.getAttribute('data-bound') !== '1') {
+        host.setAttribute('data-bound', '1');
+        host.addEventListener('click', function (evt) {
+          var a = evt.target.closest ? evt.target.closest('a[data-project-id]') : null;
+          if (!a) return;
+          evt.preventDefault();
+          openProjectModal(a.getAttribute('data-project-id'));
+        });
+      }
+    }
+    function failActiveProjects(e) {
+      var host = cardPartByLink('/projects/projects.html', '.divide-y');
+      if (host) host.innerHTML = '<div class="px-4 py-6 text-center text-[12px] text-rose-500">Could not load projects: ' + esc(e && e.message ? e.message : 'error') + '</div>';
+    }
+    function loadActiveProjects() { return dashFetch('/active-projects?limit=3').then(renderActiveProjects); }
+
+    // ---------- ALERTS ----------
+    function renderAlerts(list) {
+      var host = cardPartByLink('/notifications/notifications.html', '.card-body');
+      if (!host) return;
+      if (!list || !list.length) {
+        host.innerHTML = '<div class="text-[12px] text-gray-400 py-6 text-center">No alerts right now. You are all caught up.</div>';
+        return;
+      }
+      host.innerHTML = list.map(function (a) {
+        var sev = ['red', 'amber', 'blue', 'green', 'purple'].indexOf(a.severity) >= 0 ? a.severity : 'blue';
+        var when = timeAgo(parseDashDate(a.occurredAt));
+        var inner = '<div class="alert-icon ai-' + sev + '"><i class="fa-solid ' + (ALERT_ICONS[a.type] || 'fa-bell') + '"></i></div>'
+          + '<div class="flex-1"><div class="alert-title">' + esc(a.title) + '</div>'
+          + '<div class="alert-desc">' + esc(a.description) + '</div>'
+          + (when ? '<div class="alert-time">' + esc(when) + '</div>' : '') + '</div>';
+        return a.link
+          ? '<a href="' + esc(a.link) + '" class="alert-item al-' + sev + '">' + inner + '</a>'
+          : '<div class="alert-item al-' + sev + '">' + inner + '</div>';
+      }).join('');
+    }
+    function failAlerts(e) {
+      var host = cardPartByLink('/notifications/notifications.html', '.card-body');
+      if (host) host.innerHTML = '<div class="text-[12px] text-rose-500 py-6 text-center">Could not load alerts: ' + esc(e && e.message ? e.message : 'error') + '</div>';
+    }
+    function loadAlerts() { return dashFetch('/alerts?limit=5').then(renderAlerts); }
+
+    // ---------- orchestration ----------
+    function loadDashboard() {
+      return Promise.all([
+        runWidget(loadSummary, failSummary),
+        runWidget(function () { return loadIncomeExpense(incExpPeriodCode); }, failIncomeExpense),
+        runWidget(function () { return loadTopExpenses(topExpPeriodCode); }, failTopExpenses),
+        runWidget(loadActiveProjects, failActiveProjects),
+        runWidget(loadAlerts, failAlerts)
+      ]).then(function (results) {
+        var firstErr = results.filter(Boolean)[0] || null;
+        if (firstErr) showToast('Some dashboard data could not be loaded: ' + firstErr, 'error');
+        return firstErr;
+      });
+    }
+    function refreshDashboard() {
+      showToast('Refreshing dashboard...', 'info');
+      loadDashboard().then(function (err) { if (!err) showToast('Dashboard updated', 'success'); });
+    }
+    window.dashOnPeriodChange = function (dropdownId, label) {
+      var code = PERIOD_CODES[label] || 'THIS_FY';
+      if (dropdownId === 'incomeExpPeriod') {
+        incExpPeriodCode = code;
+        runWidget(function () { return loadIncomeExpense(code); }, failIncomeExpense).then(function (err) {
+          if (err) showToast('Could not load income & expense: ' + err, 'error');
+        });
+      } else if (dropdownId === 'topExpPeriod') {
+        topExpPeriodCode = code;
+        runWidget(function () { return loadTopExpenses(code); }, failTopExpenses).then(function (err) {
+          if (err) showToast('Could not load top expenses: ' + err, 'error');
+        });
+      }
+    };
 
     // =============================================================
     // PROJECT DETAILS POPUP (dashboard varunach details dakhva)
     // =============================================================
-    var DASH_PROJECTS = {
-      'PRJ-001': { name: 'Operation & Supervision — WHE', code: '26LW069', customer: 'Sustro Speciality Oils Pvt Ltd', status: 'active', pm: 'Rajesh Sharma', startDate: '2025-11-01', endDate: '2026-06-30', progress: 62, budget: 500000, actualCost: 310000, revenue: 450000, profit: 140000, description: 'Operation and supervision contract for WHE' },
-      'PRJ-002': { name: 'Odor Control Unit — Retrofit', code: '26LW070', customer: 'XYZ Technologies', status: 'active', pm: 'Priya Patel', startDate: '2025-12-15', endDate: '2026-05-31', progress: 31, budget: 350000, actualCost: 120000, revenue: 200000, profit: 80000, description: 'Retrofit of odor control unit' },
-      'PRJ-003': { name: 'Dual Media Filter — Phase II', code: '26LW071', customer: 'ABC Distributor Group', status: 'completed', pm: 'Rajesh Sharma', startDate: '2025-08-01', endDate: '2026-01-15', progress: 100, budget: 750000, actualCost: 720000, revenue: 950000, profit: 230000, description: 'Dual media filter installation phase II' }
-    };
+    var DASH_PROJECTS = {};
 
     function pmMoney(n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); }
 
@@ -1255,7 +1618,7 @@
     // =============================================================
     // INIT
     // =============================================================
-    console.log('📊 Dashboard Module Loaded Successfully');
+   loadDashboard();
   </script>
 
 </body>

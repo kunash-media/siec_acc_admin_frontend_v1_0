@@ -566,6 +566,33 @@
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+     // ---------- Field validation helpers ----------
+    function cleanName(v) {
+      return String(v == null ? '' : v).replace(/[^\p{L}\p{M}\s]/gu, '').replace(/\s{2,}/g, ' ').replace(/^\s+/, '');
+    }
+    function onNameInput(el) {
+      var s = cleanName(el.value);
+      if (s !== el.value) el.value = s;
+      showFieldErr('f_name', '');
+    }
+    function isValidName(s) { return /^[\p{L}\p{M}]+(\s[\p{L}\p{M}]+)*$/u.test(s); }
+    function isValidEmail(s) {
+      return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(s);
+    }
+    function showFieldErr(id, msg) {
+      var el = document.getElementById(id), err = document.getElementById('err_' + id);
+      if (el) el.classList.toggle('border-red-500', !!msg);
+      if (err) { err.textContent = msg || ''; err.classList.toggle('hidden', !msg); }
+    }
+    function checkEmailField() {
+      var el = document.getElementById('f_email');
+      var v = el ? el.value.trim() : '';
+      var bad = v !== '' && !isValidEmail(v);
+      showFieldErr('f_email', bad ? 'Enter a valid email, e.g. name@company.com' : '');
+      return !bad;
+    }
+
+
     // ---------- Client types (dropdown values come from backend: GET /get-client-types) ----------
     // Starts with the 3 standard types so the page still works if the API is unreachable.
     var CLIENT_TYPES = STANDARD_CLIENT_TYPES.slice();
@@ -1101,8 +1128,7 @@
 
           <div id="tab-basic" class="modal-tab-panel active">
             <div class="grid grid-cols-2 form-grid-2 gap-x-4 gap-y-4">
-              ${fld('Client Name', '<input id="f_name" value="' + e.name + '" placeholder="e.g. XYZ Retail Store" class="' + inputBase() + '">')}
-              ${fld('Company Name', '<input id="f_company" value="' + (e.companyName || '') + '" placeholder="Company legal name" class="' + inputBase() + '">')}
+              ${fld('Client Name <span class="required">*</span>', '<input id="f_name" maxlength="100" value="' + escHtml(e.name) + '" placeholder="e.g. Rajesh Kumar" oninput="onNameInput(this)" class="' + inputBase() + '"><div id="err_f_name" class="hidden text-[10.5px] text-red-500 mt-1"></div>')}              ${fld('Company Name', '<input id="f_company" value="' + (e.companyName || '') + '" placeholder="Company legal name" class="' + inputBase() + '">')}
               ${fld('Client Type', '<select id="f_type" class="' + inputBase() + '" onchange="toggleTypeOther()">' + typeOptionsHtml(e.customerType) + '<option value="' + OTHER_TYPE_VALUE + '">Other</option></select>', null, 'col-span-2')}
               <div id="f_typeOtherWrap" class="col-span-2 hidden">
                 ${fld('Specify Client Type', `<div style="display:flex;align-items:center;gap:8px;">
@@ -1112,8 +1138,7 @@
                       class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm whitespace-nowrap">Add</button>
                   </div>`, )}
               </div>
-              ${fld('Email', '<input id="f_email" type="email" value="' + e.email + '" placeholder="client@domain.com" class="' + inputBase() + '">')}
-              ${fld('Phone', '<input id="f_phone" value="' + e.phone + '" placeholder="+91-XXXXXXXXXX" class="' + inputBase() + '">')}
+              ${fld('Email', '<input id="f_email" type="text" inputmode="email" autocomplete="off" maxlength="120" value="' + escHtml(e.email) + '" placeholder="client@domain.com" oninput="showFieldErr(\'f_email\',\'\')" onblur="checkEmailField()" class="' + inputBase() + '"><div id="err_f_email" class="hidden text-[10.5px] text-red-500 mt-1"></div>')}              ${fld('Phone', '<input id="f_phone" value="' + e.phone + '" placeholder="+91-XXXXXXXXXX" class="' + inputBase() + '">')}
             </div>
           </div>
 
@@ -1252,6 +1277,18 @@
       var gstRegistered = gstRegRadio ? gstRegRadio.value === 'true' : false;
       var statusRadio = document.querySelector('input[name="customerStatus"]:checked');
       var status = statusRadio ? statusRadio.value : 'active';
+
+      var nameBad = !name ? 'Client name is required' : (!isValidName(name) ? 'Only letters and spaces are allowed' : '');
+      var emailBad = email !== '' && !isValidEmail(email);
+      showFieldErr('f_name', nameBad);
+      showFieldErr('f_email', emailBad ? 'Enter a valid email, e.g. name@company.com' : '');
+      if (nameBad || emailBad) {
+        var bt = document.querySelector('#modalTabs [data-tab="tab-basic"]'); if (bt) bt.click();
+        showToast(nameBad ? 'Please fix the Client Name' : 'Please enter a valid email address', 'error');
+        return;
+      }
+      email = email.toLowerCase();
+
 
       var body = {
         name: name,

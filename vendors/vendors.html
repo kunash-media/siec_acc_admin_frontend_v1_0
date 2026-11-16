@@ -1159,7 +1159,9 @@
     async function readErrorMessage(res, fallback) {
       try {
         var text = await res.text();
-        return text || fallback;
+        if (!text) return fallback;
+        try { var j = JSON.parse(text); return j.message || j.error || fallback; }
+        catch (e) { return text; }
       } catch (e) {
         return fallback;
       }
@@ -1541,19 +1543,90 @@
       }
     }
 
+    // FIND
+    // ---------- Secondary Contact Person (new, Basic Info tab) ----------
+// REPLACE
+    // ---------- Field validation helpers ----------
+    function escV(v) {
+      return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    var VF_ERR = '<div class="vf-err hidden text-[10.5px] text-red-500 mt-1"></div>';
+
+    function cleanLetters(v) {
+      return String(v == null ? '' : v).replace(/[^\p{L}\p{M}\s]/gu, '').replace(/\s{2,}/g, ' ').replace(/^\s+/, '');
+    }
+    function cleanPhone(v) {
+      var d = String(v == null ? '' : v).replace(/\D/g, '');
+      if (d.length === 12 && d.indexOf('91') === 0) d = d.slice(2);
+      else if (d.length === 11 && d.charAt(0) === '0') d = d.slice(1);
+      return d.slice(0, 10);
+    }
+    function cleanPin(v) { return String(v == null ? '' : v).replace(/\D/g, '').slice(0, 6); }
+
+    function isLetters(s) { return /^[\p{L}\p{M}]+(\s[\p{L}\p{M}]+)*$/u.test(s); }
+    function isValidEmail(s) { return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(s); }
+    function isValidPhone(s) { return /^\d{10}$/.test(s); }
+    function isValidPin(s) { return /^\d{6}$/.test(s); }
+
+    var VF_RULES = {
+      name:     { req: true, reqMsg: 'Vendor name is required', test: isLetters, msg: 'Only letters and spaces are allowed', clean: cleanLetters },
+      email:    { req: true, reqMsg: 'Email is required', test: isValidEmail, msg: 'Enter a valid email, e.g. name@company.com' },
+      phone:    { req: true, reqMsg: 'Phone is required', test: isValidPhone, msg: 'Enter exactly 10 digits', clean: cleanPhone },
+      city:     { test: isLetters, msg: 'Only letters and spaces are allowed', clean: cleanLetters },
+      pin:      { test: isValidPin, msg: 'Pincode must be exactly 6 digits', clean: cleanPin },
+      scName:   { test: isLetters, msg: 'Only letters and spaces are allowed', clean: cleanLetters },
+      scMobile: { test: isValidPhone, msg: 'Enter exactly 10 digits', clean: cleanPhone },
+      scEmail:  { test: isValidEmail, msg: 'Enter a valid email, e.g. name@company.com' }
+    };
+
+    function fieldErr(el, msg) {
+      if (!el) return;
+      el.classList.toggle('border-red-500', !!msg);
+      var box = el.parentNode ? el.parentNode.querySelector('.vf-err') : null;
+      if (box) { box.textContent = msg || ''; box.classList.toggle('hidden', !msg); }
+    }
+    // typing / pasting: strip bad characters, clear the error
+    function onVfInput(el) {
+      var r = VF_RULES[el.dataset.vf];
+      if (r && r.clean) { var s = r.clean(el.value); if (s !== el.value) el.value = s; }
+      fieldErr(el, '');
+    }
+    // blur / save: returns true when valid
+    function vfCheck(el) {
+      var r = VF_RULES[el.dataset.vf]; if (!r) return true;
+      var v = el.value.trim(), msg = '';
+      if (v === '') msg = r.req ? r.reqMsg : '';
+      else if (!r.test(v)) msg = r.msg;
+      fieldErr(el, msg);
+      return !msg;
+    }
+    function validateVendorForm() {
+      var first = null;
+      document.querySelectorAll('#modalRoot [data-vf]').forEach(function (el) {
+        if (!vfCheck(el) && !first) first = el;
+      });
+      return first;
+    }
+
     // ---------- Secondary Contact Person (new, Basic Info tab) ----------
     function secondaryContactBlockHtml(idx, contact) {
       contact = contact || {};
+      var vf = function (kind, cls, val, ph) {
+        return '<input class="' + cls + ' ' + inputBase() + '" data-vf="' + kind + '" value="' + escV(val) + '" placeholder="' + ph + '" oninput="onVfInput(this)" onblur="vfCheck(this)">' + VF_ERR;
+      };
       return `
-        <div class="secondary-contact-block" data-contact-idx="${idx}">
-          <button type="button" onclick="removeSecondaryContact(${idx})" class="secondary-contact-remove btn-icon-action danger" title="Remove contact">${iconX()}</button>
-          <div class="grid grid-cols-2 gap-3">
-            ${fld('Contact Name', '<input class="sc_name ' + inputBase() + '" value="' + (contact.name || '') + '" placeholder="Full name">')}
-            ${fld('Designation', '<input class="sc_designation ' + inputBase() + '" value="' + (contact.designation || '') + '" placeholder="e.g. Accounts Manager">')}
+        <div class="secondary-contact-block" data-contact-idx="${idx}" style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;margin-bottom:10px;position:relative;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Contact Person</span>
+            <button type="button" onclick="removeSecondaryContact(${idx})" class="btn-icon-action danger" style="position:static;margin:0;" title="Remove contact">${iconX()}</button>
           </div>
           <div class="grid grid-cols-2 gap-3">
-            ${fld('Mobile', '<input class="sc_mobile ' + inputBase() + '" value="' + (contact.mobile || '') + '" placeholder="+91-XXXXXXXXXX">')}
-            ${fld('Email', '<input class="sc_email ' + inputBase() + '" type="email" value="' + (contact.email || '') + '" placeholder="contact@domain.com">')}
+            ${fld('Contact Name', vf('scName', 'sc_name', contact.name, 'Full name').replace('class="sc_name', 'maxlength="100" class="sc_name'))}
+            ${fld('Designation', '<input class="sc_designation ' + inputBase() + '" value="' + escV(contact.designation) + '" placeholder="e.g. Accounts Manager">')}
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            ${fld('Mobile', vf('scMobile', 'sc_mobile', cleanPhone(contact.mobile), '10-digit mobile').replace('class="sc_mobile', 'inputmode="numeric" maxlength="10" class="sc_mobile'))}
+            ${fld('Email', vf('scEmail', 'sc_email', contact.email, 'contact@domain.com').replace('class="sc_email', 'maxlength="120" class="sc_email'))}
           </div>
         </div>`;
     }
@@ -1909,27 +1982,24 @@
 
           <div id="tab-basic" class="modal-tab-panel active">
             <div class="grid grid-cols-2 gap-3">
-              ${fld('Vendor Name *', '<input id="f_name" value="' + e.name + '" placeholder="e.g. Global Imports Inc." class="' + inputBase() + '">')}
-              ${fld('Company Name', '<input id="f_company" value="' + (e.companyName || '') + '" placeholder="Company legal name" class="' + inputBase() + '">')}
+              ${fld('Vendor Name *', '<input id="f_name" data-vf="name" maxlength="100" value="' + escV(e.name) + '" placeholder="e.g. Rajesh Kumar" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR)}              ${fld('Company Name', '<input id="f_company" value="' + (e.companyName || '') + '" placeholder="Company legal name" class="' + inputBase() + '">')}
             </div>
             <div class="grid grid-cols-2 gap-3">
               ${fld('Vendor Type', '<select id="f_vendorType" class="' + inputBase() + '">' + vendorCategoryOptionsHtml(e.vendorType) + '</select>', 'Manage the list via "Manage Vendor Categories" on the vendors page')}
               <div></div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${fld('Email *', '<input id="f_email" type="email" value="' + e.email + '" placeholder="vendor@domain.com" class="' + inputBase() + '">')}
-              ${fld('Phone *', '<input id="f_phone" value="' + e.phone + '" placeholder="+91-XXXXXXXXXX" class="' + inputBase() + '">')}
+             ${fld('Email *', '<input id="f_email" data-vf="email" type="text" inputmode="email" autocomplete="off" maxlength="120" value="' + escV(e.email) + '" placeholder="vendor@domain.com" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR)}
+              ${fld('Phone *', '<input id="f_phone" data-vf="phone" type="text" inputmode="numeric" maxlength="10" value="' + escV(cleanPhone(e.phone)) + '" placeholder="10-digit mobile number" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR)}
             </div>
             <div>
               ${fld('Address', '<textarea id="f_address" rows="2" class="' + inputBase() + '" placeholder="Street address">' + (e.address || '') + '</textarea>')}
             </div>
             <div class="grid grid-cols-3 gap-3">
-              ${fld('City', '<input id="f_city" value="' + (e.city || '') + '" placeholder="City" class="' + inputBase() + '">')}
-              ${fld('State', '<select id="f_state" class="' + inputBase() + '" onchange="updateStateCode()">' + stateOptions.map(function (s) { return '<option ' + (s === e.state ? 'selected' : '') + '>' + s + '</option>'; }).join('') + '</select>')}
+              ${fld('City', '<input id="f_city" data-vf="city" maxlength="60" value="' + escV(e.city) + '" placeholder="City" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR)}              ${fld('State', '<select id="f_state" class="' + inputBase() + '" onchange="updateStateCode()">' + stateOptions.map(function (s) { return '<option ' + (s === e.state ? 'selected' : '') + '>' + s + '</option>'; }).join('') + '</select>')}
               ${fld('State Code', '<input id="f_stateCode" value="' + (e.stateCode || '27') + '" class="' + inputBase() + '" disabled>')}
             </div>
-            ${fld('Pincode', '<input id="f_pincode" value="' + (e.pincode || '') + '" placeholder="6-digit PIN" class="' + inputBase() + '">')}
-
+            ${fld('Pincode', '<input id="f_pincode" data-vf="pin" type="text" inputmode="numeric" maxlength="6" value="' + escV(cleanPin(e.pincode)) + '" placeholder="6-digit PIN" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR)}
             <div class="mt-4 pt-3 border-t border-gray-100">
               <div class="flex items-center justify-between mb-2">
                 <h4 class="text-[12.5px] font-semibold text-gray-800">Secondary Contact Person</h4>
@@ -2181,10 +2251,21 @@
       var status = statusRadio ? statusRadio.value : 'active';
       var secondaryContacts = collectSecondaryContacts();
 
-      if (!name || !email || !phone) {
-        showToast('Please fill all required fields (Name, Email, Phone)', 'error');
+      var badEl = validateVendorForm();
+      if (badEl) {
+        switchVendorStepTab('tab-basic');
+        badEl.scrollIntoView({ block: 'center' });
+        badEl.focus();
+        showToast('Please fix the highlighted fields', 'error');
         return;
       }
+      name = name.replace(/\s+/g, ' ');
+      email = email.toLowerCase();
+      phone = cleanPhone(phone);
+      secondaryContacts = collectSecondaryContacts().map(function (c) {
+        c.email = (c.email || '').toLowerCase();
+        return c;
+      });
 
       var payload = {
         vendorName: name,

@@ -53,7 +53,7 @@
   };
 
   // ---- API config ----
-  var API_BASE_URL = "http://" + window.location.hostname + ":9093";
+  var API_BASE_URL = "http://localhost:9093";
   var LOGIN_URL = API_BASE_URL + "/api/admin/auth/login";
   var LOGOUT_URL = API_BASE_URL + "/api/admin/auth/logout";
   var ORG_URL = API_BASE_URL + "/api/organization/get-org";

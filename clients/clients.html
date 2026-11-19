@@ -711,7 +711,7 @@
     var customerColors = ['#6da84c', '#1985bf', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#4f46e5', '#e11d48', '#0d9488'];
 
     // Backend base URL (Spring Boot, server.port in application.properties)
-    var API_BASE = "http://" + window.location.hostname + ":9093/api/clients/v1";
+    var API_BASE = "http://localhost:9093/api/clients/v1";
 
     var customers = [];    // current page's rows only — comes straight from backend
     var META = null;       // stat cards, comes from the same /get-all-clients response

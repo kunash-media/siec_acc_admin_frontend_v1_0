@@ -533,11 +533,23 @@
               <p class="text-[13px] text-gray-500">Supplier master with GST details, payment terms, bank details
                 and transaction history.</p>
             </div>
-            <div class="flex gap-2.5 flex-wrap">
+            <div class="flex gap-2.5 flex-wrap items-center">
+              <!-- Search -->
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-magnifying-glass text-[11px]"></i></span>
+                <input type="text" id="searchInput" oninput="onVendorSearchInput()" autocomplete="off"
+                  placeholder="Search name, company, phone… (min 3 letters)"
+                  class="w-56 sm:w-72 border border-gray-300 bg-white rounded-lg pl-8 pr-3 py-2 text-[12px] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+              </div>
+              <!-- Reset Button -->
+              <button type="button" onclick="resetAll()" title="Reset search & filters"
+                class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap">
+                <i class="fa-solid fa-rotate-left text-[11px]"></i> Reset
+              </button>
               <!-- Filter Button -->
               <div class="relative inline-block" data-dd-trigger>
                 <button onclick="toggleFilterDD()"
-                  class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-4 py-2.5 rounded-lg transition whitespace-nowrap">
+                  class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-[12px] font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 6h18M7 12h10M11 18h2" />
                   </svg>
@@ -1160,7 +1172,7 @@
       try {
         var text = await res.text();
         if (!text) return fallback;
-        try { var j = JSON.parse(text); return j.message || j.error || fallback; }
+        try { var j = JSON.parse(text); return j.details || j.message || j.error || fallback; }
         catch (e) { return text; }
       } catch (e) {
         return fallback;
@@ -1313,6 +1325,47 @@
       }
     }
 
+     var PREVIEWABLE_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+
+    function sniffMime(b) {
+      if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return 'application/pdf';
+      if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47) return 'image/png';
+      if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return 'image/jpeg';
+      if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return 'image/webp';
+      return '';
+    }
+
+    // Opens the document in a new tab for preview. The tab is opened synchronously so pop-up blockers allow it.
+    async function openDocumentPreview(fileUrl, fileName) {
+      var url = resolveViewableUrl(fileUrl);
+      if (!url) return;
+      if (url.indexOf('blob:') === 0) { window.open(url, '_blank'); return; }   // freshly staged file
+      var tab = window.open('', '_blank');
+      if (!tab) { showToast('Please allow pop-ups to preview documents', 'error'); return; }
+      tab.document.write('<p style="font-family:sans-serif;padding:16px">Loading document…</p>');
+      try {
+        var res = await fetch(url);
+        if (!res.ok) throw new Error('Could not load the document');
+        var buf = await res.arrayBuffer();
+        var type = sniffMime(new Uint8Array(buf.slice(0, 12))) ||
+          (res.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+        var blobUrl = URL.createObjectURL(new Blob([buf], { type: type || 'application/octet-stream' }));
+        if (PREVIEWABLE_TYPES.indexOf(type) !== -1) {
+          tab.location.href = blobUrl;
+        } else {
+          tab.close();
+          var a = document.createElement('a');
+          a.href = blobUrl; a.download = fileName || 'document';
+          document.body.appendChild(a); a.click(); a.remove();
+          showToast('This file type cannot be previewed in the browser, so it was downloaded', 'info');
+        }
+        setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 60000);
+      } catch (err) {
+        tab.close();
+        showToast(err.message || 'Could not open the document', 'error');
+      }
+    }
+
     function viewVendorDocument(vendorId, idx) {
       var v = vendors.find(function (x) { return x.id === vendorId; });
       var doc = v && v.documents ? v.documents[idx] : null;
@@ -1376,6 +1429,7 @@
     }
 
     function renderStats() {
+      updateVendorFilterBadge();
       document.getElementById('totalVendors').textContent = vendors.length;
       var active = vendors.filter(function (v) { return v.status === 'active'; });
       document.getElementById('activeVendors').textContent = active.length;
@@ -1385,9 +1439,52 @@
       document.getElementById('totalPayable').textContent = money(total);
     }
 
+     // ---------- Search (debounced, minimum characters) / Reset / filter badge ----------
+    var VENDOR_SEARCH_MIN = 3;        // change to 2 if you want searching to start earlier
+    var VENDOR_SEARCH_DEBOUNCE = 350; // ms
+    var vendorSearchTimer = null;
+    var vendorLastSearch = '';
+
+    function onVendorSearchInput() {
+      var si = document.getElementById('searchInput');
+      var v = si ? si.value.trim().toLowerCase() : '';
+      var eff = v.length >= VENDOR_SEARCH_MIN ? v : '';
+      clearTimeout(vendorSearchTimer);
+      if (eff === vendorLastSearch) return;
+      vendorSearchTimer = setTimeout(function () {
+        vendorLastSearch = eff;
+        currentVendorPage = 1;
+        renderVendors();
+      }, VENDOR_SEARCH_DEBOUNCE);
+    }
+
+    function resetAll() {
+      ['filterStatus', 'filterGST', 'filterVendorType'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.value = 'all';
+      });
+      var si = document.getElementById('searchInput');
+      if (si) si.value = '';
+      clearTimeout(vendorSearchTimer);
+      vendorLastSearch = '';
+      document.querySelectorAll('[data-dd-menu]').forEach(function (m) { m.classList.add('hidden'); });
+      currentVendorPage = 1;
+      renderVendors();
+    }
+
+    function updateVendorFilterBadge() {
+      var fb = document.getElementById('filterBadge');
+      if (!fb) return;
+      var val = function (id) { var el = document.getElementById(id); return el ? el.value : 'all'; };
+      var n = (val('filterStatus') !== 'all' ? 1 : 0) + (val('filterGST') !== 'all' ? 1 : 0) + (val('filterVendorType') !== 'all' ? 1 : 0);
+      fb.textContent = n;
+      fb.classList.toggle('hidden', !n);
+    }
+
     function getFilteredVendors() {
       var searchInput = document.getElementById('searchInput');
-      var q = searchInput ? searchInput.value.toLowerCase() : '';
+      var qRaw = searchInput ? searchInput.value.trim().toLowerCase() : '';
+      var q = qRaw.length >= VENDOR_SEARCH_MIN ? qRaw : '';
       var status = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : 'all';
       var gst = document.getElementById('filterGST') ? document.getElementById('filterGST').value : 'all';
       var vtype = document.getElementById('filterVendorType') ? document.getElementById('filterVendorType').value : 'all';
@@ -1514,7 +1611,9 @@
       document.getElementById('filterGST').value = 'all';
       if (document.getElementById('filterVendorType')) document.getElementById('filterVendorType').value = 'all';
       var searchInput = document.getElementById('searchInput');
-      if (searchInput) searchInput.value = '';
+      if (searchInput) searchInput.value = ''; 
+      vendorLastSearch = ''; 
+      clearTimeout(vendorSearchTimer);
       currentVendorPage = 1;
       renderVendors();
       toggleFilterDD();
@@ -1568,6 +1667,16 @@
     function isValidPhone(s) { return /^\d{10}$/.test(s); }
     function isValidPin(s) { return /^\d{6}$/.test(s); }
 
+   function cleanGstin(v) { return String(v == null ? '' : v).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15); }
+    function cleanPan(v) { return String(v == null ? '' : v).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10); }
+    function cleanIfsc(v) { return String(v == null ? '' : v).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11); }
+    function cleanAccount(v) { return String(v == null ? '' : v).replace(/\D/g, '').slice(0, 18); }
+    function cleanBankName(v) { return String(v == null ? '' : v).replace(/[^A-Za-z\s]/g, '').replace(/\s{2,}/g, ' ').replace(/^\s+/, ''); }
+
+    var GSTIN_RX = /^(0[1-9]|[12][0-9]|3[0-8]|9[79])[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+    var PAN_RX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+    var IFSC_RX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+
     var VF_RULES = {
       name:     { req: true, reqMsg: 'Vendor name is required', test: isLetters, msg: 'Only letters and spaces are allowed', clean: cleanLetters },
       email:    { req: true, reqMsg: 'Email is required', test: isValidEmail, msg: 'Enter a valid email, e.g. name@company.com' },
@@ -1576,7 +1685,12 @@
       pin:      { test: isValidPin, msg: 'Pincode must be exactly 6 digits', clean: cleanPin },
       scName:   { test: isLetters, msg: 'Only letters and spaces are allowed', clean: cleanLetters },
       scMobile: { test: isValidPhone, msg: 'Enter exactly 10 digits', clean: cleanPhone },
-      scEmail:  { test: isValidEmail, msg: 'Enter a valid email, e.g. name@company.com' }
+      scEmail:  { test: isValidEmail, msg: 'Enter a valid email, e.g. name@company.com' },
+      gstin:    { test: function (s) { return GSTIN_RX.test(s); }, msg: 'Enter a valid 15-character GSTIN, e.g. 27AAPFU0939F1ZV', clean: cleanGstin },
+      pan:      { test: function (s) { return PAN_RX.test(s); }, msg: 'Enter a valid PAN, e.g. ABCDE1234F', clean: cleanPan },
+      bankName: { test: function (s) { return /^[A-Za-z]+(\s[A-Za-z]+)*$/.test(s); }, msg: 'Only letters and spaces are allowed', clean: cleanBankName },
+      account:  { test: function (s) { return /^\d{1,18}$/.test(s); }, msg: 'Only digits are allowed (up to 18)', clean: cleanAccount },
+      ifsc:     { test: function (s) { return IFSC_RX.test(s); }, msg: 'Enter a valid IFSC, e.g. HDFC0001234', clean: cleanIfsc }
     };
 
     function fieldErr(el, msg) {
@@ -2011,18 +2125,18 @@
 
           <div id="tab-tax" class="modal-tab-panel">
             <div class="grid grid-cols-2 gap-3">
-              ${fld('GSTIN', '<input id="f_gstin" value="' + (e.gstin || '') + '" placeholder="15-digit GSTIN" class="' + inputBase() + '">', 'Format: 2-digit state code + 10-digit PAN + 3-digit entity code')}
-              ${fld('PAN', '<input id="f_pan" value="' + (e.pan || '') + '" placeholder="10-digit PAN" class="' + inputBase() + '">')}
+              ${fld('GSTIN', '<input id="f_gstin" data-vf="gstin" maxlength="15" value="' + escV(cleanGstin(e.gstin)) + '" placeholder="e.g. 27AAPFU0939F1ZV" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR, 'Format: 2-digit state code + 10-character PAN + entity digit + Z + check character')}
+              ${fld('PAN', '<input id="f_pan" data-vf="pan" maxlength="10" value="' + escV(cleanPan(e.pan)) + '" placeholder="e.g. ABCDE1234F" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR, 'Format: 5 letters + 4 digits + 1 letter')}
             </div>
             ${fld('GST Registered?', '<div class="flex items-center gap-4 mt-1"><label class="flex items-center gap-2 text-[13px]"><input type="radio" name="gstReg" value="true" ' + (e.gstRegistered ? 'checked' : '') + '> <span class="font-medium">Yes</span></label><label class="flex items-center gap-2 text-[13px]"><input type="radio" name="gstReg" value="false" ' + (!e.gstRegistered ? 'checked' : '') + '> <span class="font-medium">No</span></label></div>')}
           </div>
 
           <div id="tab-banking" class="modal-tab-panel">
             <div class="grid grid-cols-2 gap-3">
-              ${fld('Bank Name', '<input id="f_bankName" value="' + (e.bankName || '') + '" placeholder="e.g. HDFC Bank" class="' + inputBase() + '">')}
-              ${fld('Account Number', '<input id="f_bankAccount" value="' + (e.bankAccount || '') + '" placeholder="Account number" class="' + inputBase() + '">')}
+               ${fld('Bank Name', '<input id="f_bankName" data-vf="bankName" maxlength="60" value="' + escV(e.bankName) + '" placeholder="e.g. HDFC Bank" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR)}
+              ${fld('Account Number', '<input id="f_bankAccount" data-vf="account" type="text" inputmode="numeric" maxlength="18" value="' + escV(cleanAccount(e.bankAccount)) + '" placeholder="Account number" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR)}
             </div>
-            ${fld('IFSC Code', '<input id="f_bankIfsc" value="' + (e.bankIfsc || '') + '" placeholder="e.g. HDFC0000123" class="' + inputBase() + '">')}
+            ${fld('IFSC Code', '<input id="f_bankIfsc" data-vf="ifsc" maxlength="11" value="' + escV(cleanIfsc(e.bankIfsc)) + '" placeholder="e.g. HDFC0001234" oninput="onVfInput(this)" onblur="vfCheck(this)" class="' + inputBase() + '">' + VF_ERR, 'Format: 4 letters + 0 + 6 letters or digits')}
           </div>
 
           <div id="tab-payment" class="modal-tab-panel">
@@ -2159,7 +2273,7 @@
         showToast('Document URL is not available', 'info');
         return;
       }
-      window.open(resolveViewableUrl(doc.fileUrl), '_blank');
+     openDocumentPreview(doc.fileUrl, doc.fileName);
     }
 
     async function removeVendorFormDocument(index) {
@@ -2253,7 +2367,8 @@
 
       var badEl = validateVendorForm();
       if (badEl) {
-        switchVendorStepTab('tab-basic');
+        var badPanel = badEl.closest('.modal-tab-panel');
+        switchVendorStepTab(badPanel ? badPanel.id : 'tab-basic');
         badEl.scrollIntoView({ block: 'center' });
         badEl.focus();
         showToast('Please fix the highlighted fields', 'error');
@@ -2349,7 +2464,7 @@
           <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
             <input type="text" id="searchInput" placeholder="Search vendors by name, company, phone…"
-              onkeyup="filterVendors()"
+              oninput="onVendorSearchInput()"
               class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
           </div>
         `;
@@ -2363,6 +2478,7 @@
         }
       }
     })();
+
 
     // =============================================================
     // INIT

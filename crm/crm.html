@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+<link rel="manifest" href="/favicon_io/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<title>CRM — Aquilon ERP</title>
+
+<script>
+  (function () {
+    try {
+      var collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+      document.documentElement.classList.add(collapsed ? "sidebar-collapsed" : "sidebar-expanded");
+    } catch (e) {
+      document.documentElement.classList.add("sidebar-expanded");
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: "#0f766e", dark: "#0d6b60", soft: "#ccfbf1" },
+          secondary: { DEFAULT: "#14b8a6", soft: "#e6f4f1" },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="stylesheet" href="/assets/css/nav-sidebar.css" />
+<link rel="stylesheet" href="/crm/crm.css" />
+<style>
+  .db-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+  .db-stat{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #0f766e;border-radius:12px;padding:12px 14px;transition:transform .15s,box-shadow .15s}
+  .db-stat:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.06)}
+  .db-stat-ico{width:36px;height:36px;border-radius:10px;border:1px solid #0f766e;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .db-cal{display:grid;grid-template-columns:240px minmax(0,1fr);background:#fff;border:1px solid #0f766e;border-radius:12px;overflow:hidden;margin-bottom:14px}
+  .db-cal-left{padding:18px 16px;background:#f0fbf8;border-right:1px solid #d6eae6;display:flex;flex-direction:column;gap:14px;min-width:0}
+  .db-month{font-size:18px;font-weight:700;letter-spacing:.2em;color:rgba(13, 107, 96,.45)}
+  .db-year{font-size:44px;font-weight:700;letter-spacing:-.04em;line-height:1;color:rgba(13, 107, 96,.25)}
+  .db-up-h{font-size:10px;font-weight:800;letter-spacing:.16em;color:#0d6b60;text-transform:uppercase;margin-bottom:8px}
+  .db-up-list{display:flex;flex-direction:column;gap:9px;max-height:340px;overflow-y:auto;padding:6px 2px 2px}
+  .db-up{position:relative;background:#fff;border:1px solid #d6eae6;border-radius:10px;padding:8px 10px;cursor:pointer;transition:all .15s}
+  .db-up:hover{border-color:#0f766e;transform:translateY(-1px)}
+  .db-up.today{background:#e6f4f1;border-color:#0f766e}
+  .db-up-tag{position:absolute;top:-6px;left:8px;font-size:8px;font-weight:800;letter-spacing:.08em;background:#0f766e;color:#fff;padding:1px 6px;border-radius:20px}
+  .db-cal-right{padding:16px;min-width:0}
+  .db-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .db-nav-btn{width:30px;height:30px;border-radius:8px;border:1px solid #d6eae6;background:#fff;cursor:pointer;color:#163b3a}
+  .db-nav-btn:hover{background:#e6f4f1;border-color:#0f766e}
+  .db-dow,.db-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+  .db-dow span{text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#647b78;padding:4px 0 8px;border-bottom:1px solid #d6eae6}
+  .db-grid{gap:3px;margin-top:4px}
+  .db-cell{min-height:72px;border:1px solid #d6eae6;border-radius:6px;padding:4px 5px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+  .db-cell.has{cursor:pointer}.db-cell.has:hover{background:#e6f4f1;border-color:#0f766e}
+  .db-cell.out .db-num{color:#b6d3cd}
+  .db-cell.today{border:1.5px solid #0f766e;background:#f0fbf8}
+  .db-num{font-size:11.5px;font-weight:500;color:#163b3a}
+  .db-cell.today .db-num{font-weight:800;color:#0d6b60}
+  .db-badge{align-self:flex-end;width:17px;height:17px;border-radius:50%;background:#0284c7;color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+  .db-badge.late{background:#dc2626}.db-badge.now{background:#0f766e;animation:dbPulse 1.2s ease-in-out infinite}
+  @keyframes dbPulse{0%,100%{box-shadow:0 0 0 0 rgba(15, 118, 110,.5)}50%{box-shadow:0 0 0 5px rgba(15, 118, 110,0)}}
+  .db-chip{font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#e6f4f1;color:#647b78}
+  .db-chip.t-hot{background:#fee2e2;color:#991b1b}.db-chip.t-warm{background:#fef3c7;color:#92400e}.db-chip.t-cold{background:#dbeafe;color:#1e40af}
+  .db-charts{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}
+  .db-card{background:#fff;border:1px solid #0f766e;border-radius:12px;padding:14px 16px}
+  .db-card-t{font-size:13px;font-weight:700;color:#163b3a;margin-bottom:10px}
+  .db-bars{display:flex;gap:12px;height:190px}
+  .db-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0}
+  .db-bar-area{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+  .db-bar{width:70%;max-width:34px;background:#0f766e;border-radius:5px 5px 0 0;min-height:2px}
+  .db-bar-val{font-size:11px;font-weight:700;color:#0d6b60}.db-bar-lbl{font-size:11px;color:#647b78;font-weight:600;margin-top:4px}
+  .db-donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .db-donut{width:130px;height:130px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .db-donut-hole{width:78px;height:78px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#163b3a;line-height:1.1}
+  .db-donut-hole span{font-size:10px;font-weight:600;color:#647b78}
+  .db-legend{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#647b78}
+  .db-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+  @media(max-width:900px){.db-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.db-cal,.db-charts{grid-template-columns:1fr}.db-cal-left{border-right:0;border-bottom:1px solid #d6eae6}}
+  @media(max-width:640px){.db-chip{display:none}.db-cell{min-height:46px}}
+</style>
+</head>
+
+<body class="crm-page antialiased text-sm">
+
+  <div class="flex min-h-screen">
+    <div id="sidebar-root"></div>
+
+    <div class="app-main flex-1 flex flex-col min-w-0">
+      <div id="topbar-root"></div>
+
+      <main class="p-3 sm:p-4 lg:p-5">
+
+        <!-- Shared toast + modal mount points (one modal is open at a time across all 4 modules) -->
+        <div id="toastWrap" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 items-end"></div>
+        <div id="modalRoot"></div>
+
+        <div class="max-w-7xl mx-auto">
+
+          <!-- ===== PAGE HEADER ===== -->
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <div class="page-breadcrumb">Sales</div>
+              <h1 class="page-title text-gray-900">CRM</h1>
+            </div>
+          </div>
+
+          <!-- ===== MODULE TABS ===== -->
+          <div class="module-tabs mb-4">
+            <button class="module-tab-btn active" data-module="db" onclick="switchModuleTab('db')"><i class="fa-solid fa-chart-pie text-[12px]"></i> Dashboard</button>
+            <button class="module-tab-btn" data-module="lr" onclick="switchModuleTab('lr')"><i class="fa-solid fa-user-plus text-[12px]"></i> Lead Registration</button>
+            <button class="module-tab-btn" data-module="cl" onclick="switchModuleTab('cl')"><i class="fa-solid fa-phone text-[12px]"></i> Contacted Leads</button>
+            <button class="module-tab-btn" data-module="dl" onclick="switchModuleTab('dl')"><i class="fa-solid fa-briefcase text-[12px]"></i> Deals</button>
+            <button class="module-tab-btn" data-module="cw" onclick="switchModuleTab('cw')"><i class="fa-solid fa-trophy text-[12px]"></i> Closed Won</button>
+            <button class="module-tab-btn" data-module="al" onclick="switchModuleTab('al')"><i class="fa-solid fa-timeline text-[12px]"></i> Activities Log</button>
+          </div>
+
+          <!-- ===== MODULE: Dashboard ===== -->
+          <section class="module-tab-panel" data-module="db">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <div><h2 class="module-title">Dashboard</h2><p class="module-subtitle">Today's follow-ups, your calendar and lead numbers in one place.</p></div>
+              <button onclick="openAddLead()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm"><i class="fa-solid fa-plus text-[11px]"></i> Add Lead</button>
+            </div>
+            <div class="db-stats" id="dbStats"></div>
+            <div class="db-cal">
+              <div class="db-cal-left">
+                <div id="dbMonthBig"></div>
+                <div><p class="db-up-h">Upcoming follow-ups</p><div class="db-up-list" id="dbUpcoming"></div></div>
+              </div>
+              <div class="db-cal-right">
+                <div class="db-nav"><button class="db-nav-btn" onclick="dbShift(-1)" aria-label="Previous month"><i class="fa-solid fa-chevron-left text-[11px]"></i></button><span class="font-bold text-[15px] text-gray-800" id="dbNavLabel"></span><button class="db-nav-btn" onclick="dbShift(1)" aria-label="Next month"><i class="fa-solid fa-chevron-right text-[11px]"></i></button></div>
+                <div id="dbGrid"></div>
+              </div>
+            </div>
+            <div class="db-charts">
+              <div class="db-card"><p class="db-card-t">Monthly lead trend</p><div id="dbTrend"></div></div>
+              <div class="db-card"><p class="db-card-t">Leads by service</p><div id="dbDonut"></div></div>
+            </div>
+          </section>
+
+          <!-- ===== MODULE: Lead Registration ===== -->
+          <section class="module-tab-panel hidden" data-module="lr">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <div><h2 class="module-title">Lead Registration</h2></div>
+              <div class="flex gap-2 flex-wrap items-center">
+                <div class="relative flex-1 min-w-[180px] max-w-[260px]">
+                  <input type="text" id="search-lr" placeholder="Search leads by name, company, mobile…" onkeyup="renderLR()" class="w-full border border-gray-200 bg-white rounded-lg pl-3 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+                </div>
+                <select id="filterStatus-lr" onchange="filterLR()" class="inline-filter-select"><option value="all">All Status</option><option value="registered">Registered</option><option value="contacted">Contacted</option><option value="converted">Converted</option><option value="lost">Lost</option></select>
+                <select id="filterSource-lr" onchange="filterLR()" class="inline-filter-select"><option value="all">All Sources</option><option>Website</option><option>Referral</option><option>Exhibition</option><option>Cold Call</option><option>Social Media</option><option>Other</option></select>
+                <button onclick="clearFiltersLR()" class="inline-filter-reset" title="Reset filters"><i class="fa-solid fa-rotate-right text-[11px]"></i> Reset</button>
+                <button onclick="openAddLead()" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition shadow-sm"><i class="fa-solid fa-plus text-[11px]"></i> Register Lead</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4"><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Total Leads</div><div class="stat-value " id="totalLR">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Registered</div><div class="stat-value text-blue-600" id="regLR">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Contacted</div><div class="stat-value text-amber-600" id="contLR">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Converted</div><div class="stat-value text-green-600" id="convLR">0</div></div></div>
+            <div id="lrPanel"></div>
+          </section>
+
+          <!-- ===== MODULE: Contacted Leads ===== -->
+          <section class="module-tab-panel hidden" data-module="cl">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <div><h2 class="module-title">Contacted Leads</h2></div>
+              <div class="flex gap-2 flex-wrap items-center">
+                <div class="relative flex-1 min-w-[180px] max-w-[260px]">
+                  <input type="text" id="search-cl" placeholder="Search contacted leads…" onkeyup="renderCL()" class="w-full border border-gray-200 bg-white rounded-lg pl-3 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+                </div>
+                <select id="filterSource-cl" onchange="filterCL()" class="inline-filter-select"><option value="all">All Sources</option><option>Website</option><option>Referral</option><option>Exhibition</option><option>Cold Call</option><option>Social Media</option><option>Other</option></select>
+                <button onclick="clearFiltersCL()" class="inline-filter-reset" title="Reset filters"><i class="fa-solid fa-rotate-right text-[11px]"></i> Reset</button>
+                
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4"><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Contacted</div><div class="stat-value text-amber-600" id="totalCL">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Overdue Follow-ups</div><div class="stat-value text-red-600" id="overdueCL">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Converted</div><div class="stat-value text-green-600" id="convCL">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Lost</div><div class="stat-value text-gray-500" id="lostCL">0</div></div></div>
+            <div id="clPanel"></div>
+          </section>
+
+          <!-- ===== MODULE: Deals ===== -->
+          <section class="module-tab-panel hidden" data-module="dl">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <div><h2 class="module-title">Deals</h2></div>
+              <div class="flex gap-2 flex-wrap items-center">
+                <div class="relative flex-1 min-w-[180px] max-w-[260px]">
+                  <input type="text" id="search-dl" placeholder="Search deals by title, company…" onkeyup="renderDL()" class="w-full border border-gray-200 bg-white rounded-lg pl-3 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+                </div>
+                <select id="filterStage-dl" onchange="filterDL()" class="inline-filter-select"><option value="all">All Stages</option><option>Qualification</option><option>Site Visit</option><option>Proposal</option><option>Negotiation</option></select>
+                <button onclick="clearFiltersDL()" class="inline-filter-reset" title="Reset filters"><i class="fa-solid fa-rotate-right text-[11px]"></i> Reset</button>
+                
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4"><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Open Deals</div><div class="stat-value " id="openDL">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Pipeline Value</div><div class="stat-value text-primary" id="valDL">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Closed Won</div><div class="stat-value text-green-600" id="wonDL">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Closed Lost</div><div class="stat-value text-red-600" id="lostDL">0</div></div></div>
+            <div id="dlPanel"></div>
+          </section>
+
+          <!-- ===== MODULE: Closed Won ===== -->
+          <section class="module-tab-panel hidden" data-module="cw">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <div><h2 class="module-title">Closed Won</h2></div>
+              <div class="flex gap-2 flex-wrap items-center">
+                <div class="relative flex-1 min-w-[180px] max-w-[260px]">
+                  <input type="text" id="search-cw" placeholder="Search closed deals…" onkeyup="renderCW()" class="w-full border border-gray-200 bg-white rounded-lg pl-3 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+                </div>
+                
+                <button onclick="clearFiltersCW()" class="inline-filter-reset" title="Reset filters"><i class="fa-solid fa-rotate-right text-[11px]"></i> Reset</button>
+                
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 mb-4"><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Closed Won</div><div class="stat-value text-green-600" id="totalCW">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Won Value</div><div class="stat-value text-primary" id="valCW">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Average Deal</div><div class="stat-value text-amber-600" id="avgCW">0</div></div></div>
+            <div id="cwPanel"></div>
+          </section>
+
+          <!-- ===== MODULE: Activities Log ===== -->
+          <section class="module-tab-panel hidden" data-module="al">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <div><h2 class="module-title">Activities Log</h2></div>
+              <div class="flex gap-2 flex-wrap items-center">
+                <div class="relative flex-1 min-w-[180px] max-w-[260px]">
+                  <input type="text" id="search-al" placeholder="Search by lead no, company, details…" onkeyup="renderAL()" class="w-full border border-gray-200 bg-white rounded-lg pl-3 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+                </div>
+                <select id="filterType-al" onchange="filterAL()" class="inline-filter-select"><option value="all">All Types</option><option>Lead</option><option>Deal</option></select>
+                <select id="filterAction-al" onchange="filterAL()" class="inline-filter-select"><option value="all">All Actions</option><option>Registered</option><option>Updated</option><option>Contacted</option><option>Follow-up</option><option>Converted</option><option>Stage Changed</option><option>Closed Won</option><option>Closed Lost</option><option>Lead Lost</option></select>
+                <button onclick="clearFiltersAL()" class="inline-filter-reset" title="Reset filters"><i class="fa-solid fa-rotate-right text-[11px]"></i> Reset</button>
+                
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4"><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Total Activities</div><div class="stat-value " id="totalAL">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Today</div><div class="stat-value text-blue-600" id="todayAL">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Leads Converted</div><div class="stat-value text-amber-600" id="convAL">0</div></div><div class="bg-white border border-[#0f766e] rounded-xl shadow-sm stat-card"><div class="stat-label">Deals Won</div><div class="stat-value text-green-600" id="wonAL">0</div></div></div>
+            <div id="alPanel"></div>
+          </section>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/assets/js/nav-sidebar.js"></script>
+  <script>
+    NavSidebar.init({
+      basePath: "",
+      activePage: "crm-dashboard",
+      pageTitle: "CRM",
+      user: { name: "Admin", role: "Super Admin", avatarUrl: "" },
+    });
+  </script>
+  <script>
+  window.CRM_API_BASE = "http://localhost:9093";
+  // window.CRM_TOKEN_KEY = "accessToken";   // agar login token localStorage me 'token' naam se nahi hai
+</script>
+  <script src="/crm/crm.js"></script>
+
+</body>
+</html>

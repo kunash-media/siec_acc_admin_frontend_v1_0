@@ -81,7 +81,7 @@
     color: var(--muted);
   }
   .stat-card .stat-value {
-    font-size: clamp(17px, 2.4vw, 20px); font-weight: 800;
+    font-size: clamp(17px, 2.4vw, 20px); font-weight: 700;
     color: var(--ink); margin-top: 5px; letter-spacing: -0.01em;
   }
   .stat-card .stat-icon {
@@ -441,7 +441,7 @@
 
         
           <!-- ===== STAT CARDS ===== -->
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 mb-5">
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 mb-5">
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-primary">
               <div class="flex items-center justify-between mb-2">
                 <span class="stat-label">Sales</span>
@@ -474,14 +474,14 @@
               <div class="stat-value" id="statPayables">—</div>
               <div class="stat-trend text-gray-400" id="statPayablesTrend">&nbsp;</div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-emerald">
+            <!-- <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-emerald">
               <div class="flex items-center justify-between mb-2">
                 <span class="stat-label">Bank Balance</span>
                 <span class="stat-icon bg-emerald-50 text-emerald-700"><i class="fa-solid fa-building-columns"></i></span>
               </div>
               <div class="stat-value" id="statBank">—</div>
               <div class="stat-trend text-gray-400" id="statBankSub">&nbsp;</div>
-            </div>
+            </div> -->
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm stat-card stat-accent-primary">
               <div class="flex items-center justify-between mb-2">
                 <span class="stat-label">GST Payable</span>
@@ -603,9 +603,6 @@
             </div>
           </div>
 
-         
-
-          <!-- ===== RECEIVABLES / PAYABLES ===== -->
           <!-- ===== RECEIVABLES / PAYABLES ===== -->
           <div class="grid lg:grid-cols-2 gap-4 mb-5">
 
@@ -732,7 +729,7 @@
                   <span class="card-title-icon bg-rose-50 text-rose-700"><i class="fa-solid fa-bell"></i></span>
                   <div class="card-title">Alerts &amp; Notifications</div>
                 </div>
-                <a href="/notifications/notifications.html" class="card-link">View All →</a>
+                <!-- <a href="/notifications/notifications.html" class="card-link">View All →</a> -->
               </div>
               <div class="card-body">
                 <div class="alert-item al-red">
@@ -845,7 +842,7 @@
   <!-- ========================================================== -->
 
   <script src="/assets/js/nav-sidebar.js"></script>
-  <script>
+    <script>
     // =============================================================
     // NAV-SIDEBAR INIT
     // =============================================================
@@ -890,140 +887,16 @@
     }
 
     // =============================================================
-    // CHART POINT TOOLTIPS (pie segments + any SVG dots)
+    // DONUT TOOLTIP (shared) + click-outside to hide
     // =============================================================
-    (function () {
-      var tip = document.getElementById('chartTooltip');
-      if (!tip) return;
-      var pinnedDot = null;
-
-      function renderTip(dot) {
-        var series = dot.getAttribute('data-series');
-        var month = dot.getAttribute('data-month');
-        var value = dot.getAttribute('data-value');
-        var color = dot.getAttribute('data-color') || '#6da84c';
-        tip.innerHTML =
-          '<span class="ct-swatch" style="background:' + color + '"></span>' +
-          '<span class="ct-month">' + month + '</span>' +
-          series + ': ' + value;
-      }
-
-      function positionAt(x, y) {
-        tip.style.left = x + 'px';
-        tip.style.top = y + 'px';
-      }
-
-      function positionAtDot(dot) {
-        var rect = dot.getBoundingClientRect();
-        positionAt(rect.left + rect.width / 2, rect.top);
-      }
-
-      function showTip(dot) {
-        renderTip(dot);
-        positionAtDot(dot);
-        tip.classList.add('show');
-      }
-
-      function hideTip() {
-        tip.classList.remove('show');
-        pinnedDot = null;
-      }
-
-      document.querySelectorAll('.lc-dot').forEach(function (dot) {
-        dot.addEventListener('mouseenter', function () {
-          if (pinnedDot) return;
-          showTip(dot);
-        });
-        dot.addEventListener('mousemove', function (evt) {
-          if (pinnedDot) return;
-          positionAt(evt.clientX, evt.clientY - 10);
-        });
-        dot.addEventListener('mouseleave', function () {
-          if (pinnedDot) return;
-          hideTip();
-        });
-        dot.addEventListener('click', function (evt) {
-          evt.stopPropagation();
-          if (pinnedDot === dot) {
-            hideTip();
-            return;
-          }
-          pinnedDot = dot;
-          showTip(dot);
-        });
-      });
-
-      document.addEventListener('click', function (evt) {
-        if (!evt.target.closest('.lc-dot') && !evt.target.closest('.pie-seg') && !evt.target.closest('.pie-legend-item')) hideTip();
-      });
-      window.addEventListener('scroll', function () {
-        if (pinnedDot && pinnedDot.classList.contains('lc-dot')) positionAtDot(pinnedDot);
-      }, true);
-      window.addEventListener('resize', function () {
-        if (pinnedDot && pinnedDot.classList.contains('lc-dot')) positionAtDot(pinnedDot);
-      });
-
-      // ---- Pie chart segments (Top Expenses) ----
-      function renderPieTip(seg) {
-        var label = seg.getAttribute('data-label');
-        var pct = seg.getAttribute('data-pct');
-        var value = seg.getAttribute('data-value');
-        var color = seg.getAttribute('data-color') || '#6da84c';
-        tip.innerHTML =
-          '<span class="ct-swatch" style="background:' + color + '"></span>' +
-          '<span class="ct-month">' + label + '</span>' +
-          value + ' (' + pct + ')';
-      }
-
-      function setActiveSeg(seg) {
-        document.querySelectorAll('.pie-seg-active').forEach(function (el) { el.classList.remove('pie-seg-active'); });
-        if (!seg) return;
-        seg.classList.add('pie-seg-active');
-        var legendRow = document.querySelector('.pie-legend-item[data-seg="' + seg.id + '"]');
-        if (legendRow) legendRow.classList.add('pie-seg-active');
-      }
-
-      function showPieTip(seg, x, y) {
-        renderPieTip(seg);
-        positionAt(x, y - 10);
-        tip.classList.add('show');
-        pinnedDot = seg;
-        setActiveSeg(seg);
-      }
-
-      document.querySelectorAll('.pie-seg').forEach(function (seg) {
-        seg.addEventListener('click', function (evt) {
-          evt.stopPropagation();
-          if (pinnedDot === seg) {
-            hideTip();
-            setActiveSeg(null);
-            return;
-          }
-          showPieTip(seg, evt.clientX, evt.clientY);
-        });
-      });
-
-      document.querySelectorAll('.pie-legend-item').forEach(function (row) {
-        row.addEventListener('click', function (evt) {
-          evt.stopPropagation();
-          var seg = document.getElementById(row.getAttribute('data-seg'));
-          if (!seg) return;
-          if (pinnedDot === seg) {
-            hideTip();
-            setActiveSeg(null);
-            return;
-          }
-          var rect = row.getBoundingClientRect();
-          showPieTip(seg, rect.left + 14, rect.top + rect.height / 2);
-        });
-      });
-
-      var origHideTip = hideTip;
-      hideTip = function () {
-        origHideTip();
-        setActiveSeg(null);
-      };
-    })();
+    var chartTip = document.getElementById('chartTooltip');
+    function hideChartTip() {
+      if (chartTip) chartTip.classList.remove('show');
+      document.querySelectorAll('.pie-seg-active').forEach(function (el) { el.classList.remove('pie-seg-active'); });
+    }
+    document.addEventListener('click', function (evt) {
+      if (!evt.target.closest('.pie-seg') && !evt.target.closest('.pie-legend-item')) hideChartTip();
+    });
 
     // =============================================================
     // PERIOD DROPDOWNS (This Fiscal Year / Previous / Last 12 Months)
@@ -1045,7 +918,7 @@
       if (label) label.textContent = itemEl.textContent.trim();
       dropdown.classList.remove('open');
       showToast('Showing data for "' + itemEl.textContent.trim() + '"', 'info');
-     if (window.dashOnPeriodChange) window.dashOnPeriodChange(dropdownId, itemEl.textContent.trim());
+      if (window.dashOnPeriodChange) window.dashOnPeriodChange(dropdownId, itemEl.textContent.trim());
     }
 
     document.addEventListener('click', function (evt) {
@@ -1054,14 +927,16 @@
       }
     });
 
-       // INCOME & EXPENSE + ALL DASHBOARD WIDGETS — live data from /api/v1/dashboard/*
     // =============================================================
-    var DASH_API_BASE =  "http://" + window.location.hostname + ":9093"; // same-origin by default; set to your API host if the frontend is served elsewhere
+    // DASHBOARD DATA LAYER — live data from /api/v1/dashboard/*
+    // =============================================================
+    var DASH_API_BASE = "http://localhost:9093"; // same-origin by default; set to your API host if the frontend is served elsewhere
     var PERIOD_CODES = { 'This Fiscal Year': 'THIS_FY', 'Previous Fiscal Year': 'PREV_FY', 'Last 12 Months': 'LAST_12M' };
     var incExpPeriodCode = 'THIS_FY';
     var topExpPeriodCode = 'THIS_FY';
     var incExpChartInst = null, incExpDrawn = false, incExpObserving = false, incExpPending = null;
     var incExpReq = 0, topExpReq = 0;
+    var exportBusy = false;
     var PIE_COLORS = ['#6da84c', '#1985bf', '#d97706', '#059669', '#b45309'];
     var PIE_CIRC = 2 * Math.PI * 70;
     var ALERT_ICONS = { LOW_STOCK: 'fa-triangle-exclamation', INVOICE_OVERDUE: 'fa-clock', PO_APPROVAL: 'fa-check', PAYMENT_RECEIVED: 'fa-hand-holding-dollar', PROJECT_BUDGET: 'fa-bullseye' };
@@ -1121,6 +996,7 @@
     function afterWindowLoad(fn) {
       if (document.readyState === 'complete') fn(); else window.addEventListener('load', fn);
     }
+    function inr(v) { return '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
 
     // ---------- API ----------
     function dashFetch(path) {
@@ -1218,7 +1094,6 @@
       if (a >= 1e3) return s + '₹' + trimNum(a / 1e3) + 'k';
       return s + '₹' + trimNum(a);
     }
-    function inr(v) { return '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
 
     function ensureIncExpChart() {
       var dom = document.getElementById('incExpChart');
@@ -1394,26 +1269,20 @@
     function bindPieDelegates() {
       var svg = document.querySelector('.pie-svg');
       var legend = document.querySelector('.pie-legend');
-      var tip = document.getElementById('chartTooltip');
-      if (!svg || !legend || !tip || svg.getAttribute('data-bound') === '1') return;
+      if (!svg || !legend || !chartTip || svg.getAttribute('data-bound') === '1') return;
       svg.setAttribute('data-bound', '1');
       var pinned = null;
-      function clearActive() {
-        document.querySelectorAll('.pie-seg-active').forEach(function (el) { el.classList.remove('pie-seg-active'); });
-      }
       function activate(seg, x, y) {
-        if (tip.classList.contains('show') && pinned === seg) {
-          tip.classList.remove('show'); pinned = null; clearActive(); return;
-        }
+        if (chartTip.classList.contains('show') && pinned === seg) { hideChartTip(); pinned = null; return; }
         pinned = seg;
         var sw = document.createElement('span'); sw.className = 'ct-swatch'; sw.style.background = seg.getAttribute('data-color');
         var lb = document.createElement('span'); lb.className = 'ct-month'; lb.textContent = seg.getAttribute('data-label');
-        tip.innerHTML = '';
-        tip.appendChild(sw); tip.appendChild(lb);
-        tip.appendChild(document.createTextNode(seg.getAttribute('data-value') + ' (' + seg.getAttribute('data-pct') + ')'));
-        tip.style.left = x + 'px'; tip.style.top = y + 'px';
-        tip.classList.add('show');
-        clearActive();
+        chartTip.innerHTML = '';
+        chartTip.appendChild(sw); chartTip.appendChild(lb);
+        chartTip.appendChild(document.createTextNode(seg.getAttribute('data-value') + ' (' + seg.getAttribute('data-pct') + ')'));
+        chartTip.style.left = x + 'px'; chartTip.style.top = y + 'px';
+        chartTip.classList.add('show');
+        document.querySelectorAll('.pie-seg-active').forEach(function (el) { el.classList.remove('pie-seg-active'); });
         seg.classList.add('pie-seg-active');
         var row = document.querySelector('.pie-legend-item[data-seg="' + seg.id + '"]');
         if (row) row.classList.add('pie-seg-active');
@@ -1435,7 +1304,7 @@
       });
     }
 
-    // ---------- ACTIVE PROJECTS ----------
+    // ---------- ACTIVE PROJECTS (View + Export buttons per entry) ----------
     function projectRow(p) {
       var pct = Math.max(0, Math.min(100, Number(p.progress) || 0));
       var good = pct >= 50;
@@ -1443,14 +1312,23 @@
       var txt = good ? 'text-primary-dark' : 'text-amber-600';
       var bar = good ? 'prog-green' : 'prog-amber';
       var off = (106.81 * (1 - pct / 100)).toFixed(2);
-      return '<a href="/projects/projects.html?project=' + encodeURIComponent(p.id) + '" data-project-id="' + esc(p.id) + '" class="flex items-center gap-3.5 px-4 py-3.5 table-row-hover cursor-pointer" title="Open project">'
+      var id = esc(p.id);
+      return '<div class="flex items-center gap-3.5 px-4 py-3.5 table-row-hover" data-project-row="' + id + '">'
         + '<div class="ring-wrap"><svg viewBox="0 0 40 40" class="w-11 h-11">'
         + '<circle cx="20" cy="20" r="17" fill="none" stroke="#E8EDED" stroke-width="4" />'
         + '<circle cx="20" cy="20" r="17" fill="none" stroke="' + stroke + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="106.81" stroke-dashoffset="' + off + '" />'
         + '</svg><div class="ring-center ' + txt + '">' + pct + '%</div></div>'
         + '<div class="min-w-0 flex-1"><div class="text-[12.8px] font-semibold text-gray-800 truncate">' + esc(p.name) + '</div>'
         + '<div class="text-[11px] text-gray-400">' + esc(p.customer) + '</div>'
-        + '<div class="prog-bar"><div class="fill ' + bar + '" style="width:' + pct + '%"></div></div></div></a>';
+        + '<div class="prog-bar"><div class="fill ' + bar + '" style="width:' + pct + '%"></div></div></div>'
+        + '<div class="flex items-center gap-2 flex-shrink-0">'
+        +   '<button type="button" data-view-project="' + id + '" title="View project details" '
+        +     'class="inline-flex items-center gap-1.5 bg-white border border-primary text-primary-dark hover:bg-primary-soft text-[11.5px] font-semibold px-2.5 py-1.5 rounded-lg transition">'
+        +     '<i class="fa-solid fa-eye"></i><span class="hidden sm:inline">View</span></button>'
+        +   '<button type="button" data-export-project="' + id + '" title="Export project to Excel" '
+        +     'class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[11.5px] font-semibold px-2.5 py-1.5 rounded-lg transition">'
+        +     '<i class="fa-solid fa-file-excel"></i><span class="hidden sm:inline">Export</span></button>'
+        + '</div></div>';
     }
     function renderActiveProjects(list) {
       var host = cardPartByLink('/projects/projects.html', '.divide-y');
@@ -1469,21 +1347,22 @@
       host.innerHTML = (list && list.length)
         ? list.map(projectRow).join('')
         : '<div class="px-4 py-6 text-center text-[12px] text-gray-400">No active projects</div>';
-      if (host.getAttribute('data-bound') !== '1') {
-        host.setAttribute('data-bound', '1');
-        host.addEventListener('click', function (evt) {
-          var a = evt.target.closest ? evt.target.closest('a[data-project-id]') : null;
-          if (!a) return;
-          evt.preventDefault();
-          openProjectModal(a.getAttribute('data-project-id'));
-        });
-      }
     }
     function failActiveProjects(e) {
       var host = cardPartByLink('/projects/projects.html', '.divide-y');
       if (host) host.innerHTML = '<div class="px-4 py-6 text-center text-[12px] text-rose-500">Could not load projects: ' + esc(e && e.message ? e.message : 'error') + '</div>';
     }
     function loadActiveProjects() { return dashFetch('/active-projects?limit=3').then(renderActiveProjects); }
+
+    // One delegated listener for every View / Export button (rows and the details popup)
+    document.addEventListener('click', function (evt) {
+      var t = evt.target;
+      if (!t || !t.closest) return;
+      var ex = t.closest('[data-export-project]');
+      if (ex) { evt.preventDefault(); exportProjectExcel(ex.getAttribute('data-export-project'), ex); return; }
+      var vw = t.closest('[data-view-project]');
+      if (vw) { evt.preventDefault(); openProjectModal(vw.getAttribute('data-view-project')); }
+    });
 
     // ---------- ALERTS ----------
     function renderAlerts(list) {
@@ -1545,7 +1424,7 @@
     };
 
     // =============================================================
-    // PROJECT DETAILS POPUP (dashboard varunach details dakhva)
+    // PROJECT DETAILS POPUP (filled from the active-projects API)
     // =============================================================
     var DASH_PROJECTS = {};
 
@@ -1580,6 +1459,7 @@
               '<h2 class="text-[18px] sm:text-[20px] font-bold text-gray-900">' + p.name + '</h2>' +
               '<span class="text-[11px] font-bold px-2.5 py-1 rounded-full ' + st.cls + '">' + st.label + '</span>' +
               '<div class="flex-1"></div>' +
+              '<button type="button" data-export-project="' + esc(id) + '" class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-[12px] font-semibold px-3 py-2 rounded-lg transition"><i class="fa-solid fa-file-excel"></i><span>Export to Excel</span></button>' +
               '<button onclick="closeProjectModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 flex items-center justify-center" title="Close"><i class="fa-solid fa-xmark"></i></button>' +
             '</div>' +
             '<div class="p-6 grid grid-cols-1 md:grid-cols-[280px_1fr] gap-5">' +
@@ -1616,10 +1496,915 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeProjectModal(); });
 
     // =============================================================
+    // EXCEL EXPORT ENGINE (ExcelJS is loaded only when an export is clicked)
+    // =============================================================
+    var XL_FONT = 'Calibri';
+    var XL = {
+      ink: 'FF16182A', muted: 'FF64748B',
+      green: 'FF6DA84C', greenDark: 'FF5C9140', greenSoft: 'FFEEF5E8', greenLine: 'FFDCEBD2', zebra: 'FFF8FBF6',
+      hero: 'FF17331F', heroSub: 'FFB9D9A6',
+      blue: 'FF1985BF', blueSoft: 'FFE7F3FA',
+      amber: 'FFD97706', amberSoft: 'FFFEF3C7', amberDark: 'FF92400E',
+      rose: 'FFE11D48', roseSoft: 'FFFEE2E2', roseDark: 'FF991B1B',
+      emerald: 'FF059669', white: 'FFFFFFFF'
+    };
+    var STATUS_CHIP = {
+      active:    { t: 'Active',    fill: XL.greenSoft, color: XL.greenDark },
+      completed: { t: 'Completed', fill: XL.blueSoft,  color: XL.blue },
+      onhold:    { t: 'On Hold',   fill: XL.amberSoft, color: XL.amberDark },
+      pending:   { t: 'Pending',   fill: 'FFF1F5F9',   color: XL.muted },
+      cancelled: { t: 'Cancelled', fill: XL.roseSoft,  color: XL.roseDark }
+    };
+    var PRIORITY = {
+      red:    { t: 'High',      fill: XL.roseSoft,  color: XL.roseDark },
+      amber:  { t: 'Medium',    fill: XL.amberSoft, color: XL.amberDark },
+      purple: { t: 'Review',    fill: 'FFEDE9FE',   color: 'FF5B21B6' },
+      blue:   { t: 'Info',      fill: 'FFDBEAFE',   color: 'FF1E40AF' },
+      green:  { t: 'Good news', fill: 'FFDCFCE7',   color: 'FF166534' }
+    };
+
+    // ---------- library loader ----------
+    var excelJsPromise = null;
+    function loadScriptOnce(src) {
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = src; s.async = true;
+        s.onload = function () { resolve(); };
+        s.onerror = function () { s.remove(); reject(new Error('load failed: ' + src)); };
+        document.head.appendChild(s);
+      });
+    }
+    function loadExcelJs() {
+      if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+      if (excelJsPromise) return excelJsPromise;
+      excelJsPromise = loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js')
+        .catch(function () { return loadScriptOnce('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'); })
+        .then(function () {
+          if (!window.ExcelJS) throw new Error('Excel library did not load');
+          return window.ExcelJS;
+        })
+        .catch(function () {
+          excelJsPromise = null;
+          throw new Error('Could not load the Excel library (check internet / ad-blocker).');
+        });
+      return excelJsPromise;
+    }
+
+    // ---------- small utilities ----------
+    function r2(v) { var n = Number(v); return isFinite(n) ? Math.round((n + Number.EPSILON) * 100) / 100 : 0; }
+    function numOr0(v) { var n = Number(v); return isFinite(n) ? n : 0; }
+    function pick(o, keys) {
+      if (!o) return undefined;
+      for (var i = 0; i < keys.length; i++) {
+        var v = o[keys[i]];
+        if (v !== undefined && v !== null && v !== '') return v;
+      }
+      return undefined;
+    }
+    function xlDate(v) {
+      var d = parseDashDate(v);
+      return d ? new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())) : null;
+    }
+    function colLetter(n) {
+      var s = '';
+      while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+      return s;
+    }
+    function fileSafe(s) { return String(s || '').replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40); }
+    function todayIso() {
+      var d = new Date();
+      return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    }
+    function nowStamp() {
+      return new Date().toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+    function longDate(v) {
+      var d = parseDashDate(v);
+      return d ? d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    }
+    function titleCase(s) { s = String(s || ''); return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : s; }
+    function fitHeight(text, widthChars, minH) {
+      var len = String(text == null ? '' : text).length;
+      var lines = Math.max(1, Math.ceil(len / Math.max(8, widthChars * 1.05)));
+      return Math.max(minH || 20, lines * 13.5 + 6);
+    }
+    function absUrl(u) {
+      if (/^https?:/i.test(u)) return u;
+      var base = /^https?:/i.test(DASH_API_BASE) ? DASH_API_BASE : (location.origin + DASH_API_BASE);
+      return base + (u.charAt(0) === '/' ? '' : '/') + u;
+    }
+    function pctOf(part, whole) { return numOr0(whole) > 0 ? (numOr0(part) / numOr0(whole) * 100).toFixed(1) + '%' : '0%'; }
+    function ratioFormula(numKey, denKey) {
+      return function (rowNum, idx) {
+        var n = colLetter(idx[numKey]) + rowNum, d = colLetter(idx[denKey]) + rowNum;
+        return 'IF(' + d + '>0,' + n + '/' + d + ',0)';
+      };
+    }
+    function statusStyle(s) {
+      var k = String(s || '').toLowerCase();
+      if (k === 'paid' || k === 'approved' || k === 'completed' || k === 'active' || k === 'cleared') return { color: XL.emerald, bold: true };
+      if (k === 'overdue' || k === 'rejected' || k === 'cancelled' || k === 'bounced') return { color: XL.rose, bold: true };
+      if (k === 'partial' || k === 'pending' || k === 'onhold' || k === 'received' || k === 'unpaid') return { color: XL.amber, bold: true };
+      return {};
+    }
+
+    // ---------- styling primitives ----------
+    function xfill(argb) { return { type: 'pattern', pattern: 'solid', fgColor: { argb: argb } }; }
+    function xthin(argb) { return { style: 'thin', color: { argb: argb } }; }
+    function xbox(argb) { var b = xthin(argb); return { top: b, left: b, bottom: b, right: b }; }
+
+    // Indian lakh/crore grouping chosen per cell (Excel has no native 2-digit grouping); negatives show red with a minus.
+    function inrFmt(v) {
+      var n = Math.abs(Number(v) || 0);
+      var p = n >= 1e7 ? '##\\,##\\,##\\,##0.00' : n >= 1e5 ? '##\\,##\\,##0.00' : '#,##0.00';
+      return '"₹"' + p + ';[Red]-"₹"' + p;
+    }
+    function styleCell(cell, o) {
+      o = o || {};
+      cell.font = { name: XL_FONT, size: o.size || 10, bold: !!o.bold, italic: !!o.italic, underline: !!o.underline, color: { argb: o.color || XL.ink } };
+      if (o.fill) cell.fill = xfill(o.fill);
+      cell.alignment = { vertical: 'middle', horizontal: o.align || 'left', wrapText: o.wrap !== false, indent: o.indent || 0 };
+      if (o.border !== false) cell.border = xbox(XL.greenLine);
+    }
+    function styleHeader(cell, align) {
+      cell.font = { name: XL_FONT, size: 10, bold: true, color: { argb: XL.greenDark } };
+      cell.fill = xfill(XL.greenSoft);
+      cell.alignment = { horizontal: align || 'center', vertical: 'middle', wrapText: true };
+      cell.border = { top: xthin(XL.green), left: xthin(XL.greenLine), right: xthin(XL.greenLine), bottom: { style: 'medium', color: { argb: XL.green } } };
+    }
+    function putHeader(cell, text, align) { cell.value = text; styleHeader(cell, align); return cell; }
+    function putText(cell, text, o) { cell.value = (text == null) ? '' : text; styleCell(cell, o); return cell; }
+    function putMoney(cell, v, formula, o) {
+      var n = r2(v);
+      cell.value = formula ? { formula: formula, result: n } : n;
+      styleCell(cell, Object.assign({ align: 'right' }, o || {}));
+      cell.numFmt = inrFmt(n);
+      return cell;
+    }
+    function putPct(cell, frac, formula, o, fmt) {
+      var f = Math.round(numOr0(frac) * 1e6) / 1e6;
+      cell.value = formula ? { formula: formula, result: f } : f;
+      styleCell(cell, Object.assign({ align: 'right' }, o || {}));
+      cell.numFmt = fmt || '0.0%';
+      return cell;
+    }
+    function putDate(cell, v, o) {
+      var d = xlDate(v);
+      cell.value = d || '—';
+      styleCell(cell, Object.assign({ align: 'center' }, o || {}));
+      if (d) cell.numFmt = 'dd-mmm-yyyy';
+      return cell;
+    }
+    function putInt(cell, v, o) {
+      cell.value = numOr0(v);
+      styleCell(cell, Object.assign({ align: 'center' }, o || {}));
+      cell.numFmt = '0';
+      return cell;
+    }
+    function putLink(cell, text, url, o) {
+      cell.value = { text: text, hyperlink: url };
+      styleCell(cell, Object.assign({ align: 'center', color: XL.blue, underline: true }, o || {}));
+      return cell;
+    }
+    function mergeRow(ws, row, c1, c2, text, o) {
+      if (c2 > c1) ws.mergeCells(row, c1, row, c2);
+      var master = putText(ws.getCell(row, c1), text, o);
+      for (var k = c1 + 1; k <= c2; k++) styleCell(ws.getCell(row, k), o);
+      return master;
+    }
+
+    // ---------- sheet scaffolding ----------
+    function newWorkbook(title) {
+      var wb = new window.ExcelJS.Workbook();
+      wb.creator = 'SIEC Dashboard';
+      wb.created = new Date();
+      wb.title = title;
+      return wb;
+    }
+    function addSheet(wb, name) {
+      return wb.addWorksheet(name, {
+        properties: { tabColor: { argb: XL.green }, defaultRowHeight: 18 },
+        views: [{ showGridLines: false }],
+        pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 }
+      });
+    }
+    function addBanner(ws, lastCol, title, subtitle) {
+      var last = colLetter(lastCol);
+      ws.mergeCells('A1:' + last + '1');
+      var t = ws.getCell('A1');
+      t.value = title;
+      t.font = { name: XL_FONT, size: 18, bold: true, color: { argb: XL.white } };
+      t.fill = xfill(XL.hero);
+      t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+      ws.getRow(1).height = 36;
+      ws.mergeCells('A2:' + last + '2');
+      var s = ws.getCell('A2');
+      s.value = subtitle;
+      s.font = { name: XL_FONT, size: 10, color: { argb: XL.heroSub } };
+      s.fill = xfill(XL.hero);
+      s.alignment = { vertical: 'middle', horizontal: 'left', indent: 1, wrapText: true };
+      ws.getRow(2).height = 24;
+      ws.getRow(3).height = 5;
+      for (var c = 1; c <= lastCol; c++) ws.getCell(3, c).fill = xfill(XL.green);
+      ws.getRow(4).height = 8;
+    }
+    function addSection(ws, row, lastCol, text) {
+      ws.mergeCells(row, 1, row, lastCol);
+      var c = ws.getCell(row, 1);
+      c.value = text;
+      c.font = { name: XL_FONT, size: 11, bold: true, color: { argb: XL.white } };
+      c.fill = xfill(XL.green);
+      c.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+      ws.getRow(row).height = 22;
+    }
+
+    // ---------- generic ledger sheet (banner + filterable table + totals) ----------
+    // col: { key, h, w, t:'int|text|date|money|pct|link', v(row,i), f(rowNum,idx), sum, auto, fmt, tf(totalRow,idx), tv(sums), sty(value,row) }
+    function buildLedgerSheet(ws, spec) {
+      var cols = spec.cols, rows = spec.rows, n = cols.length;
+      addBanner(ws, n, spec.title, spec.subtitle);
+      ws.mergeCells(5, 1, 5, n);
+      var tip = ws.getCell(5, 1);
+      tip.value = spec.tip || 'Tip: use the arrows on the header row to sort or filter. Totals at the bottom follow your filter.';
+      tip.font = { name: XL_FONT, size: 9, italic: true, color: { argb: XL.muted } };
+      tip.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+      ws.getRow(5).height = 20;
+
+      var headerRow = 6, first = 7;
+      var idx = {};
+      cols.forEach(function (c, j) { idx[c.key] = j + 1; });
+      cols.forEach(function (c, j) {
+        putHeader(ws.getCell(headerRow, j + 1), c.h, c.t === 'text' ? 'left' : 'center');
+        ws.getColumn(j + 1).width = c.w || 16;
+      });
+      ws.getRow(headerRow).height = 28;
+
+      var sums = {};
+      var last = first + rows.length - 1;
+      if (!rows.length) {
+        mergeRow(ws, first, 1, n, spec.emptyMsg || 'No records.', { italic: true, color: XL.muted, align: 'center' });
+        ws.getRow(first).height = 26;
+        last = first;
+      } else {
+        rows.forEach(function (r, i) {
+          var rowNum = first + i;
+          cols.forEach(function (c, j) {
+            var cell = ws.getCell(rowNum, j + 1);
+            var raw = c.auto ? (i + 1) : c.v(r, i);
+            var o = { fill: (i % 2 === 1) ? XL.zebra : null };
+            if (c.sum) sums[c.key] = (sums[c.key] || 0) + numOr0(raw);
+            if (c.t === 'money') putMoney(cell, raw, c.f ? c.f(rowNum, idx) : null, o);
+            else if (c.t === 'pct') putPct(cell, raw, c.f ? c.f(rowNum, idx) : null, o, c.fmt);
+            else if (c.t === 'date') putDate(cell, raw, o);
+            else if (c.t === 'int') putInt(cell, raw, o);
+            else if (c.t === 'link') {
+              if (raw) putLink(cell, 'Open', raw, o); else putText(cell, '—', Object.assign({ align: 'center' }, o));
+            } else {
+              var sty = c.sty ? c.sty(raw, r) : null;
+              putText(cell, (raw === undefined || raw === null || raw === '') ? '—' : raw, Object.assign({}, o, sty || {}));
+            }
+          });
+          ws.getRow(rowNum).height = 20;
+        });
+        if (!spec.noFilter) ws.autoFilter = { from: { row: headerRow, column: 1 }, to: { row: last, column: n } };
+      }
+      ws.views = [{ state: 'frozen', ySplit: headerRow, showGridLines: false }];
+      ws.pageSetup.printTitlesRow = headerRow + ':' + headerRow;
+
+      var totalRow = last + 1;
+      var labelCol = 0;
+      for (var q = 0; q < n; q++) { if (cols[q].t === 'text') { labelCol = q; break; } }
+      cols.forEach(function (c, j) {
+        var cell = ws.getCell(totalRow, j + 1);
+        var o = { bold: true, fill: XL.greenSoft, color: XL.greenDark, border: false };
+        var L = colLetter(j + 1);
+        if (c.sum && (c.t === 'money' || c.t === 'pct')) {
+          var tot = sums[c.key] || 0;
+          var tf = rows.length ? 'SUBTOTAL(109,' + L + first + ':' + L + last + ')' : null;
+          if (c.t === 'money') putMoney(cell, tot, tf, o); else putPct(cell, tot, tf, o, c.fmt);
+        } else if (c.tf) {
+          var tv = c.tv ? c.tv(sums) : 0;
+          putPct(cell, tv, rows.length ? c.tf(totalRow, idx) : null, o, c.fmt);
+        } else if (j === labelCol) {
+          putText(cell, 'TOTAL', o);
+        } else {
+          putText(cell, '', o);
+        }
+        cell.border = { top: { style: 'medium', color: { argb: XL.green } }, bottom: xthin(XL.greenLine), left: xthin(XL.greenLine), right: xthin(XL.greenLine) };
+      });
+      ws.getRow(totalRow).height = 24;
+
+      var info = { headerRow: headerRow, first: first, last: last, totalRow: totalRow, idx: idx, sums: sums, count: rows.length };
+      if (spec.afterTotals) spec.afterTotals(ws, info);
+      return info;
+    }
+
+    // ---------- chart images (off-screen ECharts -> PNG, optional) ----------
+    function renderChartPng(option, w, h) {
+      if (typeof echarts === 'undefined') return null;
+      var host = document.createElement('div');
+      host.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + w + 'px;height:' + h + 'px;';
+      document.body.appendChild(host);
+      var inst = null;
+      try {
+        inst = echarts.init(host, null, { width: w, height: h, renderer: 'canvas' });
+        option.animation = false;
+        inst.setOption(option, true);
+        return inst.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+      } catch (e) {
+        return null;
+      } finally {
+        try { if (inst) inst.dispose(); } catch (ignore) {}
+        host.remove();
+      }
+    }
+    function buildTrendImageOption(d) {
+      var o = buildIncExpOption(d);
+      delete o.toolbox;
+      o.title = { text: 'Income vs Expense — ' + d.rangeLabel, left: 'center', top: 6, textStyle: { fontSize: 14, color: '#16182a' } };
+      o.grid = { left: 10, right: 10, top: 64, bottom: 40, containLabel: true };
+      return o;
+    }
+    function buildPieImageOption(items) {
+      return {
+        color: PIE_COLORS,
+        title: { text: 'Where the money goes', left: 'center', top: 6, textStyle: { fontSize: 14, color: '#16182a' } },
+        legend: { orient: 'vertical', right: 10, top: 'middle', textStyle: { color: '#475569' } },
+        series: [{
+          type: 'pie', radius: ['42%', '68%'], center: ['36%', '56%'],
+          label: { formatter: '{d}%', color: '#16182a' },
+          data: items.map(function (i) { return { name: i.label, value: Number(i.amount) }; })
+        }]
+      };
+    }
+    function addPng(wb, ws, dataUrl, col, row, w, h) {
+      if (!dataUrl) return;
+      try {
+        var id = wb.addImage({ base64: dataUrl, extension: 'png' });
+        ws.addImage(id, { tl: { col: col, row: row }, ext: { width: w, height: h } });
+      } catch (ignore) { /* the data table is still complete without the picture */ }
+    }
+
+    // =============================================================
+    // PROJECT WORKBOOK
+    // =============================================================
+    function isApproved(r) { return String(pick(r, ['status']) || '').toLowerCase() === 'approved'; }
+
+    function projectSalesCols(rows) {
+      var amt = function (r) { return numOr0(pick(r, ['amount', 'total', 'totalAmount'])); };
+      var paidOf = function (r) { return pick(r, ['paid', 'paidAmount', 'receivedAmount']); };
+      var defs = [
+        { key: 'no', h: '#', w: 6, t: 'int', auto: true, req: true },
+        { key: 'num', h: 'Invoice No.', w: 20, t: 'text', req: true, v: function (r) { return pick(r, ['number', 'invoiceNumber', 'invoiceStrId', 'invoiceId', 'id']); } },
+        { key: 'date', h: 'Date', w: 14, t: 'date', req: true, v: function (r) { return pick(r, ['date', 'invoiceDate']); } },
+        { key: 'party', h: 'Customer', w: 30, t: 'text', v: function (r) { return pick(r, ['customer', 'customerName', 'clientName', 'client']); } },
+        { key: 'status', h: 'Status', w: 14, t: 'text', v: function (r) { return pick(r, ['status']); }, sty: function (v) { return statusStyle(v); } },
+        { key: 'amount', h: 'Amount (₹)', w: 20, t: 'money', sum: true, req: true, v: amt },
+        { key: 'paid', h: 'Received (₹)', w: 20, t: 'money', sum: true, v: function (r) { var p = paidOf(r); return p === undefined ? undefined : numOr0(p); } },
+        { key: 'bal', h: 'Balance (₹)', w: 20, t: 'money', sum: true,
+          v: function (r) {
+            var p = paidOf(r);
+            if (p !== undefined) return r2(amt(r) - numOr0(p));
+            var b = pick(r, ['balance', 'balanceDue']);
+            return b === undefined ? undefined : numOr0(b);
+          },
+          f: function (rowNum, idx) { return idx.paid ? colLetter(idx.amount) + rowNum + '-' + colLetter(idx.paid) + rowNum : null; } },
+        { key: 'pdf', h: 'Invoice PDF', w: 14, t: 'link', v: function (r) { var u = pick(r, ['pdfUrl']); return u ? absUrl(u) : undefined; } }
+      ];
+      return defs.filter(function (d) { return d.req || rows.some(function (r) { return d.v(r) !== undefined; }); });
+    }
+    function projectPurchaseCols(rows) {
+      var amt = function (r) { return numOr0(pick(r, ['amount', 'total', 'totalAmount'])); };
+      var paidOf = function (r) { return pick(r, ['paid', 'paidAmount']); };
+      var defs = [
+        { key: 'no', h: '#', w: 6, t: 'int', auto: true, req: true },
+        { key: 'num', h: 'Bill No.', w: 20, t: 'text', req: true, v: function (r) { return pick(r, ['number', 'pbNumber', 'billNumber', 'pbStrId', 'refId']); } },
+        { key: 'date', h: 'Date', w: 14, t: 'date', req: true, v: function (r) { return pick(r, ['date', 'billDate']); } },
+        { key: 'party', h: 'Vendor', w: 30, t: 'text', v: function (r) { return pick(r, ['vendor', 'vendorName']); } },
+        { key: 'status', h: 'Status', w: 14, t: 'text', v: function (r) { return pick(r, ['status']); }, sty: function (v) { return statusStyle(v); } },
+        { key: 'amount', h: 'Amount (₹)', w: 20, t: 'money', sum: true, req: true, v: amt },
+        { key: 'paid', h: 'Paid (₹)', w: 20, t: 'money', sum: true, v: function (r) { var p = paidOf(r); return p === undefined ? undefined : numOr0(p); } },
+        { key: 'bal', h: 'Balance (₹)', w: 20, t: 'money', sum: true,
+          v: function (r) {
+            var p = paidOf(r);
+            if (p !== undefined) return r2(amt(r) - numOr0(p));
+            var b = pick(r, ['balance', 'balanceDue']);
+            return b === undefined ? undefined : numOr0(b);
+          },
+          f: function (rowNum, idx) { return idx.paid ? colLetter(idx.amount) + rowNum + '-' + colLetter(idx.paid) + rowNum : null; } }
+      ];
+      return defs.filter(function (d) { return d.req || rows.some(function (r) { return d.v(r) !== undefined; }); });
+    }
+    function projectExpenseCols(rows) {
+      var defs = [
+        { key: 'no', h: '#', w: 6, t: 'int', auto: true, req: true },
+        { key: 'date', h: 'Date', w: 14, t: 'date', req: true, v: function (r) { return pick(r, ['date', 'expenseDate']); } },
+        { key: 'cat', h: 'Category', w: 26, t: 'text', req: true, v: function (r) { return pick(r, ['category', 'expenseCategory']); } },
+        { key: 'party', h: 'Vendor', w: 28, t: 'text', v: function (r) { return pick(r, ['vendor', 'expenseVendor']); } },
+        { key: 'status', h: 'Status', w: 14, t: 'text', req: true, v: function (r) { return pick(r, ['status']); }, sty: function (v) { return statusStyle(v); } },
+        { key: 'amount', h: 'Amount incl. GST (₹)', w: 22, t: 'money', sum: true, req: true, v: function (r) { return numOr0(pick(r, ['amount'])); } },
+        { key: 'counted', h: 'Counted in project cost?', w: 26, t: 'text', req: true,
+          v: function (r) { return isApproved(r) ? 'Yes' : 'No — not approved yet'; },
+          sty: function (v) { return v === 'Yes' ? { color: XL.emerald, bold: true } : { color: XL.amber }; } }
+      ];
+      return defs.filter(function (d) { return d.req || rows.some(function (r) { return d.v(r) !== undefined; }); });
+    }
+    function rangeRef(sheet, info, key) {
+      if (!info.count) return null;
+      var L = colLetter(info.idx[key]);
+      return sheet + '!' + L + info.first + ':' + L + info.last;
+    }
+
+    function buildProjectWorkbook(b) {
+      var p = (b && b.project) || {};
+      var bud = (b && b.budget) || {};
+      var sales = (b && b.sales) || [], purchases = (b && b.purchases) || [], expenses = (b && b.expenses) || [];
+      var wb = newWorkbook('Project report ' + (p.code || ''));
+      var stamp = nowStamp();
+      var sub = 'Project ' + (p.code || '-') + '  ·  ' + (p.customer || '-') + '  ·  Exported ' + stamp + '  ·  Amounts in Indian Rupees (₹)';
+
+      var wsSum = addSheet(wb, 'Summary');
+      var wsSales = addSheet(wb, 'Sales');
+      var wsPur = addSheet(wb, 'Purchases');
+      var wsExp = addSheet(wb, 'Expenses');
+
+      var sInfo = buildLedgerSheet(wsSales, {
+        title: 'Sales — invoices linked to this project', subtitle: sub,
+        cols: projectSalesCols(sales), rows: sales, emptyMsg: 'No invoices are linked to this project yet.'
+      });
+      var pInfo = buildLedgerSheet(wsPur, {
+        title: 'Purchases — vendor bills linked to this project', subtitle: sub,
+        cols: projectPurchaseCols(purchases), rows: purchases, emptyMsg: 'No purchase bills are linked to this project yet.'
+      });
+      var eInfo = buildLedgerSheet(wsExp, {
+        title: 'Expenses — recorded against this project', subtitle: sub,
+        tip: 'Only APPROVED expenses count towards project cost. Pending or rejected ones are listed for reference. Totals follow your filter.',
+        cols: projectExpenseCols(expenses), rows: expenses, emptyMsg: 'No expenses are recorded against this project yet.',
+        afterTotals: function (ws, info) {
+          var aCol = info.idx.amount, sCol = info.idx.status;
+          var amtRange = info.count ? colLetter(aCol) + info.first + ':' + colLetter(aCol) + info.last : null;
+          var stRange = info.count ? colLetter(sCol) + info.first + ':' + colLetter(sCol) + info.last : null;
+          var approved = 0, other = 0;
+          expenses.forEach(function (r) {
+            var a = numOr0(pick(r, ['amount']));
+            if (isApproved(r)) approved += a; else other += a;
+          });
+          function line(rowNum, label, val, formula) {
+            mergeRow(ws, rowNum, 1, aCol - 1, label, { bold: true, align: 'right', color: XL.greenDark });
+            putMoney(ws.getCell(rowNum, aCol), val, formula, { bold: true });
+            ws.getRow(rowNum).height = 22;
+          }
+          line(info.totalRow + 1, 'Approved — counted in project cost', approved,
+               amtRange ? 'SUMIF(' + stRange + ',"approved",' + amtRange + ')' : null);
+          line(info.totalRow + 2, 'Pending / rejected — not counted', other,
+               amtRange ? 'SUMIF(' + stRange + ',"<>approved",' + amtRange + ')' : null);
+        }
+      });
+
+      // ----- numbers for the summary (computed here so cached results always match the formulas) -----
+      var revenue = r2(sInfo.sums.amount || 0);
+      var purTotal = r2(pInfo.sums.amount || 0);
+      var expApproved = 0;
+      expenses.forEach(function (r) { if (isApproved(r)) expApproved += numOr0(pick(r, ['amount'])); });
+      expApproved = r2(expApproved);
+      var cost = r2(purTotal + expApproved);
+      var profit = r2(revenue - cost);
+      var budget = r2(numOr0(bud.totalBudget != null ? bud.totalBudget : p.budget));
+      var margin = revenue > 0 ? profit / revenue : 0;
+      var remaining = r2(budget - cost);
+      var used = budget > 0 ? cost / budget : 0;
+      var pb = r2(numOr0(bud.purchaseBudget != null ? bud.purchaseBudget : p.purchaseBudget));
+      var eb = r2(numOr0(bud.expenseBudget != null ? bud.expenseBudget : p.expenseBudget));
+      var hb = r2(numOr0(bud.hoursBudget != null ? bud.hoursBudget : p.hoursBudget));
+
+      // ----- Summary sheet -----
+      var LAST = 5;
+      [36, 22, 22, 22, 18].forEach(function (w, i) { wsSum.getColumn(i + 1).width = w; });
+      addBanner(wsSum, LAST, p.name || 'Project', sub);
+      var r = 5;
+      addSection(wsSum, r++, LAST, 'PROJECT DETAILS');
+      function detail(label, value, o) {
+        putText(wsSum.getCell(r, 1), label, { bold: true, color: XL.greenDark, fill: XL.greenSoft });
+        var c = mergeRow(wsSum, r, 2, LAST, value, o || {});
+        wsSum.getRow(r).height = 21;
+        r++;
+        return c;
+      }
+      detail('Project code', p.code || '—');
+      detail('Project name', p.name || '—');
+      detail('Customer', p.customer || '—');
+      detail('Project manager', p.pm || '—');
+      var chip = STATUS_CHIP[String(p.status || '').toLowerCase()] || { t: titleCase(p.status || '—'), fill: XL.greenSoft, color: XL.greenDark };
+      detail('Status', chip.t, { bold: true, fill: chip.fill, color: chip.color });
+      var dStart = detail('Start date', '');
+      var sd = xlDate(p.startDate); dStart.value = sd || '—'; if (sd) dStart.numFmt = 'dd-mmm-yyyy';
+      var dEnd = detail('End date', '');
+      var ed = xlDate(p.endDate); dEnd.value = ed || '—'; if (ed) dEnd.numFmt = 'dd-mmm-yyyy';
+      var dProg = detail('Progress', '');
+      dProg.value = Math.max(0, Math.min(100, numOr0(p.progress))) / 100; dProg.numFmt = '0%';
+      if (p.holdReason) detail('On-hold reason', p.holdReason);
+      detail('Description', p.description || '—');
+      wsSum.getRow(r - 1).height = fitHeight(p.description, 84, 21);
+
+      r++;
+      addSection(wsSum, r++, LAST, 'FINANCIAL SUMMARY');
+      putHeader(wsSum.getCell(r, 1), 'Item', 'left');
+      putHeader(wsSum.getCell(r, 2), 'Amount (₹)', 'center');
+      wsSum.mergeCells(r, 3, r, LAST);
+      putHeader(wsSum.getCell(r, 3), 'How it is calculated', 'left');
+      for (var hk = 4; hk <= LAST; hk++) styleHeader(wsSum.getCell(r, hk), 'left');
+      wsSum.getRow(r).height = 24;
+      r++;
+
+      var rowBudget = r, rowRev = r + 1, rowCost = r + 2, rowPur = r + 3, rowExp = r + 4, rowProfit = r + 5, rowMargin = r + 6, rowRemain = r + 7, rowUsed = r + 8;
+      function finRow(label, value, formula, note, o) {
+        o = o || {};
+        putText(wsSum.getCell(r, 1), label, { bold: !!o.bold, indent: o.indent || 0, fill: o.fill, color: o.labelColor });
+        if (o.pct) putPct(wsSum.getCell(r, 2), value, formula, { bold: !!o.bold, fill: o.fill, color: o.valColor });
+        else putMoney(wsSum.getCell(r, 2), value, formula, { bold: !!o.bold, fill: o.fill, color: o.valColor });
+        mergeRow(wsSum, r, 3, LAST, note, { color: XL.muted, size: 9, fill: o.fill });
+        wsSum.getRow(r).height = fitHeight(note, 62, 21);
+        r++;
+      }
+      var salesSum = rangeRef('Sales', sInfo, 'amount');
+      var purSum = rangeRef('Purchases', pInfo, 'amount');
+      var expAmt = rangeRef('Expenses', eInfo, 'amount');
+      var expSt = rangeRef('Expenses', eInfo, 'status');
+      finRow('Total budget', budget, null, 'Approved budget for the project.', { bold: true });
+      finRow('Revenue (invoiced)', revenue, salesSum ? 'SUM(' + salesSum + ')' : null, 'Total of all invoices linked to this project (Sales sheet).', { bold: true, valColor: XL.emerald });
+      finRow('Actual cost', cost, 'B' + rowPur + '+B' + rowExp, 'Linked purchase bills + approved expenses, GST included.', { bold: true, valColor: XL.rose });
+      finRow('of which purchase bills', purTotal, purSum ? 'SUM(' + purSum + ')' : null, 'All vendor bills linked to this project (Purchases sheet).', { indent: 2, labelColor: XL.muted });
+      finRow('of which approved expenses', expApproved, (expAmt && expSt) ? 'SUMIF(' + expSt + ',"approved",' + expAmt + ')' : null, 'Only approved expenses count (Expenses sheet).', { indent: 2, labelColor: XL.muted });
+      finRow('Profit', profit, 'B' + rowRev + '-B' + rowCost, 'Revenue − Actual cost.', { bold: true, fill: XL.greenSoft, valColor: profit >= 0 ? XL.emerald : XL.rose });
+      finRow('Profit margin', margin, 'IF(B' + rowRev + '>0,B' + rowProfit + '/B' + rowRev + ',0)', 'Profit ÷ Revenue. Shows 0% when nothing is invoiced yet.', { pct: true });
+      finRow('Budget remaining', remaining, 'B' + rowBudget + '-B' + rowCost, 'Total budget − Actual cost. Negative (red) means over budget.', { bold: true });
+      finRow('Budget used', used, 'IF(B' + rowBudget + '>0,B' + rowCost + '/B' + rowBudget + ',0)', 'Actual cost ÷ Total budget.', { pct: true });
+
+      var okRev = Math.abs(r2(numOr0(p.revenue)) - revenue) < 0.01;
+      var okCost = Math.abs(r2(numOr0(p.actualCost)) - cost) < 0.01;
+      mergeRow(wsSum, r, 1, LAST,
+        (okRev && okCost) ? '✔ Cross-check: revenue and cost match the Projects page.'
+          : '⚠ Cross-check: totals differ from the Projects page (Revenue ' + inr(p.revenue) + ', Cost ' + inr(p.actualCost) + '). Please review.',
+        { italic: true, size: 9, border: false, color: (okRev && okCost) ? XL.emerald : XL.rose });
+      r++;
+
+      r++;
+      addSection(wsSum, r++, LAST, 'BUDGET VS ACTUAL');
+      ['Head', 'Budget (₹)', 'Actual (₹)', 'Remaining (₹)', 'Used'].forEach(function (h, i) { putHeader(wsSum.getCell(r, i + 1), h, i === 0 ? 'left' : 'center'); });
+      wsSum.getRow(r).height = 24;
+      r++;
+      var rPur = r, rExp = r + 1, rMan = r + 2, rUn = r + 3, rAll = r + 4;
+      function bvaRow(label, budgetVal, budgetFormula, actualVal, actualFormula, o) {
+        o = o || {};
+        var rr = r;
+        putText(wsSum.getCell(rr, 1), label, { bold: !!o.bold, fill: o.fill });
+        putMoney(wsSum.getCell(rr, 2), budgetVal, budgetFormula, { bold: !!o.bold, fill: o.fill });
+        putMoney(wsSum.getCell(rr, 3), actualVal, actualFormula, { bold: !!o.bold, fill: o.fill });
+        putMoney(wsSum.getCell(rr, 4), r2(budgetVal - actualVal), 'B' + rr + '-C' + rr, { bold: !!o.bold, fill: o.fill });
+        putPct(wsSum.getCell(rr, 5), budgetVal > 0 ? actualVal / budgetVal : 0, 'IF(B' + rr + '>0,C' + rr + '/B' + rr + ',0)', { bold: !!o.bold, fill: o.fill });
+        wsSum.getRow(rr).height = 21;
+        r++;
+      }
+      bvaRow('Purchases (vendor bills)', pb, null, purTotal, 'B' + rowPur);
+      bvaRow('Expenses (approved)', eb, null, expApproved, 'B' + rowExp);
+      putText(wsSum.getCell(r, 1), 'Manpower / hours', {});
+      putMoney(wsSum.getCell(r, 2), hb, null, {});
+      putText(wsSum.getCell(r, 3), 'Not tracked', { align: 'right', color: XL.muted, italic: true });
+      putText(wsSum.getCell(r, 4), '—', { align: 'right', color: XL.muted });
+      putText(wsSum.getCell(r, 5), '—', { align: 'right', color: XL.muted });
+      wsSum.getRow(r).height = 21; r++;
+      putText(wsSum.getCell(r, 1), 'Unallocated budget', {});
+      putMoney(wsSum.getCell(r, 2), r2(budget - (pb + eb + hb)), 'B' + rowBudget + '-(B' + rPur + '+B' + rExp + '+B' + rMan + ')', {});
+      putText(wsSum.getCell(r, 3), '—', { align: 'right', color: XL.muted });
+      putText(wsSum.getCell(r, 4), '—', { align: 'right', color: XL.muted });
+      putText(wsSum.getCell(r, 5), '—', { align: 'right', color: XL.muted });
+      wsSum.getRow(r).height = 21; r++;
+      bvaRow('Overall project', budget, 'B' + rowBudget, cost, 'B' + rowCost, { bold: true, fill: XL.greenSoft });
+      void rAll; void rowMargin; void rowRemain; void rowUsed;
+
+      r++;
+      addSection(wsSum, r++, LAST, 'WORKBOOK GUIDE');
+      [
+        ['Sales', 'Every linked invoice with amount, received and balance. Filter and sort freely.'],
+        ['Purchases', 'Every linked vendor bill with amount, paid and balance.'],
+        ['Expenses', 'Every expense recorded against the project; only approved ones count towards cost.']
+      ].forEach(function (g) {
+        putLink(wsSum.getCell(r, 1), g[0], '#' + g[0] + '!A1', { align: 'left', bold: true });
+        mergeRow(wsSum, r, 2, LAST, g[1], { color: XL.muted, size: 9 });
+        wsSum.getRow(r).height = 21;
+        r++;
+      });
+      r++;
+      [
+        'Formulas are live: change a figure on a data sheet and this summary recalculates.',
+        'Hours budget has no actual because time tracking is not connected to project cost yet.',
+        'All amounts are in Indian Rupees (₹).'
+      ].forEach(function (t) {
+        mergeRow(wsSum, r, 1, LAST, '•  ' + t, { size: 9, color: XL.muted, border: false });
+        r++;
+      });
+
+      return { wb: wb, fileName: 'Project_' + fileSafe(p.code) + '_' + fileSafe(p.name) + '_' + todayIso() + '.xlsx' };
+    }
+
+    // =============================================================
+    // BUSINESS SNAPSHOT WORKBOOK (for founder / director)
+    // =============================================================
+    function trendInfo(m, cmp) {
+      var pct = m.trendPct == null ? null : Number(m.trendPct);
+      if (m.trendDirection === 'UP' && pct != null) return { text: '▲ +' + pct.toFixed(1) + '% ' + (cmp || ''), color: XL.emerald };
+      if (m.trendDirection === 'DOWN' && pct != null) return { text: '▼ ' + pct.toFixed(1) + '% ' + (cmp || ''), color: XL.rose };
+      if (m.trendDirection === 'NEW') return { text: '▲ New this month', color: XL.emerald };
+      return { text: '● No change', color: XL.muted };
+    }
+    function projectCheck(p) {
+      var usage = numOr0(p.budgetUsagePct), budget = numOr0(p.budget), prog = numOr0(p.progress);
+      var end = parseDashDate(p.endDate);
+      var today = new Date(); today.setHours(0, 0, 0, 0);
+      if (budget > 0 && usage > 100) return 'Over budget';
+      if (end && prog < 100 && end < today) return 'Past end date';
+      if (budget > 0 && usage - prog > 20) return 'Cost running ahead of progress';
+      if (budget <= 0) return 'No budget set';
+      return 'On track';
+    }
+
+    function buildSnapshotWorkbook(d) {
+      var s = d.summary, fy = d.fy, tr = d.trend, top = d.top;
+      var projects = d.projects || [], alerts = d.alerts;
+      var wb = newWorkbook('SIEC business snapshot');
+      var stamp = nowStamp();
+
+      var wsO = addSheet(wb, 'Overview');
+      var wsT = addSheet(wb, 'Monthly Trend');
+      var wsE = addSheet(wb, 'Expense Breakdown');
+      var wsP = addSheet(wb, 'Active Projects');
+
+      // ----- Monthly Trend -----
+      var trendRows = tr.months.map(function (m, i) { return { m: m, inc: tr.income[i], exp: tr.expense[i] }; });
+      buildLedgerSheet(wsT, {
+        title: 'Monthly trend — income vs expense',
+        subtitle: tr.rangeLabel + ' (rolling 12 months)  ·  Exported ' + stamp,
+        tip: 'Income = invoices (excl. cancelled). Expense = approved expenses + vendor bills. Net = Income − Expense.',
+        noFilter: true, rows: trendRows,
+        cols: [
+          { key: 'm', h: 'Month', w: 14, t: 'text', v: function (r) { return r.m; } },
+          { key: 'inc', h: 'Income (₹)', w: 20, t: 'money', sum: true, v: function (r) { return r.inc; } },
+          { key: 'exp', h: 'Expense (₹)', w: 20, t: 'money', sum: true, v: function (r) { return r.exp; } },
+          { key: 'net', h: 'Net (₹)', w: 20, t: 'money', sum: true,
+            v: function (r) { return r2(numOr0(r.inc) - numOr0(r.exp)); },
+            f: function (rowNum, idx) { return colLetter(idx.inc) + rowNum + '-' + colLetter(idx.exp) + rowNum; } },
+          { key: 'mar', h: 'Net margin', w: 14, t: 'pct', fmt: '0.0%',
+            v: function (r) { var i = numOr0(r.inc); return i > 0 ? (i - numOr0(r.exp)) / i : 0; },
+            f: ratioFormula('net', 'inc'), tf: ratioFormula('net', 'inc'),
+            tv: function (sums) { return sums.inc > 0 ? sums.net / sums.inc : 0; } }
+        ]
+      });
+      addPng(wb, wsT, renderChartPng(buildTrendImageOption(tr), 760, 340), 6, 4, 760, 340);
+
+      // ----- Expense Breakdown -----
+      var topItems = top.items || [];
+      buildLedgerSheet(wsE, {
+        title: 'Expense breakdown — ' + top.periodLabel,
+        subtitle: top.rangeLabel + '  ·  Exported ' + stamp,
+        tip: 'Approved expenses (GST included) plus vendor bills. Smaller heads are grouped under "Others".',
+        noFilter: true, rows: topItems, emptyMsg: 'No approved expenses or vendor bills in this period.',
+        cols: [
+          { key: 'no', h: '#', w: 6, t: 'int', auto: true },
+          { key: 'head', h: 'Expense head', w: 30, t: 'text', v: function (r) { return r.label; } },
+          { key: 'amt', h: 'Amount (₹)', w: 20, t: 'money', sum: true, v: function (r) { return r.amount; } },
+          { key: 'share', h: 'Share', w: 12, t: 'pct', fmt: '0.0%', sum: true, v: function (r) { return numOr0(r.percent) / 100; } }
+        ]
+      });
+      if (topItems.length) addPng(wb, wsE, renderChartPng(buildPieImageOption(topItems), 560, 320), 5, 4, 560, 320);
+
+      // ----- Active Projects -----
+      buildLedgerSheet(wsP, {
+        title: 'Active projects — financial position',
+        subtitle: 'Status: Active  ·  Exported ' + stamp + '  ·  Revenue, cost and profit match the Projects page',
+        rows: projects, emptyMsg: 'There are no active projects right now.',
+        cols: [
+          { key: 'no', h: '#', w: 5, t: 'int', auto: true },
+          { key: 'code', h: 'Code', w: 12, t: 'text', v: function (p) { return p.code; } },
+          { key: 'name', h: 'Project', w: 34, t: 'text', v: function (p) { return p.name; } },
+          { key: 'cust', h: 'Customer', w: 28, t: 'text', v: function (p) { return p.customer; } },
+          { key: 'pm', h: 'Project manager', w: 18, t: 'text', v: function (p) { return p.projectManager; } },
+          { key: 'start', h: 'Start', w: 13, t: 'date', v: function (p) { return p.startDate; } },
+          { key: 'end', h: 'End', w: 13, t: 'date', v: function (p) { return p.endDate; } },
+          { key: 'prog', h: 'Progress', w: 10, t: 'pct', fmt: '0%', v: function (p) { return numOr0(p.progress) / 100; } },
+          { key: 'bud', h: 'Budget (₹)', w: 18, t: 'money', sum: true, v: function (p) { return p.budget; } },
+          { key: 'rev', h: 'Revenue (₹)', w: 18, t: 'money', sum: true, v: function (p) { return p.revenue; } },
+          { key: 'cost', h: 'Actual cost (₹)', w: 18, t: 'money', sum: true, v: function (p) { return p.actualCost; } },
+          { key: 'profit', h: 'Profit (₹)', w: 18, t: 'money', sum: true,
+            v: function (p) { return r2(numOr0(p.revenue) - numOr0(p.actualCost)); },
+            f: function (rowNum, idx) { return colLetter(idx.rev) + rowNum + '-' + colLetter(idx.cost) + rowNum; } },
+          { key: 'margin', h: 'Margin', w: 10, t: 'pct', fmt: '0.0%',
+            v: function (p) { var rv = numOr0(p.revenue); return rv > 0 ? (rv - numOr0(p.actualCost)) / rv : 0; },
+            f: ratioFormula('profit', 'rev'), tf: ratioFormula('profit', 'rev'),
+            tv: function (sums) { return sums.rev > 0 ? sums.profit / sums.rev : 0; } },
+          { key: 'used', h: 'Budget used', w: 12, t: 'pct', fmt: '0.0%',
+            v: function (p) { var b = numOr0(p.budget); return b > 0 ? numOr0(p.actualCost) / b : 0; },
+            f: ratioFormula('cost', 'bud'), tf: ratioFormula('cost', 'bud'),
+            tv: function (sums) { return sums.bud > 0 ? sums.cost / sums.bud : 0; } },
+          { key: 'check', h: 'Quick check', w: 30, t: 'text', v: function (p) { return projectCheck(p); },
+            sty: function (v) { return v === 'On track' ? { color: XL.emerald, bold: true } : (v === 'Over budget' || v === 'Past end date') ? { color: XL.rose, bold: true } : { color: XL.amber, bold: true }; } }
+        ],
+        afterTotals: function (ws, info) {
+          mergeRow(ws, info.totalRow + 2, 1, 15,
+            'Quick check is a guide only: Over budget = cost above 100% of budget · Past end date = end date passed with progress below 100% · Cost running ahead = budget used exceeds progress by more than 20 points · On track otherwise. Confirm with the project manager.',
+            { italic: true, size: 9, color: XL.muted, border: false });
+          ws.getRow(info.totalRow + 2).height = 30;
+        }
+      });
+
+      // ----- Overview -----
+      var LAST = 4;
+      [40, 22, 30, 66].forEach(function (w, i) { wsO.getColumn(i + 1).width = w; });
+      addBanner(wsO, LAST, 'SIEC — Business Snapshot',
+        'As of ' + longDate(s.asOf) + '  ·  ' + s.periodLabel + '  ·  Generated ' + stamp + '  ·  All amounts in Indian Rupees (₹)');
+      var r = 5;
+
+      function tableHeader(a, b, c, e) {
+        putHeader(wsO.getCell(r, 1), a, 'left');
+        putHeader(wsO.getCell(r, 2), b, 'center');
+        putHeader(wsO.getCell(r, 3), c, 'left');
+        putHeader(wsO.getCell(r, 4), e, 'left');
+        wsO.getRow(r).height = 24;
+        r++;
+      }
+      function keyRow(label, value, formula, statusText, statusColor, note, o) {
+        o = o || {};
+        putText(wsO.getCell(r, 1), label, { bold: !o.indent, indent: o.indent ? 2 : 0, color: o.indent ? XL.muted : XL.ink });
+        putMoney(wsO.getCell(r, 2), value, formula, { bold: !o.indent, size: o.indent ? 10 : 11, fill: o.fill });
+        putText(wsO.getCell(r, 3), statusText || '', { bold: true, color: statusColor || XL.muted });
+        putText(wsO.getCell(r, 4), note || '', { color: XL.muted, size: 9 });
+        wsO.getRow(r).height = fitHeight(note, 66, 22);
+        r++;
+      }
+
+      addSection(wsO, r++, LAST, '1 · HEADLINE NUMBERS — ' + String(s.periodLabel).toUpperCase());
+      tableHeader('Metric', 'Amount (₹)', 'Trend / status', 'How to read this');
+      var sT = trendInfo(s.sales, s.comparisonLabel), pT = trendInfo(s.purchases, s.comparisonLabel);
+      var rc = s.receivables, py = s.payables, g = s.gst;
+      keyRow('Sales (invoiced)', s.sales.value, null, sT.text, sT.color, 'Value of all non-cancelled invoices dated this month.');
+      keyRow('Purchases (vendor bills)', s.purchases.value, null, pT.text, pT.color, 'Vendor bills dated this month, GST included.');
+      keyRow('Receivables — still to collect', rc.totalUnpaid, null,
+        rc.overdueCount > 0 ? rc.overdueCount + ' invoice(s) overdue' : 'Nothing overdue', rc.overdueCount > 0 ? XL.amber : XL.emerald,
+        'Money customers still owe us after receipts.');
+      keyRow('of which overdue', rc.overdue, null, pctOf(rc.overdue, rc.totalUnpaid) + ' of receivables',
+        numOr0(rc.overdue) > 0 ? XL.amber : XL.muted, 'Past the invoice due date. Follow these up first.', { indent: true });
+      keyRow('Payables — still to pay', py.totalUnpaid, null,
+        py.overdueCount > 0 ? py.overdueCount + ' bill(s) overdue' : (py.nextDueInDays != null ? 'Next due in ' + py.nextDueInDays + ' day(s)' : 'Nothing due'),
+        py.overdueCount > 0 ? XL.rose : XL.muted, 'Money we still owe vendors after payments.');
+      keyRow('of which overdue', py.overdue, null, pctOf(py.overdue, py.totalUnpaid) + ' of payables',
+        numOr0(py.overdue) > 0 ? XL.rose : XL.muted, 'Past the bill due date.', { indent: true });
+      keyRow('Cash position (estimate)', s.bank.value, null, 'Estimate', XL.amber,
+        'Opening balance + customer receipts − bill payments − approved expenses. This is not a bank statement.');
+      keyRow('GST for the month', g.payable, null,
+        g.direction === 'CREDIT' ? 'Input credit' : 'Due ' + fmtDay(g.dueDate), g.direction === 'CREDIT' ? XL.emerald : XL.amber,
+        'Output GST on this month invoices minus input GST on vendor-bill line items. Negative means a credit.');
+
+      r++;
+      addSection(wsO, r++, LAST, '2 · FISCAL YEAR PERFORMANCE — ' + String(fy.rangeLabel).toUpperCase());
+      tableHeader('Metric', 'Amount (₹)', 'Status', 'How to read this');
+      var rI = r, rE = r + 1, rN = r + 2;
+      var netFy = r2(numOr0(fy.totalIncome) - numOr0(fy.totalExpense));
+      keyRow('Income (invoiced)', fy.totalIncome, null, '', '', 'Invoices dated in the fiscal year to date, excluding cancelled ones.');
+      keyRow('Expense (approved expenses + vendor bills)', fy.totalExpense, null, '', '', 'Approved expenses plus vendor bills in the same period, GST included.');
+      keyRow('Net surplus / (deficit)', netFy, 'B' + rI + '-B' + rE, netFy >= 0 ? 'Surplus' : 'Deficit', netFy >= 0 ? XL.emerald : XL.rose,
+        'Income − Expense on an accrual basis (by invoice / bill date, not by cash received).', { fill: XL.greenSoft });
+      putText(wsO.getCell(r, 1), 'Net margin', { bold: true });
+      putPct(wsO.getCell(r, 2), numOr0(fy.totalIncome) > 0 ? netFy / numOr0(fy.totalIncome) : 0, 'IF(B' + rI + '>0,B' + rN + '/B' + rI + ',0)', { bold: true });
+      putText(wsO.getCell(r, 3), '', {});
+      putText(wsO.getCell(r, 4), 'Net ÷ Income. Shows 0% when nothing has been invoiced yet.', { color: XL.muted, size: 9 });
+      wsO.getRow(r).height = 22;
+      r++;
+
+      r++;
+      addSection(wsO, r++, LAST, '3 · ATTENTION NEEDED');
+      tableHeader('Alert', 'Priority', 'When', 'Details');
+      if (alerts == null) {
+        mergeRow(wsO, r, 1, LAST, 'Alerts could not be loaded when this file was created.', { italic: true, color: XL.muted, align: 'center' });
+        wsO.getRow(r).height = 24; r++;
+      } else if (!alerts.length) {
+        mergeRow(wsO, r, 1, LAST, 'No alerts right now. Nothing needs urgent attention.', { italic: true, color: XL.emerald, align: 'center' });
+        wsO.getRow(r).height = 24; r++;
+      } else {
+        alerts.slice(0, 12).forEach(function (a) {
+          var pr = PRIORITY[a.severity] || PRIORITY.blue;
+          putText(wsO.getCell(r, 1), a.title, { bold: true });
+          putText(wsO.getCell(r, 2), pr.t, { bold: true, align: 'center', fill: pr.fill, color: pr.color });
+          putText(wsO.getCell(r, 3), timeAgo(parseDashDate(a.occurredAt)) || '—', { color: XL.muted });
+          putText(wsO.getCell(r, 4), a.description, { color: XL.muted, size: 9 });
+          wsO.getRow(r).height = Math.max(fitHeight(a.title, 40, 22), fitHeight(a.description, 66, 22));
+          r++;
+        });
+      }
+
+      r++;
+      addSection(wsO, r++, LAST, '4 · MORE DETAIL IN THIS WORKBOOK');
+      [
+        ['Monthly Trend', 'Rolling 12-month income, expense and net, with a chart.'],
+        ['Expense Breakdown', 'Where the money goes this fiscal year, by expense head, with a chart.'],
+        ['Active Projects', 'Budget, revenue, cost, profit and a quick health check for every active project.']
+      ].forEach(function (x) {
+        putLink(wsO.getCell(r, 1), x[0], "#'" + x[0] + "'!A1", { align: 'left', bold: true });
+        mergeRow(wsO, r, 2, LAST, x[1], { color: XL.muted, size: 9 });
+        wsO.getRow(r).height = 21;
+        r++;
+      });
+
+      r++;
+      addSection(wsO, r++, LAST, '5 · HOW THESE NUMBERS ARE CALCULATED');
+      [
+        'Sales and income: non-cancelled invoices by invoice date, in rupees.',
+        'Purchases and expense: vendor bills by bill date, plus approved expenses only (GST included).',
+        'Receivables and payables: balance left after payments. Overdue means the due date is before today.',
+        'Cash position: an estimate built from receipts and payments recorded in the system, plus any opening balance configured on the server. It is not a bank statement.',
+        'GST: output GST on the month invoices minus input GST on vendor-bill line items. Older bills without line items add no input credit.',
+        'Trend arrows compare month-to-date with the same days of last month.'
+      ].forEach(function (t) {
+        mergeRow(wsO, r, 1, LAST, '•  ' + t, { size: 9, color: XL.muted, border: false });
+        wsO.getRow(r).height = fitHeight(t, 150, 16);
+        r++;
+      });
+      r++;
+      mergeRow(wsO, r, 1, LAST, 'Prepared automatically from live accounting data.', { italic: true, size: 9, color: XL.greenDark, border: false });
+
+      return { wb: wb, fileName: 'SIEC_Business_Snapshot_' + todayIso() + '.xlsx' };
+    }
+
+    // =============================================================
+    // EXPORT ORCHESTRATION
+    // =============================================================
+    function downloadBuffer(buf, fileName) {
+      var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
+    }
+    function busyButton(btn, text) {
+      if (!btn) return function () {};
+      var html = btn.innerHTML, wasDisabled = btn.disabled;
+      btn.disabled = true; btn.style.opacity = '0.7'; btn.style.cursor = 'wait';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>' + (text ? '<span class="ml-1.5">' + esc(text) + '</span>' : '');
+      return function () { btn.innerHTML = html; btn.disabled = wasDisabled; btn.style.opacity = ''; btn.style.cursor = ''; };
+    }
+    function finishExport(built, okMessage) {
+      return built.wb.xlsx.writeBuffer().then(function (buf) {
+        downloadBuffer(buf, built.fileName);
+        showToast(okMessage, 'success');
+      });
+    }
+
+    function exportProjectExcel(id, btn) {
+      if (!id) return;
+      if (exportBusy) { showToast('Another export is still running. Please wait a moment.', 'warning'); return; }
+      exportBusy = true;
+      var inModal = !!(btn && btn.closest && btn.closest('#projectModalRoot'));
+      var done = busyButton(btn, inModal ? 'Preparing…' : '');
+      showToast('Preparing project export…', 'info');
+      Promise.all([loadExcelJs(), dashFetch('/projects/' + encodeURIComponent(id) + '/export')])
+        .then(function (r) { return finishExport(buildProjectWorkbook(r[1]), 'Project export downloaded'); })
+        .catch(function (e) { showToast('Export failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); })
+        .then(function () { exportBusy = false; done(); });
+    }
+
+    function exportDashboardSnapshot(btn) {
+      if (exportBusy) { showToast('Another export is still running. Please wait a moment.', 'warning'); return; }
+      exportBusy = true;
+      var done = busyButton(btn, 'Preparing…');
+      showToast('Preparing business snapshot…', 'info');
+      Promise.all([
+        loadExcelJs(),
+        dashFetch('/summary'),
+        dashFetch('/income-expense?period=THIS_FY'),
+        dashFetch('/income-expense?period=LAST_12M'),
+        dashFetch('/top-expenses?period=THIS_FY'),
+        dashFetch('/active-projects?limit=10'),
+        dashFetch('/alerts?limit=20').catch(function () { return null; })
+      ])
+        .then(function (r) {
+          return finishExport(buildSnapshotWorkbook({ summary: r[1], fy: r[2], trend: r[3], top: r[4], projects: r[5], alerts: r[6] }),
+            'Business snapshot downloaded');
+        })
+        .catch(function (e) { showToast('Export failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); })
+        .then(function () { exportBusy = false; done(); });
+    }
+
+    // =============================================================
     // INIT
     // =============================================================
-   loadDashboard();
-  </script>
+    (function bindHeaderExportButton() {
+      var btn = document.getElementById('dashExportBtn') || document.querySelector('button[onclick*="Export started"]');
+      if (!btn) return;
+      btn.removeAttribute('onclick');
+      btn.addEventListener('click', function () { exportDashboardSnapshot(btn); });
+    })();
 
+    loadDashboard();
+  </script>
 </body>
 </html>

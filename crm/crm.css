@@ -1,0 +1,384 @@
+/* CRM styles — purchase.css recoloured with the CRM teal palette */
+/* =============================================================
+   Purchase Management — styles
+   Mirrors the Vendors / Suppliers page design system so both
+   modules feel like one product: same primary green (#0f766e),
+   secondary blue (#0284c7), same badges, stat cards, modal and
+   table patterns.
+   ============================================================= */
+
+/* ---------- Page header (breadcrumb / title / subtitle) ---------- */
+.page-breadcrumb {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+.page-subtitle {
+  font-size: 13px;
+  color: #647b78;
+  margin-top: 2px;
+}
+
+/* ---------- Module tab strip (PR / PO / GRN / PB) ---------- */
+.module-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid #d6eae6;
+  padding-bottom: 0;
+}
+.module-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #647b78;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.module-tab-btn:hover:not(.active) {
+  color: #163b3a;
+  background: #f0fbf8;
+}
+.module-tab-btn.active {
+  color: #0d6b60;
+  background: #e6f4f1;
+  border-bottom-color: #0f766e;
+}
+
+.module-tab-panel { animation: pmFadeIn 0.2s ease; }
+.module-tab-panel.hidden { display: none; }
+
+.module-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #163b3a;
+  letter-spacing: -0.01em;
+}
+.module-subtitle {
+  font-size: 12.5px;
+  color: #647b78;
+  margin-top: 2px;
+  max-width: 560px;
+}
+
+@keyframes pmFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pmModalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-modal { animation: pmModalIn 0.18s ease; }
+
+/* ---------- Inline per-table filters (replaces the old Filter-button dropdown) ---------- */
+.inline-filter-select {
+  border: 1px solid #d6eae6;
+  background: #fff;
+  color: #163b3a;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 7px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  max-width: 150px;
+}
+.inline-filter-select:hover { border-color: #d1d5db; }
+.inline-filter-select:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+/* ---------- Reset-filters button (distinct from row delete/danger buttons:
+   green-tinted, pill-shaped, carries a "Reset" label so it never reads
+   as a destructive/delete action) ---------- */
+.inline-filter-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #d6eae6;
+  background: #f0fbf8;
+  color: #0d6b60;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.inline-filter-reset:hover {
+  background: #e6f4f1;
+  border-color: #0f766e;
+  color: #0b5a52;
+}
+.inline-filter-reset svg { flex-shrink: 0; }
+
+/* ---------- Form controls ---------- */
+.form-input {
+  width: 100%;
+  border: 1px solid #d6eae6;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fafafa;
+  color: #163b3a;
+}
+.form-input:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+  background: #ffffff;
+}
+.form-input:disabled { background: #f3f4f6; cursor: not-allowed; }
+.form-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #163b3a;
+  display: block;
+  margin-bottom: 4px;
+}
+.form-label .required { color: #ef4444; margin-left: 2px; }
+.form-hint { font-size: 10.5px; color: #94a3a0; margin-top: 3px; }
+
+/* ---------- Stat cards ---------- */
+.stat-card {
+  padding: 14px 16px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+.stat-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #647b78;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #163b3a;
+  margin-top: 2px;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.badge-green { background: #dcfce7; color: #166534; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-gray { background: #e6f4f1; color: #647b78; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.badge-dot-green { background: #22c55e; }
+.badge-dot-amber { background: #f59e0b; }
+.badge-dot-red { background: #ef4444; }
+.badge-dot-gray { background: #94a3b8; }
+.badge-dot-blue { background: #3b82f6; }
+
+/* ---------- Table ---------- */
+.table-row-hover:hover { background: #f0fbf8; }
+
+/* ---------- Panel wrapper (matches Vendors table card) ---------- */
+.panel-card {
+  background: #fff;
+  border: 1px solid #0f766e;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  overflow: hidden;
+}
+.panel-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e6f4f1;
+}
+.panel-card-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: #163b3a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-count-chip {
+  font-size: 11px;
+  font-weight: 700;
+  background: #e6f4f1;
+  color: #0d6b60;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+/* ---------- Icon action buttons ---------- */
+.btn-icon-action {
+  transition: all 0.15s ease;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.btn-icon-action:hover { background: #e6f4f1; color: #0f766e; }
+.btn-icon-action.danger:hover { background: #fee2e2; color: #ef4444; }
+
+/* ---------- Toast ---------- */
+.toast { animation: pmFadeIn 0.2s ease; }
+.toast-success { background: #16a34a; }
+.toast-error { background: #dc2626; }
+.toast-warning { background: #f59e0b; }
+.toast-info { background: #0f766e; }
+
+/* ---------- Modal scroll area ---------- */
+.modal-scroll { max-height: 60vh; overflow-y: auto; }
+.modal-scroll::-webkit-scrollbar { width: 4px; }
+.modal-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+/* ---------- Modal tabs (used inside line-item modals) ---------- */
+.modal-tab-btn {
+  transition: all 0.2s ease;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  color: #647b78;
+  cursor: pointer;
+  background: transparent;
+}
+.modal-tab-btn.active { color: #0f766e; border-bottom-color: #0f766e; }
+.modal-tab-btn:hover:not(.active) { color: #163b3a; border-bottom-color: #d1d5db; }
+.modal-tab-panel { display: none; }
+.modal-tab-panel.active { display: block; animation: pmFadeIn 0.25s ease; }
+
+/* ---------- Pagination bar (bottom of every table) ---------- */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid #e6f4f1;
+  background: #f0fbf8;
+}
+.pagination-info {
+  font-size: 11.5px;
+  color: #647b78;
+  font-weight: 500;
+}
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pagination-size-select {
+  border: 1px solid #0f766e;
+  background: #fff;
+  color: #163b3a;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 6px 8px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.pagination-size-select:hover { border-color: #d1d5db; }
+.pagination-size-select:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+.pagination-page-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #163b3a;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+.pagination-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid #d6eae6;
+  background: #fff;
+  color: #647b78;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pagination-btn:hover:not(:disabled) { background: #e6f4f1; color: #0d6b60; border-color: #d6eae6; }
+.pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- Empty state ---------- */
+.empty-icon-svg { opacity: 0.2; width: 48px; height: 48px; color: #94a3b8; }
+
+/* ---------- Line item rows (PO / GRN / PB item builder) ---------- */
+.line-item-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 90px 100px 32px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.line-item-header {
+  display: grid;
+  grid-template-columns: 1fr 90px 90px 100px 32px;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3a0;
+  margin-bottom: 6px;
+}
+
+/* ---------- CRM teal palette: page + Tailwind utility overrides ---------- */
+body.crm-page { background: #f0fbf8; color: #163b3a; }
+body.crm-page .text-gray-900, body.crm-page .text-gray-800, body.crm-page .text-gray-700 { color: #163b3a; }
+body.crm-page .text-gray-600, body.crm-page .text-gray-500 { color: #647b78; }
+body.crm-page .text-gray-400 { color: #94a3a0; }
+body.crm-page .border-gray-100, body.crm-page .border-gray-200, body.crm-page .border-gray-300 { border-color: #d6eae6; }
+body.crm-page .bg-gray-50 { background-color: #f0fbf8; }

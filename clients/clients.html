@@ -613,6 +613,15 @@
     function cleanAscii(v) { return String(v == null ? '' : v).replace(/[^A-Za-z\s]/g, '').replace(/\s{2,}/g, ' ').replace(/^\s+/, ''); }
     function cleanPinC(v) { return String(v == null ? '' : v).replace(/\D/g, '').slice(0, 10); }
     function cleanGstinC(v) { return String(v == null ? '' : v).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15); }
+    function cleanPanC(v) { return String(v == null ? '' : v).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10); }
+    
+    function cleanMoneyC(v) {
+      var s = String(v == null ? '' : v).replace(/[^0-9.]/g, '');
+      var i = s.indexOf('.');
+      if (i !== -1) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, '');
+      var m = s.match(/^(\d*)(\.\d{0,2})?/);
+      return (m ? (m[1] + (m[2] || '')) : s).slice(0, 15);
+    }
 
     var CF_GSTIN_RX = /^(0[1-9]|[12][0-9]|3[0-8]|9[79])[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
     var CF_RULES = {
@@ -621,6 +630,8 @@
       f_state:     { clean: cleanAscii, test: function (s) { return /^[A-Za-z]+(\s[A-Za-z]+)*$/.test(s); }, msg: 'Only letters and spaces are allowed' },
       f_typeOther: { clean: cleanAscii, test: function (s) { return /^[A-Za-z]+(\s[A-Za-z]+)*$/.test(s); }, msg: 'Only letters and spaces are allowed' },
       f_pincode:   { clean: cleanPinC, test: function (s) { return /^\d{1,10}$/.test(s); }, msg: 'Digits only' },
+      f_pan:         { clean: cleanPanC, test: function (s) { return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(s); }, msg: 'Enter a valid PAN, e.g. ABCDE1234F' },
+      f_creditLimit: { clean: cleanMoneyC, test: function (s) { return /^\d+(\.\d{0,2})?$/.test(s) && Number(s) > 0; }, msg: 'Must be greater than 0 (leave empty for no limit)' },
       f_gstin:     { clean: cleanGstinC, test: function (s) { return CF_GSTIN_RX.test(s); }, msg: 'Enter a valid 15-character GSTIN, e.g. 27AAPFU0939F1ZV' }
     };
     function onCfInput(el) {
@@ -1226,16 +1237,15 @@
 
           <div id="tab-tax" class="modal-tab-panel">
             <div class="grid grid-cols-2 form-grid-2 gap-x-4 gap-y-4 mb-4">
-            ${fld('GSTIN', '<input id="f_gstin" maxlength="15" value="' + escHtml(cleanGstinC(e.gstin)) + '" placeholder="e.g. 27AAPFU0939F1ZV" oninput="onCfInput(this)" onblur="cfCheck(this)" class="' + inputBase() + '">' + CF_ERR('f_gstin'), 'Format: 2-digit state code + 10-character PAN + entity digit + Z + check character')}              ${fld('PAN', '<input id="f_pan" value="' + (e.pan || '') + '" placeholder="10-digit PAN" class="' + inputBase() + '">')}
-            </div>
+            ${fld('GSTIN', '<input id="f_gstin" maxlength="15" value="' + escHtml(cleanGstinC(e.gstin)) + '" placeholder="e.g. 27AAPFU0939F1ZV" oninput="onCfInput(this)" onblur="cfCheck(this)" class="' + inputBase() + '">' + CF_ERR('f_gstin'), 'Format: 2-digit state code + 10-character PAN + entity digit + Z + check character')}              
+            ${fld('PAN', '<input id="f_pan" maxlength="10" value="' + escHtml(cleanPanC(e.pan)) + '" placeholder="e.g. ABCDE1234F" oninput="onCfInput(this)" onblur="cfCheck(this)" class="' + inputBase() + '">' + CF_ERR('f_pan'), 'Format: 5 letters + 4 digits + 1 letter')}            </div>
             ${fld('GST Registered?', '<div class="form-radio-row"><label><input type="radio" name="gstReg" value="true" ' + (e.gstRegistered ? 'checked' : '') + '> <span class="font-medium">Yes</span></label><label><input type="radio" name="gstReg" value="false" ' + (!e.gstRegistered ? 'checked' : '') + '> <span class="font-medium">No</span></label></div>')}
           </div>
 
           <div id="tab-payment" class="modal-tab-panel">
             <div class="grid grid-cols-2 form-grid-2 gap-x-4 gap-y-4 mb-4">
               ${fld('Payment Terms', '<select id="f_paymentTerms" class="' + inputBase() + '"><option ' + (e.paymentTerms === 'Net 7 days' ? 'selected' : '') + '>Net 7 days</option><option ' + (e.paymentTerms === 'Net 15 days' ? 'selected' : '') + '>Net 15 days</option><option ' + (e.paymentTerms === 'Net 30 days' ? 'selected' : '') + '>Net 30 days</option><option ' + (e.paymentTerms === 'Net 45 days' ? 'selected' : '') + '>Net 45 days</option><option ' + (e.paymentTerms === 'Net 60 days' ? 'selected' : '') + '>Net 60 days</option><option ' + (e.paymentTerms === 'Advance Payment' ? 'selected' : '') + '>Advance Payment</option><option ' + (e.paymentTerms === 'Cash on Delivery' ? 'selected' : '') + '>Cash on Delivery</option></select>')}
-              ${fld('Credit Limit (₹)', '<input id="f_creditLimit" type="number" value="' + (e.creditLimit || '') + '" placeholder="e.g. 100000" class="' + inputBase() + '">', 'Set 0 for no credit limit')}
-            </div>
+              ${fld('Credit Limit (₹)', '<input id="f_creditLimit" type="text" inputmode="decimal" maxlength="15" value="' + (e.creditLimit > 0 ? escHtml(e.creditLimit) : '') + '" placeholder="e.g. 100000" oninput="onCfInput(this)" onblur="cfCheck(this)" class="' + inputBase() + '">' + CF_ERR('f_creditLimit'), 'Optional. Must be greater than 0; leave empty for no limit')}            </div>
             ${fld('Status', '<div class="form-radio-row"><label><input type="radio" name="customerStatus" value="active" ' + (e.status === 'active' ? 'checked' : '') + '> <span class="font-medium">Active</span></label><label><input type="radio" name="customerStatus" value="inactive" ' + (e.status === 'inactive' ? 'checked' : '') + '> <span class="font-medium">Inactive</span></label></div>')}
           </div>
         </div>
@@ -1340,7 +1350,8 @@
       var gstin = document.getElementById('f_gstin') ? document.getElementById('f_gstin').value.trim().toUpperCase() : '';
       var pan = document.getElementById('f_pan') ? document.getElementById('f_pan').value.trim().toUpperCase() : '';
       var paymentTerms = document.getElementById('f_paymentTerms') ? document.getElementById('f_paymentTerms').value : 'Net 15 days';
-      var creditLimit = document.getElementById('f_creditLimit') ? parseFloat(document.getElementById('f_creditLimit').value) || 0 : 0;
+      var creditRaw = document.getElementById('f_creditLimit') ? document.getElementById('f_creditLimit').value.trim() : '';
+      var creditLimit = creditRaw === '' ? null : parseFloat(creditRaw);
       var gstRegRadio = document.querySelector('input[name="gstReg"]:checked');
       var gstRegistered = gstRegRadio ? gstRegRadio.value === 'true' : false;
       var statusRadio = document.querySelector('input[name="customerStatus"]:checked');

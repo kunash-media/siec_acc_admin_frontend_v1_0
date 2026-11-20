@@ -1194,7 +1194,7 @@
         <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl sticky bottom-0">
           <div>${extraBtns || ''}</div>
           <div class="flex gap-2">
-            <button ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
+            <button id="modalSaveBtn" ${onSaveAttr} class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm flex items-center gap-1.5">
               ${iconSave()} ${saveLabel}
             </button>
           </div>
@@ -1610,7 +1610,7 @@
       var pending = salesOrders.filter(function(so) { return so.status === 'pending'; }).length;
       var approved = salesOrders.filter(function(so) { return so.status === 'approved'; }).length;
       var fulfilled = salesOrders.filter(function(so) { return so.fulfillmentStatus === 'fulfilled'; }).length;
-      var totalVal = round2(salesOrders.reduce(function(sum, so) { return sum + so.total; }, 0));
+      var totalVal = round2(salesOrders.reduce(function(sum, so) { return so.status === 'rejected' ? sum : sum + so.total; }, 0));
 
       document.getElementById('totalOrders').textContent = total;
       document.getElementById('pendingOrders').textContent = pending;
@@ -1621,7 +1621,8 @@
 
     function getFilteredSalesOrders() {
       var searchInput = document.getElementById('searchInput');
-      var q = searchInput ? searchInput.value.toLowerCase() : '';
+      var qRaw = searchInput ? searchInput.value.trim().toLowerCase() : '';
+      var q = qRaw.length >= SO_SEARCH_MIN ? qRaw : '';
       var statusEl = document.getElementById('filterStatus');
       var status = statusEl ? statusEl.value : 'all';
       var clientId = filterClient ? filterClient.value : 'all';
@@ -1721,6 +1722,7 @@
       filterClient = null;
       var searchInput = document.getElementById('searchInput');
       if (searchInput) searchInput.value = '';
+      soLastSearch = ''; clearTimeout(soSearchTimer);
       currentPage = 1;
       renderSalesOrders();
       showToast('Filters cleared', 'info');
@@ -2104,8 +2106,7 @@
 
           <!-- Footer Fields -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-            ${fld('Discount (%)', '<input type="number" min="0" max="100" step="0.01" class="form-input" id="f_discount" value="' + e.discount + '" placeholder="0" onchange="calcSOTotal()">')}
-            ${fld('Tax Rate (%)', '<select class="form-input" id="f_tax" onchange="calcSOTotal()"><option ' + (e.tax == 0 ? 'selected' : '') + '>0</option><option ' + (e.tax == 5 ? 'selected' : '') + '>5</option><option ' + (e.tax == 12 ? 'selected' : '') + '>12</option><option ' + (e.tax == 18 ? 'selected' : '') + '>18</option><option ' + (e.tax == 28 ? 'selected' : '') + '>28</option></select>')}
+            ${fld('Discount (%)', '<input type="number" min="0" max="100" step="0.01" data-so="discount" class="form-input" id="f_discount" value="' + e.discount + '" placeholder="0" oninput="onSoFieldInput(this)"><div class="so-err hidden text-[9.5px] text-red-500 mt-0.5"></div>')}            ${fld('Tax Rate (%)', '<select class="form-input" id="f_tax" onchange="calcSOTotal()"><option ' + (e.tax == 0 ? 'selected' : '') + '>0</option><option ' + (e.tax == 5 ? 'selected' : '') + '>5</option><option ' + (e.tax == 12 ? 'selected' : '') + '>12</option><option ' + (e.tax == 18 ? 'selected' : '') + '>18</option><option ' + (e.tax == 28 ? 'selected' : '') + '>28</option></select>')}
             ${fld('Total Amount', '<input type="text" class="form-input" id="f_total" value="' + money(e.total) + '" disabled style="font-weight:bold;color:#6da84c;">')}
             ${fld('Fulfillment Status', '<input type="text" class="form-input" id="f_fulfillmentView" value="' + (e.fulfillmentStatus.charAt(0).toUpperCase() + e.fulfillmentStatus.slice(1)) + '" disabled>', 'Updated automatically from deliveries')}
           </div>
@@ -2226,11 +2227,12 @@
           <div class="item-host"></div>
         </td>
         <td class="px-2 py-1">
-          <input type="number" min="0" step="1" class="form-input text-[10px] item-qty" value="${prefill ? prefill.qty : 1}" placeholder="Qty" onchange="calcSOTotal()">
+           <input type="number" min="1" step="1" data-so="qty" class="form-input text-[10px] item-qty" value="${prefill ? prefill.qty : 1}" placeholder="Qty" oninput="onSoFieldInput(this)">
+          <div class="so-err hidden text-[9.5px] text-red-500 mt-0.5"></div>
         </td>
         <td class="px-2 py-1">
-          <input type="number" min="0" step="0.01" class="form-input text-[10px] item-rate" value="${prefill ? prefill.rate : 0}" placeholder="Rate" onchange="calcSOTotal()">
-        </td>
+          <input type="number" min="0.01" step="0.01" data-so="rate" class="form-input text-[10px] item-rate" value="${prefill ? prefill.rate : ''}" placeholder="Rate" oninput="onSoFieldInput(this)">
+          <div class="so-err hidden text-[9.5px] text-red-500 mt-0.5"></div>        </td>
         <td class="px-2 py-1 text-center">
           <button onclick="removeLineItem(this)" class="text-red-500 hover:text-red-700 transition">${iconX()}</button>
         </td>
@@ -2249,13 +2251,74 @@
           if (raw) {
             // picking a product fills the rate with its selling price (same as before)
             var price = Number(raw.productSellingPrice);
-            row.querySelector('.item-rate').value = isNaN(price) ? 0 : price;
+            var rateEl = row.querySelector('.item-rate');
+            rateEl.value = (isNaN(price) || price <= 0) ? '' : price;
+            soCheck(rateEl);
             productMetaCache[raw.productStrId] = raw;
           }
           calcSOTotal();
         }
       });
     }
+
+    // ---------- Field validation: inline errors, nothing is silently changed ----------
+    var SO_SEARCH_MIN = 3;        // change to 2 to start earlier
+    var SO_SEARCH_DEBOUNCE = 350;
+    var soSearchTimer = null, soLastSearch = '';
+
+    var SO_RULES = {
+      qty: function (raw, el) {
+        if (raw === '') return (el.validity && el.validity.badInput) ? 'Enter a valid number' : 'Quantity is required';
+        var v = Number(raw);
+        if (!isFinite(v)) return 'Enter a valid number';
+        if (v <= 0) return 'Quantity must be greater than 0';
+        if (Math.floor(v) !== v) return 'Quantity must be a whole number';
+        return '';
+      },
+      rate: function (raw, el) {
+        if (raw === '') return (el.validity && el.validity.badInput) ? 'Enter a valid number' : 'Rate must be greater than 0';
+        var v = Number(raw);
+        if (!isFinite(v)) return 'Enter a valid number';
+        if (v <= 0) return 'Rate must be greater than 0';
+        return '';
+      },
+      discount: function (raw, el) {
+        if (raw === '') return (el.validity && el.validity.badInput) ? 'Enter a valid number' : '';
+        var v = Number(raw);
+        if (!isFinite(v) || v < 0 || v > 100) return 'Discount must be between 0 and 100';
+        return '';
+      }
+    };
+
+    function soSetErr(el, msg) {
+      el.style.borderColor = msg ? '#ef4444' : '';
+      var box = el.parentNode ? el.parentNode.querySelector('.so-err') : null;
+      if (box) { box.textContent = msg || ''; box.classList.toggle('hidden', !msg); }
+    }
+    function soCheck(el) {
+      var rule = SO_RULES[el.dataset.so]; if (!rule) return true;
+      var msg = rule(String(el.value).trim(), el);
+      soSetErr(el, msg);
+      return !msg;
+    }
+    function onSoFieldInput(el) { soCheck(el); calcSOTotal(); }
+    function validateSOForm() {
+      var first = null;
+      document.querySelectorAll('#modalRoot [data-so]').forEach(function (el) {
+        if (!soCheck(el) && !first) first = el;
+      });
+      return first;
+    }
+
+    function onSoSearchInput() {
+      var si = document.getElementById('searchInput');
+      var v = si ? si.value.trim() : '';
+      var eff = v.length >= SO_SEARCH_MIN ? v : '';
+      clearTimeout(soSearchTimer);
+      if (eff === soLastSearch) return;
+      soSearchTimer = setTimeout(function () { soLastSearch = eff; filterSalesOrders(); }, SO_SEARCH_DEBOUNCE);
+    }
+
 
     function removeLineItem(btn) {
       var row = btn.closest('tr');
@@ -2276,17 +2339,16 @@
       rows.forEach(function(row) {
         var qtyInput = row.querySelector('.item-qty');
         var rateInput = row.querySelector('.item-rate');
-        var qty = Math.max(0, Math.floor(parseFloat(qtyInput.value) || 0));
-        var rate = Math.max(0, parseFloat(rateInput.value) || 0);
-        qtyInput.value = qty;
-        rateInput.value = rate;
+       var qv = parseFloat(qtyInput.value), rv = parseFloat(rateInput.value);
+        var qty = (isFinite(qv) && qv > 0 && Math.floor(qv) === qv) ? qv : 0;
+        var rate = (isFinite(rv) && rv > 0) ? rv : 0;
         subtotal += round2(qty * rate);
       });
       subtotal = round2(subtotal);
 
       var discountInput = document.getElementById('f_discount');
-      var discount = Math.min(100, Math.max(0, parseFloat(discountInput.value) || 0));
-      discountInput.value = discount;
+      var dv = parseFloat(discountInput.value);
+      var discount = (isFinite(dv) && dv >= 0 && dv <= 100) ? dv : 0;
       var tax = parseFloat(document.getElementById('f_tax').value) || 0;
 
       var taxable = round2(subtotal - round2(subtotal * (discount / 100)));
@@ -2299,6 +2361,27 @@
     // =============================================================
     // SAVE / DELETE SALES ORDER  (backend integrated)
     // =============================================================
+
+     var _soSaving = false;
+    async function saveSO(existingId) {
+      if (_soSaving) return;
+      var badEl = validateSOForm();
+      if (badEl) {
+        badEl.scrollIntoView({ block: 'center' });
+        badEl.focus();
+        showToast('Please fix the highlighted fields', 'error');
+        return;
+      }
+      _soSaving = true;
+      var sbtn = document.getElementById('modalSaveBtn');
+      if (sbtn) { sbtn.disabled = true; sbtn.classList.add('opacity-60', 'cursor-not-allowed'); }
+      try { await saveSOInner(existingId); }
+      finally {
+        _soSaving = false;
+        if (sbtn && sbtn.isConnected) { sbtn.disabled = false; sbtn.classList.remove('opacity-60', 'cursor-not-allowed'); }
+      }
+    }
+
 
     async function saveSO(existingId) {
       var date = document.getElementById('f_date').value;
@@ -2519,26 +2602,38 @@
     // SEARCH
     // =============================================================
 
-    (function addSearchToTopbar() {
-      var searchContainer = document.querySelector('.app-main header');
-      if (searchContainer) {
-        var searchHtml = `
-          <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
-            <input type="text" id="searchInput" placeholder="Search sales orders by number, client…"
-              onkeyup="filterSalesOrders()"
-              class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
-          </div>
-        `;
-        var headerContent = searchContainer.innerHTML;
-        var hamburgerIndex = headerContent.indexOf('lg:hidden');
-        if (hamburgerIndex !== -1) {
-          var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
-          var before = headerContent.substring(0, firstDivEnd);
-          var after = headerContent.substring(firstDivEnd);
-          searchContainer.innerHTML = before + searchHtml + after;
-        }
-      }
+    // (function addSearchToTopbar() {
+    //   var searchContainer = document.querySelector('.app-main header');
+    //   if (searchContainer) {
+    //     var searchHtml = `
+    //       <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
+    //         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+    //         <input type="text" id="searchInput" placeholder="Search sales orders by number, client…"
+    //           onkeyup="filterSalesOrders()"
+    //           class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+    //       </div>
+    //     `;
+    //     var headerContent = searchContainer.innerHTML;
+    //     var hamburgerIndex = headerContent.indexOf('lg:hidden');
+    //     if (hamburgerIndex !== -1) {
+    //       var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
+    //       var before = headerContent.substring(0, firstDivEnd);
+    //       var after = headerContent.substring(firstDivEnd);
+    //       searchContainer.innerHTML = before + searchHtml + after;
+    //     }
+    //   }
+    // })();
+
+        (function mountSoSearch() {
+      var panel = document.getElementById('salesOrdersPanel');
+      if (!panel || !panel.parentNode || document.getElementById('searchInput')) return;
+      var w = document.createElement('div');
+      w.className = 'mb-3';
+      w.innerHTML = '<div class="relative w-full sm:w-96">' +
+        '<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">' + iconSearch() + '</span>' +
+        '<input type="text" id="searchInput" oninput="onSoSearchInput()" autocomplete="off" placeholder="Search by SO number or client… (min 3 letters)" ' +
+        'class="w-full border border-gray-300 bg-white rounded-lg pl-9 pr-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400"></div>';
+      panel.parentNode.insertBefore(w, panel);
     })();
 
     // =============================================================

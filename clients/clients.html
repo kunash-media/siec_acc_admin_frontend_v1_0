@@ -308,9 +308,16 @@
               <h1 class="text-[16px] sm:text-[22px] font-bold tracking-tight text-gray-900">Clients / Customers</h1>
               <p class="text-[13px] text-gray-500">Customer master with GST details, addresses, credit limits, transactions and statements.</p>
             </div>
-            <div class="flex gap-2.5 flex-wrap">
+            <div class="flex gap-6 flex-wrap items-center">
+              <!-- Search -->
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-magnifying-glass text-[11px]"></i></span>
+                <input type="text" id="searchInput" oninput="onClientSearchInput()" autocomplete="off"
+                  placeholder="Search name, ID, phone, company… (min 3 letters)"
+                  class="w-56 sm:w-80 border border-gray-300 bg-white rounded-lg pl-8 pr-3 py-2 text-[12px] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+              </div>
               <!-- Add Customer Button -->
-              <button onclick="openAddCustomer()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[13px] font-semibold px-4 py-2.5 rounded-lg transition shadow-sm">
+              <button onclick="openAddCustomer()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition shadow-sm">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M12 5v14M5 12h14"/>
                 </svg>
@@ -593,6 +600,51 @@
     }
 
 
+    // FIND
+    // ---------- Client types (dropdown values come from backend: GET /get-client-types) ----------
+// REPLACE
+    function cleanPhoneC(v) {
+      var d = String(v == null ? '' : v).replace(/\D/g, '');
+      if (d.length === 12 && d.indexOf('91') === 0) d = d.slice(2);
+      else if (d.length === 11 && d.charAt(0) === '0') d = d.slice(1);
+      return d.slice(0, 10);
+    }
+    function cleanUniLetters(v) { return String(v == null ? '' : v).replace(/[^\p{L}\p{M}\s]/gu, '').replace(/\s{2,}/g, ' ').replace(/^\s+/, ''); }
+    function cleanAscii(v) { return String(v == null ? '' : v).replace(/[^A-Za-z\s]/g, '').replace(/\s{2,}/g, ' ').replace(/^\s+/, ''); }
+    function cleanPinC(v) { return String(v == null ? '' : v).replace(/\D/g, '').slice(0, 10); }
+    function cleanGstinC(v) { return String(v == null ? '' : v).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15); }
+
+    var CF_GSTIN_RX = /^(0[1-9]|[12][0-9]|3[0-8]|9[79])[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+    var CF_RULES = {
+      f_phone:     { clean: cleanPhoneC, test: function (s) { return /^\d{10}$/.test(s); }, msg: 'Enter exactly 10 digits' },
+      f_city:      { clean: cleanUniLetters, test: function (s) { return /^[\p{L}\p{M}]+(\s[\p{L}\p{M}]+)*$/u.test(s); }, msg: 'Only letters and spaces are allowed' },
+      f_state:     { clean: cleanAscii, test: function (s) { return /^[A-Za-z]+(\s[A-Za-z]+)*$/.test(s); }, msg: 'Only letters and spaces are allowed' },
+      f_typeOther: { clean: cleanAscii, test: function (s) { return /^[A-Za-z]+(\s[A-Za-z]+)*$/.test(s); }, msg: 'Only letters and spaces are allowed' },
+      f_pincode:   { clean: cleanPinC, test: function (s) { return /^\d{1,10}$/.test(s); }, msg: 'Digits only' },
+      f_gstin:     { clean: cleanGstinC, test: function (s) { return CF_GSTIN_RX.test(s); }, msg: 'Enter a valid 15-character GSTIN, e.g. 27AAPFU0939F1ZV' }
+    };
+    function onCfInput(el) {
+      var r = CF_RULES[el.id];
+      if (r) { var s = r.clean(el.value); if (s !== el.value) el.value = s; }
+      showFieldErr(el.id, '');
+    }
+    function cfCheck(el) {
+      var r = CF_RULES[el.id]; if (!r) return true;
+      var v = el.value.trim(), bad = v !== '' && !r.test(v);
+      showFieldErr(el.id, bad ? r.msg : '');
+      return !bad;
+    }
+    function validateClientExtra() {
+      var first = null;
+      Object.keys(CF_RULES).forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el || el.tagName !== 'INPUT' || id === 'f_typeOther') return;
+        if (!cfCheck(el) && !first) first = el;
+      });
+      return first;
+    }
+    var CF_ERR = function (id) { return '<div id="err_' + id + '" class="hidden text-[10.5px] text-red-500 mt-1"></div>'; };
+
     // ---------- Client types (dropdown values come from backend: GET /get-client-types) ----------
     // Starts with the 3 standard types so the page still works if the API is unreachable.
     var CLIENT_TYPES = STANDARD_CLIENT_TYPES.slice();
@@ -641,7 +693,7 @@
           return '<option value="' + escHtml(st) + '"' + (st === current ? ' selected' : '') + '>' + escHtml(st) + '</option>';
         }).join('') + '</select>';
       }
-      return '<input id="f_state" value="' + escHtml(current) + '" placeholder="State / Province" class="form-input">';
+            return '<input id="f_state" maxlength="60" value="' + escHtml(cleanAscii(current)) + '" placeholder="State / Province" oninput="onCfInput(this)" onblur="cfCheck(this)" class="form-input">' + CF_ERR('f_state');
     }
 
     function rowActionsHtml(editFn, delFn, viewFn) {
@@ -758,9 +810,27 @@
     var activeFilters = { status: 'all', gst: 'all', type: 'all' };
     var searchDebounceTimer = null;
 
+    var CLIENT_SEARCH_MIN = 3;       // change to 2 to start earlier
+    var CLIENT_SEARCH_DEBOUNCE = 350;
+    var clientLastSearch = '';
+
+    function onClientSearchInput() {
+      var si = document.getElementById('searchInput');
+      var v = si ? si.value.trim() : '';
+      var eff = v.length >= CLIENT_SEARCH_MIN ? v : '';
+      clearTimeout(searchDebounceTimer);
+      if (eff === clientLastSearch) return;
+      searchDebounceTimer = setTimeout(function () {
+        clientLastSearch = eff;
+        currentPage = 1;
+        loadCustomers();
+      }, CLIENT_SEARCH_DEBOUNCE);
+    }
+
     function buildQuery() {
       var searchInput = document.getElementById('searchInput');
       var q = searchInput ? searchInput.value.trim() : '';
+      if (q.length < CLIENT_SEARCH_MIN) q = '';
       var params = new URLSearchParams();
       params.set('status', activeFilters.status);
       params.set('gst', activeFilters.gst);
@@ -946,6 +1016,7 @@
       currentPage = 1;
       var searchInput = document.getElementById('searchInput');
       if (searchInput) searchInput.value = '';
+      clientLastSearch = ''; clearTimeout(searchDebounceTimer);
       loadCustomers();
       showToast('Filters reset', 'info');
     }
@@ -1132,14 +1203,14 @@
               ${fld('Client Type', '<select id="f_type" class="' + inputBase() + '" onchange="toggleTypeOther()">' + typeOptionsHtml(e.customerType) + '<option value="' + OTHER_TYPE_VALUE + '">Other</option></select>', null, 'col-span-2')}
               <div id="f_typeOtherWrap" class="col-span-2 hidden">
                 ${fld('Specify Client Type', `<div style="display:flex;align-items:center;gap:8px;">
-                    <input id="f_typeOther" maxlength="30" placeholder="e.g. Trust, NGO, Partnership" class="form-input" style="flex:1;min-width:0;"
+                                       <input id="f_typeOther" maxlength="30" placeholder="e.g. Trust, NGO, Partnership" class="form-input" style="flex:1;min-width:0;" oninput="onCfInput(this)"
                       onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomClientType();}">
                     <button type="button" id="f_typeAddBtn" onclick="addCustomClientType()"
                       class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-dark transition shadow-sm whitespace-nowrap">Add</button>
                   </div>`, )}
               </div>
-              ${fld('Email', '<input id="f_email" type="text" inputmode="email" autocomplete="off" maxlength="120" value="' + escHtml(e.email) + '" placeholder="client@domain.com" oninput="showFieldErr(\'f_email\',\'\')" onblur="checkEmailField()" class="' + inputBase() + '"><div id="err_f_email" class="hidden text-[10.5px] text-red-500 mt-1"></div>')}              ${fld('Phone', '<input id="f_phone" value="' + e.phone + '" placeholder="+91-XXXXXXXXXX" class="' + inputBase() + '">')}
-            </div>
+              ${fld('Email', '<input id="f_email" type="text" inputmode="email" autocomplete="off" maxlength="120" value="' + escHtml(e.email) + '" placeholder="client@domain.com" oninput="showFieldErr(\'f_email\',\'\')" onblur="checkEmailField()" class="' + inputBase() + '"><div id="err_f_email" class="hidden text-[10.5px] text-red-500 mt-1"></div>')} 
+              ${fld('Phone', '<input id="f_phone" type="text" inputmode="numeric" maxlength="10" value="' + escHtml(cleanPhoneC(e.phone)) + '" placeholder="10-digit mobile number" oninput="onCfInput(this)" onblur="cfCheck(this)" class="' + inputBase() + '">' + CF_ERR('f_phone'))}            </div>
           </div>
 
           <div id="tab-address" class="modal-tab-panel">
@@ -1148,17 +1219,14 @@
               ${fld('Shipping Address', '<textarea id="f_shippingAddress" rows="2" class="' + inputBase() + '" placeholder="Shipping address (if different)">' + (e.shippingAddress || '') + '</textarea>')}
             </div>
             <div class="grid grid-cols-3 form-grid-3 gap-x-4 gap-y-4">
-              ${fld('City', '<input id="f_city" value="' + (e.city || '') + '" placeholder="City" class="' + inputBase() + '">')}
-              ${fld('State', '<div id="f_stateWrap">' + stateFieldHtml(e.country, e.state, true) + '</div>')}
+              ${fld('City', '<input id="f_city" maxlength="60" value="' + escHtml(cleanUniLetters(e.city)) + '" placeholder="City" oninput="onCfInput(this)" onblur="cfCheck(this)" class="' + inputBase() + '">' + CF_ERR('f_city'))}              ${fld('State', '<div id="f_stateWrap">' + stateFieldHtml(e.country, e.state, true) + '</div>')}
               ${fld('Country', countrySelectHtml(e.country))}
-              ${fld('Pincode', '<input id="f_pincode" value="' + (e.pincode || '') + '" placeholder="6-digit PIN" class="' + inputBase() + '">')}
-            </div>
+              ${fld('Pincode', '<input id="f_pincode" type="text" inputmode="numeric" maxlength="10" value="' + escHtml(cleanPinC(e.pincode)) + '" placeholder="PIN / postal code" oninput="onCfInput(this)" onblur="cfCheck(this)" class="' + inputBase() + '">' + CF_ERR('f_pincode'))}            </div>
           </div>
 
           <div id="tab-tax" class="modal-tab-panel">
             <div class="grid grid-cols-2 form-grid-2 gap-x-4 gap-y-4 mb-4">
-              ${fld('GSTIN', '<input id="f_gstin" value="' + (e.gstin || '') + '" placeholder="15-digit GSTIN" class="' + inputBase() + '">', 'Format: 2-digit state code + 10-digit PAN + 3-digit entity code')}
-              ${fld('PAN', '<input id="f_pan" value="' + (e.pan || '') + '" placeholder="10-digit PAN" class="' + inputBase() + '">')}
+            ${fld('GSTIN', '<input id="f_gstin" maxlength="15" value="' + escHtml(cleanGstinC(e.gstin)) + '" placeholder="e.g. 27AAPFU0939F1ZV" oninput="onCfInput(this)" onblur="cfCheck(this)" class="' + inputBase() + '">' + CF_ERR('f_gstin'), 'Format: 2-digit state code + 10-character PAN + entity digit + Z + check character')}              ${fld('PAN', '<input id="f_pan" value="' + (e.pan || '') + '" placeholder="10-digit PAN" class="' + inputBase() + '">')}
             </div>
             ${fld('GST Registered?', '<div class="form-radio-row"><label><input type="radio" name="gstReg" value="true" ' + (e.gstRegistered ? 'checked' : '') + '> <span class="font-medium">Yes</span></label><label><input type="radio" name="gstReg" value="false" ' + (!e.gstRegistered ? 'checked' : '') + '> <span class="font-medium">No</span></label></div>')}
           </div>
@@ -1212,7 +1280,7 @@
       var inp = document.getElementById('f_typeOther');
       var sel = document.getElementById('f_type');
       if (!inp || !sel) return;
-      var name = inp.value.trim().replace(/\s+/g, ' ');
+      var name = cleanAscii(inp.value).trim().replace(/\s+/g, ' ');
       if (!name) { showToast('Please enter a client type', 'warning'); inp.focus(); return; }
       if (name.toLowerCase() === 'other') { showToast('"Other" is reserved, please enter a specific type', 'warning'); return; }
 
@@ -1259,8 +1327,8 @@
           showToast('Please specify the client type', 'warning');
           return;
         }
-        customerType = otherText; // typed but "Add" not clicked -> backend saves it as a new type anyway
-      }
+        customerType = cleanAscii(otherText).trim().replace(/\s+/g, ' ');
+        if (!customerType) { showToast('Client type can contain only letters and spaces', 'warning'); return; }      }
       var email = document.getElementById('f_email') ? document.getElementById('f_email').value.trim() : '';
       var phone = document.getElementById('f_phone') ? document.getElementById('f_phone').value.trim() : '';
       var billingAddress = document.getElementById('f_billingAddress') ? document.getElementById('f_billingAddress').value.trim() : '';
@@ -1287,7 +1355,27 @@
         showToast(nameBad ? 'Please fix the Client Name' : 'Please enter a valid email address', 'error');
         return;
       }
-      email = email.toLowerCase();
+       email = email.toLowerCase();
+      var badEl = validateClientExtra();
+      if (badEl) {
+        var bp = badEl.closest('.modal-tab-panel');
+        var bTab = bp && document.querySelector('#modalTabs [data-tab="' + bp.id + '"]');
+        if (bTab) bTab.click();
+        badEl.focus();
+        showToast('Please fix the highlighted fields', 'error');
+        return;
+      }
+      phone = cleanPhoneC(phone);
+      var badEl = validateClientExtra();
+      if (badEl) {
+        var bp = badEl.closest('.modal-tab-panel');
+        var bTab = bp && document.querySelector('#modalTabs [data-tab="' + bp.id + '"]');
+        if (bTab) bTab.click();
+        badEl.focus();
+        showToast('Please fix the highlighted fields', 'error');
+        return;
+      }
+      phone = cleanPhoneC(phone);
 
 
       var body = {
@@ -1371,27 +1459,27 @@
     // SEARCH
     // =============================================================
 
-    (function addSearchToTopbar() {
-      var searchContainer = document.querySelector('.app-main header');
-      if (searchContainer) {
-        var searchHtml = `
-          <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
-            <input type="text" id="searchInput" placeholder="Search clients by name, company, phone…"
-              onkeyup="debouncedSearch()"
-              class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
-          </div>
-        `;
-        var headerContent = searchContainer.innerHTML;
-        var hamburgerIndex = headerContent.indexOf('lg:hidden');
-        if (hamburgerIndex !== -1) {
-          var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
-          var before = headerContent.substring(0, firstDivEnd);
-          var after = headerContent.substring(firstDivEnd);
-          searchContainer.innerHTML = before + searchHtml + after;
-        }
-      }
-    })();
+    // (function addSearchToTopbar() {
+    //   var searchContainer = document.querySelector('.app-main header');
+    //   if (searchContainer) {
+    //     var searchHtml = `
+    //       <div class="hidden sm:flex flex-1 max-w-[420px] relative ml-4">
+    //         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${iconSearch()}</span>
+    //         <input type="text" id="searchInput" placeholder="Search clients by name, company, phone…"
+    //           onkeyup="debouncedSearch()"
+    //           class="w-full border border-gray-200 bg-gray-50 focus:bg-white rounded-lg pl-9 pr-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-400">
+    //       </div>
+    //     `;
+    //     var headerContent = searchContainer.innerHTML;
+    //     var hamburgerIndex = headerContent.indexOf('lg:hidden');
+    //     if (hamburgerIndex !== -1) {
+    //       var firstDivEnd = headerContent.indexOf('</div>', hamburgerIndex) + 6;
+    //       var before = headerContent.substring(0, firstDivEnd);
+    //       var after = headerContent.substring(firstDivEnd);
+    //       searchContainer.innerHTML = before + searchHtml + after;
+    //     }
+    //   }
+    // })();
 
     // =============================================================
     // INIT
